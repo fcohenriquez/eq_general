@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 print(R.version.string)
 
 rm(list = ls())
-
+setwd("~/proyectos/equilibrio_general")
 # Loading gEcon.iosam (and gEcon) package
 library(gEcon.iosam)
 library (pracma)
@@ -20,7 +20,7 @@ library (pracma)
 
 
 ```{r }
-chile_sam <- read.csv("/cloud/project/macro_sam_2008_simp.csv", row.names=1)
+chile_sam <- read.csv("macro_sam_2008_simp.csv", row.names=1)
 rows1<-c( 'Actprim', 'Actmanu', 'Actserv', 'Prodprim', 'Prodmanu', 'Prodserv', 'Trabajo', 'Capital', 'Hogares',
           'Empresas', 'Gobierno', 'Cont_soc', 'Pres_soc', 'Imp_dir', 'IVA', 'SI', 'Total')
 
