@@ -22,8 +22,7 @@ library(pracma)
 
 ```{r }
 chile_sam <- read.csv("macro_sam_2008_simp.csv", row.names = 1)
-rows1 <- c(
-    "Act", "Prod", "Trabajo", "Capital", "Hogares",
+rows1 <- c( "Prod", "Act", "Trabajo", "Capital", "Hogares",
     "Empresas", "Gobierno", "Cont_soc", "Pres_soc", "Imp_dir", "IVA", "SI", "Total"
 )
 
@@ -68,7 +67,7 @@ model <- set_free_par(model, c(
     por_cont = flow1["Cont_soc", "Hogares"] / flow1["Hogares", "Total"],
     por_tremp = flow1["Hogares", "Empresas"] / flow1["Empresas", "Total"],
     por_trgov = flow1["Hogares", "Gobierno"] / flow1["Gobierno", "Total"],
-    get_flow_values(flow1[sam_prod_sp, "Hogares"], "d_data", sam_prod_sp),
+    d_data__Prod=flow1["Prod", "Total"],
     get_flow_values(flow1["Trabajo", acts], "l_data", acts),
     get_flow_values(flow1["IVA", sam_prod] / (flow1["Total", sam_prod] - flow1["IVA", sam_prod]), "vat", sam_prod),
     get_flow_values(flow1[sam_prod, "Gobierno"], "data_gg_p", sam_prod),
@@ -78,6 +77,7 @@ model <- set_free_par(model, c(
 
 model <- steady_state(model, calibration = T)
 ```
+
 
 
 # Listado de parametros
@@ -92,7 +92,7 @@ g_o <- 2.6
 
 
 varlist <- list(
-    lambda__CONSUMER_1 = 0.5,
+   
     p_k = 1,
     U = 1,
     BTINC = flow1["Total", "Hogares"],
@@ -118,37 +118,30 @@ varlist <- list(
     TR_EMP = flow1["Hogares", "Empresas"],
     TR_GOV = flow1["Hogares", "Gobierno"],
     VAT = flow1["Total", "IVA"],
-    p__Prodprim = 1, p__Prodmanu = 1, p__Prodserv = 1, # Precios de los bienes
-    pi__Actprim = 0, pi__Actmanu = 0, pi__Actserv = 0, # Utilidades de las industrias
-    D__Prodprim = flow1["Prodprim", "Hogares"], D__Prodmanu = flow1["Prodmanu", "Hogares"], D__Prodserv = flow1["Prodserv", "Hogares"], # Demanda de los hogares
-    DA__Prodprim = flow1["Prodprim", "Total"], DA__Prodmanu = flow1["Prodmanu", "Total"], DA__Prodserv = flow1["Prodserv", "Total"], # Demanda agregada por producto
+    p__Prod = 1, # Precios de los bienes
+    pi__Act = 0, # Utilidades de las industrias
+    D__Prod = flow1["Prod", "Hogares"], # Demanda de los hogares
+    DA__Prod = flow1["Prod", "Total"], # Demanda agregada por producto
 
-    GG__Prodprim = flow1["Prodprim", "Gobierno"], GG__Prodmanu = flow1["Prodmanu", "Gobierno"], GG__Prodserv = flow1["Prodserv", "Gobierno"], # Gasto de gobierno
-    I__Prodprim = flow1["Prodprim", "SI"], I__Prodmanu = flow1["Prodmanu", "SI"], I__Prodserv = flow1["Prodserv", "SI"], # Inversion
+    GG__Prod = flow1["Prod", "Gobierno"], # Gasto de gobierno
+    I__Prod = flow1["Prod", "SI"], # Inversion
     # Capital usado en cada producto en cada actividad
-    K__Prodprim__Actprim = 13, K__Prodprim__Actmanu = 0.1, K__Prodprim__Actserv = 0.2,
-    K__Prodmanu__Actprim = 0.01, K__Prodmanu__Actmanu = 11, K__Prodmanu__Actserv = 0.3,
-    K__Prodserv__Actprim = 0.0001, K__Prodserv__Actmanu = 0.16, K__Prodserv__Actserv = 23,
+    K__Prod__Act = 49.4, 
     # Trabajo usado en cada producto en cada actividad
-    L__Prodprim__Actprim = 3, L__Prodprim__Actmanu = 0.1, L__Prodprim__Actserv = 0.2,
-    L__Prodmanu__Actprim = 0.01, L__Prodmanu__Actmanu = 6.8, L__Prodmanu__Actserv = 0.3,
-    L__Prodserv__Actprim = 0.0001, L__Prodserv__Actmanu = 0.2, L__Prodserv__Actserv = 23,
-    OA__Prodprim = flow1["Total", "Prodprim"], OA__Prodmanu = flow1["Total", "Prodmanu"], OA__Prodserv = flow1["Total", "Prodserv"], # Oferta agregada por producto
+    L__Prod__Act = 34.1,
+    
+    OA__Prod = flow1["Total", "Prod"], # Oferta agregada por producto
 
 
 
     # Produccion por actividad
-    Y__Prodprim__Actprim = flow1["Actprim", "Prodprim"], Y__Prodprim__Actmanu = flow1["Actmanu", "Prodprim"], Y__Prodprim__Actserv = flow1["Actserv", "Prodprim"],
-    Y__Prodmanu__Actprim = flow1["Actprim", "Prodmanu"], Y__Prodmanu__Actmanu = flow1["Actmanu", "Prodmanu"], Y__Prodmanu__Actserv = flow1["Actserv", "Prodmanu"],
-    Y__Prodserv__Actprim = flow1["Actprim", "Prodserv"], Y__Prodserv__Actmanu = flow1["Actmanu", "Prodserv"], Y__Prodserv__Actserv = flow1["Actserv", "Prodserv"]
+    Y__Prod__Act = flow1["Act", "Prod"]
 )
 
 listcalib <- c(get_flow_values(rep(0.2, n), "alpha", sam_prod),
     get_flow_values(matrix(0.6, n, m), "beta_k", sam_prod, acts),
     get_flow_values(matrix(0.4, n, m), "beta_l", sam_prod, acts),
-    gamma__Prodprim__Actprim = g_p, gamma__Prodmanu__Actprim = g_o, gamma__Prodserv__Actprim = g_o,
-    gamma__Prodprim__Actmanu = g_o, gamma__Prodmanu__Actmanu = g_p, gamma__Prodserv__Actmanu = g_o,
-    gamma__Prodprim__Actserv = g_o, gamma__Prodmanu__Actserv = g_o, gamma__Prodserv__Actserv = g_p
+    gamma__Prod__Act = g_p
 )
 ```
 
@@ -196,32 +189,23 @@ list_calibr_eq(model, c(1))
 # Estadisticas de valores obtenidos
 
 ```{r}
-var_info(model, variables = c("p_k", "p__Prodprim", "p__Prodmanu", "p__Prodserv"))
+var_info(model, variables = c("p_k", "p__Prod"))
 
-var_info(model, variables = c("pi__Actserv", "pi__Actprim", "pi__Actmanu"))
+var_info(model, variables = c("pi__Act"))
 
-
-var_info(model, variables = c(
-    "OA__Prodmanu", "Y__Prodmanu__Actmanu", "Y__Prodmanu__Actprim", "Y__Prodmanu__Actserv", "DA__Prodmanu",
-    "D__Prodmanu", "GG__Prodmanu", "I__Prodmanu", "p__Prodmanu"
-))
 
 var_info(model, variables = c(
-    "OA__Prodprim", "Y__Prodprim__Actmanu", "Y__Prodprim__Actprim", "Y__Prodprim__Actserv", "DA__Prodprim",
-    "D__Prodprim", "GG__Prodprim", "I__Prodprim", "p__Prodprim"
+    "OA__Prod", "Y__Prod__Act", "DA__Prod", "GG__Prod", "I__Prod", "p__Prod"
 ))
 
-var_info(model, variables = c(
-    "OA__Prodserv", "Y__Prodserv__Actmanu", "Y__Prodserv__Actprim", "Y__Prodserv__Actserv", "DA__Prodserv",
-    "D__Prodserv", "GG__Prodserv", "I__Prodserv", "p__Prodserv"
-))
+
 
 var_info(model, variables = c("VAT", "DIR_T"))
 ```
 
 ```{r}
 get_flow_values(1 - flow1["IVA", sam_prod] / (flow1["Total", sam_prod] - flow1["IVA", sam_prod]), "vat", sam_prod)
-get_flow_values((flow1["Imp_prod", acts] + flow1["Imptos_Espec", acts]) / (flow1["Total", acts] - flow1["Imp_prod", acts] - flow1["Imptos_Espec", acts]), "t_prod", acts)
+
 ```
 ```{r}
 var_info(model, all = T)

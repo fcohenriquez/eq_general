@@ -22,8 +22,8 @@ options
 
 indexsets
 {
-    SEC = { 'Actprim', 'Actmanu', 'Actserv' };
-	PRODS={'Prodprim', 'Prodmanu', 'Prodserv'};
+    SEC = { 'Act' };
+	PRODS={'Prod'};
 };
 
 
@@ -94,8 +94,8 @@ block CONSUMER
     };
 	calibration
     {
-        <p::PRODS\'Prodprim'>D<p>[] = d_data<p>/(1+vat<p>) -> alpha<p>; #OJO con el rol del  IVA
-		SUM<p::PRODS>(alpha<p>^omega) = 1 -> alpha<'Prodprim'>;
+        <p::PRODS>D<p>[] = d_data<p>/(1+vat<p>) -> alpha<p>; #OJO con el rol del  IVA
+		#SUM<p::PRODS>(alpha<p>^omega) = 1 ;
 
     };
 };
@@ -130,7 +130,7 @@ block <s::SEC>SECTOR
 	identities
 	{
 		K<s>[]=SUM<p::PRODS>(K<p,s>[]);
-		L<s>[]=SUM<p::PRODS>(L<p,s>[]);
+		#L<s>[]=SUM<p::PRODS>(L<p,s>[]);
 		
 		
 	};
@@ -275,18 +275,18 @@ identities
 };
 
 
-block EQUILIBRIUM
-{
-identities 
-	{
+#block EQUILIBRIUM
+#{
+#identities 
+#	{
 		#SUM<s::SEC>L<s>[]=L_h[];
-		SUM<s::SEC>K<s>[]=K_h[]+K_f[]+K_g[];
+#		SUM<s::SEC>K<s>[]=K_h[]+K_f[]+K_g[];
 
 		
 		
-	};
+#	};
 
-};
+#};
 
 
 
