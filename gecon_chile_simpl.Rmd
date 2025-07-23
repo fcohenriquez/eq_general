@@ -23,22 +23,22 @@ library(pracma)
 ```{r }
 chile_sam <- read.csv("macro_sam_2008_simp.csv", row.names = 1)
 rows1 <- c(
-    "Actprim", "Actmanu", "Actserv", "Prodprim", "Prodmanu", "Prodserv", "Trabajo", "Capital", "Hogares",
+    "Act", "Prod", "Trabajo", "Capital", "Hogares",
     "Empresas", "Gobierno", "Cont_soc", "Pres_soc", "Imp_dir", "IVA", "SI", "Total"
 )
 
 flow1 <- iosam(as.matrix(chile_sam),
-    nproducts = c(3, 3),
+    nproducts = c(1, 1),
     rows = rows1
 )
 
 
 summary(flow1)
 
-acts <- c("Actprim", "Actmanu", "Actserv")
-sam_prod <- c("Prodprim", "Prodmanu", "Prodserv")
+acts <- c("Act")
+sam_prod <- c("Prod")
 
-sam_prod_sp <- c("Prodmanu", "Prodserv")
+
 ```
 
 ## Building model from the .gcn file
