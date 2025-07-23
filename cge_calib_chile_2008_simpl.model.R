@@ -1,10 +1,10 @@
-# Generated on 2025-07-23 12:45:02 by gEcon ver. 1.2.3 (2025-04-13)
+# Generated on 2025-07-23 14:22:47 by gEcon ver. 1.2.3 (2025-04-13)
 # http://gecon.r-forge.r-project.org/
 
 # Model name: cge_calib_chile_2008_simpl
 
 # info
-info__ <- c("cge_calib_chile_2008_simpl", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl.gcn", "2025-07-23 12:45:02", "false")
+info__ <- c("cge_calib_chile_2008_simpl", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl.gcn", "2025-07-23 14:22:47", "false")
 
 # index sets
 index_sets__ <- list(PRODS = c("Prod"),
@@ -239,9 +239,9 @@ equations__ <- c("l_total_data - L_h = 0",
                  "beta_l<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^(-1 + beta_l<'Prod','Act'>) = 0")
 
 # calibrating equations
-calibr_equations__ <- c("-data_prod_s<'Act','Prod'> + Y<'Prod','Act'> = 0",
+calibr_equations__ <- c("-d_data<'Prod'> + D<'Prod'> = 0",
+                        "-data_prod_s<'Act','Prod'> + Y<'Prod','Act'> = 0",
                         "-l_data<'Act'> + L<'Prod','Act'> = 0",
-                        "D<'Prod'> - d_data<'Prod'> * (1 + vat<'Prod'>)^-1 = 0",
                         "-1 + beta_k<'Prod','Act'> + beta_l<'Prod','Act'> = 0")
 
 # variables / equations map
@@ -285,7 +285,7 @@ vareqmap__ <- sparseMatrix(i = c(1, 2, 2, 3, 3, 4, 4, 5, 5, 6,
 
 # variables / calibrating equations map
 varcalibreqmap__ <- sparseMatrix(i = c(1, 2, 3),
-                                 j = c(37, 35, 30),
+                                 j = c(30, 37, 35),
                                  x = rep(1, 3), dims = c(4, 37))
 
 # calibrated parameters / equations map
@@ -308,9 +308,9 @@ freepareqmap__ <- sparseMatrix(i = c(1, 2, 2, 3, 4, 5, 7, 7, 8, 8,
                                x = rep(1, 30), dims = c(37, 23))
 
 # free parameters / calibrating equations map
-freeparcalibreqmap__ <- sparseMatrix(i = c(1, 2, 3, 3),
-                                     j = c(20, 22, 19, 23),
-                                     x = rep(1, 4), dims = c(4, 23))
+freeparcalibreqmap__ <- sparseMatrix(i = c(1, 2, 3),
+                                     j = c(19, 20, 22),
+                                     x = rep(1, 3), dims = c(4, 23))
 
 # shocks / equations map
 shockeqmap__ <- sparseMatrix(i = NULL, j = NULL, dims = c(37, 0))
@@ -364,9 +364,9 @@ ss_eq__ <- function(v, pc, pf)
 calibr_eq__ <- function(v, pc, pf)
 {
     r <- numeric(4)
-    r[1] = -pf[20] + v[37]
-    r[2] = -pf[22] + v[35]
-    r[3] = v[30] - pf[19] * (1 + pf[23])^-1
+    r[1] = -pf[19] + v[30]
+    r[2] = -pf[20] + v[37]
+    r[3] = -pf[22] + v[35]
     r[4] = -1 + pc[2] + pc[3]
 
     return(r)
@@ -529,7 +529,7 @@ ss_calibr_eq_jacob__ <- function(v, pc, pf)
                                 22, 7, 18, 22, 25, 28, 32, 1, 9, 12,
                                 17, 20, 24, 1, 2, 11, 14, 16, 24, 25,
                                 28, 34, 35, 39, 40, 41, 28, 34, 35, 39,
-                                40, 41, 37, 35, 30, 39, 40),
+                                40, 41, 30, 37, 35, 39, 40),
                           x = jac, dims = c(41, 41))
 
     return(jacob)

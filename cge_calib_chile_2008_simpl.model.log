@@ -1,4 +1,4 @@
-Generated on 2025-07-23 12:45:02 by gEcon ver. 1.2.3 (2025-04-13)
+Generated on 2025-07-23 14:22:47 by gEcon ver. 1.2.3 (2025-04-13)
 http://gecon.r-forge.r-project.org/
 
 Model name: cge_calib_chile_2008_simpl
@@ -133,8 +133,8 @@ Equations (37):
  (37)  beta_l<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^(-1 + beta_l<'Prod','Act'>) = 0
 
 Calibrating equations (4):
- (1)  -data_prod_s<'Act','Prod'> + Y<'Prod','Act'> = 0
- (2)  -l_data<'Act'> + L<'Prod','Act'> = 0
- (3)  D<'Prod'> - d_data<'Prod'> * (1 + vat<'Prod'>)^-1 = 0
+ (1)  -d_data<'Prod'> + D<'Prod'> = 0
+ (2)  -data_prod_s<'Act','Prod'> + Y<'Prod','Act'> = 0
+ (3)  -l_data<'Act'> + L<'Prod','Act'> = 0
  (4)  -1 + beta_k<'Prod','Act'> + beta_l<'Prod','Act'> = 0
 

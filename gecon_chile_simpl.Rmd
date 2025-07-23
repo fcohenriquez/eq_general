@@ -49,7 +49,7 @@ model <- make_model("cge_calib_chile_2008_simpl.gcn")
 
 
 model <- set_free_par(model, c(
-    omega = 2,
+    omega = 1,
     k_total_data = flow1["Total", "Capital"],
     par_k_h = flow1["Hogares", "Capital"] / flow1["Total", "Capital"],
     par_k_f = flow1["Empresas", "Capital"] / flow1["Total", "Capital"],
@@ -67,7 +67,7 @@ model <- set_free_par(model, c(
     por_cont = flow1["Cont_soc", "Hogares"] / flow1["Hogares", "Total"],
     por_tremp = flow1["Hogares", "Empresas"] / flow1["Empresas", "Total"],
     por_trgov = flow1["Hogares", "Gobierno"] / flow1["Gobierno", "Total"],
-    d_data__Prod=flow1["Prod", "Total"],
+    d_data__Prod=flow1["Prod", "Hogares"],
     get_flow_values(flow1["Trabajo", acts], "l_data", acts),
     get_flow_values(flow1["IVA", sam_prod] / (flow1["Total", sam_prod] - flow1["IVA", sam_prod]), "vat", sam_prod),
     get_flow_values(flow1[sam_prod, "Gobierno"], "data_gg_p", sam_prod),
@@ -78,6 +78,9 @@ model <- set_free_par(model, c(
 model <- steady_state(model, calibration = T)
 ```
 
+```{r}
+flow1["Prod", "Hogares"]
+```
 
 
 # Listado de parametros
@@ -108,12 +111,12 @@ varlist <- list(
     L_h = flow1["Total", "Trabajo"],
     PIT_base = flow1["Total", "Hogares"],
     PREST_SOC = flow1["Total", "Pres_soc"],
-    PREST_SOC_F = flow1["Empresas", "Pres_soc"],
-    PREST_SOC_G = flow1["Gobierno", "Pres_soc"],
-    SAV = flow1["Hogares", "SI"],
-    SAV_F = flow1["Empresas", "SI"],
-    SAV_TOT = flow1["Total", "SI"],
-    SAV_G = flow1["Gobierno", "SI"],
+    PREST_SOC_F = flow1["Pres_soc", "Empresas"],
+    PREST_SOC_G = flow1["Pres_soc", "Gobierno"],
+    SAV = flow1["SI", "Hogares"],
+    SAV_F = flow1["SI", "Empresas"],
+    SAV_TOT = flow1["SI", "Total"],
+    SAV_G = flow1["SI", "Gobierno"],
     TOTAL_TAX = flow1["Total", "Imp_dir"] + flow1["Total", "IVA"],
     TR_EMP = flow1["Hogares", "Empresas"],
     TR_GOV = flow1["Hogares", "Gobierno"],
@@ -145,6 +148,9 @@ listcalib <- c(get_flow_values(rep(0.2, n), "alpha", sam_prod),
 )
 ```
 
+```{r}
+flow1["Pres_soc", "Empresas"]
+```
 
 
 # Generacion del modelo calibrado
@@ -165,8 +171,8 @@ model <- steady_state(model,
 
 ```{r}
 model <- steady_state(model,
-    calibration = F, use_jac = T, last_solver_iter = F,
-    options_list = list(method = "Broyden", global = "dbldog", max_iter = 1000, tol = 1e-6, xscalm = "auto", xtol = 1e-7), solver_status = F
+    calibration = T, use_jac = F, last_solver_iter = F,
+    options_list = list(method = "Broyden", global = "dbldog", max_iter = 100000, tol = 1e-6, xscalm = "auto", xtol = 1e-6), solver_status = T
 )
 ```
 
@@ -178,11 +184,11 @@ Norm(model@init_residual_vector)
 Norm(model@residual_vector)
 ```
 ```{r}
-list_eq(model, eq_idx = c(90, 94, 98))
+list_eq(model, eq_idx = c(23,32,27))
 ```
 
 ```{r}
-list_calibr_eq(model, c(1))
+list_calibr_eq(model, c(3))
 ```
 
  
