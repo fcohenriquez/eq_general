@@ -69,7 +69,7 @@ block CONSUMER
     constraints
     {
 	
-        INC[] = SUM<p::PRODS>((D<p>[] * p<p>[]*(1+vat<p>)))+SAV[]+CONT_SOC[];
+        INC[] = SUM<p::PRODS>(D<p>[] * p<p>[])+SAV[]+CONT_SOC[];
 		INC[] = BTINC[]+SUM<s::SEC>(pi<s>[]) - pit * PIT_base[];
 		BTINC[] = K_h[] * p_k[] + L_h[] + TR_EMP[]+TR_GOV[]+PREST_SOC[];
 		#PIT_base[] = BTINC[];
@@ -94,7 +94,7 @@ block CONSUMER
     };
 	calibration
     {
-        #<p::PRODS>D<p>[] = d_data<p>/(1+vat<p>) -> alpha<p>; #OJO con el rol del  IVA
+        
 		<p::PRODS>D<p>[] = d_data<p> -> alpha<p>; #OJO con el rol del  IVA
 		#SUM<p::PRODS>(alpha<p>^omega) = 1 ;
 
@@ -160,10 +160,11 @@ block <p::PRODS>PRODUCTS
  
 	    identities
     {
-		OA<p>[]*(1+vat<p>)=DA<p>[];
-		OA<p>[]=SUM<s::SEC>(Y<p,s>[]*p<p>[]);
+		OA<p>[]=DA<p>[];
+		OA<p>[]=SUM<s::SEC>(Y<p,s>[]*p<p>[]*(1+vat<p>));
 		
-		DA<p>[]=p<p>[]*(1+vat<p>)*(D<p>[]  +GG<p>[] +I<p>[] );
+		
+		DA<p>[]=p<p>[]*(D<p>[]  +GG<p>[] +I<p>[] );
 
 
 		#GG<p> lo voy a definir en el bloque del gobierno
@@ -219,7 +220,7 @@ block SI
 identities
 	{
 
-	SAV_TOT[]=SUM<p::PRODS>(I<p>[] * p<p>[]*(1+vat<p>));
+	SAV_TOT[]=SUM<p::PRODS>(I<p>[] * p<p>[]);
 	SAV_TOT[]=SAV[]+SAV_F[]+SAV_G[];
 
 
@@ -252,18 +253,19 @@ identities
 	{
 	ING_GOB[]=GTO_G[];
 	ING_GOB[]=K_g[]*p_k[]+CONT_SOC_G[]+TOTAL_TAX[];
-	GTO_G[]=SUM<p::PRODS>(GG<p>[] * p<p>[]*(1+vat<p>))+TR_GOV[]+PREST_SOC_G[]+SAV_G[];
+	GTO_G[]=SUM<p::PRODS>(GG<p>[] * p<p>[])+TR_GOV[]+PREST_SOC_G[]+SAV_G[];
 	PREST_SOC_G[]=ING_GOB[]*por_pres_soc_g;
 	
 	K_g[] = k_total_data*par_k_g;
 	CONT_SOC_G[]=CONT_SOC[]*por_cont_soc_g;
 	VAT[]=SUM<p::PRODS>((vat<p>* p<p>[])*(D<p>[] +GG<p>[] +I<p>[] ));
+	
 	DIR_T[]=pit * PIT_base[]+fit*(K_f[]*p_k[]);
 	
 	TOTAL_TAX[]=VAT[]+DIR_T[];
 	SAV_G[]=por_sav_g*ING_GOB[];
 	
-		<p::PRODS>GG<p>[]* p<p>[]*(1+vat<p>)=data_gg_p<p>;	
+	<p::PRODS>GG<p>[]* p<p>[]=data_gg_p<p>;	
 	
 	
 	

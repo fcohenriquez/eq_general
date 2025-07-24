@@ -1,10 +1,10 @@
-# Generated on 2025-07-24 11:04:22 by gEcon ver. 1.2.3 (2025-04-13)
+# Generated on 2025-07-24 12:50:42 by gEcon ver. 1.2.3 (2025-04-13)
 # http://gecon.r-forge.r-project.org/
 
 # Model name: cge_calib_chile_2008_simpl
 
 # info
-info__ <- c("cge_calib_chile_2008_simpl", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl.gcn", "2025-07-24 11:04:22", "false")
+info__ <- c("cge_calib_chile_2008_simpl", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl.gcn", "2025-07-24 12:50:42", "false")
 
 # index sets
 index_sets__ <- list(PRODS = c("Prod"),
@@ -201,7 +201,7 @@ parameters_free_val__ <- c(NA,
 
 # equations
 equations__ <- c("l_total_data - L_h = 0",
-                 "data_gg_p<'Prod'> - p<'Prod'> * GG<'Prod'> * (1 + vat<'Prod'>) = 0",
+                 "data_gg_p<'Prod'> - p<'Prod'> * GG<'Prod'> = 0",
                  "-CONT_SOC + por_cont * INC = 0",
                  "-CONT_SOC_F + por_cont_soc_f * CONT_SOC = 0",
                  "-CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0",
@@ -213,15 +213,15 @@ equations__ <- c("l_total_data - L_h = 0",
                  "-PREST_SOC_G + por_pres_soc_g * ING_GOB = 0",
                  "-SAV + por_sav * INC = 0",
                  "-SAV_F + por_sav_f * ING_F = 0",
-                 "-SAV_TOT + p<'Prod'> * I<'Prod'> * (1 + vat<'Prod'>) = 0",
+                 "-SAV_TOT + p<'Prod'> * I<'Prod'> = 0",
                  "-SAV_G + por_sav_g * ING_GOB = 0",
                  "-TR_EMP + por_tremp * ING_F = 0",
                  "-TR_GOV + por_trgov * ING_GOB = 0",
                  "U - (alpha<'Prod'> * D<'Prod'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0",
                  "-VAT + vat<'Prod'> * p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0",
-                 "-DA<'Prod'> + p<'Prod'> * (1 + vat<'Prod'>) * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0",
-                 "DA<'Prod'> - OA<'Prod'> * (1 + vat<'Prod'>) = 0",
-                 "-OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> = 0",
+                 "-DA<'Prod'> + p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0",
+                 "DA<'Prod'> - OA<'Prod'> = 0",
+                 "-OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> * (1 + vat<'Prod'>) = 0",
                  "-Y<'Prod','Act'> + gamma<'Prod','Act'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0",
                  "CONT_SOC_F - ING_F + p_k * K_f = 0",
                  "-DIR_T + pit * PIT_base + fit * p_k * K_f = 0",
@@ -229,10 +229,10 @@ equations__ <- c("l_total_data - L_h = 0",
                  "L_h - PIT_base + p_k * K_h = 0",
                  "-PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0",
                  "BTINC - INC + pi<'Act'> - pit * PIT_base = 0",
-                 "CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> * (1 + vat<'Prod'>) = 0",
+                 "CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> = 0",
                  "CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0",
                  "SAV + SAV_F - SAV_TOT + SAV_G = 0",
-                 "-GTO_G + PREST_SOC_G + SAV_G + TR_GOV + p<'Prod'> * GG<'Prod'> * (1 + vat<'Prod'>) = 0",
+                 "-GTO_G + PREST_SOC_G + SAV_G + TR_GOV + p<'Prod'> * GG<'Prod'> = 0",
                  "-ING_F + PREST_SOC_F + SAV_F + TR_EMP + fit * p_k * K_f = 0",
                  "-BTINC + L_h + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h = 0",
                  "beta_k<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^(-1 + beta_k<'Prod','Act'>) * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0",
@@ -299,13 +299,13 @@ calibrparcalibreqmap__ <- sparseMatrix(i = c(4, 4),
                                        x = rep(1, 2), dims = c(4, 4))
 
 # free parameters / equations map
-freepareqmap__ <- sparseMatrix(i = c(1, 2, 2, 3, 4, 5, 7, 7, 8, 8,
-                                     9, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-                                     18, 19, 20, 21, 25, 25, 29, 30, 33, 34),
-                               j = c(3, 21, 23, 10, 14, 17, 2, 5, 2, 6,
-                                     2, 7, 15, 16, 9, 13, 23, 18, 11, 12,
-                                     4, 23, 23, 23, 1, 8, 8, 23, 23, 1),
-                               x = rep(1, 30), dims = c(37, 23))
+freepareqmap__ <- sparseMatrix(i = c(1, 2, 3, 4, 5, 7, 7, 8, 8, 9,
+                                     9, 10, 11, 12, 13, 15, 16, 17, 18, 19,
+                                     22, 25, 25, 29, 34),
+                               j = c(3, 21, 10, 14, 17, 2, 5, 2, 6, 2,
+                                     7, 15, 16, 9, 13, 18, 11, 12, 4, 23,
+                                     23, 1, 8, 8, 1),
+                               x = rep(1, 25), dims = c(37, 23))
 
 # free parameters / calibrating equations map
 freeparcalibreqmap__ <- sparseMatrix(i = c(1, 2, 3),
@@ -320,7 +320,7 @@ ss_eq__ <- function(v, pc, pf)
 {
     r <- numeric(37)
     r[1] = pf[3] - v[14]
-    r[2] = pf[21] - v[28] * v[32] * (1 + pf[23])
+    r[2] = pf[21] - v[28] * v[32]
     r[3] = -v[3] + pf[10] * v[8]
     r[4] = -v[4] + pf[14] * v[3]
     r[5] = -v[5] + pf[17] * v[3]
@@ -332,15 +332,15 @@ ss_eq__ <- function(v, pc, pf)
     r[11] = -v[18] + pf[16] * v[10]
     r[12] = -v[19] + pf[9] * v[8]
     r[13] = -v[20] + pf[13] * v[9]
-    r[14] = -v[21] + v[28] * v[33] * (1 + pf[23])
+    r[14] = -v[21] + v[28] * v[33]
     r[15] = -v[22] + pf[18] * v[10]
     r[16] = -v[24] + pf[11] * v[9]
     r[17] = -v[25] + pf[12] * v[10]
     r[18] = v[26] - (pc[1] * v[30]^(pf[4]^-1 * (-1 + pf[4])))^(pf[4] * (-1 + pf[4])^-1)
     r[19] = -v[27] + pf[23] * v[28] * (v[30] + v[32] + v[33])
-    r[20] = -v[31] + v[28] * (1 + pf[23]) * (v[30] + v[32] + v[33])
-    r[21] = v[31] - v[36] * (1 + pf[23])
-    r[22] = -v[36] + v[28] * v[37]
+    r[20] = -v[31] + v[28] * (v[30] + v[32] + v[33])
+    r[21] = v[31] - v[36]
+    r[22] = -v[36] + v[28] * v[37] * (1 + pf[23])
     r[23] = -v[37] + pc[4] * v[34]^pc[2] * v[35]^pc[3]
     r[24] = v[4] - v[9] + v[1] * v[12]
     r[25] = -v[6] + pf[8] * v[15] + pf[1] * v[1] * v[12]
@@ -348,10 +348,10 @@ ss_eq__ <- function(v, pc, pf)
     r[27] = v[14] - v[15] + v[1] * v[11]
     r[28] = -v[16] + v[17] + v[18]
     r[29] = v[2] - v[8] + v[29] - pf[8] * v[15]
-    r[30] = v[3] - v[8] + v[19] + v[28] * v[30] * (1 + pf[23])
+    r[30] = v[3] - v[8] + v[19] + v[28] * v[30]
     r[31] = v[5] - v[10] + v[23] + v[1] * v[13]
     r[32] = v[19] + v[20] - v[21] + v[22]
-    r[33] = -v[7] + v[18] + v[22] + v[25] + v[28] * v[32] * (1 + pf[23])
+    r[33] = -v[7] + v[18] + v[22] + v[25] + v[28] * v[32]
     r[34] = -v[9] + v[17] + v[20] + v[24] + pf[1] * v[1] * v[12]
     r[35] = -v[2] + v[14] + v[16] + v[24] + v[25] + v[1] * v[11]
     r[36] = pc[2] * pc[4] * v[28] * v[34]^(-1 + pc[2]) * v[35]^pc[3]
@@ -378,8 +378,8 @@ ss_calibr_eq_jacob__ <- function(v, pc, pf)
     r <- numeric(4)
     jac <- numeric(127)
     jac[1] = -1
-    jac[2] = -v[32] * (1 + pf[23])
-    jac[3] = -v[28] * (1 + pf[23])
+    jac[2] = -v[32]
+    jac[3] = -v[28]
     jac[4] = -1
     jac[5] = pf[10]
     jac[6] = pf[14]
@@ -400,8 +400,8 @@ ss_calibr_eq_jacob__ <- function(v, pc, pf)
     jac[21] = pf[13]
     jac[22] = -1
     jac[23] = -1
-    jac[24] = v[33] * (1 + pf[23])
-    jac[25] = v[28] * (1 + pf[23])
+    jac[24] = v[33]
+    jac[25] = v[28]
     jac[26] = pf[18]
     jac[27] = -1
     jac[28] = pf[11]
@@ -416,16 +416,16 @@ ss_calibr_eq_jacob__ <- function(v, pc, pf)
     jac[37] = pf[23] * v[28]
     jac[38] = pf[23] * v[28]
     jac[39] = pf[23] * v[28]
-    jac[40] = (1 + pf[23]) * (v[30] + v[32] + v[33])
-    jac[41] = v[28] * (1 + pf[23])
+    jac[40] = v[30] + v[32] + v[33]
+    jac[41] = v[28]
     jac[42] = -1
-    jac[43] = v[28] * (1 + pf[23])
-    jac[44] = v[28] * (1 + pf[23])
+    jac[43] = v[28]
+    jac[44] = v[28]
     jac[45] = 1
-    jac[46] = -1 - pf[23]
-    jac[47] = v[37]
+    jac[46] = -1
+    jac[47] = v[37] * (1 + pf[23])
     jac[48] = -1
-    jac[49] = v[28]
+    jac[49] = v[28] * (1 + pf[23])
     jac[50] = pc[2] * pc[4] * v[34]^(-1 + pc[2]) * v[35]^pc[3]
     jac[51] = pc[3] * pc[4] * v[34]^pc[2] * v[35]^(-1 + pc[3])
     jac[52] = -1
@@ -457,8 +457,8 @@ ss_calibr_eq_jacob__ <- function(v, pc, pf)
     jac[78] = 1
     jac[79] = -1
     jac[80] = 1
-    jac[81] = v[30] * (1 + pf[23])
-    jac[82] = v[28] * (1 + pf[23])
+    jac[81] = v[30]
+    jac[82] = v[28]
     jac[83] = v[13]
     jac[84] = 1
     jac[85] = -1
@@ -472,8 +472,8 @@ ss_calibr_eq_jacob__ <- function(v, pc, pf)
     jac[93] = 1
     jac[94] = 1
     jac[95] = 1
-    jac[96] = v[32] * (1 + pf[23])
-    jac[97] = v[28] * (1 + pf[23])
+    jac[96] = v[32]
+    jac[97] = v[28]
     jac[98] = pf[1] * v[12]
     jac[99] = -1
     jac[100] = pf[1] * v[1]
