@@ -37,7 +37,8 @@ summary(flow1)
 acts <- c("Act")
 sam_prod <- c("Prod")
 
-
+print("chequeo de SAM")
+rowSums(chile_sam) - colSums(chile_sam)
 ```
 
 ## Building model from the .gcn file
@@ -90,8 +91,7 @@ flow1["Prod", "Hogares"]
 n <- length(sam_prod)
 m <- length(acts)
 
-g_p <- 3.95 - 0.5
-g_o <- 2.6
+g_p <- 2*0+1.5
 
 
 varlist <- list(
@@ -109,7 +109,7 @@ varlist <- list(
     ING_GOB = flow1["Total", "Gobierno"],
     K_h = flow1["Hogares", "Capital"], K_f = flow1["Empresas", "Capital"], K_g = flow1["Gobierno", "Capital"],
     L_h = flow1["Total", "Trabajo"],
-    PIT_base = flow1["Total", "Hogares"],
+    PIT_base = flow1["Hogares", "Trabajo"]+flow1["Hogares", "Capital"],
     PREST_SOC = flow1["Total", "Pres_soc"],
     PREST_SOC_F = flow1["Pres_soc", "Empresas"],
     PREST_SOC_G = flow1["Pres_soc", "Gobierno"],
@@ -129,9 +129,9 @@ varlist <- list(
     GG__Prod = flow1["Prod", "Gobierno"], # Gasto de gobierno
     I__Prod = flow1["Prod", "SI"], # Inversion
     # Capital usado en cada producto en cada actividad
-    K__Prod__Act = 49.4, 
+    K__Prod__Act = flow1["Capital", "Act"], 
     # Trabajo usado en cada producto en cada actividad
-    L__Prod__Act = 34.1,
+    L__Prod__Act = flow1["Trabajo", "Act"],
     
     OA__Prod = flow1["Total", "Prod"], # Oferta agregada por producto
 
@@ -142,15 +142,16 @@ varlist <- list(
 )
 
 listcalib <- c(get_flow_values(rep(0.2, n), "alpha", sam_prod),
-    get_flow_values(matrix(0.6, n, m), "beta_k", sam_prod, acts),
-    get_flow_values(matrix(0.4, n, m), "beta_l", sam_prod, acts),
+    get_flow_values(matrix(0.5635, n, m), "beta_k", sam_prod, acts),
+    get_flow_values(matrix(0.43654, n, m), "beta_l", sam_prod, acts),
     gamma__Prod__Act = g_p
 )
 ```
 
 ```{r}
-flow1["Pres_soc", "Empresas"]
+flow1["Hogares", "Trabajo"]+flow1["Hogares", "Capital"]
 ```
+
 
 
 # Generacion del modelo calibrado
@@ -169,12 +170,7 @@ model <- steady_state(model,
 )
 ```
 
-```{r}
-model <- steady_state(model,
-    calibration = T, use_jac = F, last_solver_iter = F,
-    options_list = list(method = "Broyden", global = "dbldog", max_iter = 100000, tol = 1e-6, xscalm = "auto", xtol = 1e-6), solver_status = T
-)
-```
+
 
 # Estadisticas de residuos
 
@@ -184,7 +180,11 @@ Norm(model@init_residual_vector)
 Norm(model@residual_vector)
 ```
 ```{r}
-list_eq(model, eq_idx = c(23,32,27))
+list_eq(model, eq_idx = c(23, 27, 20))
+```
+```{r}
+#var_info(model, variables=c("Y__Prod__Act", "K__Prod__Act", "L__Prod__Act"))
+var_info(model, variables=c("L_h", "PIT_base", "p_k", 'K_h'))
 ```
 
 ```{r}
@@ -213,9 +213,12 @@ var_info(model, variables = c("VAT", "DIR_T"))
 get_flow_values(1 - flow1["IVA", sam_prod] / (flow1["Total", sam_prod] - flow1["IVA", sam_prod]), "vat", sam_prod)
 
 ```
+Valor de las variables estimado
 ```{r}
 var_info(model, all = T)
 ```
+
+Parametros estimados
 
 ```{r}
 get_par_values(model)
