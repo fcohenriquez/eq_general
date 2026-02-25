@@ -1,10 +1,10 @@
-# Generated on 2026-02-25 10:31:04 by gEcon ver. 1.2.3 (2025-04-13)
+# Generated on 2026-02-25 11:14:13 by gEcon ver. 1.2.3 (2025-04-13)
 # http://gecon.r-forge.r-project.org/
 
 # Model name: cge_calib_chile_2008_simpl
 
 # info
-info__ <- c("cge_calib_chile_2008_simpl", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl.gcn", "2026-02-25 10:31:04", "false")
+info__ <- c("cge_calib_chile_2008_simpl", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl.gcn", "2026-02-25 11:14:13", "false")
 
 # index sets
 index_sets__ <- list(PRODS = c("Prod"),
