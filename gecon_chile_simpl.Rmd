@@ -46,6 +46,8 @@ rowSums(chile_sam) - colSums(chile_sam)
 
 Revisar los porcentajes de exportacion e importacion
 
+
+
 ```{r }
 model <- make_model("cge_calib_chile_2008_simpl.gcn")
 
@@ -65,13 +67,12 @@ model <- set_free_par(model, c(
     fit = flow1["Imp_dir", "Empresas"] / flow1["Empresas", "Capital"],
     por_sav = flow1["SI", "Hogares"] / (flow1["Total", "Hogares"] - (flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])) * (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])),
     por_sav_f = flow1["SI", "Empresas"] / flow1["Empresas", "Total"],
-    por_sav_g = flow1["SI", "Gobierno"] / flow1["Gobierno", "Total"],
     por_cont = flow1["Cont_soc", "Hogares"] / (flow1["Total", "Hogares"] - (flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])) * (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])),
     por_tremp = flow1["Hogares", "Empresas"] / flow1["Empresas", "Total"],
     por_trgov = flow1["Hogares", "Gobierno"] / flow1["Gobierno", "Total"],
     d_data__Prod = flow1["Prod", "Hogares"],
     get_flow_values(flow1["Trabajo", acts], "l_data", acts),
-    get_flow_values(flow1["IVA", sam_prod] / (flow1["Total", sam_prod]), "vat", sam_prod),
+    get_flow_values(flow1["IVA", sam_prod] / flow1["Total", sam_prod], "vat", sam_prod),
     get_flow_values(flow1[sam_prod, "Gobierno"], "data_gg_p", sam_prod),
     get_flow_values(flow1[acts, sam_prod], "data_prod_s", acts, sam_prod)
 ))
@@ -172,44 +173,11 @@ get_residuals(model, largest = 10)
 Norm(model@init_residual_vector)
 Norm(model@residual_vector)
 ```
-```{r}
-list_eq(model, eq_idx = c(22))
-```
-```{r}
-var_info(model, variables = c("INC", "CONT_SOC", "SAV", "p__Prod", "D__Prod"))
-# var_info(model, variables=c("Y__Prod__Act", "K__Prod__Act", "L__Prod__Act"))
-# var_info(model, variables=c("L_h", "PIT_base", "p_k", 'K_h'))
-# var_info(model, variables=c("DA__Prod", "p__Prod","D__Prod","GG__Prod","I__Prod"))
-# var_info(model, variables=c("DA__Prod", "OA__Prod"))
-# var_info(model, variables=c("OA__Prod", "p__Prod", "Y__Prod__Act"))
-```
 
-```{r}
-list_calibr_eq(model, c(3))
-```
 
- 
 # Estadisticas de valores obtenidos
 
-```{r}
-var_info(model, variables = c("p_k", "p__Prod"))
-
-var_info(model, variables = c("pi__Act"))
-
-
-var_info(model, variables = c(
-    "OA__Prod", "Y__Prod__Act", "DA__Prod", "GG__Prod", "I__Prod", "p__Prod"
-))
-
-
-
-var_info(model, variables = c("VAT", "TOTAL_TAX"))
-```
-
-```{r}
-get_flow_values(1 - flow1["IVA", sam_prod] / (flow1["Total", sam_prod] - flow1["IVA", sam_prod]), "vat", sam_prod)
-```
-Valor de las variables estimado
+# Valor de las variables estimado
 ```{r}
 var_info(model, all = T)
 ```
@@ -222,18 +190,37 @@ get_par_values(model)
 
 
 ```{r}
-list_calibr_eq(model, eq_idx = NULL)
-```
-
-```{r}
-list_eq(model, eq_idx = NULL)
-```
-
-
-```{r}
 library(pracma)
 Norm(model@init_residual_vector)
 Norm(model@residual_vector)
+```
+
+# Simulación de Escenario: Incremento 10% en VAT
+```{r}
+# Obtenemos el parametro calibrado de nuestro modelo base
+vat_base <- get_par_values(model, "vat__Prod")
+
+# Incremento del 10% (multiplicando o dividiendo segun corresponda)
+# Por ejemplo, podemos simular el nuevo impuesto en base a tu fórmula:
+vat_sim <- get_flow_values(1.1*flow1["IVA", sam_prod] / ( flow1["Total", sam_prod]), "vat", sam_prod)
+
+# Actualizamos el modelo calibrado CON el nuevo parámetro
+model_sim <- set_free_par(model, vat_sim)
+
+# Resolvemos CON calibration=FALSE para que encuentre los nuevos valores
+# Esta vez, TODAS las variables endógenas (Precios, PGB, Ingresos) se ajustan al nuevo equilibrio.
+model_sim <- steady_state(model_sim,
+    calibration = F,
+    options_list = list(
+        method = "Newton", global = "qline",
+        max_iter = 3000, tol = 1e-06, xscalm = "auto", xtol = F
+    )
+)
+
+var_info(model_sim, variables = c("U", "INC", "ING_F", "SAV", "VAT", "TOTAL_TAX", "ING_GOB", "Y__Prod__Act", "D__Prod"))
+```
+```{r}
+var_info(model_sim, all = T)
 ```
 
 

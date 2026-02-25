@@ -1,4 +1,4 @@
-Generated on 2026-02-25 08:04:57 by gEcon ver. 1.2.3 (2025-04-13)
+Generated on 2026-02-25 10:31:04 by gEcon ver. 1.2.3 (2025-04-13)
 http://gecon.r-forge.r-project.org/
 
 Model name: cge_calib_chile_2008_simpl
@@ -73,22 +73,22 @@ Block: GOB
     -CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0
     -VAT + SUM<p::PRODS> vat<p> * p<p> * (D<p> + GG<p> + I<p>) = 0
     -TOTAL_TAX + VAT + pit * PIT_base + fit * p_k * K_f = 0
-    -SAV_G + por_sav_g * ING_GOB = 0
     <p::PRODS> data_gg_p<p> - p<p> * GG<p> = 0
 
 Block: EQUILIBRIUM
  Identities:
     L_h - SUM<p::PRODS> SUM<s::SEC> L<p,s> = 0
+    SAV + SAV_F + SAV_G - SUM<p::PRODS> p<p> * I<p> = 0
     1 - p_k = 0
 
 Variables (35):
     p_k, BTINC, CONT_SOC, CONT_SOC_F, CONT_SOC_G, GTO_G, INC, ING_F, ING_GOB, K_h, K_f, K_g, L_h, PIT_base, PREST_SOC, PREST_SOC_F, PREST_SOC_G, SAV, SAV_F, SAV_G, TOTAL_TAX, TR_EMP, TR_GOV, U, VAT, p<'Prod'>, pi<'Act'>, D<'Prod'>, DA<'Prod'>, GG<'Prod'>, I<'Prod'>, K<'Prod','Act'>, L<'Prod','Act'>, OA<'Prod'>, Y<'Prod','Act'>
 
-Parameters (27):
-    fit, k_total_data, l_total_data, omega, par_k_h, par_k_f, par_k_g, pit, por_sav, por_cont, por_tremp, por_trgov, por_sav_f, por_cont_soc_f, por_pres_soc_f, por_pres_soc_g, por_cont_soc_g, por_sav_g, alpha<'Prod'>, beta_k<'Prod','Act'>, beta_l<'Prod','Act'>, d_data<'Prod'>, data_prod_s<'Act','Prod'>, data_gg_p<'Prod'>, gamma<'Prod','Act'>, l_data<'Act'>, vat<'Prod'>
+Parameters (26):
+    fit, k_total_data, l_total_data, omega, par_k_h, par_k_f, par_k_g, pit, por_sav, por_cont, por_tremp, por_trgov, por_sav_f, por_cont_soc_f, por_pres_soc_f, por_pres_soc_g, por_cont_soc_g, alpha<'Prod'>, beta_k<'Prod','Act'>, beta_l<'Prod','Act'>, d_data<'Prod'>, data_prod_s<'Act','Prod'>, data_gg_p<'Prod'>, gamma<'Prod','Act'>, l_data<'Act'>, vat<'Prod'>
 
-Free parameters (23):
-    fit, k_total_data, l_total_data, omega, par_k_h, par_k_f, par_k_g, pit, por_sav, por_cont, por_tremp, por_trgov, por_sav_f, por_cont_soc_f, por_pres_soc_f, por_pres_soc_g, por_cont_soc_g, por_sav_g, d_data<'Prod'>, data_prod_s<'Act','Prod'>, data_gg_p<'Prod'>, l_data<'Act'>, vat<'Prod'>
+Free parameters (22):
+    fit, k_total_data, l_total_data, omega, par_k_h, par_k_f, par_k_g, pit, por_sav, por_cont, por_tremp, por_trgov, por_sav_f, por_cont_soc_f, por_pres_soc_f, por_pres_soc_g, por_cont_soc_g, d_data<'Prod'>, data_prod_s<'Act','Prod'>, data_gg_p<'Prod'>, l_data<'Act'>, vat<'Prod'>
 
 Calibrated parameters (4):
     alpha<'Prod'>, beta_k<'Prod','Act'>, beta_l<'Prod','Act'>, gamma<'Prod','Act'>
@@ -111,19 +111,19 @@ Equations (35):
  (15)  -PREST_SOC_G + por_pres_soc_g * ING_GOB = 0
  (16)  -SAV + por_sav * INC = 0
  (17)  -SAV_F + por_sav_f * ING_F = 0
- (18)  -SAV_G + por_sav_g * ING_GOB = 0
- (19)  -TR_EMP + por_tremp * ING_F = 0
- (20)  -TR_GOV + por_trgov * ING_GOB = 0
- (21)  U - (alpha<'Prod'> * D<'Prod'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0
- (22)  -VAT + vat<'Prod'> * p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
- (23)  -DA<'Prod'> + p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
- (24)  -OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> * (1 + vat<'Prod'>) = 0
- (25)  -Y<'Prod','Act'> + gamma<'Prod','Act'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
- (26)  L_h - PIT_base + p_k * K_h = 0
- (27)  -PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0
- (28)  BTINC - INC + pi<'Act'> - pit * PIT_base = 0
- (29)  CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> = 0
- (30)  CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0
+ (18)  -TR_EMP + por_tremp * ING_F = 0
+ (19)  -TR_GOV + por_trgov * ING_GOB = 0
+ (20)  U - (alpha<'Prod'> * D<'Prod'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0
+ (21)  -VAT + vat<'Prod'> * p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
+ (22)  -DA<'Prod'> + p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
+ (23)  -OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> * (1 + vat<'Prod'>) = 0
+ (24)  -Y<'Prod','Act'> + gamma<'Prod','Act'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
+ (25)  L_h - PIT_base + p_k * K_h = 0
+ (26)  -PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0
+ (27)  BTINC - INC + pi<'Act'> - pit * PIT_base = 0
+ (28)  CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> = 0
+ (29)  CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0
+ (30)  SAV + SAV_F + SAV_G - p<'Prod'> * I<'Prod'> = 0
  (31)  -TOTAL_TAX + VAT + pit * PIT_base + fit * p_k * K_f = 0
  (32)  pi<'Act'> + L<'Prod','Act'> + p_k * K<'Prod','Act'> - p<'Prod'> * Y<'Prod','Act'> = 0
  (33)  -GTO_G + PREST_SOC_G + SAV_G + TR_GOV + p<'Prod'> * GG<'Prod'> = 0

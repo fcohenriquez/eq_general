@@ -1,4 +1,4 @@
-% Generated on 2026-02-25 08:04:57 by gEcon ver. 1.2.3 (2025-04-13)
+% Generated on 2026-02-25 10:31:04 by gEcon ver. 1.2.3 (2025-04-13)
 % http://gecon.r-forge.r-project.org/
 
 % Model name: cge_calib_chile_2008_simpl
@@ -167,9 +167,6 @@ K^{\mathrm{g}} = {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\m
 {T\!O\!T\!A\!L}^{\mathrm{TAX}} = {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}}
 \end{equation}
 \begin{equation}
-{S\!A\!V}^{\mathrm{G}} = {{p\!o\!r}^{\mathrm{sav}^{\mathrm{g}}}} {{I\!N\!G}^{\mathrm{GOB}}}
-\end{equation}
-\begin{equation}
 p\in {P\!R\!O\!D\!S}\colon\quad {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} = {{d\!a\!t\!a}^{\mathrm{gg}^{\mathrm{p}}}}^{\langle p\rangle}
 \end{equation}
 
@@ -182,6 +179,9 @@ p\in {P\!R\!O\!D\!S}\colon\quad {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\ra
 
 \begin{equation}
 \sum_{p\in {P\!R\!O\!D\!S}} \sum_{s\in {S\!E\!C}} {L}^{\langle p,s\rangle} = L^{\mathrm{h}}
+\end{equation}
+\begin{equation}
+\sum_{p\in {P\!R\!O\!D\!S}} {{p}^{\langle p\rangle}} {{I}^{\langle p\rangle}} = {S\!A\!V} + {S\!A\!V}^{\mathrm{F}} + {S\!A\!V}^{\mathrm{G}}
 \end{equation}
 \begin{equation}
 p^{\mathrm{k}} = 1
@@ -235,9 +235,6 @@ L^{\mathrm{h}} - \sum_{p\in {P\!R\!O\!D\!S}} \sum_{s\in {S\!E\!C}} {L}^{\langle 
 -{S\!A\!V}^{\mathrm{F}} + {{p\!o\!r}^{\mathrm{sav}^{\mathrm{f}}}} {{I\!N\!G}^{\mathrm{F}}} = 0
 \end{equation}
 \begin{equation}
--{S\!A\!V}^{\mathrm{G}} + {{p\!o\!r}^{\mathrm{sav}^{\mathrm{g}}}} {{I\!N\!G}^{\mathrm{GOB}}} = 0
-\end{equation}
-\begin{equation}
 -{T\!R}^{\mathrm{EMP}} + {{p\!o\!r}^{\mathrm{tremp}}} {{I\!N\!G}^{\mathrm{F}}} = 0
 \end{equation}
 \begin{equation}
@@ -263,6 +260,9 @@ L^{\mathrm{h}} - {P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} =
 \end{equation}
 \begin{equation}
 {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
+\end{equation}
+\begin{equation}
+{S\!A\!V} + {S\!A\!V}^{\mathrm{F}} + {S\!A\!V}^{\mathrm{G}} - \sum_{p\in {P\!R\!O\!D\!S}} {{p}^{\langle p\rangle}} {{I}^{\langle p\rangle}} = 0
 \end{equation}
 \begin{equation}
 -{T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
@@ -363,9 +363,6 @@ L^{\mathrm{h}} - {L}^{\langle \mathrm{Prod},\mathrm{Act}\rangle} = 0
 -{S\!A\!V}^{\mathrm{F}} + {{p\!o\!r}^{\mathrm{sav}^{\mathrm{f}}}} {{I\!N\!G}^{\mathrm{F}}} = 0
 \end{equation}
 \begin{equation}
--{S\!A\!V}^{\mathrm{G}} + {{p\!o\!r}^{\mathrm{sav}^{\mathrm{g}}}} {{I\!N\!G}^{\mathrm{GOB}}} = 0
-\end{equation}
-\begin{equation}
 -{T\!R}^{\mathrm{EMP}} + {{p\!o\!r}^{\mathrm{tremp}}} {{I\!N\!G}^{\mathrm{F}}} = 0
 \end{equation}
 \begin{equation}
@@ -400,6 +397,9 @@ L^{\mathrm{h}} - {P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} =
 \end{equation}
 \begin{equation}
 {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
+\end{equation}
+\begin{equation}
+{S\!A\!V} + {S\!A\!V}^{\mathrm{F}} + {S\!A\!V}^{\mathrm{G}} - {{p}^{\langle \mathrm{Prod}\rangle}} {{I}^{\langle \mathrm{Prod}\rangle}} = 0
 \end{equation}
 \begin{equation}
 -{T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0

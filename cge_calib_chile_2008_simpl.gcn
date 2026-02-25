@@ -237,7 +237,8 @@ identities
 	VAT[]=SUM<p::PRODS>((vat<p>* p<p>[])*(D<p>[] +GG<p>[] +I<p>[] ));
 	
 	TOTAL_TAX[]=VAT[]+pit * PIT_base[]+fit*(K_f[]*p_k[]);
-	SAV_G[]=por_sav_g*ING_GOB[];
+	# Se comenta para permitir que SAV_G sea endogeno y el recaudo varíe:
+	# SAV_G[]=por_sav_g*ING_GOB[];
 	
 	<p::PRODS>GG<p>[]* p<p>[]=data_gg_p<p>;	
 	
@@ -258,6 +259,9 @@ identities
 	{
 		SUM<p::PRODS>(SUM<s::SEC>(L<p,s>[]))=L_h[];
 		# SUM<s::SEC>K<s>[]=K_h[]+K_f[]+K_g[];
+
+		# Ahorro = Inversion (Cierre Macroeconómico)
+		SUM<p::PRODS>(I<p>[] * p<p>[]) = SAV[] + SAV_F[] + SAV_G[];
 
 		# Numeraire
 		p_k[] = 1;
