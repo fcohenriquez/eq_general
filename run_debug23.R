@@ -1,0 +1,5 @@
+library(gEcon.iosam)
+setwd('d:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general')
+source('gecon_chile_simpl_debug.R')
+model <- steady_state(model, calibration=T, use_jac=T)
+print(get_residuals(model, largest=10))

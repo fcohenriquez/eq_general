@@ -1,54 +1,16 @@
----
-title: "gecon_chile_v1"
-output: html_document
-date: "2024-05-16"
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-print(R.version.string)
-
-rm(list = ls())
-setwd("~/proyectos/equilibrio_general")
-
-# Loading gEcon.iosam (and gEcon) package
 library(gEcon.iosam)
 library(pracma)
-```
 
-## Importacion de datos
+setwd("d:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general")
 
-
-
-```{r }
 chile_sam <- read.csv("macro_sam_2008_simp.csv", row.names = 1)
-rows1 <- c(
-    "Prod", "Act", "Trabajo", "Capital", "Hogares",
-    "Empresas", "Gobierno", "Cont_soc", "Pres_soc", "Imp_dir", "IVA", "SI", "Total"
-)
+rows1 <- c("Prod", "Act", "Trabajo", "Capital", "Hogares", "Empresas", "Gobierno", "Cont_soc", "Pres_soc", "Imp_dir", "IVA", "SI", "Total")
 
-flow1 <- iosam(as.matrix(chile_sam),
-    nproducts = c(1, 1),
-    rows = rows1
-)
-
-
-summary(flow1)
-
+flow1 <- iosam(as.matrix(chile_sam), nproducts = c(1, 1), rows = rows1)
 acts <- c("Act")
 sam_prod <- c("Prod")
 
-print("chequeo de SAM")
-rowSums(chile_sam) - colSums(chile_sam)
-```
-
-## Building model from the .gcn file
-
-Revisar los porcentajes de exportacion e importacion
-
-```{r }
 model <- make_model("cge_calib_chile_2008_simpl.gcn")
-
 
 model <- set_free_par(model, c(
     omega = 0.5,
@@ -76,26 +38,15 @@ model <- set_free_par(model, c(
     get_flow_values(flow1[acts, sam_prod], "data_prod_s", acts, sam_prod)
 ))
 
-
-model <- steady_state(model, calibration = T)
-```
-
-
-# Listado de parametros
-
-
-```{r}
 n <- length(sam_prod)
 m <- length(acts)
-
 beta_l_exact <- flow1["Trabajo", acts] / flow1["Act", "Prod"]
 beta_k_exact <- 1 - beta_l_exact
 gamma_exact <- flow1["Act", "Prod"] / ((flow1["Capital", "Act"]^beta_k_exact) * (flow1["Trabajo", "Act"]^beta_l_exact))
 g_p <- gamma_exact
 
 varlist <- list(
-    p_k = 1,
-    U = (0.2 * flow1["Prod", "Hogares"]^((0.5 - 1) / 0.5))^(0.5 / (0.5 - 1)),
+    p_k = 1, U = (0.2 * flow1["Prod", "Hogares"]^((0.5 - 1) / 0.5))^(0.5 / (0.5 - 1)),
     BTINC = flow1["Total", "Hogares"],
     CONT_SOC = flow1["Total", "Cont_soc"],
     CONT_SOC_F = flow1["Empresas", "Cont_soc"],
@@ -110,29 +61,15 @@ varlist <- list(
     PREST_SOC = flow1["Total", "Pres_soc"],
     PREST_SOC_F = flow1["Pres_soc", "Empresas"],
     PREST_SOC_G = flow1["Pres_soc", "Gobierno"],
-    SAV = flow1["SI", "Hogares"],
-    SAV_F = flow1["SI", "Empresas"],
-    SAV_G = flow1["SI", "Gobierno"],
+    SAV = flow1["SI", "Hogares"], SAV_F = flow1["SI", "Empresas"], SAV_G = flow1["SI", "Gobierno"],
     TOTAL_TAX = flow1["Total", "Imp_dir"] + flow1["Total", "IVA"],
-    TR_EMP = flow1["Hogares", "Empresas"],
-    TR_GOV = flow1["Hogares", "Gobierno"],
+    TR_EMP = flow1["Hogares", "Empresas"], TR_GOV = flow1["Hogares", "Gobierno"],
     VAT = (flow1["IVA", "Prod"] / flow1["Total", "Prod"]) * 1 * (flow1["Prod", "Hogares"] + flow1["Prod", "Gobierno"] + flow1["Prod", "SI"]),
-    p__Prod = 1, # Precios de los bienes
-    pi__Act = 0, # Utilidades de las industrias
-    D__Prod = flow1["Prod", "Hogares"], # Demanda de los hogares
-    DA__Prod = 1 * (flow1["Prod", "Hogares"] + flow1["Prod", "Gobierno"] + flow1["Prod", "SI"]), # Demanda agregada por producto
-
-    GG__Prod = flow1["Prod", "Gobierno"], # Gasto de gobierno
-    I__Prod = flow1["Prod", "SI"], # Inversion
-    # Capital usado en cada producto en cada actividad
-    K__Prod__Act = flow1["Capital", "Act"],
-    # Trabajo usado en cada producto en cada actividad
-    L__Prod__Act = flow1["Trabajo", "Act"],
-    OA__Prod = flow1["Act", "Prod"] * (1 + flow1["IVA", "Prod"] / flow1["Total", "Prod"]), # Oferta agregada ajustada con la fórmula del modelo
-
-
-
-    # Produccion por actividad
+    p__Prod = 1, pi__Act = 0,
+    D__Prod = flow1["Prod", "Hogares"], DA__Prod = 1 * (flow1["Prod", "Hogares"] + flow1["Prod", "Gobierno"] + flow1["Prod", "SI"]),
+    GG__Prod = flow1["Prod", "Gobierno"], I__Prod = flow1["Prod", "SI"],
+    K__Prod__Act = flow1["Capital", "Act"], L__Prod__Act = flow1["Trabajo", "Act"],
+    OA__Prod = flow1["Act", "Prod"] * (1 + flow1["IVA", "Prod"] / flow1["Total", "Prod"]),
     Y__Prod__Act = flow1["Act", "Prod"]
 )
 
@@ -141,100 +78,20 @@ listcalib <- c(get_flow_values(rep(0.2, n), "alpha", sam_prod),
     get_flow_values(matrix((flow1["Trabajo", acts] / flow1["Act", "Prod"]), n, m), "beta_l", sam_prod, acts),
     gamma__Prod__Act = g_p
 )
-```
 
-
-
-
-# Generacion del modelo calibrado
-
-```{r}
 model <- initval_calibr_par(model, listcalib)
-
 model <- initval_var(model, varlist)
 
+res1 <- Norm(model@init_residual_vector)
+
 model <- steady_state(model,
-    calibration = T, use_jac = F, last_solver_iter = F,
+    calibration = T, use_jac = T, last_solver_iter = F,
     options_list = list(
         method = "Newton", global = "qline",
         max_iter = 3000, tol = 1e-06, xscalm = "auto", xtol = F
     )
 )
-```
 
-
-
-
-# Estadisticas de residuos
-
-```{r}
-get_residuals(model, largest = 10)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
-```
-```{r}
-list_eq(model, eq_idx = c(22))
-```
-```{r}
-var_info(model, variables = c("INC", "CONT_SOC", "SAV", "p__Prod", "D__Prod"))
-# var_info(model, variables=c("Y__Prod__Act", "K__Prod__Act", "L__Prod__Act"))
-# var_info(model, variables=c("L_h", "PIT_base", "p_k", 'K_h'))
-# var_info(model, variables=c("DA__Prod", "p__Prod","D__Prod","GG__Prod","I__Prod"))
-# var_info(model, variables=c("DA__Prod", "OA__Prod"))
-# var_info(model, variables=c("OA__Prod", "p__Prod", "Y__Prod__Act"))
-```
-
-```{r}
-list_calibr_eq(model, c(3))
-```
-
- 
-# Estadisticas de valores obtenidos
-
-```{r}
-var_info(model, variables = c("p_k", "p__Prod"))
-
-var_info(model, variables = c("pi__Act"))
-
-
-var_info(model, variables = c(
-    "OA__Prod", "Y__Prod__Act", "DA__Prod", "GG__Prod", "I__Prod", "p__Prod"
-))
-
-
-
-var_info(model, variables = c("VAT", "TOTAL_TAX"))
-```
-
-```{r}
-get_flow_values(1 - flow1["IVA", sam_prod] / (flow1["Total", sam_prod] - flow1["IVA", sam_prod]), "vat", sam_prod)
-```
-Valor de las variables estimado
-```{r}
-var_info(model, all = T)
-```
-
-Parametros estimados
-
-```{r}
-get_par_values(model)
-```
-
-
-```{r}
-list_calibr_eq(model, eq_idx = NULL)
-```
-
-```{r}
-list_eq(model, eq_idx = NULL)
-```
-
-
-```{r}
-library(pracma)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
-```
-
-
-
+res2 <- Norm(model@residual_vector)
+cat("Init resid: ", res1, "\n")
+cat("Final resid: ", res2, "\n")

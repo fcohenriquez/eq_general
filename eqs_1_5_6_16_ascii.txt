@@ -1,0 +1,8 @@
+model parsed in 0.02s
+model loaded in 0.06s
+Init resid:  0 
+Final resid:  0.2328573 
+Eq 1:  -1 + beta_l<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^(-1 + beta_l<'Prod','Act'>) = 0 
+Eq 5:  -p_k + beta_k<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^(-1 + beta_k<'Prod','Act'>) * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0 
+Eq 6:  -CONT_SOC + por_cont * INC = 0 
+Eq 16:  -SAV + por_sav * INC = 0 

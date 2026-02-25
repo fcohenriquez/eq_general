@@ -1,0 +1,8 @@
+library(gEcon.iosam)
+setwd('d:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general')
+source('gecon_chile_simpl_debug.R')
+sink('debug_out.txt')
+res <- get_residuals(model, largest=10)
+cat('\n\nFINAL EQS:\n')
+print(res[['final']])
+sink()

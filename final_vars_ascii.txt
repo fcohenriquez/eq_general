@@ -1,0 +1,49 @@
+model parsed in 0.03s
+model loaded in 0.07s
+Init resid:  0 
+Final resid:  0.2328573 
+Model parameters:
+
+                        Value
+fit                     0.150
+k_total_data           49.359
+l_total_data           34.133
+omega                   0.500
+par_k_h                 0.350
+par_k_f                 0.630
+par_k_g                 0.020
+pit                     0.024
+por_sav                 0.120
+por_cont                0.102
+por_tremp               0.472
+por_trgov               0.035
+por_sav_f               0.361
+por_cont_soc_f          0.783
+por_pres_soc_f          0.041
+por_pres_soc_g          0.162
+por_cont_soc_g          0.217
+por_sav_g               0.142
+alpha__Prod             0.200
+beta_k__Prod__Act       0.546
+beta_l__Prod__Act       0.454
+d_data__Prod           56.022
+data_prod_s__Act__Prod 83.492
+data_gg_p__Prod        10.495
+gamma__Prod__Act        2.000
+l_data__Act            34.133
+vat__Prod               0.081
+
+
+Final variable values:
+$P
+NULL
+
+$Q
+NULL
+
+$R
+NULL
+
+$S
+NULL
+

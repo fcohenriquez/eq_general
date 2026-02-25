@@ -1,0 +1,47 @@
+﻿
+---  block CONSUMER  ---
+        u[] = (SUM<p::PRODS>(alpha<p> * D<p>[]^((omega - 1)/omega)))^(omega/(omega - 1));
+        U[] = u[];
+		INC[] = SUM<p::PRODS>(D<p>[] * p<p>[])+SAV[]+CONT_SOC[];
+		INC[] = BTINC[]+SUM<s::SEC>(pi<s>[]) - pit * PIT_base[];
+		BTINC[] = K_h[] * p_k[] + L_h[] + TR_EMP[]+TR_GOV[]+PREST_SOC[];
+		PIT_base[] = K_h[] * p_k[] + L_h[];
+        K_h[] = k_total_data*par_k_h;
+        L_h[] = l_total_data;
+		SAV[]=por_sav*INC[];
+		CONT_SOC[]=por_cont*INC[];
+		TR_EMP[]=por_tremp*ING_F[]; 
+		TR_GOV[]=por_trgov*ING_GOB[];
+		PREST_SOC[]=PREST_SOC_F[]+PREST_SOC_G[];
+
+---  block <s::SEC>SECTOR  ---
+
+
+---  block <p::PRODS>PRODUCTS  ---
+
+
+---  block FIRM  ---
+	ING_F[]=TR_EMP[]+ PREST_SOC_F[]+fit*(K_f[]*p_k[])+SAV_F[];
+	SAV_F[]=por_sav_f*ING_F[];
+	K_f[] = k_total_data*par_k_f;
+	CONT_SOC_F[]=CONT_SOC[]*por_cont_soc_f;
+	PREST_SOC_F[]=ING_F[]*por_pres_soc_f;
+
+---  block SI  ---
+	SAV_TOT[]=SUM<p::PRODS>(I<p>[] * p<p>[]);
+	SAV_TOT[]=SAV[]+SAV_F[]+SAV_G[];
+
+---  block GOB  ---
+	ING_GOB[]=K_g[]*p_k[]+CONT_SOC_G[]+TOTAL_TAX[];
+	GTO_G[]=SUM<p::PRODS>(GG<p>[] * p<p>[])+TR_GOV[]+PREST_SOC_G[]+SAV_G[];
+	ING_GOB[]=GTO_G[];
+	PREST_SOC_G[]=ING_GOB[]*por_pres_soc_g;
+	K_g[] = k_total_data*par_k_g;
+	CONT_SOC_G[]=CONT_SOC[]*por_cont_soc_g;
+	VAT[]=SUM<p::PRODS>((vat<p>* p<p>[])*(D<p>[] +GG<p>[] +I<p>[] ));
+	DIR_T[]=pit * PIT_base[]+fit*(K_f[]*p_k[]);
+	TOTAL_TAX[]=VAT[]+DIR_T[];
+	SAV_G[]=por_sav_g*ING_GOB[];
+
+---  block EQUILIBRIUM  ---
+		p_k[] = 1;

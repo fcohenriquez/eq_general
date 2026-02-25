@@ -1,7 +1,7 @@
-Generated on 2026-02-25 08:04:57 by gEcon ver. 1.2.3 (2025-04-13)
+Generated on 2026-02-23 17:04:04 by gEcon ver. 1.2.3 (2025-04-13)
 http://gecon.r-forge.r-project.org/
 
-Model name: cge_calib_chile_2008_simpl
+Model name: cge_calib_chile_2008_simpl_noeq
 
 1 WARNING, see bottom of this logfile
 
@@ -20,9 +20,8 @@ Block: CONSUMER
     <p::PRODS> D<p>
  Objective:
     U = (SUM<p::PRODS> alpha<p> * D<p>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1)
- Constraints:
-    CONT_SOC - INC + SAV + SUM<p::PRODS> p<p> * D<p> = 0    (lambda__CONSUMER_1)
  Identities:
+    CONT_SOC - INC + SAV + SUM<p::PRODS> p<p> * D<p> = 0
     BTINC - INC - pit * PIT_base + SUM<s::SEC> pi<s> = 0
     -BTINC + L_h + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h = 0
     L_h - PIT_base + p_k * K_h = 0
@@ -34,7 +33,7 @@ Block: CONSUMER
     -TR_GOV + por_trgov * ING_GOB = 0
     -PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0
  First order conditions:
-    <p::PRODS> lambda__CONSUMER_1 * p<p> + alpha<p> * D<p>^(-1 + omega^-1 * (-1 + omega)) * (SUM<p::PRODS> alpha<p> * D<p>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) = 0    (<p::PRODS> D<p>)
+    <p::PRODS> alpha<p> * D<p>^(-1 + omega^-1 * (-1 + omega)) * (SUM<p::PRODS> alpha<p> * D<p>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) = 0    (<p::PRODS> D<p>)
 
 Block: <s::SEC> SECTOR
  Controls:
@@ -63,6 +62,11 @@ Block: FIRM
     -CONT_SOC_F + por_cont_soc_f * CONT_SOC = 0
     -PREST_SOC_F + por_pres_soc_f * ING_F = 0
 
+Block: SI
+ Identities:
+    -SAV_TOT + SUM<p::PRODS> p<p> * I<p> = 0
+    SAV + SAV_F - SAV_TOT + SAV_G = 0
+
 Block: GOB
  Identities:
     CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0
@@ -72,17 +76,13 @@ Block: GOB
     -K_g + k_total_data * par_k_g = 0
     -CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0
     -VAT + SUM<p::PRODS> vat<p> * p<p> * (D<p> + GG<p> + I<p>) = 0
-    -TOTAL_TAX + VAT + pit * PIT_base + fit * p_k * K_f = 0
+    -DIR_T + pit * PIT_base + fit * p_k * K_f = 0
+    DIR_T - TOTAL_TAX + VAT = 0
     -SAV_G + por_sav_g * ING_GOB = 0
     <p::PRODS> data_gg_p<p> - p<p> * GG<p> = 0
 
-Block: EQUILIBRIUM
- Identities:
-    L_h - SUM<p::PRODS> SUM<s::SEC> L<p,s> = 0
-    1 - p_k = 0
-
-Variables (35):
-    p_k, BTINC, CONT_SOC, CONT_SOC_F, CONT_SOC_G, GTO_G, INC, ING_F, ING_GOB, K_h, K_f, K_g, L_h, PIT_base, PREST_SOC, PREST_SOC_F, PREST_SOC_G, SAV, SAV_F, SAV_G, TOTAL_TAX, TR_EMP, TR_GOV, U, VAT, p<'Prod'>, pi<'Act'>, D<'Prod'>, DA<'Prod'>, GG<'Prod'>, I<'Prod'>, K<'Prod','Act'>, L<'Prod','Act'>, OA<'Prod'>, Y<'Prod','Act'>
+Variables (37):
+    p_k, BTINC, CONT_SOC, CONT_SOC_F, CONT_SOC_G, DIR_T, GTO_G, INC, ING_F, ING_GOB, K_h, K_f, K_g, L_h, PIT_base, PREST_SOC, PREST_SOC_F, PREST_SOC_G, SAV, SAV_F, SAV_TOT, SAV_G, TOTAL_TAX, TR_EMP, TR_GOV, U, VAT, p<'Prod'>, pi<'Act'>, D<'Prod'>, DA<'Prod'>, GG<'Prod'>, I<'Prod'>, K<'Prod','Act'>, L<'Prod','Act'>, OA<'Prod'>, Y<'Prod','Act'>
 
 Parameters (27):
     fit, k_total_data, l_total_data, omega, par_k_h, par_k_f, par_k_g, pit, por_sav, por_cont, por_tremp, por_trgov, por_sav_f, por_cont_soc_f, por_pres_soc_f, por_pres_soc_g, por_cont_soc_g, por_sav_g, alpha<'Prod'>, beta_k<'Prod','Act'>, beta_l<'Prod','Act'>, d_data<'Prod'>, data_prod_s<'Act','Prod'>, data_gg_p<'Prod'>, gamma<'Prod','Act'>, l_data<'Act'>, vat<'Prod'>
@@ -93,42 +93,44 @@ Free parameters (23):
 Calibrated parameters (4):
     alpha<'Prod'>, beta_k<'Prod','Act'>, beta_l<'Prod','Act'>, gamma<'Prod','Act'>
 
-Equations (35):
+Equations (37):
  (1)  -1 + beta_l<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^(-1 + beta_l<'Prod','Act'>) = 0
- (2)  1 - p_k = 0
- (3)  l_total_data - L_h = 0
- (4)  data_gg_p<'Prod'> - p<'Prod'> * GG<'Prod'> = 0
- (5)  -p_k + beta_k<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^(-1 + beta_k<'Prod','Act'>) * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
- (6)  -CONT_SOC + por_cont * INC = 0
- (7)  -CONT_SOC_F + por_cont_soc_f * CONT_SOC = 0
- (8)  -CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0
- (9)  GTO_G - ING_GOB = 0
- (10)  -K_h + k_total_data * par_k_h = 0
- (11)  -K_f + k_total_data * par_k_f = 0
- (12)  -K_g + k_total_data * par_k_g = 0
- (13)  L_h - L<'Prod','Act'> = 0
- (14)  -PREST_SOC_F + por_pres_soc_f * ING_F = 0
- (15)  -PREST_SOC_G + por_pres_soc_g * ING_GOB = 0
- (16)  -SAV + por_sav * INC = 0
- (17)  -SAV_F + por_sav_f * ING_F = 0
- (18)  -SAV_G + por_sav_g * ING_GOB = 0
- (19)  -TR_EMP + por_tremp * ING_F = 0
- (20)  -TR_GOV + por_trgov * ING_GOB = 0
- (21)  U - (alpha<'Prod'> * D<'Prod'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0
- (22)  -VAT + vat<'Prod'> * p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
- (23)  -DA<'Prod'> + p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
- (24)  -OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> * (1 + vat<'Prod'>) = 0
- (25)  -Y<'Prod','Act'> + gamma<'Prod','Act'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
- (26)  L_h - PIT_base + p_k * K_h = 0
- (27)  -PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0
- (28)  BTINC - INC + pi<'Act'> - pit * PIT_base = 0
- (29)  CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> = 0
- (30)  CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0
- (31)  -TOTAL_TAX + VAT + pit * PIT_base + fit * p_k * K_f = 0
- (32)  pi<'Act'> + L<'Prod','Act'> + p_k * K<'Prod','Act'> - p<'Prod'> * Y<'Prod','Act'> = 0
- (33)  -GTO_G + PREST_SOC_G + SAV_G + TR_GOV + p<'Prod'> * GG<'Prod'> = 0
- (34)  -ING_F + PREST_SOC_F + SAV_F + TR_EMP + fit * p_k * K_f = 0
- (35)  -BTINC + L_h + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h = 0
+ (2)  l_total_data - L_h = 0
+ (3)  data_gg_p<'Prod'> - p<'Prod'> * GG<'Prod'> = 0
+ (4)  -p_k + beta_k<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^(-1 + beta_k<'Prod','Act'>) * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
+ (5)  -CONT_SOC + por_cont * INC = 0
+ (6)  -CONT_SOC_F + por_cont_soc_f * CONT_SOC = 0
+ (7)  -CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0
+ (8)  GTO_G - ING_GOB = 0
+ (9)  -K_h + k_total_data * par_k_h = 0
+ (10)  -K_f + k_total_data * par_k_f = 0
+ (11)  -K_g + k_total_data * par_k_g = 0
+ (12)  -PREST_SOC_F + por_pres_soc_f * ING_F = 0
+ (13)  -PREST_SOC_G + por_pres_soc_g * ING_GOB = 0
+ (14)  -SAV + por_sav * INC = 0
+ (15)  -SAV_F + por_sav_f * ING_F = 0
+ (16)  -SAV_TOT + p<'Prod'> * I<'Prod'> = 0
+ (17)  -SAV_G + por_sav_g * ING_GOB = 0
+ (18)  -TR_EMP + por_tremp * ING_F = 0
+ (19)  -TR_GOV + por_trgov * ING_GOB = 0
+ (20)  U - (alpha<'Prod'> * D<'Prod'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0
+ (21)  -VAT + vat<'Prod'> * p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
+ (22)  -DA<'Prod'> + p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
+ (23)  -OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> * (1 + vat<'Prod'>) = 0
+ (24)  -Y<'Prod','Act'> + gamma<'Prod','Act'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
+ (25)  -DIR_T + pit * PIT_base + fit * p_k * K_f = 0
+ (26)  DIR_T - TOTAL_TAX + VAT = 0
+ (27)  L_h - PIT_base + p_k * K_h = 0
+ (28)  -PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0
+ (29)  BTINC - INC + pi<'Act'> - pit * PIT_base = 0
+ (30)  CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> = 0
+ (31)  CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0
+ (32)  SAV + SAV_F - SAV_TOT + SAV_G = 0
+ (33)  pi<'Act'> + L<'Prod','Act'> + p_k * K<'Prod','Act'> - p<'Prod'> * Y<'Prod','Act'> = 0
+ (34)  -GTO_G + PREST_SOC_G + SAV_G + TR_GOV + p<'Prod'> * GG<'Prod'> = 0
+ (35)  -ING_F + PREST_SOC_F + SAV_F + TR_EMP + fit * p_k * K_f = 0
+ (36)  -BTINC + L_h + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h = 0
+ (37)  alpha<'Prod'> * D<'Prod'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Prod'> * D<'Prod'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) = 0
 
 Calibrating equations (4):
  (1)  -d_data<'Prod'> + D<'Prod'> = 0

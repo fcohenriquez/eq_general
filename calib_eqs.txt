@@ -1,0 +1,4 @@
+-d_data<'Prod'> + D<'Prod'> = 0
+-data_prod_s<'Act','Prod'> + Y<'Prod','Act'> = 0
+-l_data<'Act'> + L<'Prod','Act'> = 0
+-1 + beta_k<'Prod','Act'> + beta_l<'Prod','Act'> = 0

@@ -1,0 +1,2 @@
+<simpleError in make_model("cge_calib_chile_2008_simpl.gcn"): 
+(gEcon model error 1): There are only 39 variables but there are 41 model equations>

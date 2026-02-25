@@ -1,0 +1,14 @@
+model parsed in 0.01s
+model loaded in 0.07s
+Init resid:  0 
+Final resid:  1.420856 
+Eq 1: -1 + beta_l<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^(-1 + beta_l<'Prod','Act'>) = 0
+Eq 5: -p_k + beta_k<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^(-1 + beta_k<'Prod','Act'>) * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
+Eq 6: -CONT_SOC + por_cont * INC = 0
+Eq 9: GTO_G - ING_GOB = 0
+Eq 15: -PREST_SOC_G + por_pres_soc_g * ING_GOB = 0
+Eq 16: -SAV + por_sav * INC = 0
+Eq 22: -VAT + vat<'Prod'> * p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
+Eq 23: -DA<'Prod'> + p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0
+Eq 25: -Y<'Prod','Act'> + gamma<'Prod','Act'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0
+Eq 35: -BTINC + L_h + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h = 0

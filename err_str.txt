@@ -1,0 +1,4 @@
+List of 2
+ $ message: chr "the following are not model variables: \"SAV_TOT\""
+ $ call   : language initval_var(model, varlist)
+ - attr(*, "class")= chr [1:3] "simpleError" "error" "condition"

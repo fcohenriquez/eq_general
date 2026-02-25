@@ -1,0 +1,7 @@
+model parsed in 0.03s
+model loaded in 0.06s
+Init resid:  0 
+Final resid:  2.506529 
+Eq 24:  -OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> * (1 + vat<'Prod'>) = 0 
+Eq 32:  pi<'Act'> + L<'Prod','Act'> + p_k * K<'Prod','Act'> - p<'Prod'> * Y<'Prod','Act'> = 0 
+Calib Eq 2:  -data_prod_s<'Act','Prod'> + Y<'Prod','Act'> = 0 

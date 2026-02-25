@@ -1,0 +1,77 @@
+﻿VARIABLES (37):
+p_k
+BTINC
+CONT_SOC
+CONT_SOC_F
+CONT_SOC_G
+DIR_T
+GTO_G
+INC
+ING_F
+ING_GOB
+K_h
+K_f
+K_g
+L_h
+PIT_base
+PREST_SOC
+PREST_SOC_F
+PREST_SOC_G
+SAV
+SAV_F
+SAV_TOT
+SAV_G
+TOTAL_TAX
+TR_EMP
+TR_GOV
+U
+VAT
+p__Prod
+pi__Act
+D__Prod
+DA__Prod
+GG__Prod
+I__Prod
+K__Prod__Act
+L__Prod__Act
+OA__Prod
+Y__Prod__Act
+
+EQUATIONS (37):
+Eq. 1:   "l_total_data - L_h = 0"                                                                                                                         
+Eq. 2:   "data_gg_p<'Prod'> - p<'Prod'> * GG<'Prod'> = 0"                                                                                                 
+Eq. 3:   "-CONT_SOC + por_cont * INC = 0"                                                                                                                 
+Eq. 4:   "-CONT_SOC_F + por_cont_soc_f * CONT_SOC = 0"                                                                                                    
+Eq. 5:   "-CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0"                                                                                                    
+Eq. 6:   "GTO_G - ING_GOB = 0"                                                                                                                            
+Eq. 7:   "-K_h + k_total_data * par_k_h = 0"                                                                                                              
+Eq. 8:   "-K_f + k_total_data * par_k_f = 0"                                                                                                              
+Eq. 9:   "-K_g + k_total_data * par_k_g = 0"                                                                                                              
+Eq. 10:  "-PREST_SOC_F + por_pres_soc_f * ING_F = 0"                                                                                                      
+Eq. 11:  "-PREST_SOC_G + por_pres_soc_g * ING_GOB = 0"                                                                                                    
+Eq. 12:  "-SAV + por_sav * INC = 0"                                                                                                                       
+Eq. 13:  "-SAV_F + por_sav_f * ING_F = 0"                                                                                                                 
+Eq. 14:  "-SAV_TOT + p<'Prod'> * I<'Prod'> = 0"                                                                                                           
+Eq. 15:  "-SAV_G + por_sav_g * ING_GOB = 0"                                                                                                               
+Eq. 16:  "-TR_EMP + por_tremp * ING_F = 0"                                                                                                                
+Eq. 17:  "-TR_GOV + por_trgov * ING_GOB = 0"                                                                                                              
+Eq. 18:  "U - (alpha<'Prod'> * D<'Prod'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0"                                                        
+Eq. 19:  "-VAT + vat<'Prod'> * p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0"                                                                      
+Eq. 20:  "-DA<'Prod'> + p<'Prod'> * (D<'Prod'> + GG<'Prod'> + I<'Prod'>) = 0"                                                                             
+Eq. 21:  "DA<'Prod'> - OA<'Prod'> = 0"                                                                                                                    
+Eq. 22:  "-OA<'Prod'> + p<'Prod'> * Y<'Prod','Act'> * (1 + vat<'Prod'>) = 0"                                                                              
+Eq. 23:  "-Y<'Prod','Act'> + gamma<'Prod','Act'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0"                       
+Eq. 24:  "CONT_SOC_F - ING_F + p_k * K_f = 0"                                                                                                             
+Eq. 25:  "-DIR_T + pit * PIT_base + fit * p_k * K_f = 0"                                                                                                  
+Eq. 26:  "DIR_T - TOTAL_TAX + VAT = 0"                                                                                                                    
+Eq. 27:  "L_h - PIT_base + p_k * K_h = 0"                                                                                                                 
+Eq. 28:  "-PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0"                                                                                                     
+Eq. 29:  "BTINC - INC + pi<'Act'> - pit * PIT_base = 0"                                                                                                   
+Eq. 30:  "CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> = 0"                                                                                               
+Eq. 31:  "CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0"                                                                                               
+Eq. 32:  "SAV + SAV_F - SAV_TOT + SAV_G = 0"                                                                                                              
+Eq. 33:  "-GTO_G + PREST_SOC_G + SAV_G + TR_GOV + p<'Prod'> * GG<'Prod'> = 0"                                                                             
+Eq. 34:  "-ING_F + PREST_SOC_F + SAV_F + TR_EMP + fit * p_k * K_f = 0"                                                                                    
+Eq. 35:  "-BTINC + L_h + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h = 0"                                                                                     
+Eq. 36:  "beta_k<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^(-1 + beta_k<'Prod','Act'>) * L<'Prod','Act'>^beta_l<'Prod','Act'> = 0"
+Eq. 37:  "beta_l<'Prod','Act'> * gamma<'Prod','Act'> * p<'Prod'> * K<'Prod','Act'>^beta_k<'Prod','Act'> * L<'Prod','Act'>^(-1 + beta_l<'Prod','Act'>) = 0"

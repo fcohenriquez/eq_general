@@ -1,0 +1,6 @@
+model parsed in 0.02s
+model loaded in 0.04s
+Init resid:  0 
+Final resid:  1.420856 
+Eq 28:  BTINC - INC + pi<'Act'> - pit * PIT_base = 0 
+Eq 29:  CONT_SOC - INC + SAV + p<'Prod'> * D<'Prod'> = 0 

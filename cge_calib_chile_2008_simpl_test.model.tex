@@ -1,7 +1,7 @@
-% Generated on 2026-02-25 08:04:57 by gEcon ver. 1.2.3 (2025-04-13)
+% Generated on 2026-02-23 17:08:40 by gEcon ver. 1.2.3 (2025-04-13)
 % http://gecon.r-forge.r-project.org/
 
-% Model name: cge_calib_chile_2008_simpl
+% Model name: cge_calib_chile_2008_simpl_test
 
 \section*{Index sets}
 
@@ -15,13 +15,14 @@ $${S\!E\!C} = \{ \mathrm{Act} \}$$
 \begin{align}
 &\max_{\left({D}^{\langle p\rangle}\right)_{p\in {P\!R\!O\!D\!S}}
 } U = \left(\sum_{p\in {P\!R\!O\!D\!S}} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{{\omega} \left(-1 + \omega\right)^{-1}}\\
-&\mathrm{s.t.:}\nonumber\\
-& {I\!N\!C} = {C\!O\!N\!T}^{\mathrm{SOC}} + {S\!A\!V} + \sum_{p\in {P\!R\!O\!D\!S}} {{p}^{\langle p\rangle}} {{D}^{\langle p\rangle}} \quad \left(\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}\right)
 \end{align}
 
 
 \subsection{Identities}
 
+\begin{equation}
+{I\!N\!C} = {C\!O\!N\!T}^{\mathrm{SOC}} + {S\!A\!V} + \sum_{p\in {P\!R\!O\!D\!S}} {{p}^{\langle p\rangle}} {{D}^{\langle p\rangle}}
+\end{equation}
 \begin{equation}
 {I\!N\!C} = {B\!T\!I\!N\!C} - {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + \sum_{s\in {S\!E\!C}} {\pi}^{\langle s\rangle}
 \end{equation}
@@ -57,7 +58,7 @@ L^{\mathrm{h}} = l^{\mathrm{total}^{\mathrm{data}}}
 \subsection{First order conditions}
 
 \begin{equation}
-p\in {P\!R\!O\!D\!S}\colon\quad {\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}} {{p}^{\langle p\rangle}} + {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left(\sum_{p\in {P\!R\!O\!D\!S}} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} = 0
+p\in {P\!R\!O\!D\!S}\colon\quad {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left(\sum_{p\in {P\!R\!O\!D\!S}} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} = 0
  \quad \left({D}^{\langle p\rangle}\right)
 \end{equation}
 
@@ -126,9 +127,6 @@ p\in {P\!R\!O\!D\!S}\colon\quad -1 + {{\beta^{\mathrm{l}}}^{\langle p,s\rangle}}
 {S\!A\!V}^{\mathrm{F}} = {{p\!o\!r}^{\mathrm{sav}^{\mathrm{f}}}} {{I\!N\!G}^{\mathrm{F}}}
 \end{equation}
 \begin{equation}
-K^{\mathrm{f}} = {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{f}}}}
-\end{equation}
-\begin{equation}
 {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{F}}} = {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{f}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}}
 \end{equation}
 \begin{equation}
@@ -164,7 +162,10 @@ K^{\mathrm{g}} = {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\m
 {V\!A\!T} = \sum_{p\in {P\!R\!O\!D\!S}} {{{v\!a\!t}}^{\langle p\rangle}} {{p}^{\langle p\rangle}} \left({D}^{\langle p\rangle} + {{G\!G}}^{\langle p\rangle} + {I}^{\langle p\rangle}\right)
 \end{equation}
 \begin{equation}
-{T\!O\!T\!A\!L}^{\mathrm{TAX}} = {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}}
+{D\!I\!R}^{\mathrm{T}} = {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}}
+\end{equation}
+\begin{equation}
+{T\!O\!T\!A\!L}^{\mathrm{TAX}} = {D\!I\!R}^{\mathrm{T}} + {V\!A\!T}
 \end{equation}
 \begin{equation}
 {S\!A\!V}^{\mathrm{G}} = {{p\!o\!r}^{\mathrm{sav}^{\mathrm{g}}}} {{I\!N\!G}^{\mathrm{GOB}}}
@@ -214,9 +215,6 @@ l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
 -K^{\mathrm{h}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{h}}}} = 0
 \end{equation}
 \begin{equation}
--K^{\mathrm{f}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{f}}}} = 0
-\end{equation}
-\begin{equation}
 -K^{\mathrm{g}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{g}}}} = 0
 \end{equation}
 \begin{equation}
@@ -250,6 +248,12 @@ U - \left(\sum_{p\in {P\!R\!O\!D\!S}} {{\alpha}^{\langle p\rangle}} {{{D}^{\lang
 -{V\!A\!T} + \sum_{p\in {P\!R\!O\!D\!S}} {{{v\!a\!t}}^{\langle p\rangle}} {{p}^{\langle p\rangle}} \left({D}^{\langle p\rangle} + {{G\!G}}^{\langle p\rangle} + {I}^{\langle p\rangle}\right) = 0
 \end{equation}
 \begin{equation}
+-{D\!I\!R}^{\mathrm{T}} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+{D\!I\!R}^{\mathrm{T}} - {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} = 0
+\end{equation}
+\begin{equation}
 L^{\mathrm{h}} - {P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} = 0
 \end{equation}
 \begin{equation}
@@ -263,9 +267,6 @@ L^{\mathrm{h}} - {P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} =
 \end{equation}
 \begin{equation}
 {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
-\end{equation}
-\begin{equation}
--{T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
 \end{equation}
 \begin{equation}
 -{G\!T\!O}^{\mathrm{G}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {S\!A\!V}^{\mathrm{G}} + {T\!R}^{\mathrm{GOV}} + \sum_{p\in {P\!R\!O\!D\!S}} {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} = 0
@@ -286,7 +287,7 @@ p\in {P\!R\!O\!D\!S}\colon\quad -{{D\!A}}^{\langle p\rangle} + {{p}^{\langle p\r
 p\in {P\!R\!O\!D\!S}\colon\quad -{{O\!A}}^{\langle p\rangle} + {{p}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) \left(\sum_{s\in {S\!E\!C}} {Y}^{\langle p,s\rangle}\right) = 0
 \end{equation}
 \begin{equation}
-p\in {P\!R\!O\!D\!S}\colon\quad {\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}} {{p}^{\langle p\rangle}} + {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left(\sum_{p\in {P\!R\!O\!D\!S}} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} = 0
+p\in {P\!R\!O\!D\!S}\colon\quad {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left(\sum_{p\in {P\!R\!O\!D\!S}} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} = 0
 \end{equation}
 \begin{equation}
 s\in {S\!E\!C}\colon\quad -{K}^{\langle s\rangle} + \sum_{p\in {P\!R\!O\!D\!S}} {K}^{\langle p,s\rangle} = 0
@@ -342,9 +343,6 @@ l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
 -K^{\mathrm{h}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{h}}}} = 0
 \end{equation}
 \begin{equation}
--K^{\mathrm{f}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{f}}}} = 0
-\end{equation}
-\begin{equation}
 -K^{\mathrm{g}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{g}}}} = 0
 \end{equation}
 \begin{equation}
@@ -387,6 +385,12 @@ U - \left({{\alpha}^{\langle \mathrm{\mathrm{Prod}}\rangle}} {{{D}^{\langle \mat
 -{Y}^{\langle \mathrm{Prod},\mathrm{Act}\rangle} + {{\gamma}^{\langle \mathrm{\mathrm{Prod}},\mathrm{\mathrm{Act}}\rangle}} {{{K}^{\langle \mathrm{Prod},\mathrm{Act}\rangle}}^{{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Prod}},\mathrm{\mathrm{Act}}\rangle}}} {{{L}^{\langle \mathrm{Prod},\mathrm{Act}\rangle}}^{{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Prod}},\mathrm{\mathrm{Act}}\rangle}}} = 0
 \end{equation}
 \begin{equation}
+-{D\!I\!R}^{\mathrm{T}} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+{D\!I\!R}^{\mathrm{T}} - {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} = 0
+\end{equation}
+\begin{equation}
 L^{\mathrm{h}} - {P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} = 0
 \end{equation}
 \begin{equation}
@@ -402,9 +406,6 @@ L^{\mathrm{h}} - {P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} =
 {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
 \end{equation}
 \begin{equation}
--{T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
-\end{equation}
-\begin{equation}
 {\pi}^{\langle \mathrm{Act}\rangle} + {L}^{\langle \mathrm{Prod},\mathrm{Act}\rangle} + {p^{\mathrm{k}}} {{K}^{\langle \mathrm{Prod},\mathrm{Act}\rangle}} - {{p}^{\langle \mathrm{Prod}\rangle}} {{Y}^{\langle \mathrm{Prod},\mathrm{Act}\rangle}} = 0
 \end{equation}
 \begin{equation}
@@ -415,6 +416,9 @@ L^{\mathrm{h}} - {P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} =
 \end{equation}
 \begin{equation}
 -{B\!T\!I\!N\!C} + L^{\mathrm{h}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}} + {T\!R}^{\mathrm{EMP}} + {T\!R}^{\mathrm{GOV}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} = 0
+\end{equation}
+\begin{equation}
+{{\alpha}^{\langle \mathrm{\mathrm{Prod}}\rangle}} {{{D}^{\langle \mathrm{Prod}\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left({{\alpha}^{\langle \mathrm{\mathrm{Prod}}\rangle}} {{{D}^{\langle \mathrm{Prod}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} = 0
 \end{equation}
 
 

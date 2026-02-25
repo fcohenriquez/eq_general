@@ -1,0 +1,44 @@
+model parsed in 0.01s
+model loaded in 0.05s
+Init resid:  0 
+Final resid:  1.420856 
+Incidence info:
+
+                    INC CONT_SOC     SAV Y__Prod__Act K__Prod__Act L__Prod__Act
+Equation     1        .        .       .            .            X            X
+Equation     5        .        .       .            .            X            X
+Equation     6        X        X       .            .            .            .
+Equation     7        .        X       .            .            .            .
+Equation     8        .        X       .            .            .            .
+Equation     13       .        .       .            .            .            X
+Equation     16       X        .       X            .            .            .
+Equation     24       .        .       .            X            .            .
+Equation     25       .        .       .            X            X            X
+Equation     28       X        .       .            .            .            .
+Equation     29       X        X       X            .            .            .
+Equation     32       .        .       .            X            X            X
+Calibr. Eq.  2        .        .       .            X            .            .
+Calibr. Eq.  3        .        .       .            .            .            X
+
+---------------------------------------------------------- 
+Last solver iteration values for equilibrium computation:
+
+             Last solver iteration
+INC                        72.2824
+CONT_SOC                    7.4809
+SAV                         8.7798
+Y__Prod__Act               83.4923
+K__Prod__Act               49.3593
+L__Prod__Act               34.1330
+
+---------------------------------------------------------- 
+
+Initial values for equilibrium computation:
+
+             Initial values
+INC                 72.2824
+CONT_SOC             7.4809
+SAV                  8.7798
+Y__Prod__Act        83.4923
+K__Prod__Act        49.3593
+L__Prod__Act        34.1330

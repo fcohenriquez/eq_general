@@ -1,0 +1,7 @@
+library(gEcon.iosam)
+setwd('d:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general')
+source('gecon_chile_simpl_debug.R')
+res <- get_residuals(model)
+cat('Initial Residuals of Eq 1 (Wages): ', res\[1], '\n')
+cat('Initial Residuals of Eq 5 (Capital): ', res\[5], '\n')
+cat('Initial Residuals of Eq 6 (Contrib): ', res\[6], '\n')

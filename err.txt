@@ -1,0 +1,2 @@
+
+(gEcon model error 1): There are only 41 variables but there are 44 model equations

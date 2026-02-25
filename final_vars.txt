@@ -1,0 +1,1 @@
+﻿[1] "\n(gEcon model error 1): There are 39 variables but there are only 38 model equations"

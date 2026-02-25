@@ -66,12 +66,9 @@ block CONSUMER
     {
         U[] = u[];
     };
-    constraints
-    {
-		INC[] = SUM<p::PRODS>(D<p>[] * p<p>[])+SAV[]+CONT_SOC[];
-    };
     identities
     {
+		INC[] = SUM<p::PRODS>(D<p>[] * p<p>[])+SAV[]+CONT_SOC[];
 		INC[] = BTINC[]+SUM<s::SEC>(pi<s>[]) - pit * PIT_base[];
 		BTINC[] = K_h[] * p_k[] + L_h[] + TR_EMP[]+TR_GOV[]+PREST_SOC[];
 		PIT_base[] = K_h[] * p_k[] + L_h[];
@@ -192,7 +189,7 @@ block FIRM
 	
 	ING_F[]=TR_EMP[]+ PREST_SOC_F[]+fit*(K_f[]*p_k[])+SAV_F[];
 	SAV_F[]=por_sav_f*ING_F[];
-	K_f[] = k_total_data*par_k_f;
+	#K_f[] = k_total_data*par_k_f;
 	CONT_SOC_F[]=CONT_SOC[]*por_cont_soc_f;
 
 	PREST_SOC_F[]=ING_F[]*por_pres_soc_f;
@@ -236,7 +233,9 @@ identities
 	CONT_SOC_G[]=CONT_SOC[]*por_cont_soc_g;
 	VAT[]=SUM<p::PRODS>((vat<p>* p<p>[])*(D<p>[] +GG<p>[] +I<p>[] ));
 	
-	TOTAL_TAX[]=VAT[]+pit * PIT_base[]+fit*(K_f[]*p_k[]);
+	DIR_T[]=pit * PIT_base[]+fit*(K_f[]*p_k[]);
+	
+	TOTAL_TAX[]=VAT[]+DIR_T[];
 	SAV_G[]=por_sav_g*ING_GOB[];
 	
 	<p::PRODS>GG<p>[]* p<p>[]=data_gg_p<p>;	
