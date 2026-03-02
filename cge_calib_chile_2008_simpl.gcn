@@ -68,7 +68,7 @@ block CONSUMER
     };
     constraints
     {
-		INC[] = SUM<p::PRODS>(D<p>[] * p<p>[])+SAV[]+CONT_SOC[];
+		INC[] = SUM<p::PRODS>(D<p>[] * p<p>[] * (1 + vat<p>)) + SAV[] + CONT_SOC[];
     };
     identities
     {
@@ -156,11 +156,10 @@ block <p::PRODS>PRODUCTS
     {
 		# Walras' law implies that one market clearing condition is redundant. We are dropping DA<p>[] = OA<p>[]
 		# OA<p>[]=DA<p>[];
-		OA<p>[]=SUM<s::SEC>(Y<p,s>[]*p<p>[]*(1+vat<p>));
+		OA<p>[]=SUM<s::SEC>(Y<p,s>[]);
 		
-		
-		DA<p>[]=p<p>[]*(D<p>[]  +GG<p>[] +I<p>[] );
-
+		# DA ahora considera equilibrio físico
+		DA<p>[]=D<p>[] + GG<p>[] + I<p>[];
 
 		#GG<p> lo voy a definir en el bloque del gobierno
 		#I<p> lo voy a definir en el bloque ahorro inversion
@@ -189,9 +188,8 @@ block FIRM
 
  identities
     {
-	
-	ING_F[]=TR_EMP[]+ PREST_SOC_F[]+fit*(K_f[]*p_k[])+SAV_F[];
-	SAV_F[]=por_sav_f*ING_F[];
+	ING_F[] = K_f[] * p_k[] + CONT_SOC_F[];
+	SAV_F[] = ING_F[] - TR_EMP[] - PREST_SOC_F[] - fit*(K_f[]*p_k[]);
 	K_f[] = k_total_data*par_k_f;
 	CONT_SOC_F[]=CONT_SOC[]*por_cont_soc_f;
 
@@ -228,7 +226,7 @@ block GOB
 identities
 	{
 	ING_GOB[]=K_g[]*p_k[]+CONT_SOC_G[]+TOTAL_TAX[];
-	GTO_G[]=SUM<p::PRODS>(GG<p>[] * p<p>[])+TR_GOV[]+PREST_SOC_G[]+SAV_G[];
+	GTO_G[]=SUM<p::PRODS>(GG<p>[] * p<p>[] * (1 + vat<p>)) + TR_GOV[]+PREST_SOC_G[]+SAV_G[];
 	ING_GOB[]=GTO_G[];
 	PREST_SOC_G[]=ING_GOB[]*por_pres_soc_g;
 	
@@ -260,8 +258,8 @@ identities
 		SUM<p::PRODS>(SUM<s::SEC>(L<p,s>[]))=L_h[];
 		# SUM<s::SEC>K<s>[]=K_h[]+K_f[]+K_g[];
 
-		# Ahorro = Inversion (Cierre Macroeconómico)
-		SUM<p::PRODS>(I<p>[] * p<p>[]) = SAV[] + SAV_F[] + SAV_G[];
+		# Ahorro = Inversion (Cierre Macroeconómico), pagado a precio de mercado
+		SUM<p::PRODS>(I<p>[] * p<p>[] * (1 + vat<p>)) = SAV[] + SAV_F[] + SAV_G[];
 
 		# Numeraire
 		p_k[] = 1;

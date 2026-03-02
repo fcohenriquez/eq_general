@@ -66,14 +66,13 @@ model <- set_free_par(model, c(
     pit = flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"]),
     fit = flow1["Imp_dir", "Empresas"] / flow1["Empresas", "Capital"],
     por_sav = flow1["SI", "Hogares"] / (flow1["Total", "Hogares"] - (flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])) * (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])),
-    por_sav_f = flow1["SI", "Empresas"] / flow1["Empresas", "Total"],
     por_cont = flow1["Cont_soc", "Hogares"] / (flow1["Total", "Hogares"] - (flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])) * (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])),
     por_tremp = flow1["Hogares", "Empresas"] / flow1["Empresas", "Total"],
     por_trgov = flow1["Hogares", "Gobierno"] / flow1["Gobierno", "Total"],
-    d_data__Prod = flow1["Prod", "Hogares"],
+    d_data__Prod = flow1["Prod", "Hogares"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]),
     get_flow_values(flow1["Trabajo", acts], "l_data", acts),
-    get_flow_values(flow1["IVA", sam_prod] / flow1["Total", sam_prod], "vat", sam_prod),
-    get_flow_values(flow1[sam_prod, "Gobierno"], "data_gg_p", sam_prod),
+    get_flow_values(flow1["IVA", sam_prod] / flow1["Act", sam_prod], "vat", sam_prod),
+    get_flow_values(flow1[sam_prod, "Gobierno"] / (1 + flow1["IVA", sam_prod] / flow1["Act", sam_prod]), "data_gg_p", sam_prod),
     get_flow_values(flow1[acts, sam_prod], "data_prod_s", acts, sam_prod)
 ))
 
@@ -96,7 +95,7 @@ g_p <- gamma_exact
 
 varlist <- list(
     p_k = 1,
-    U = (0.2 * flow1["Prod", "Hogares"]^((0.5 - 1) / 0.5))^(0.5 / (0.5 - 1)),
+    U = (0.2 * (flow1["Prod", "Hogares"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]))^((0.5 - 1) / 0.5))^(0.5 / (0.5 - 1)),
     BTINC = flow1["Total", "Hogares"],
     CONT_SOC = flow1["Total", "Cont_soc"],
     CONT_SOC_F = flow1["Empresas", "Cont_soc"],
@@ -117,19 +116,19 @@ varlist <- list(
     TOTAL_TAX = flow1["Total", "Imp_dir"] + flow1["Total", "IVA"],
     TR_EMP = flow1["Hogares", "Empresas"],
     TR_GOV = flow1["Hogares", "Gobierno"],
-    VAT = (flow1["IVA", "Prod"] / flow1["Total", "Prod"]) * 1 * (flow1["Prod", "Hogares"] + flow1["Prod", "Gobierno"] + flow1["Prod", "SI"]),
+    VAT = flow1["IVA", "Prod"],
     p__Prod = 1, # Precios de los bienes
     pi__Act = 0, # Utilidades de las industrias
-    D__Prod = flow1["Prod", "Hogares"], # Demanda de los hogares
-    DA__Prod = 1 * (flow1["Prod", "Hogares"] + flow1["Prod", "Gobierno"] + flow1["Prod", "SI"]), # Demanda agregada por producto
+    D__Prod = flow1["Prod", "Hogares"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Demanda de los hogares
+    DA__Prod = (flow1["Prod", "Hogares"] + flow1["Prod", "Gobierno"] + flow1["Prod", "SI"]) / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Demanda agregada por producto
 
-    GG__Prod = flow1["Prod", "Gobierno"], # Gasto de gobierno
-    I__Prod = flow1["Prod", "SI"], # Inversion
+    GG__Prod = flow1["Prod", "Gobierno"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Gasto de gobierno
+    I__Prod = flow1["Prod", "SI"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Inversion
     # Capital usado en cada producto en cada actividad
     K__Prod__Act = flow1["Capital", "Act"],
     # Trabajo usado en cada producto en cada actividad
     L__Prod__Act = flow1["Trabajo", "Act"],
-    OA__Prod = flow1["Act", "Prod"] * (1 + flow1["IVA", "Prod"] / flow1["Total", "Prod"]), # Oferta agregada ajustada con la fórmula del modelo
+    OA__Prod = flow1["Act", "Prod"], # Oferta agregada base
 
 
 
@@ -244,7 +243,7 @@ model_sim2 <- steady_state(model_sim2,
     )
 )
 
-var_info(model_sim2, variables = c("U", "INC", "ING_F", "SAV", , "ING_GOB", "Y__Prod__Act", "D__Prod"))
+var_info(model_sim2, variables = c("U", "INC", "ING_F", "SAV", "ING_GOB", "Y__Prod__Act", "D__Prod"))
 ```
 ```{r}
 var_info(model_sim2, all = T)
