@@ -201,8 +201,8 @@ vat_base <- get_par_values(model, "vat__Prod")
 
 # Incremento del 10% (multiplicando o dividiendo segun corresponda)
 # Por ejemplo, podemos simular el nuevo impuesto en base a tu fórmula:
-vat_sim <- get_flow_values(1.1 * flow1["IVA", sam_prod] / (flow1["Total", sam_prod]), "vat", sam_prod)
-
+#vat_sim <- get_flow_values(1.1 * flow1["IVA", sam_prod] / (flow1["Total", sam_prod]), "vat", sam_prod)
+vat_sim <-vat_base*1.1
 # Actualizamos el modelo calibrado CON el nuevo parámetro
 model_sim <- set_free_par(model, vat_sim)
 
@@ -216,8 +216,16 @@ model_sim <- steady_state(model_sim,
     )
 )
 
-var_info(model_sim, variables = c("U", "INC", "ING_F", "SAV", "VAT", "TOTAL_TAX", "ING_GOB", "Y__Prod__Act", "D__Prod"))
+var_info(model_sim, variables = c("U", "INC", "ING_F", "SAV", "VAT", "TOTAL_TAX", "ING_GOB", "Y__Prod__Act", "D__Prod", "GG__Prod", "I__Prod"))
 ```
+```{r}
+vat_base
+vat_sim
+vat_sim/vat_base
+```
+
+
+
 ```{r}
 var_info(model_sim, all = T)
 ```
@@ -245,6 +253,15 @@ model_sim2 <- steady_state(model_sim2,
 
 var_info(model_sim2, variables = c("U", "INC", "ING_F", "SAV", "ING_GOB", "Y__Prod__Act", "D__Prod"))
 ```
+
+```{r}
+pit_base
+pit_sim
+pit_sim/pit_base
+```
+
+
+
 ```{r}
 var_info(model_sim2, all = T)
 ```
