@@ -1,16 +1,6 @@
 # ############################################################################
-# This file is a part of gEcon.iosam.                                        #
-#                                                                            #
-# (c) Chancellery of the Prime Minister of the Republic of Poland 2014-2015  #
-# (c) Marta Retkiewicz 2015-2016                                             #
-# Licence terms can be found in the file:                                    #
-# http://gecon.r-forge.r-project.org/files/gEcon.iosam_licence.txt           #
-#                                                                            #
-# Author: Marta Retkiewicz                                                   #
+# Unified 1-to-1 CGE model for SAM Chile 2008 (Refined Identities)
 # ############################################################################
-# Example for gEcon.iosam package: calibration of a CGE model para SAM Chile 2008
-# ############################################################################
-
 
 options
 {
@@ -19,256 +9,131 @@ options
     output logfile = TRUE;
 };
 
-
 indexsets
 {
-    SEC = { 'Act' };
-	PRODS={'Prod'};
-};
-
-
-tryreduce
-{
-    <s::SEC>K<s>[], <s::SEC>L<s>[];
+    P = { 'Manu', 'Prim', 'Serv' };
+    P_SP = { 'Manu', 'Serv' };
 };
 
 block CONSUMER
 {
-  ### VARIABLES
-
-    # k_total_data				Capital total
-	# par_k_h					% particip hogar en capital
-	# l_total_data				Trabajo total
-	#L_h[]						Trabajo de los hogares
-	#por_l_h					% del trabajo de los hogares
-	#K_h[]						Capital perteneciente a los hogares
-	#D<p>[]						Demanda de los hogares por el producto p
-	#SAV[]						Ahorro de los hogares
-	#CONT_SOC[]					Contribuciones sociales de los hogares (dadas por los hogares a las empresas y al gobierno)
-	#TR_EMP[]					Transferencias desde las empresas
-	#TR_GOV[]					Transferencias desde el gobierno
-	#PREST_SOC[]				Prestaciones sociales (entregadas por el gobierno y las empresas)
-	#pro_prest
-	
-	
-	
     definitions
     {
-        u[] = (SUM<p::PRODS>(alpha<p> * D<p>[]^((omega - 1)/omega)))^(omega/(omega - 1));
+        u[] = (SUM<p::P>(alpha<p> * D<p>[]^((omega - 1)/omega)))^(omega/(omega - 1));
     };
 
     controls
     {
-        <p::PRODS>D<p>[];
+        <p::P>D<p>[];
     };
 
     objective
     {
         U[] = u[];
     };
+    
     constraints
     {
-		INC[] = SUM<p::PRODS>(D<p>[] * p<p>[] * (1 + vat<p>)) + SAV[] + CONT_SOC[];
+        SUM<p::P>(D<p>[] * p<p>[] * (1 + vat<p>)) + SAV[] + CONT_SOC[] = INC[];
     };
+    
     identities
     {
-		INC[] = BTINC[]+SUM<s::SEC>(pi<s>[]) - pit * PIT_base[];
-		BTINC[] = K_h[] * p_k[] + L_h[] + TR_EMP[]+TR_GOV[]+PREST_SOC[];
-		PIT_base[] = K_h[] * p_k[] + L_h[];
+        INC[] = BTINC[] - pit * PIT_base[];
+        BTINC[] = K_h[] * p_k[] + L_h[] * w[] + TR_EMP[] + TR_GOV[] + PREST_SOC[];
+        PIT_base[] = K_h[] * p_k[] + L_h[] * w[];
         
-        K_h[] = k_total_data*par_k_h;
+        K_h[] = k_total_data * par_k_h;
         L_h[] = l_total_data;
-		SAV[]=por_sav*INC[];
-		CONT_SOC[]=por_cont*INC[];
+        SAV[] = por_sav * INC[];
+        CONT_SOC[] = por_cont * INC[];
 
-		# Se va a hacer depender las transferencias de los ingresos del gobierno y las empresas
-		TR_EMP[]=por_tremp*ING_F[]; 
-		TR_GOV[]=por_trgov*ING_GOB[];
-		
-		PREST_SOC[]=PREST_SOC_F[]+PREST_SOC_G[];
-		
-		
-    };
-	calibration
-    {
+        TR_EMP[] = por_tremp * ING_F[]; 
+        TR_GOV[] = por_trgov * ING_GOB[];
         
-		<p::PRODS>D<p>[] = d_data<p> -> alpha<p>; #OJO con el rol del  IVA
-		#SUM<p::PRODS>(alpha<p>^omega) = 1 ;
-
+        PREST_SOC[] = PREST_SOC_F[] + PREST_SOC_G[];
+    };
+    
+    calibration
+    {
+        <p::P_SP>D<p>[] = d_data<p> -> alpha<p>;
+        SUM<p::P>(alpha<p>) = 1 -> alpha<'Prim'>;
     };
 };
 
-
-block <s::SEC>SECTOR
+block <p::P>PRODUCTION
 {
-  ### VARIABLES
-
-    # por_ps[p,s]				% de la produccion del producto p en el sector s
-
-	#data_prod_s<s,p>			la produccion de p en s
-	
-	
-	
     controls
     {
-		<p::PRODS>Y<p,s>[], <p::PRODS>K<p,s>[], <p::PRODS>L<p,s>[];
-       
+        Y<p>[], K<p>[], L<p>[];
     };
 
     objective
     {
-         pi<s>[] =  SUM<p::PRODS>(Y<p,s>[] * p<p>[]) - SUM<p::PRODS>(K<p,s>[]) * p_k[] - SUM<p::PRODS>(L<p,s>[]) ;
-    };
-    constraints
-    {
-        <p::PRODS>Y<p,s>[] = gamma<p,s> * K<p,s>[]^beta_k<p,s> * L<p,s>[]^beta_l<p,s>;
-
+        pi<p>[] = Y<p>[] * p<p>[] - K<p>[] * p_k[] - L<p>[] * w[];
     };
     
-	identities
-	{
-		K<s>[]=SUM<p::PRODS>(K<p,s>[]);		
-	};
-	
-	calibration
+    constraints
     {
-		
-		<p::PRODS>beta_k<p,s> + beta_l<p,s> = 1 -> beta_k<p,s>;
-		<p::PRODS>L<p,s>[] = l_data<s>*data_prod_s<s,p>/(SUM<pi::PRODS>(data_prod_s<s,pi>)) -> beta_l<p,s>;
-		<p::PRODS>Y<p,s>[] = data_prod_s<s,p> -> gamma<p,s>;
-
+        Y<p>[] = gamma<p> * K<p>[]^beta_k<p> * L<p>[]^beta_l<p>;
+    };
+    
+    identities
+    {
+        Y<p>[] = D<p>[] + GG<p>[] + I<p>[];
+    };
+    
+    calibration
+    {
+        beta_k<p> + beta_l<p> = 1 -> beta_k<p>;
+        L<p>[] = l_data<p> -> beta_l<p>;
+        Y<p>[] = y_data<p> -> gamma<p>;
     };
 };
-
-
-block <p::PRODS>PRODUCTS
-{
-  ### VARIABLES
-
-
-	#G<p>[]					Gasto del gobierno en el bien p
-	#I<p>[]					Gasto en inversión en el bien p
-	# DA<p>[] 				demanda agregada del bien. Esta en pesos despues de iva
-	#OA<p>[]				oferta agregada del bien. Esta en pesos antes de iva
-
- 
-	    identities
-    {
-		# Walras' law implies that one market clearing condition is redundant. We are dropping DA<p>[] = OA<p>[]
-		# OA<p>[]=DA<p>[];
-		OA<p>[]=SUM<s::SEC>(Y<p,s>[]);
-		
-		# DA ahora considera equilibrio físico
-		DA<p>[]=D<p>[] + GG<p>[] + I<p>[];
-
-		#GG<p> lo voy a definir en el bloque del gobierno
-		#I<p> lo voy a definir en el bloque ahorro inversion
-		
-	};
-
-};
-
 
 block FIRM
 {
-
-  ### VARIABLES
-
-    # K_f[]				capital de las empresas
-	#par_k_f			% participacion de las empresas en el capital
-	#fit                impuesto sobre los ingresos del capital de las empresas
-	#ING_F[]			ingresos totales de las empresas
-	#por_sav_f			% del ahorro de las empresas (como % de sus ingresos)
-	#SAV_F[]			Ahorro de las empresas
-	#CONT_SOC_F[]		Contribuciones sociales pagadas a las empresas
-	#por_cont_soc_f		% de las contribuciones sociales pagadas a las empresas
-	#PREST_SOC_F[]		Prestaciones sociales de las empresas
-	
-
-
- identities
+    identities
     {
-	ING_F[] = K_f[] * p_k[] + CONT_SOC_F[];
-	SAV_F[] = ING_F[] - TR_EMP[] - PREST_SOC_F[] - fit*(K_f[]*p_k[]);
-	K_f[] = k_total_data*par_k_f;
-	CONT_SOC_F[]=CONT_SOC[]*por_cont_soc_f;
-
-	PREST_SOC_F[]=ING_F[]*por_pres_soc_f;
-	
-	};
-
+        ING_F[] = K_f[] * p_k[] + CONT_SOC_F[];
+        SAV_F[] = ING_F[] - TR_EMP[] - PREST_SOC_F[] - fit * (K_f[] * p_k[]);
+        K_f[] = k_total_data * par_k_f;
+        CONT_SOC_F[] = CONT_SOC[] * por_cont_soc_f;
+        PREST_SOC_F[] = ING_F[] * por_pres_soc_f;
+    };
 };
-
-
-
-
-
 
 block GOB
 {
-  ### VARIABLES
-  
-	#ING_GOB[]			Ingresos Totales del gobierno
-	#par_k_g			% participacion del gobierno en el capital
-	#K_g[]				Capital del gobierno
-	#por_cont_soc_g		% de las contribuciones sociales pagasdas al gobierno
-	#CONT_SOC_G[]		Contrib soc recibidas por el gobierno
-	#TOTAl_tax[]		Impuestos totales
-	#por_gg_p<p>		% de la demanda en gasto de gobierno
-	#data_gg_p<p>		Gasto de gobierno en  el producto p
-	#PREST_SOC_G[]
-	#por_pres_soc_g		% de las prestaciones sociales pagadas por el gobierno
-	#VAT[]				IVA
-	#DIR_T[]			Impuesto a la renta
-
-	#por_sav_g			% de ahorro del gobierno
-  
-identities
-	{
-	ING_GOB[]=K_g[]*p_k[]+CONT_SOC_G[]+TOTAL_TAX[];
-	GTO_G[]=SUM<p::PRODS>(GG<p>[] * p<p>[] * (1 + vat<p>)) + TR_GOV[]+PREST_SOC_G[]+SAV_G[];
-	ING_GOB[]=GTO_G[];
-	PREST_SOC_G[]=ING_GOB[]*por_pres_soc_g;
-	
-	K_g[] = k_total_data*par_k_g;
-	CONT_SOC_G[]=CONT_SOC[]*por_cont_soc_g;
-	VAT[]=SUM<p::PRODS>((vat<p>* p<p>[])*(D<p>[] +GG<p>[] +I<p>[] ));
-	
-	TOTAL_TAX[]=VAT[]+pit * PIT_base[]+fit*(K_f[]*p_k[]);
-	# Se comenta para permitir que SAV_G sea endogeno y el recaudo varíe:
-	# SAV_G[]=por_sav_g*ING_GOB[];
-	
-	<p::PRODS>GG<p>[]* p<p>[]=data_gg_p<p>;	
-	
-	
-	
-	
-	# Se fija la demanda de bienes del gobierno
-
-	};
-	
-
+    identities
+    {
+        ING_GOB[] = K_g[] * p_k[] + CONT_SOC_G[] + TOTAL_TAX[];
+        GTO_G[] = SUM<p::P>(p<p>[] * GG<p>[] * (1 + vat<p>)) + TR_GOV[] + PREST_SOC_G[] + SAV_G[];
+        ING_GOB[] = GTO_G[];
+        PREST_SOC_G[] = ING_GOB[] * por_pres_soc_g;
+        
+        K_g[] = k_total_data * par_k_g;
+        CONT_SOC_G[] = CONT_SOC[] * por_cont_soc_g;
+        VAT[] = SUM<p::P>((vat<p> * p<p>[]) * (D<p>[] + GG<p>[] + I<p>[]));
+        
+        TOTAL_TAX[] = VAT[] + pit * PIT_base[] + fit * (K_f[] * p_k[]);
+        
+        # Link to SAM data (market price * quantity)
+        <p::P>p<p>[] * GG<p>[] * (1 + vat<p>) = gg_market_data<p>;    
+    };
 };
-
 
 block EQUILIBRIUM
 {
-identities 
-	{
-		SUM<p::PRODS>(SUM<s::SEC>(L<p,s>[]))=L_h[];
-		# SUM<s::SEC>K<s>[]=K_h[]+K_f[]+K_g[];
+    identities 
+    {
+        SUM<p::P>(L<p>[]) = L_h[];
+        SUM<p::P>(K<p>[]) = K_h[] + K_f[] + K_g[];
 
-		# Ahorro = Inversion (Cierre Macroeconómico), pagado a precio de mercado
-		SUM<p::PRODS>(I<p>[] * p<p>[] * (1 + vat<p>)) = SAV[] + SAV_F[] + SAV_G[];
+        SUM<p::P>(I<p>[] * p<p>[] * (1 + vat<p>)) = SAV[] + SAV_F[] + SAV_G[] + WALRAS[];
 
-		# Numeraire
-		p_k[] = 1;
-		
-	};
+        <p::P_SP> I<p>[] * por_inv<'Prim'> = por_inv<p> * I<'Prim'>[];
 
+        p_k[] = 1;
+    };
 };
-
-
-
-
-

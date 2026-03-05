@@ -1,267 +1,187 @@
 ---
-title: "gecon_chile_v1"
+title: "gecon_chile_v2_balanced"
 output: html_document
 date: "2024-05-16"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-print(R.version.string)
-
-rm(list = ls())
-setwd("~/proyectos/equilibrio_general")
-
-# Loading gEcon.iosam (and gEcon) package
 library(gEcon.iosam)
 library(pracma)
+rm(list = ls())
 ```
 
-## Importacion de datos
-
-
+## 1. Importación y Procesamiento de la SAM
 
 ```{r }
-chile_sam <- read.csv("macro_sam_2008_simp.csv", row.names = 1)
-rows1 <- c(
-    "Prod", "Act", "Trabajo", "Capital", "Hogares",
-    "Empresas", "Gobierno", "Cont_soc", "Pres_soc", "Imp_dir", "IVA", "SI", "Total"
-)
+# Carga de la SAM simplificada de Chile 2008
+chile_sam <- read.csv("macro_sam_2008_simp3sect.csv", row.names = 1, check.names = FALSE)
+chile_sam[is.na(chile_sam)] <- 0
 
-flow1 <- iosam(as.matrix(chile_sam),
-    nproducts = c(1, 1),
-    rows = rows1
-)
+# Definición de índices alineados alfabéticamente (Orden gEcon: Manu, Prim, Serv)
+p_names <- c("Manu", "Prim", "Serv")
+sam_p <- c("Prod manu", "Prod prim", "Prod serv")
+sam_a <- c("Act manu", "Act prim", "Act serv")
 
-
-summary(flow1)
-
-acts <- c("Act")
-sam_prod <- c("Prod")
-
-print("chequeo de SAM")
-rowSums(chile_sam) - colSums(chile_sam)
+# Verificación de equilibrio de la SAM
+cat("Balance de Hogares (Ingreso - Gasto):", sum(as.numeric(chile_sam["Hogares", !names(chile_sam) %in% c("Total")])) - sum(as.numeric(chile_sam[, "Hogares"])), "\n")
 ```
 
-## Building model from the .gcn file
-
-Revisar los porcentajes de exportacion e importacion
-
-
+## 2. Construcción del Modelo GCN
 
 ```{r }
-model <- make_model("cge_calib_chile_2008_simpl.gcn")
+# El modelo usa un mapeo 1:1 entre actividades y productos simplificado
+model <- make_model("cge_calib_chile_2008_simpl3sect.gcn")
 
+# Extracción de datos de la SAM (Precios normalizados a 1)
+Y_vals <- as.numeric(diag(as.matrix(chile_sam[sam_a, sam_p])))
+L_vals <- as.numeric(chile_sam["Trabajo", sam_a])
+K_vals <- as.numeric(chile_sam["Capital", sam_a])
 
+# Valores de mercado
+D_market <- as.numeric(chile_sam[sam_p, "Hogares"])
+GG_market <- as.numeric(chile_sam[sam_p, "Gobierno"])
+I_market <- as.numeric(chile_sam[sam_p, "S-I"])
+
+# Cálculo de tasas de IVA (basadas en valores netos)
+vat_rates <- as.numeric(chile_sam["IVA", sam_p]) / (D_market + GG_market + I_market - as.numeric(chile_sam["IVA", sam_p]))
+vat_rates[is.nan(vat_rates)] <- 0
+
+# Cantidades netas iniciales
+D_vals <- D_market / (1 + vat_rates)
+GG_vals <- GG_market / (1 + vat_rates)
+I_vals <- I_market / (1 + vat_rates)
+```
+
+## 3. Calibración y Balancéo de Cuentas Institucionales
+
+```{r }
+# Parámetros Globales
+K_h_val <- chile_sam["Hogares", "Capital"]
+K_f_val <- chile_sam["Empresas", "Capital"]
+K_g_val <- chile_sam["Gobierno", "Capital"]
+L_h_val <- sum(L_vals)
+
+TR_EMP_val <- chile_sam["Hogares", "Empresas"]
+TR_GOV_val <- chile_sam["Hogares", "Gobierno"]
+PREST_SOC_F_val <- chile_sam["Pres_soc", "Empresas"]
+PREST_SOC_G_val <- chile_sam["Pres_soc", "Gobierno"]
+PREST_SOC_val <- PREST_SOC_F_val + PREST_SOC_G_val
+
+# Ingreso de Hogares (Balanced)
+BTINC_val <- K_h_val + L_h_val + TR_EMP_val + TR_GOV_val + PREST_SOC_val
+PIT_base_val <- K_h_val + L_h_val
+DIR_TAX_H_val <- chile_sam["Imp_dir", "Hogares"]
+INC_val <- BTINC_val - DIR_TAX_H_val
+CONT_SOC_H_val <- chile_sam["Cont_soc", "Hogares"]
+SAV_H_val <- INC_val - sum(D_market) - CONT_SOC_H_val
+
+# Otros parámetros de calibración
+FIT_val <- chile_sam["Imp_dir", "Empresas"]
+ING_F_val <- K_f_val + chile_sam["Empresas", "Cont_soc"]
+ING_GOB_val <- K_g_val + chile_sam["Gobierno", "Cont_soc"] + sum(chile_sam["IVA", sam_p]) + DIR_TAX_H_val + FIT_val
+
+# Configuración de parámetros en gEcon
 model <- set_free_par(model, c(
     omega = 0.5,
-    k_total_data = flow1["Total", "Capital"],
-    par_k_h = flow1["Hogares", "Capital"] / flow1["Total", "Capital"],
-    par_k_f = flow1["Empresas", "Capital"] / flow1["Total", "Capital"],
-    par_k_g = flow1["Gobierno", "Capital"] / flow1["Total", "Capital"],
-    l_total_data = flow1["Total", "Trabajo"],
-    por_cont_soc_f = flow1["Empresas", "Cont_soc"] / flow1["Total", "Cont_soc"],
-    por_cont_soc_g = flow1["Gobierno", "Cont_soc"] / flow1["Total", "Cont_soc"],
-    por_pres_soc_f = flow1["Pres_soc", "Empresas"] / flow1["Total", "Empresas"],
-    por_pres_soc_g = flow1["Pres_soc", "Gobierno"] / flow1["Total", "Gobierno"],
-    pit = flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"]),
-    fit = flow1["Imp_dir", "Empresas"] / flow1["Empresas", "Capital"],
-    por_sav = flow1["SI", "Hogares"] / (flow1["Total", "Hogares"] - (flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])) * (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])),
-    por_cont = flow1["Cont_soc", "Hogares"] / (flow1["Total", "Hogares"] - (flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])) * (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])),
-    por_tremp = flow1["Hogares", "Empresas"] / flow1["Empresas", "Total"],
-    por_trgov = flow1["Hogares", "Gobierno"] / flow1["Gobierno", "Total"],
-    d_data__Prod = flow1["Prod", "Hogares"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]),
-    get_flow_values(flow1["Trabajo", acts], "l_data", acts),
-    get_flow_values(flow1["IVA", sam_prod] / flow1["Act", sam_prod], "vat", sam_prod),
-    get_flow_values(flow1[sam_prod, "Gobierno"] / (1 + flow1["IVA", sam_prod] / flow1["Act", sam_prod]), "data_gg_p", sam_prod),
-    get_flow_values(flow1[acts, sam_prod], "data_prod_s", acts, sam_prod)
+    k_total_data = sum(K_vals),
+    par_k_h = K_h_val / sum(K_vals),
+    par_k_f = K_f_val / sum(K_vals),
+    par_k_g = K_g_val / sum(K_vals),
+    l_total_data = sum(L_vals),
+    por_cont_soc_f = chile_sam["Empresas", "Cont_soc"] / CONT_SOC_H_val,
+    por_cont_soc_g = chile_sam["Gobierno", "Cont_soc"] / CONT_SOC_H_val,
+    por_pres_soc_f = PREST_SOC_F_val / ING_F_val,
+    por_pres_soc_g = PREST_SOC_G_val / ING_GOB_val,
+    pit = DIR_TAX_H_val / PIT_base_val,
+    fit = FIT_val / K_f_val,
+    por_sav = SAV_H_val / INC_val,
+    por_cont = CONT_SOC_H_val / INC_val,
+    por_tremp = TR_EMP_val / ING_F_val,
+    por_trgov = TR_GOV_val / ING_GOB_val,
+    get_flow_values(D_vals[p_names != "Prim"], "d_data", p_names[p_names != "Prim"]),
+    get_flow_values(L_vals, "l_data", p_names),
+    get_flow_values(vat_rates, "vat", p_names),
+    get_flow_values(GG_market, "gg_market_data", p_names),
+    get_flow_values(Y_vals, "y_data", p_names),
+    get_flow_values(I_vals / sum(I_vals), "por_inv", p_names)
 ))
-
-
-model <- steady_state(model, calibration = T)
 ```
 
+## 4. Inicialización de Variables y Consumidor
 
-# Listado de parametros
-
-
-```{r}
-n <- length(sam_prod)
-m <- length(acts)
-
-beta_l_exact <- flow1["Trabajo", acts] / flow1["Act", "Prod"]
-beta_k_exact <- 1 - beta_l_exact
-gamma_exact <- flow1["Act", "Prod"] / ((flow1["Capital", "Act"]^beta_k_exact) * (flow1["Trabajo", "Act"]^beta_l_exact))
-g_p <- gamma_exact
+```{r }
+# Cálculo de Alpha para consumidor con residuo cero en FOC
+alpha_unscaled <- (1 * (1 + vat_rates)) * D_vals^(1 / 0.5)
+alpha_vec <- alpha_unscaled / sum(alpha_unscaled)
+U_val <- sum(alpha_vec * D_vals^((0.5 - 1) / 0.5))^(0.5 / (0.5 - 1))
+lambda_init <- U_val^(1 / 0.5) / sum((1 + vat_rates) * D_vals^(1 / 0.5))
 
 varlist <- list(
-    p_k = 1,
-    U = (0.2 * (flow1["Prod", "Hogares"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]))^((0.5 - 1) / 0.5))^(0.5 / (0.5 - 1)),
-    BTINC = flow1["Total", "Hogares"],
-    CONT_SOC = flow1["Total", "Cont_soc"],
-    CONT_SOC_F = flow1["Empresas", "Cont_soc"],
-    CONT_SOC_G = flow1["Gobierno", "Cont_soc"],
-    GTO_G = flow1["Prod", "Gobierno"] + flow1["Hogares", "Gobierno"] + flow1["Pres_soc", "Gobierno"] + flow1["SI", "Gobierno"],
-    INC = flow1["Total", "Hogares"] - (flow1["Imp_dir", "Hogares"] / (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"])) * (flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"]),
-    ING_F = flow1["Total", "Empresas"],
-    ING_GOB = flow1["Gobierno", "Capital"] + flow1["Gobierno", "Cont_soc"] + flow1["Total", "Imp_dir"] + flow1["Total", "IVA"],
-    K_h = flow1["Hogares", "Capital"], K_f = flow1["Empresas", "Capital"], K_g = flow1["Gobierno", "Capital"],
-    L_h = flow1["Trabajo", "Act"],
-    PIT_base = flow1["Hogares", "Trabajo"] + flow1["Hogares", "Capital"],
-    PREST_SOC = flow1["Total", "Pres_soc"],
-    PREST_SOC_F = flow1["Pres_soc", "Empresas"],
-    PREST_SOC_G = flow1["Pres_soc", "Gobierno"],
-    SAV = flow1["SI", "Hogares"],
-    SAV_F = flow1["SI", "Empresas"],
-    SAV_G = flow1["SI", "Gobierno"],
-    TOTAL_TAX = flow1["Total", "Imp_dir"] + flow1["Total", "IVA"],
-    TR_EMP = flow1["Hogares", "Empresas"],
-    TR_GOV = flow1["Hogares", "Gobierno"],
-    VAT = flow1["IVA", "Prod"],
-    p__Prod = 1, # Precios de los bienes
-    pi__Act = 0, # Utilidades de las industrias
-    D__Prod = flow1["Prod", "Hogares"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Demanda de los hogares
-    DA__Prod = (flow1["Prod", "Hogares"] + flow1["Prod", "Gobierno"] + flow1["Prod", "SI"]) / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Demanda agregada por producto
-
-    GG__Prod = flow1["Prod", "Gobierno"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Gasto de gobierno
-    I__Prod = flow1["Prod", "SI"] / (1 + flow1["IVA", "Prod"] / flow1["Act", "Prod"]), # Inversion
-    # Capital usado en cada producto en cada actividad
-    K__Prod__Act = flow1["Capital", "Act"],
-    # Trabajo usado en cada producto en cada actividad
-    L__Prod__Act = flow1["Trabajo", "Act"],
-    OA__Prod = flow1["Act", "Prod"], # Oferta agregada base
-
-
-
-    # Produccion por actividad
-    Y__Prod__Act = flow1["Act", "Prod"]
+    lambda__CONSUMER_1 = lambda_init, p_k = 1, w = 1, U = U_val,
+    BTINC = BTINC_val, INC = INC_val, ING_F = ING_F_val, ING_GOB = ING_GOB_val, GTO_G = ING_GOB_val,
+    K_h = K_h_val, K_f = K_f_val, K_g = K_g_val, L_h = L_h_val,
+    PIT_base = PIT_base_val, PREST_SOC = PREST_SOC_val,
+    PREST_SOC_F = PREST_SOC_F_val, PREST_SOC_G = PREST_SOC_G_val,
+    SAV = SAV_H_val, SAV_F = ING_F_val - TR_EMP_val - PREST_SOC_F_val - FIT_val,
+    SAV_G = ING_GOB_val - sum(GG_market) - TR_GOV_val - PREST_SOC_G_val,
+    CONT_SOC = CONT_SOC_H_val, CONT_SOC_F = chile_sam["Empresas", "Cont_soc"], CONT_SOC_G = chile_sam["Gobierno", "Cont_soc"],
+    TR_EMP = TR_EMP_val, TR_GOV = TR_GOV_val,
+    TOTAL_TAX = sum(chile_sam["IVA", sam_p]) + DIR_TAX_H_val + FIT_val,
+    VAT = sum(chile_sam["IVA", sam_p]), WALRAS = 0
 )
 
-listcalib <- c(get_flow_values(rep(0.2, n), "alpha", sam_prod),
-    get_flow_values(matrix(1 - (flow1["Trabajo", acts] / flow1["Act", "Prod"]), n, m), "beta_k", sam_prod, acts),
-    get_flow_values(matrix((flow1["Trabajo", acts] / flow1["Act", "Prod"]), n, m), "beta_l", sam_prod, acts),
-    gamma__Prod__Act = g_p
+# Variables vectoriales
+varlist <- c(
+    varlist,
+    get_flow_values(rep(1, 3), "p", p_names),
+    get_flow_values(rep(0, 3), "pi", p_names),
+    get_flow_values(D_vals, "D", p_names),
+    get_flow_values(GG_vals, "GG", p_names),
+    get_flow_values(I_vals, "I", p_names),
+    get_flow_values(Y_vals, "Y", p_names),
+    get_flow_values(K_vals, "K", p_names),
+    get_flow_values(L_vals, "L", p_names)
 )
-```
 
+# Parámetros calibrados
+listcalib <- c(
+    get_flow_values(alpha_vec, "alpha", p_names),
+    get_flow_values(1 - L_vals / Y_vals, "beta_k", p_names),
+    get_flow_values(L_vals / Y_vals, "beta_l", p_names),
+    get_flow_values(Y_vals / (K_vals^(1 - L_vals / Y_vals) * L_vals^(L_vals / Y_vals)), "gamma", p_names)
+)
 
-
-
-# Generacion del modelo calibrado
-
-```{r}
 model <- initval_calibr_par(model, listcalib)
-
 model <- initval_var(model, varlist)
+```
 
-model <- steady_state(model,
-    calibration = T, use_jac = F, last_solver_iter = F,
-    options_list = list(
-        method = "Newton", global = "qline",
-        max_iter = 3000, tol = 1e-06, xscalm = "auto", xtol = F
-    )
+## 5. Solución de Equilibrio
+
+```{r }
+# Verificación de residuos iniciales (Debería ser 0)
+cat("Norma de residuos iniciales:", Norm(model@init_residual_vector), "\n")
+
+# Solución del Steady State
+model <- steady_state(model, calibration = T)
+
+# Verificación final
+cat("Norma de residuos final:", Norm(model@residual_vector), "\n")
+```
+
+## 6. Resultados de Equilibrio vs SAM
+
+```{r }
+# Comparación de Producción
+Y_equilibrium <- get_ss_values(model)[paste0("Y__", p_names)]
+comparison <- data.frame(
+    SAM = Y_vals,
+    Model = Y_equilibrium,
+    Diff = Y_vals - Y_equilibrium
 )
-```
+print("Comparación de Output (Y):")
+print(comparison)
 
-
-
-
-# Estadisticas de residuos
-
-```{r}
-get_residuals(model, largest = 10)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
-```
-
-
-# Estadisticas de valores obtenidos
-
-# Valor de las variables estimado
-```{r}
-var_info(model, all = T)
-```
-
-Parametros estimados
-
-```{r}
-get_par_values(model)
-```
-
-
-```{r}
-library(pracma)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
-```
-
-# Simulación de Escenario: Incremento 10% en VAT
-```{r}
-# Obtenemos el parametro calibrado de nuestro modelo base
-vat_base <- get_par_values(model, "vat__Prod")
-
-# Incremento del 10% (multiplicando o dividiendo segun corresponda)
-# Por ejemplo, podemos simular el nuevo impuesto en base a tu fórmula:
-#vat_sim <- get_flow_values(1.1 * flow1["IVA", sam_prod] / (flow1["Total", sam_prod]), "vat", sam_prod)
-vat_sim <-vat_base*1.1
-# Actualizamos el modelo calibrado CON el nuevo parámetro
-model_sim <- set_free_par(model, vat_sim)
-
-# Resolvemos CON calibration=FALSE para que encuentre los nuevos valores
-# Esta vez, TODAS las variables endógenas (Precios, PGB, Ingresos) se ajustan al nuevo equilibrio.
-model_sim <- steady_state(model_sim,
-    calibration = F,
-    options_list = list(
-        method = "Newton", global = "qline",
-        max_iter = 3000, tol = 1e-06, xscalm = "auto", xtol = F
-    )
-)
-
-var_info(model_sim, variables = c("U", "INC", "ING_F", "SAV", "VAT", "TOTAL_TAX", "ING_GOB", "Y__Prod__Act", "D__Prod", "GG__Prod", "I__Prod"))
-```
-```{r}
-vat_base
-vat_sim
-vat_sim/vat_base
-```
-
-
-
-```{r}
-var_info(model_sim, all = T)
-```
-
-
-# Simulación de Escenario 2: Incremento 10% en PIT
-```{r}
-# Obtenemos el parametro calibrado de nuestro modelo base
-pit_base <- get_par_values(model, "pit")
-
-# Incremento del 10% del recaudo sobre la base del modelo. Desnombrar para evitar "pit.pit"
-pit_sim <- unname(pit_base) * 1.1
-
-# Actualizamos el modelo calibrado CON el nuevo parámetro PIT
-model_sim2 <- set_free_par(model, c(pit = pit_sim))
-
-# Resolvemos CON calibration=FALSE para que encuentre los nuevos valores
-model_sim2 <- steady_state(model_sim2,
-    calibration = F,
-    options_list = list(
-        method = "Newton", global = "qline",
-        max_iter = 3000, tol = 1e-06, xscalm = "auto", xtol = F
-    )
-)
-
-var_info(model_sim2, variables = c("U", "INC", "ING_F", "SAV", "ING_GOB", "Y__Prod__Act", "D__Prod"))
-```
-
-```{r}
-pit_base
-pit_sim
-pit_sim/pit_base
-```
-
-
-
-```{r}
-var_info(model_sim2, all = T)
+# Panel de variables institucionales
+var_info(model, variables = c("U", "INC", "ING_GOB", "VAT", "TOTAL_TAX", "SAV", "WALRAS"))
 ```
