@@ -375,7 +375,7 @@ cat(&quot;Balance de Hogares (Ingreso - Gasto):&quot;, sum(as.numeric(chile_sam[
 <pre class="r"><code># El modelo usa un mapeo 1:1 entre actividades y productos simplificado
 model &lt;- make_model(&quot;cge_calib_chile_2008_simpl3sect.gcn&quot;)</code></pre>
 <pre><code>## model parsed in 0.03s
-## model loaded in 0.05s</code></pre>
+## model loaded in 0.06s</code></pre>
 <pre class="r"><code># Extracción de datos de la SAM (Precios normalizados a 1)
 Y_vals &lt;- as.numeric(diag(as.matrix(chile_sam[sam_a, sam_p])))
 L_vals &lt;- as.numeric(chile_sam[&quot;Trabajo&quot;, sam_a])
@@ -390,6 +390,9 @@ I_market &lt;- as.numeric(chile_sam[sam_p, &quot;S-I&quot;])
 vat_rates &lt;- as.numeric(chile_sam[&quot;IVA&quot;, sam_p]) / (D_market + GG_market + I_market - as.numeric(chile_sam[&quot;IVA&quot;, sam_p]))
 vat_rates[is.nan(vat_rates)] &lt;- 0
 
+# Cálculo de la tasa promedio de impuesto a la renta a los hogares
+pit &lt;- chile_sam[&quot;Imp_dir&quot;, &quot;Hogares&quot;] / (chile_sam[&quot;Hogares&quot;, &quot;Capital&quot;] + sum(L_vals))
+
 # Cantidades netas iniciales
 D_vals &lt;- D_market / (1 + vat_rates)
 GG_vals &lt;- GG_market / (1 + vat_rates)
@@ -401,7 +404,7 @@ I_vals &lt;- I_market / (1 + vat_rates)</code></pre>
 K_h_val &lt;- chile_sam[&quot;Hogares&quot;, &quot;Capital&quot;]
 K_f_val &lt;- chile_sam[&quot;Empresas&quot;, &quot;Capital&quot;]
 K_g_val &lt;- chile_sam[&quot;Gobierno&quot;, &quot;Capital&quot;]
-L_h_val &lt;- sum(L_vals)
+L_h_val &lt;- sum(L_vals) # L_h_val representa el ingreso total por trabajo de los hogares
 
 TR_EMP_val &lt;- chile_sam[&quot;Hogares&quot;, &quot;Empresas&quot;]
 TR_GOV_val &lt;- chile_sam[&quot;Hogares&quot;, &quot;Gobierno&quot;]
@@ -410,10 +413,23 @@ PREST_SOC_G_val &lt;- chile_sam[&quot;Pres_soc&quot;, &quot;Gobierno&quot;]
 PREST_SOC_val &lt;- PREST_SOC_F_val + PREST_SOC_G_val
 
 # Ingreso de Hogares (Balanced)
+# BTINC incluye Capital, Trabajo y todas las Transferencias
 BTINC_val &lt;- K_h_val + L_h_val + TR_EMP_val + TR_GOV_val + PREST_SOC_val
+# PIT_base es la base imponible: Capital (K_h_val) + Trabajo (L_h_val)
 PIT_base_val &lt;- K_h_val + L_h_val
 DIR_TAX_H_val &lt;- chile_sam[&quot;Imp_dir&quot;, &quot;Hogares&quot;]
-INC_val &lt;- BTINC_val - DIR_TAX_H_val
+
+cat(&quot;--- Verificación de Base Imponible (PIT_base) ---\n&quot;)</code></pre>
+<pre><code>## --- Verificación de Base Imponible (PIT_base) ---</code></pre>
+<pre class="r"><code>cat(&quot;Ingresos de Capital de Hogares (K_h_val):&quot;, K_h_val, &quot;\n&quot;)</code></pre>
+<pre><code>## Ingresos de Capital de Hogares (K_h_val): 17.2815</code></pre>
+<pre class="r"><code>cat(&quot;Ingresos del Trabajo de Hogares (L_h_val):&quot;, L_h_val, &quot;\n&quot;)</code></pre>
+<pre><code>## Ingresos del Trabajo de Hogares (L_h_val): 34.13303</code></pre>
+<pre class="r"><code>cat(&quot;Base Imponible Total (PIT_base_val):&quot;, PIT_base_val, &quot;\n&quot;)</code></pre>
+<pre><code>## Base Imponible Total (PIT_base_val): 51.41453</code></pre>
+<pre class="r"><code>cat(&quot;-----------------------------------------------\n&quot;)</code></pre>
+<pre><code>## -----------------------------------------------</code></pre>
+<pre class="r"><code>INC_val &lt;- BTINC_val - DIR_TAX_H_val
 CONT_SOC_H_val &lt;- chile_sam[&quot;Cont_soc&quot;, &quot;Hogares&quot;]
 SAV_H_val &lt;- INC_val - sum(D_market) - CONT_SOC_H_val
 
@@ -422,7 +438,21 @@ FIT_val &lt;- chile_sam[&quot;Imp_dir&quot;, &quot;Empresas&quot;]
 ING_F_val &lt;- K_f_val + chile_sam[&quot;Empresas&quot;, &quot;Cont_soc&quot;]
 ING_GOB_val &lt;- K_g_val + chile_sam[&quot;Gobierno&quot;, &quot;Cont_soc&quot;] + sum(chile_sam[&quot;IVA&quot;, sam_p]) + DIR_TAX_H_val + FIT_val
 
-# Configuración de parámetros en gEcon
+cat(&quot;\n--- Verificación de Ingresos del Trabajo (SAM vs Modelo) ---\n&quot;)</code></pre>
+<pre><code>## 
+## --- Verificación de Ingresos del Trabajo (SAM vs Modelo) ---</code></pre>
+<pre class="r"><code>sam_trabajo_total &lt;- sum(as.numeric(chile_sam[&quot;Trabajo&quot;, sam_a]))
+cat(&quot;Suma de &#39;Trabajo&#39; en la SAM (filas Act):&quot;, sam_trabajo_total, &quot;\n&quot;)</code></pre>
+<pre><code>## Suma de &#39;Trabajo&#39; en la SAM (filas Act): 34.13303</code></pre>
+<pre class="r"><code>cat(&quot;Valor de L_h_val en el modelo:&quot;, L_h_val, &quot;\n&quot;)</code></pre>
+<pre><code>## Valor de L_h_val en el modelo: 34.13303</code></pre>
+<pre class="r"><code>cat(&quot;PIT_base_val (K_h + L_h):&quot;, PIT_base_val, &quot;\n&quot;)</code></pre>
+<pre><code>## PIT_base_val (K_h + L_h): 51.41453</code></pre>
+<pre class="r"><code>cat(&quot;¿Está el trabajo en PIT_base?:&quot;, if (abs(PIT_base_val - (K_h_val + sam_trabajo_total)) &lt; 1e-5) &quot;SÍ&quot; else &quot;NO&quot;, &quot;\n&quot;)</code></pre>
+<pre><code>## ¿Está el trabajo en PIT_base?: SÍ</code></pre>
+<pre class="r"><code>cat(&quot;-----------------------------------------------------------\n&quot;)</code></pre>
+<pre><code>## -----------------------------------------------------------</code></pre>
+<pre class="r"><code># Configuración de parámetros en gEcon
 model &lt;- set_free_par(model, c(
     omega = 0.5,
     k_total_data = sum(K_vals),
@@ -434,7 +464,7 @@ model &lt;- set_free_par(model, c(
     por_cont_soc_g = chile_sam[&quot;Gobierno&quot;, &quot;Cont_soc&quot;] / CONT_SOC_H_val,
     por_pres_soc_f = PREST_SOC_F_val / ING_F_val,
     por_pres_soc_g = PREST_SOC_G_val / ING_GOB_val,
-    pit = DIR_TAX_H_val / PIT_base_val,
+    pit_data = DIR_TAX_H_val,
     fit = FIT_val / K_f_val,
     por_sav = SAV_H_val / INC_val,
     por_cont = CONT_SOC_H_val / INC_val,
@@ -466,6 +496,8 @@ varlist &lt;- list(
     SAV_G = ING_GOB_val - sum(GG_market) - TR_GOV_val - PREST_SOC_G_val,
     CONT_SOC = CONT_SOC_H_val, CONT_SOC_F = chile_sam[&quot;Empresas&quot;, &quot;Cont_soc&quot;], CONT_SOC_G = chile_sam[&quot;Gobierno&quot;, &quot;Cont_soc&quot;],
     TR_EMP = TR_EMP_val, TR_GOV = TR_GOV_val,
+    PI_TAX = DIR_TAX_H_val,
+    FIRM_TAX = FIT_val,
     TOTAL_TAX = sum(chile_sam[&quot;IVA&quot;, sam_p]) + DIR_TAX_H_val + FIT_val,
     VAT = sum(chile_sam[&quot;IVA&quot;, sam_p]), WALRAS = 0
 )
@@ -486,6 +518,7 @@ varlist &lt;- c(
 # Parámetros calibrados
 listcalib &lt;- c(
     get_flow_values(alpha_vec, &quot;alpha&quot;, p_names),
+    pit = DIR_TAX_H_val / PIT_base_val,
     get_flow_values(1 - L_vals / Y_vals, &quot;beta_k&quot;, p_names),
     get_flow_values(L_vals / Y_vals, &quot;beta_l&quot;, p_names),
     get_flow_values(Y_vals / (K_vals^(1 - L_vals / Y_vals) * L_vals^(L_vals / Y_vals)), &quot;gamma&quot;, p_names)
@@ -520,6 +553,7 @@ Y_equilibrium &lt;- get_ss_values(model)[paste0(&quot;Y__&quot;, p_names)]</code
 ## CONT_SOC                      7.4809
 ## CONT_SOC_F                    5.8570
 ## CONT_SOC_G                    1.6239
+## FIRM_TAX                      4.6739
 ## GTO_G                        15.8748
 ## INC                          72.2551
 ## ING_F                        36.9537
@@ -529,6 +563,7 @@ Y_equilibrium &lt;- get_ss_values(model)[paste0(&quot;Y__&quot;, p_names)]</code
 ## K_g                           0.9811
 ## L_h                          34.1330
 ## PIT_base                     51.4145
+## PI_TAX                        1.2090
 ## PREST_SOC                     4.0619
 ## PREST_SOC_F                   1.5234
 ## PREST_SOC_G                   2.5385
@@ -578,22 +613,39 @@ print(&quot;Comparación de Output (Y):&quot;)</code></pre>
 ## Y__Prim 14.34187 14.34187    0
 ## Y__Serv 49.38025 49.38025    0</code></pre>
 <pre class="r"><code># Panel de variables institucionales
-var_info(model, variables = c(&quot;U&quot;, &quot;INC&quot;, &quot;ING_GOB&quot;, &quot;VAT&quot;, &quot;TOTAL_TAX&quot;, &quot;SAV&quot;, &quot;WALRAS&quot;))</code></pre>
+var_info(model, variables = c(&quot;U&quot;, &quot;INC&quot;, &quot;ING_GOB&quot;, &quot;VAT&quot;, &quot;PI_TAX&quot;, &quot;TOTAL_TAX&quot;, &quot;SAV&quot;, &quot;WALRAS&quot;))</code></pre>
 <pre><code>## Incidence info:
 ## 
-##                       U     INC ING_GOB     VAT TOTAL_TAX     SAV  WALRAS
-## Equation     12       .       X       .       .         .       .       .
-## Equation     15       .       .       X       .         .       .       .
-## Equation     20       .       .       X       .         .       .       .
-## Equation     21       .       X       .       .         .       X       .
-## Equation     23       .       .       X       .         .       .       .
-## Equation     24       X       .       .       .         .       .       .
-## Equation     33       .       X       .       .         .       .       .
-## Equation     37       .       .       X       .         X       .       .
-## Equation     39       .       .       .       X         X       .       .
-## Equation     40       .       .       .       X         .       .       .
-## Equation     49       .       X       .       .         .       X       .
-## Equation     52       .       .       .       .         .       X       X
+##                       U     INC ING_GOB     VAT  PI_TAX TOTAL_TAX     SAV
+## Equation     12       .       X       .       .       .         .       .
+## Equation     16       .       .       X       .       .         .       .
+## Equation     20       .       .       .       .       X         .       .
+## Equation     22       .       .       X       .       .         .       .
+## Equation     23       .       X       .       .       .         .       X
+## Equation     25       .       .       X       .       .         .       .
+## Equation     26       X       .       .       .       .         .       .
+## Equation     35       .       X       .       .       .         .       .
+## Equation     39       .       .       X       .       .         X       .
+## Equation     40       .       .       .       X       X         X       .
+## Equation     42       .       .       .       X       .         .       .
+## Equation     51       .       X       .       .       .         .       X
+## Equation     54       .       .       .       .       .         .       X
+## Calibr. Eq.  1        .       .       .       .       X         .       .
+##                  WALRAS
+## Equation     12       .
+## Equation     16       .
+## Equation     20       .
+## Equation     22       .
+## Equation     23       .
+## Equation     25       .
+## Equation     26       .
+## Equation     35       .
+## Equation     39       .
+## Equation     40       .
+## Equation     42       .
+## Equation     51       .
+## Equation     54       X
+## Calibr. Eq.  1        .
 ## 
 ## ---------------------------------------------------------- 
 ## 
@@ -604,6 +656,7 @@ var_info(model, variables = c(&quot;U&quot;, &quot;INC&quot;, &quot;ING_GOB&quot
 ## INC           72.2551
 ## ING_GOB       15.8748
 ## VAT            7.3870
+## PI_TAX         1.2090
 ## TOTAL_TAX     13.2698
 ## SAV            8.7525
 ## WALRAS         0.0000
@@ -617,9 +670,1086 @@ var_info(model, variables = c(&quot;U&quot;, &quot;INC&quot;, &quot;ING_GOB&quot
 ## INC              72.2551
 ## ING_GOB          15.8748
 ## VAT               7.3870
+## PI_TAX            1.2090
 ## TOTAL_TAX        13.2698
 ## SAV               8.7525
 ## WALRAS            0.0000</code></pre>
+</div>
+<div id="estadisticas-de-residuos" class="section level1">
+<h1>Estadisticas de residuos</h1>
+<pre class="r"><code>get_residuals(model)</code></pre>
+<pre><code>## Initial residuals:
+##         Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
+##             0             0             0             0             0 
+##         Eq. 6         Eq. 7         Eq. 8         Eq. 9        Eq. 10 
+##             0             0             0             0             0 
+##        Eq. 11        Eq. 12        Eq. 13        Eq. 14        Eq. 15 
+##             0             0             0             0             0 
+##        Eq. 16        Eq. 17        Eq. 18        Eq. 19        Eq. 20 
+##             0             0             0             0             0 
+##        Eq. 21        Eq. 22        Eq. 23        Eq. 24        Eq. 25 
+##             0             0             0             0             0 
+##        Eq. 26        Eq. 27        Eq. 28        Eq. 29        Eq. 30 
+##             0             0             0             0             0 
+##        Eq. 31        Eq. 32        Eq. 33        Eq. 34        Eq. 35 
+##             0             0             0             0             0 
+##        Eq. 36        Eq. 37        Eq. 38        Eq. 39        Eq. 40 
+##             0             0             0             0             0 
+##        Eq. 41        Eq. 42        Eq. 43        Eq. 44        Eq. 45 
+##             0             0             0             0             0 
+##        Eq. 46        Eq. 47        Eq. 48        Eq. 49        Eq. 50 
+##             0             0             0             0             0 
+##        Eq. 51        Eq. 52        Eq. 53        Eq. 54  Calibr Eq. 1 
+##             0             0             0             0             0 
+##  Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5  Calibr Eq. 6 
+##             0             0             0             0             0 
+##  Calibr Eq. 7  Calibr Eq. 8  Calibr Eq. 9 Calibr Eq. 10 Calibr Eq. 11 
+##             0             0             0             0             0 
+## Calibr Eq. 12 Calibr Eq. 13 
+##             0             0 
+## 
+## Equations with the largest initial residuals:
+## Eq. 48, Eq. 54, Eq. 52, Eq. 47, Eq. 46
+## 
+## Final residuals:
+##         Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
+##             0             0             0             0             0 
+##         Eq. 6         Eq. 7         Eq. 8         Eq. 9        Eq. 10 
+##             0             0             0             0             0 
+##        Eq. 11        Eq. 12        Eq. 13        Eq. 14        Eq. 15 
+##             0             0             0             0             0 
+##        Eq. 16        Eq. 17        Eq. 18        Eq. 19        Eq. 20 
+##             0             0             0             0             0 
+##        Eq. 21        Eq. 22        Eq. 23        Eq. 24        Eq. 25 
+##             0             0             0             0             0 
+##        Eq. 26        Eq. 27        Eq. 28        Eq. 29        Eq. 30 
+##             0             0             0             0             0 
+##        Eq. 31        Eq. 32        Eq. 33        Eq. 34        Eq. 35 
+##             0             0             0             0             0 
+##        Eq. 36        Eq. 37        Eq. 38        Eq. 39        Eq. 40 
+##             0             0             0             0             0 
+##        Eq. 41        Eq. 42        Eq. 43        Eq. 44        Eq. 45 
+##             0             0             0             0             0 
+##        Eq. 46        Eq. 47        Eq. 48        Eq. 49        Eq. 50 
+##             0             0             0             0             0 
+##        Eq. 51        Eq. 52        Eq. 53        Eq. 54  Calibr Eq. 1 
+##             0             0             0             0             0 
+##  Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5  Calibr Eq. 6 
+##             0             0             0             0             0 
+##  Calibr Eq. 7  Calibr Eq. 8  Calibr Eq. 9 Calibr Eq. 10 Calibr Eq. 11 
+##             0             0             0             0             0 
+## Calibr Eq. 12 Calibr Eq. 13 
+##             0             0 
+## 
+## Equations with the largest final residuals:
+## Eq. 48, Eq. 54, Eq. 52, Eq. 47, Eq. 46</code></pre>
+<pre class="r"><code>Norm(model@init_residual_vector)</code></pre>
+<pre><code>## [1] 6.451621e-07</code></pre>
+<pre class="r"><code>Norm(model@residual_vector)</code></pre>
+<pre><code>## [1] 6.451621e-07</code></pre>
+</div>
+<div id="estadisticas-de-valores-obtenidos" class="section level1">
+<h1>Estadisticas de valores obtenidos</h1>
+<pre class="r"><code>var_info(model, all = T)</code></pre>
+<pre><code>## Incidence info:
+## 
+##                 lambda__CONSUMER_1     p_k       w   BTINC CONT_SOC CONT_SOC_F
+## Equation     1                   .       X       .       .        .          .
+## Equation     2                   .       .       .       .        .          .
+## Equation     3                   .       .       .       .        .          .
+## Equation     4                   .       .       .       .        .          .
+## Equation     5                   .       .       .       .        .          .
+## Equation     6                   .       X       .       .        .          .
+## Equation     7                   .       X       .       .        .          .
+## Equation     8                   .       X       .       .        .          .
+## Equation     9                   .       .       X       .        .          .
+## Equation     10                  .       .       X       .        .          .
+## Equation     11                  .       .       X       .        .          .
+## Equation     12                  .       .       .       .        X          .
+## Equation     13                  .       .       .       .        X          X
+## Equation     14                  .       .       .       .        X          .
+## Equation     15                  .       X       .       .        .          .
+## Equation     16                  .       .       .       .        .          .
+## Equation     17                  .       .       .       .        .          .
+## Equation     18                  .       .       .       .        .          .
+## Equation     19                  .       .       .       .        .          .
+## Equation     20                  .       .       .       .        .          .
+## Equation     21                  .       .       .       .        .          .
+## Equation     22                  .       .       .       .        .          .
+## Equation     23                  .       .       .       .        .          .
+## Equation     24                  .       .       .       .        .          .
+## Equation     25                  .       .       .       .        .          .
+## Equation     26                  .       .       .       .        .          .
+## Equation     27                  .       .       .       .        .          .
+## Equation     28                  .       .       .       .        .          .
+## Equation     29                  .       .       .       .        .          .
+## Equation     30                  .       .       .       .        .          .
+## Equation     31                  .       .       .       .        .          .
+## Equation     32                  X       .       .       .        .          .
+## Equation     33                  X       .       .       .        .          .
+## Equation     34                  X       .       .       .        .          .
+## Equation     35                  .       .       .       X        .          .
+## Equation     36                  .       X       .       .        .          X
+## Equation     37                  .       X       X       .        .          .
+## Equation     38                  .       .       .       .        .          .
+## Equation     39                  .       X       .       .        .          .
+## Equation     40                  .       .       .       .        .          .
+## Equation     41                  .       .       .       .        .          .
+## Equation     42                  .       .       .       .        .          .
+## Equation     43                  .       X       X       .        .          .
+## Equation     44                  .       X       X       .        .          .
+## Equation     45                  .       X       X       .        .          .
+## Equation     46                  .       .       .       .        .          .
+## Equation     47                  .       .       .       .        .          .
+## Equation     48                  .       .       .       .        .          .
+## Equation     49                  .       X       .       .        .          .
+## Equation     50                  .       X       X       X        .          .
+## Equation     51                  .       .       .       .        X          .
+## Equation     52                  .       .       .       .        .          .
+## Equation     53                  .       .       .       .        .          .
+## Equation     54                  .       .       .       .        .          .
+## Calibr. Eq.  1                   .       .       .       .        .          .
+## Calibr. Eq.  2                   .       .       .       .        .          .
+## Calibr. Eq.  3                   .       .       .       .        .          .
+## Calibr. Eq.  4                   .       .       .       .        .          .
+## Calibr. Eq.  5                   .       .       .       .        .          .
+## Calibr. Eq.  6                   .       .       .       .        .          .
+## Calibr. Eq.  7                   .       .       .       .        .          .
+## Calibr. Eq.  8                   .       .       .       .        .          .
+## Calibr. Eq.  9                   .       .       .       .        .          .
+##                 CONT_SOC_G FIRM_TAX   GTO_G     INC   ING_F ING_GOB     K_h
+## Equation     1           .        .       .       .       .       .       .
+## Equation     2           .        .       .       .       .       .       .
+## Equation     3           .        .       .       .       .       .       .
+## Equation     4           .        .       .       .       .       .       .
+## Equation     5           .        .       .       .       .       .       .
+## Equation     6           .        .       .       .       .       .       .
+## Equation     7           .        .       .       .       .       .       .
+## Equation     8           .        .       .       .       .       .       .
+## Equation     9           .        .       .       .       .       .       .
+## Equation     10          .        .       .       .       .       .       .
+## Equation     11          .        .       .       .       .       .       .
+## Equation     12          .        .       .       X       .       .       .
+## Equation     13          .        .       .       .       .       .       .
+## Equation     14          X        .       .       .       .       .       .
+## Equation     15          .        X       .       .       .       .       .
+## Equation     16          .        .       X       .       .       X       .
+## Equation     17          .        .       .       .       .       .       X
+## Equation     18          .        .       .       .       .       .       .
+## Equation     19          .        .       .       .       .       .       .
+## Equation     20          .        .       .       .       .       .       .
+## Equation     21          .        .       .       .       X       .       .
+## Equation     22          .        .       .       .       .       X       .
+## Equation     23          .        .       .       X       .       .       .
+## Equation     24          .        .       .       .       X       .       .
+## Equation     25          .        .       .       .       .       X       .
+## Equation     26          .        .       .       .       .       .       .
+## Equation     27          .        .       .       .       .       .       .
+## Equation     28          .        .       .       .       .       .       .
+## Equation     29          .        .       .       .       .       .       .
+## Equation     30          .        .       .       .       .       .       .
+## Equation     31          .        .       .       .       .       .       .
+## Equation     32          .        .       .       .       .       .       .
+## Equation     33          .        .       .       .       .       .       .
+## Equation     34          .        .       .       .       .       .       .
+## Equation     35          .        .       .       X       .       .       .
+## Equation     36          .        .       .       .       X       .       .
+## Equation     37          .        .       .       .       .       .       X
+## Equation     38          .        .       .       .       .       .       .
+## Equation     39          X        .       .       .       .       X       .
+## Equation     40          .        X       .       .       .       .       .
+## Equation     41          .        .       .       .       .       .       .
+## Equation     42          .        .       .       .       .       .       .
+## Equation     43          .        .       .       .       .       .       .
+## Equation     44          .        .       .       .       .       .       .
+## Equation     45          .        .       .       .       .       .       .
+## Equation     46          .        .       .       .       .       .       .
+## Equation     47          .        .       .       .       .       .       .
+## Equation     48          .        .       .       .       .       .       .
+## Equation     49          .        .       .       .       X       .       .
+## Equation     50          .        .       .       .       .       .       X
+## Equation     51          .        .       .       X       .       .       .
+## Equation     52          .        .       .       .       .       .       X
+## Equation     53          .        .       X       .       .       .       .
+## Equation     54          .        .       .       .       .       .       .
+## Calibr. Eq.  1           .        .       .       .       .       .       .
+## Calibr. Eq.  2           .        .       .       .       .       .       .
+## Calibr. Eq.  3           .        .       .       .       .       .       .
+## Calibr. Eq.  4           .        .       .       .       .       .       .
+## Calibr. Eq.  5           .        .       .       .       .       .       .
+## Calibr. Eq.  6           .        .       .       .       .       .       .
+## Calibr. Eq.  7           .        .       .       .       .       .       .
+## Calibr. Eq.  8           .        .       .       .       .       .       .
+## Calibr. Eq.  9           .        .       .       .       .       .       .
+##                     K_f     K_g     L_h PIT_base  PI_TAX PREST_SOC PREST_SOC_F
+## Equation     1        .       .       .        .       .         .           .
+## Equation     2        .       .       X        .       .         .           .
+## Equation     3        .       .       .        .       .         .           .
+## Equation     4        .       .       .        .       .         .           .
+## Equation     5        .       .       .        .       .         .           .
+## Equation     6        .       .       .        .       .         .           .
+## Equation     7        .       .       .        .       .         .           .
+## Equation     8        .       .       .        .       .         .           .
+## Equation     9        .       .       .        .       .         .           .
+## Equation     10       .       .       .        .       .         .           .
+## Equation     11       .       .       .        .       .         .           .
+## Equation     12       .       .       .        .       .         .           .
+## Equation     13       .       .       .        .       .         .           .
+## Equation     14       .       .       .        .       .         .           .
+## Equation     15       X       .       .        .       .         .           .
+## Equation     16       .       .       .        .       .         .           .
+## Equation     17       .       .       .        .       .         .           .
+## Equation     18       X       .       .        .       .         .           .
+## Equation     19       .       X       .        .       .         .           .
+## Equation     20       .       .       .        X       X         .           .
+## Equation     21       .       .       .        .       .         .           X
+## Equation     22       .       .       .        .       .         .           .
+## Equation     23       .       .       .        .       .         .           .
+## Equation     24       .       .       .        .       .         .           .
+## Equation     25       .       .       .        .       .         .           .
+## Equation     26       .       .       .        .       .         .           .
+## Equation     27       .       .       .        .       .         .           .
+## Equation     28       .       .       .        .       .         .           .
+## Equation     29       .       .       .        .       .         .           .
+## Equation     30       .       .       .        .       .         .           .
+## Equation     31       .       .       .        .       .         .           .
+## Equation     32       .       .       .        .       .         .           .
+## Equation     33       .       .       .        .       .         .           .
+## Equation     34       .       .       .        .       .         .           .
+## Equation     35       .       .       .        X       .         .           .
+## Equation     36       X       .       .        .       .         .           .
+## Equation     37       .       .       X        X       .         .           .
+## Equation     38       .       .       .        .       .         X           X
+## Equation     39       .       X       .        .       .         .           .
+## Equation     40       .       .       .        .       X         .           .
+## Equation     41       .       .       X        .       .         .           .
+## Equation     42       .       .       .        .       .         .           .
+## Equation     43       .       .       .        .       .         .           .
+## Equation     44       .       .       .        .       .         .           .
+## Equation     45       .       .       .        .       .         .           .
+## Equation     46       .       .       .        .       .         .           .
+## Equation     47       .       .       .        .       .         .           .
+## Equation     48       .       .       .        .       .         .           .
+## Equation     49       X       .       .        .       .         .           X
+## Equation     50       .       .       X        .       .         X           .
+## Equation     51       .       .       .        .       .         .           .
+## Equation     52       X       X       .        .       .         .           .
+## Equation     53       .       .       .        .       .         .           .
+## Equation     54       .       .       .        .       .         .           .
+## Calibr. Eq.  1        .       .       .        .       X         .           .
+## Calibr. Eq.  2        .       .       .        .       .         .           .
+## Calibr. Eq.  3        .       .       .        .       .         .           .
+## Calibr. Eq.  4        .       .       .        .       .         .           .
+## Calibr. Eq.  5        .       .       .        .       .         .           .
+## Calibr. Eq.  6        .       .       .        .       .         .           .
+## Calibr. Eq.  7        .       .       .        .       .         .           .
+## Calibr. Eq.  8        .       .       .        .       .         .           .
+## Calibr. Eq.  9        .       .       .        .       .         .           .
+##                 PREST_SOC_G     SAV   SAV_F   SAV_G TOTAL_TAX  TR_EMP  TR_GOV
+## Equation     1            .       .       .       .         .       .       .
+## Equation     2            .       .       .       .         .       .       .
+## Equation     3            .       .       .       .         .       .       .
+## Equation     4            .       .       .       .         .       .       .
+## Equation     5            .       .       .       .         .       .       .
+## Equation     6            .       .       .       .         .       .       .
+## Equation     7            .       .       .       .         .       .       .
+## Equation     8            .       .       .       .         .       .       .
+## Equation     9            .       .       .       .         .       .       .
+## Equation     10           .       .       .       .         .       .       .
+## Equation     11           .       .       .       .         .       .       .
+## Equation     12           .       .       .       .         .       .       .
+## Equation     13           .       .       .       .         .       .       .
+## Equation     14           .       .       .       .         .       .       .
+## Equation     15           .       .       .       .         .       .       .
+## Equation     16           .       .       .       .         .       .       .
+## Equation     17           .       .       .       .         .       .       .
+## Equation     18           .       .       .       .         .       .       .
+## Equation     19           .       .       .       .         .       .       .
+## Equation     20           .       .       .       .         .       .       .
+## Equation     21           .       .       .       .         .       .       .
+## Equation     22           X       .       .       .         .       .       .
+## Equation     23           .       X       .       .         .       .       .
+## Equation     24           .       .       .       .         .       X       .
+## Equation     25           .       .       .       .         .       .       X
+## Equation     26           .       .       .       .         .       .       .
+## Equation     27           .       .       .       .         .       .       .
+## Equation     28           .       .       .       .         .       .       .
+## Equation     29           .       .       .       .         .       .       .
+## Equation     30           .       .       .       .         .       .       .
+## Equation     31           .       .       .       .         .       .       .
+## Equation     32           .       .       .       .         .       .       .
+## Equation     33           .       .       .       .         .       .       .
+## Equation     34           .       .       .       .         .       .       .
+## Equation     35           .       .       .       .         .       .       .
+## Equation     36           .       .       .       .         .       .       .
+## Equation     37           .       .       .       .         .       .       .
+## Equation     38           X       .       .       .         .       .       .
+## Equation     39           .       .       .       .         X       .       .
+## Equation     40           .       .       .       .         X       .       .
+## Equation     41           .       .       .       .         .       .       .
+## Equation     42           .       .       .       .         .       .       .
+## Equation     43           .       .       .       .         .       .       .
+## Equation     44           .       .       .       .         .       .       .
+## Equation     45           .       .       .       .         .       .       .
+## Equation     46           .       .       .       .         .       .       .
+## Equation     47           .       .       .       .         .       .       .
+## Equation     48           .       .       .       .         .       .       .
+## Equation     49           .       .       X       .         .       X       .
+## Equation     50           .       .       .       .         .       X       X
+## Equation     51           .       X       .       .         .       .       .
+## Equation     52           .       .       .       .         .       .       .
+## Equation     53           X       .       .       X         .       .       X
+## Equation     54           .       X       X       X         .       .       .
+## Calibr. Eq.  1            .       .       .       .         .       .       .
+## Calibr. Eq.  2            .       .       .       .         .       .       .
+## Calibr. Eq.  3            .       .       .       .         .       .       .
+## Calibr. Eq.  4            .       .       .       .         .       .       .
+## Calibr. Eq.  5            .       .       .       .         .       .       .
+## Calibr. Eq.  6            .       .       .       .         .       .       .
+## Calibr. Eq.  7            .       .       .       .         .       .       .
+## Calibr. Eq.  8            .       .       .       .         .       .       .
+## Calibr. Eq.  9            .       .       .       .         .       .       .
+##                       U     VAT  WALRAS p__Manu p__Prim p__Serv pi__Manu
+## Equation     1        .       .       .       .       .       .        .
+## Equation     2        .       .       .       .       .       .        .
+## Equation     3        .       .       .       X       .       .        .
+## Equation     4        .       .       .       .       X       .        .
+## Equation     5        .       .       .       .       .       X        .
+## Equation     6        .       .       .       X       .       .        .
+## Equation     7        .       .       .       .       X       .        .
+## Equation     8        .       .       .       .       .       X        .
+## Equation     9        .       .       .       X       .       .        .
+## Equation     10       .       .       .       .       X       .        .
+## Equation     11       .       .       .       .       .       X        .
+## Equation     12       .       .       .       .       .       .        .
+## Equation     13       .       .       .       .       .       .        .
+## Equation     14       .       .       .       .       .       .        .
+## Equation     15       .       .       .       .       .       .        .
+## Equation     16       .       .       .       .       .       .        .
+## Equation     17       .       .       .       .       .       .        .
+## Equation     18       .       .       .       .       .       .        .
+## Equation     19       .       .       .       .       .       .        .
+## Equation     20       .       .       .       .       .       .        .
+## Equation     21       .       .       .       .       .       .        .
+## Equation     22       .       .       .       .       .       .        .
+## Equation     23       .       .       .       .       .       .        .
+## Equation     24       .       .       .       .       .       .        .
+## Equation     25       .       .       .       .       .       .        .
+## Equation     26       X       .       .       .       .       .        .
+## Equation     27       .       .       .       .       .       .        .
+## Equation     28       .       .       .       .       .       .        .
+## Equation     29       .       .       .       .       .       .        .
+## Equation     30       .       .       .       .       .       .        .
+## Equation     31       .       .       .       .       .       .        .
+## Equation     32       .       .       .       X       .       .        .
+## Equation     33       .       .       .       .       X       .        .
+## Equation     34       .       .       .       .       .       X        .
+## Equation     35       .       .       .       .       .       .        .
+## Equation     36       .       .       .       .       .       .        .
+## Equation     37       .       .       .       .       .       .        .
+## Equation     38       .       .       .       .       .       .        .
+## Equation     39       .       .       .       .       .       .        .
+## Equation     40       .       X       .       .       .       .        .
+## Equation     41       .       .       .       .       .       .        .
+## Equation     42       .       X       .       X       X       X        .
+## Equation     43       .       .       .       X       .       .        X
+## Equation     44       .       .       .       .       X       .        .
+## Equation     45       .       .       .       .       .       X        .
+## Equation     46       .       .       .       .       .       .        .
+## Equation     47       .       .       .       .       .       .        .
+## Equation     48       .       .       .       .       .       .        .
+## Equation     49       .       .       .       .       .       .        .
+## Equation     50       .       .       .       .       .       .        .
+## Equation     51       .       .       .       X       X       X        .
+## Equation     52       .       .       .       .       .       .        .
+## Equation     53       .       .       .       X       X       X        .
+## Equation     54       .       .       X       X       X       X        .
+## Calibr. Eq.  1        .       .       .       .       .       .        .
+## Calibr. Eq.  2        .       .       .       .       .       .        .
+## Calibr. Eq.  3        .       .       .       .       .       .        .
+## Calibr. Eq.  4        .       .       .       .       .       .        .
+## Calibr. Eq.  5        .       .       .       .       .       .        .
+## Calibr. Eq.  6        .       .       .       .       .       .        .
+## Calibr. Eq.  7        .       .       .       .       .       .        .
+## Calibr. Eq.  8        .       .       .       .       .       .        .
+## Calibr. Eq.  9        .       .       .       .       .       .        .
+##                 pi__Prim pi__Serv D__Manu D__Prim D__Serv GG__Manu GG__Prim
+## Equation     1         .        .       .       .       .        .        .
+## Equation     2         .        .       .       .       .        .        .
+## Equation     3         .        .       .       .       .        X        .
+## Equation     4         .        .       .       .       .        .        X
+## Equation     5         .        .       .       .       .        .        .
+## Equation     6         .        .       .       .       .        .        .
+## Equation     7         .        .       .       .       .        .        .
+## Equation     8         .        .       .       .       .        .        .
+## Equation     9         .        .       .       .       .        .        .
+## Equation     10        .        .       .       .       .        .        .
+## Equation     11        .        .       .       .       .        .        .
+## Equation     12        .        .       .       .       .        .        .
+## Equation     13        .        .       .       .       .        .        .
+## Equation     14        .        .       .       .       .        .        .
+## Equation     15        .        .       .       .       .        .        .
+## Equation     16        .        .       .       .       .        .        .
+## Equation     17        .        .       .       .       .        .        .
+## Equation     18        .        .       .       .       .        .        .
+## Equation     19        .        .       .       .       .        .        .
+## Equation     20        .        .       .       .       .        .        .
+## Equation     21        .        .       .       .       .        .        .
+## Equation     22        .        .       .       .       .        .        .
+## Equation     23        .        .       .       .       .        .        .
+## Equation     24        .        .       .       .       .        .        .
+## Equation     25        .        .       .       .       .        .        .
+## Equation     26        .        .       X       X       X        .        .
+## Equation     27        .        .       .       .       .        .        .
+## Equation     28        .        .       .       .       .        .        .
+## Equation     29        .        .       .       .       .        .        .
+## Equation     30        .        .       .       .       .        .        .
+## Equation     31        .        .       .       .       .        .        .
+## Equation     32        .        .       X       X       X        .        .
+## Equation     33        .        .       X       X       X        .        .
+## Equation     34        .        .       X       X       X        .        .
+## Equation     35        .        .       .       .       .        .        .
+## Equation     36        .        .       .       .       .        .        .
+## Equation     37        .        .       .       .       .        .        .
+## Equation     38        .        .       .       .       .        .        .
+## Equation     39        .        .       .       .       .        .        .
+## Equation     40        .        .       .       .       .        .        .
+## Equation     41        .        .       .       .       .        .        .
+## Equation     42        .        .       X       X       X        X        X
+## Equation     43        .        .       .       .       .        .        .
+## Equation     44        X        .       .       .       .        .        .
+## Equation     45        .        X       .       .       .        .        .
+## Equation     46        .        .       X       .       .        X        .
+## Equation     47        .        .       .       X       .        .        X
+## Equation     48        .        .       .       .       X        .        .
+## Equation     49        .        .       .       .       .        .        .
+## Equation     50        .        .       .       .       .        .        .
+## Equation     51        .        .       X       X       X        .        .
+## Equation     52        .        .       .       .       .        .        .
+## Equation     53        .        .       .       .       .        X        X
+## Equation     54        .        .       .       .       .        .        .
+## Calibr. Eq.  1         .        .       .       .       .        .        .
+## Calibr. Eq.  2         .        .       X       .       .        .        .
+## Calibr. Eq.  3         .        .       .       .       X        .        .
+## Calibr. Eq.  4         .        .       .       .       .        .        .
+## Calibr. Eq.  5         .        .       .       .       .        .        .
+## Calibr. Eq.  6         .        .       .       .       .        .        .
+## Calibr. Eq.  7         .        .       .       .       .        .        .
+## Calibr. Eq.  8         .        .       .       .       .        .        .
+## Calibr. Eq.  9         .        .       .       .       .        .        .
+##                 GG__Serv I__Manu I__Prim I__Serv K__Manu K__Prim K__Serv
+## Equation     1         .       .       .       .       .       .       .
+## Equation     2         .       .       .       .       .       .       .
+## Equation     3         .       .       .       .       .       .       .
+## Equation     4         .       .       .       .       .       .       .
+## Equation     5         X       .       .       .       .       .       .
+## Equation     6         .       .       .       .       X       .       .
+## Equation     7         .       .       .       .       .       X       .
+## Equation     8         .       .       .       .       .       .       X
+## Equation     9         .       .       .       .       X       .       .
+## Equation     10        .       .       .       .       .       X       .
+## Equation     11        .       .       .       .       .       .       X
+## Equation     12        .       .       .       .       .       .       .
+## Equation     13        .       .       .       .       .       .       .
+## Equation     14        .       .       .       .       .       .       .
+## Equation     15        .       .       .       .       .       .       .
+## Equation     16        .       .       .       .       .       .       .
+## Equation     17        .       .       .       .       .       .       .
+## Equation     18        .       .       .       .       .       .       .
+## Equation     19        .       .       .       .       .       .       .
+## Equation     20        .       .       .       .       .       .       .
+## Equation     21        .       .       .       .       .       .       .
+## Equation     22        .       .       .       .       .       .       .
+## Equation     23        .       .       .       .       .       .       .
+## Equation     24        .       .       .       .       .       .       .
+## Equation     25        .       .       .       .       .       .       .
+## Equation     26        .       .       .       .       .       .       .
+## Equation     27        .       .       .       .       X       .       .
+## Equation     28        .       .       .       .       .       X       .
+## Equation     29        .       .       .       .       .       .       X
+## Equation     30        .       X       X       .       .       .       .
+## Equation     31        .       .       X       X       .       .       .
+## Equation     32        .       .       .       .       .       .       .
+## Equation     33        .       .       .       .       .       .       .
+## Equation     34        .       .       .       .       .       .       .
+## Equation     35        .       .       .       .       .       .       .
+## Equation     36        .       .       .       .       .       .       .
+## Equation     37        .       .       .       .       .       .       .
+## Equation     38        .       .       .       .       .       .       .
+## Equation     39        .       .       .       .       .       .       .
+## Equation     40        .       .       .       .       .       .       .
+## Equation     41        .       .       .       .       .       .       .
+## Equation     42        X       X       X       X       .       .       .
+## Equation     43        .       .       .       .       X       .       .
+## Equation     44        .       .       .       .       .       X       .
+## Equation     45        .       .       .       .       .       .       X
+## Equation     46        .       X       .       .       .       .       .
+## Equation     47        .       .       X       .       .       .       .
+## Equation     48        X       .       .       X       .       .       .
+## Equation     49        .       .       .       .       .       .       .
+## Equation     50        .       .       .       .       .       .       .
+## Equation     51        .       .       .       .       .       .       .
+## Equation     52        .       .       .       .       X       X       X
+## Equation     53        X       .       .       .       .       .       .
+## Equation     54        .       X       X       X       .       .       .
+## Calibr. Eq.  1         .       .       .       .       .       .       .
+## Calibr. Eq.  2         .       .       .       .       .       .       .
+## Calibr. Eq.  3         .       .       .       .       .       .       .
+## Calibr. Eq.  4         .       .       .       .       .       .       .
+## Calibr. Eq.  5         .       .       .       .       .       .       .
+## Calibr. Eq.  6         .       .       .       .       .       .       .
+## Calibr. Eq.  7         .       .       .       .       .       .       .
+## Calibr. Eq.  8         .       .       .       .       .       .       .
+## Calibr. Eq.  9         .       .       .       .       .       .       .
+##                 L__Manu L__Prim L__Serv Y__Manu Y__Prim Y__Serv
+## Equation     1        .       .       .       .       .       .
+## Equation     2        .       .       .       .       .       .
+## Equation     3        .       .       .       .       .       .
+## Equation     4        .       .       .       .       .       .
+## Equation     5        .       .       .       .       .       .
+## Equation     6        X       .       .       .       .       .
+## Equation     7        .       X       .       .       .       .
+## Equation     8        .       .       X       .       .       .
+## Equation     9        X       .       .       .       .       .
+## Equation     10       .       X       .       .       .       .
+## Equation     11       .       .       X       .       .       .
+## Equation     12       .       .       .       .       .       .
+## Equation     13       .       .       .       .       .       .
+## Equation     14       .       .       .       .       .       .
+## Equation     15       .       .       .       .       .       .
+## Equation     16       .       .       .       .       .       .
+## Equation     17       .       .       .       .       .       .
+## Equation     18       .       .       .       .       .       .
+## Equation     19       .       .       .       .       .       .
+## Equation     20       .       .       .       .       .       .
+## Equation     21       .       .       .       .       .       .
+## Equation     22       .       .       .       .       .       .
+## Equation     23       .       .       .       .       .       .
+## Equation     24       .       .       .       .       .       .
+## Equation     25       .       .       .       .       .       .
+## Equation     26       .       .       .       .       .       .
+## Equation     27       X       .       .       X       .       .
+## Equation     28       .       X       .       .       X       .
+## Equation     29       .       .       X       .       .       X
+## Equation     30       .       .       .       .       .       .
+## Equation     31       .       .       .       .       .       .
+## Equation     32       .       .       .       .       .       .
+## Equation     33       .       .       .       .       .       .
+## Equation     34       .       .       .       .       .       .
+## Equation     35       .       .       .       .       .       .
+## Equation     36       .       .       .       .       .       .
+## Equation     37       .       .       .       .       .       .
+## Equation     38       .       .       .       .       .       .
+## Equation     39       .       .       .       .       .       .
+## Equation     40       .       .       .       .       .       .
+## Equation     41       X       X       X       .       .       .
+## Equation     42       .       .       .       .       .       .
+## Equation     43       X       .       .       X       .       .
+## Equation     44       .       X       .       .       X       .
+## Equation     45       .       .       X       .       .       X
+## Equation     46       .       .       .       X       .       .
+## Equation     47       .       .       .       .       X       .
+## Equation     48       .       .       .       .       .       X
+## Equation     49       .       .       .       .       .       .
+## Equation     50       .       .       .       .       .       .
+## Equation     51       .       .       .       .       .       .
+## Equation     52       .       .       .       .       .       .
+## Equation     53       .       .       .       .       .       .
+## Equation     54       .       .       .       .       .       .
+## Calibr. Eq.  1        .       .       .       .       .       .
+## Calibr. Eq.  2        .       .       .       .       .       .
+## Calibr. Eq.  3        .       .       .       .       .       .
+## Calibr. Eq.  4        X       .       .       .       .       .
+## Calibr. Eq.  5        .       X       .       .       .       .
+## Calibr. Eq.  6        .       .       X       .       .       .
+## Calibr. Eq.  7        .       .       .       X       .       .
+## Calibr. Eq.  8        .       .       .       .       X       .
+## Calibr. Eq.  9        .       .       .       .       .       X
+## 
+## ---------------------------------------------------------- 
+## 
+## Equilibrium values:
+## 
+##                    Equilibrium
+## lambda__CONSUMER_1      0.4988
+## p_k                     1.0000
+## w                       1.0000
+## BTINC                  73.4641
+## CONT_SOC                7.4809
+## CONT_SOC_F              5.8570
+## CONT_SOC_G              1.6239
+## FIRM_TAX                4.6739
+## GTO_G                  15.8748
+## INC                    72.2551
+## ING_F                  36.9537
+## ING_GOB                15.8748
+## K_h                    17.2815
+## K_f                    31.0967
+## K_g                     0.9811
+## L_h                    34.1330
+## PIT_base               51.4145
+## PI_TAX                  1.2090
+## PREST_SOC               4.0619
+## PREST_SOC_F             1.5234
+## PREST_SOC_G             2.5385
+## SAV                     8.7525
+## SAV_F                  13.3251
+## SAV_G                   2.2845
+## TOTAL_TAX              13.2698
+## TR_EMP                 17.4313
+## TR_GOV                  0.5564
+## U                      27.9409
+## VAT                     7.3870
+## WALRAS                  0.0000
+## p__Manu                 1.0000
+## p__Prim                 1.0000
+## p__Serv                 1.0000
+## pi__Manu                0.0000
+## pi__Prim                0.0000
+## pi__Serv                0.0000
+## D__Manu                 3.2875
+## D__Prim                14.1629
+## D__Serv                35.9626
+## GG__Manu                0.0667
+## GG__Prim                0.0172
+## GG__Serv                9.9768
+## I__Manu                16.4160
+## I__Prim                 0.1618
+## I__Serv                 3.4409
+## K__Manu                11.5960
+## K__Prim                13.1918
+## K__Serv                24.5716
+## L__Manu                 8.1743
+## L__Prim                 1.1501
+## L__Serv                24.8087
+## Y__Manu                19.7702
+## Y__Prim                14.3419
+## Y__Serv                49.3803
+## 
+## ---------------------------------------------------------- 
+## 
+## Initial values for equilibrium computation:
+## 
+##                    Initial values
+## lambda__CONSUMER_1         0.4988
+## p_k                        1.0000
+## w                          1.0000
+## BTINC                     73.4641
+## CONT_SOC                   7.4809
+## CONT_SOC_F                 5.8570
+## CONT_SOC_G                 1.6239
+## FIRM_TAX                   4.6739
+## GTO_G                     15.8748
+## INC                       72.2551
+## ING_F                     36.9537
+## ING_GOB                   15.8748
+## K_h                       17.2815
+## K_f                       31.0967
+## K_g                        0.9811
+## L_h                       34.1330
+## PIT_base                  51.4145
+## PI_TAX                     1.2090
+## PREST_SOC                  4.0619
+## PREST_SOC_F                1.5234
+## PREST_SOC_G                2.5385
+## SAV                        8.7525
+## SAV_F                     13.3251
+## SAV_G                      2.2845
+## TOTAL_TAX                 13.2698
+## TR_EMP                    17.4313
+## TR_GOV                     0.5564
+## U                         27.9409
+## VAT                        7.3870
+## WALRAS                     0.0000
+## p__Manu                    1.0000
+## p__Prim                    1.0000
+## p__Serv                    1.0000
+## pi__Manu                   0.0000
+## pi__Prim                   0.0000
+## pi__Serv                   0.0000
+## D__Manu                    3.2875
+## D__Prim                   14.1629
+## D__Serv                   35.9626
+## GG__Manu                   0.0667
+## GG__Prim                   0.0172
+## GG__Serv                   9.9768
+## I__Manu                   16.4160
+## I__Prim                    0.1618
+## I__Serv                    3.4409
+## K__Manu                   11.5960
+## K__Prim                   13.1918
+## K__Serv                   24.5716
+## L__Manu                    8.1743
+## L__Prim                    1.1501
+## L__Serv                   24.8087
+## Y__Manu                   19.7702
+## Y__Prim                   14.3419
+## Y__Serv                   49.3803</code></pre>
+<pre class="r"><code>get_par_values(model)</code></pre>
+<pre><code>## Model parameters:
+## 
+##                       Value
+## fit                   0.150
+## k_total_data         49.359
+## l_total_data         34.133
+## omega                 0.500
+## par_k_h               0.350
+## par_k_f               0.630
+## par_k_g               0.020
+## pit                   0.024
+## pit_data              1.209
+## por_sav               0.121
+## por_cont              0.104
+## por_tremp             0.472
+## por_trgov             0.035
+## por_cont_soc_f        0.783
+## por_pres_soc_f        0.041
+## por_pres_soc_g        0.160
+## por_cont_soc_g        0.217
+## alpha__Manu           0.009
+## alpha__Prim           0.130
+## alpha__Serv           0.861
+## beta_k__Manu          0.587
+## beta_k__Prim          0.920
+## beta_k__Serv          0.498
+## beta_l__Manu          0.414
+## beta_l__Prim          0.080
+## beta_l__Serv          0.502
+## d_data__Manu          3.288
+## d_data__Serv         35.963
+## gamma__Manu           1.970
+## gamma__Prim           1.322
+## gamma__Serv           2.000
+## gg_market_data__Manu  0.084
+## gg_market_data__Prim  0.018
+## gg_market_data__Serv 10.394
+## l_data__Manu          8.174
+## l_data__Prim          1.150
+## l_data__Serv         24.809
+## por_inv__Manu         0.820
+## por_inv__Prim         0.008
+## por_inv__Serv         0.172
+## vat__Manu             0.256
+## vat__Prim             0.019
+## vat__Serv             0.042
+## y_data__Manu         19.770
+## y_data__Prim         14.342
+## y_data__Serv         49.380</code></pre>
+<pre class="r"><code>library(pracma)
+Norm(model@init_residual_vector)</code></pre>
+<pre><code>## [1] 6.451621e-07</code></pre>
+<pre class="r"><code>Norm(model@residual_vector)</code></pre>
+<pre><code>## [1] 6.451621e-07</code></pre>
+</div>
+<div id="simulaciones-de-incrementos-de-impuestos" class="section level1">
+<h1>SIMULACIONES DE INCREMENTOS DE IMPUESTOS</h1>
+</div>
+<div id="shock-10-incremento-iva" class="section level1">
+<h1>SHOCK: 10% Incremento IVA</h1>
+<pre class="r"><code>vat_rates_shock &lt;- vat_rates * 1.1
+
+model_shock_iva &lt;- set_free_par(model, get_flow_values(vat_rates_shock, &quot;vat&quot;, p_names))</code></pre>
+<pre><code>## Warning in set_free_par(model, get_flow_values(vat_rates_shock, &quot;vat&quot;,
+## p_names)): the values of the following parameters have been overwritten:
+## &quot;vat__Manu&quot;, &quot;vat__Prim&quot;, &quot;vat__Serv&quot;</code></pre>
+<pre class="r"><code>model_shock_iva &lt;- steady_state(model_shock_iva, calibration = F) # Simulation, not calibration</code></pre>
+<pre><code>## Equilibrium has been FOUND</code></pre>
+<pre class="r"><code>res_shock_iva &lt;- get_ss_values(model_shock_iva)</code></pre>
+<pre><code>## Equilibrium values:
+## 
+##                    Equilibrium value
+## lambda__CONSUMER_1            0.4965
+## p_k                           1.0000
+## w                             0.9998
+## BTINC                        73.6140
+## CONT_SOC                      7.4964
+## CONT_SOC_F                    5.8692
+## CONT_SOC_G                    1.6273
+## FIRM_TAX                      4.6739
+## GTO_G                        16.6408
+## INC                          72.4052
+## ING_F                        36.9659
+## ING_GOB                      16.6408
+## K_h                          17.2815
+## K_f                          31.0967
+## K_g                           0.9811
+## L_h                          34.1330
+## PIT_base                     51.4089
+## PI_TAX                        1.2088
+## PREST_SOC                     4.1849
+## PREST_SOC_F                   1.5239
+## PREST_SOC_G                   2.6610
+## SAV                           8.7707
+## SAV_F                        13.3311
+## SAV_G                         2.9012
+## TOTAL_TAX                    14.0324
+## TR_EMP                       17.4370
+## TR_GOV                        0.5832
+## U                            27.8711
+## VAT                           8.1497
+## WALRAS                        0.0000
+## p__Manu                       0.9999
+## p__Prim                       1.0000
+## p__Serv                       0.9999
+## pi__Manu                      0.0000
+## pi__Prim                      0.0000
+## pi__Serv                      0.0000
+## D__Manu                       3.2540
+## D__Prim                      14.1470
+## D__Serv                      35.8844
+## GG__Manu                      0.0653
+## GG__Prim                      0.0172
+## GG__Serv                      9.9378
+## I__Manu                      16.5538
+## I__Prim                       0.1632
+## I__Serv                       3.4697
+## K__Manu                      11.6555
+## K__Prim                      13.1782
+## K__Serv                      24.5256
+## L__Manu                       8.2176
+## L__Prim                       1.1491
+## L__Serv                      24.7663
+## Y__Manu                      19.8731
+## Y__Prim                      14.3273
+## Y__Serv                      49.2919</code></pre>
+<pre class="r"><code>res_base &lt;- get_ss_values(model)</code></pre>
+<pre><code>## Equilibrium values:
+## 
+##                    Equilibrium value
+## lambda__CONSUMER_1            0.4988
+## p_k                           1.0000
+## w                             1.0000
+## BTINC                        73.4641
+## CONT_SOC                      7.4809
+## CONT_SOC_F                    5.8570
+## CONT_SOC_G                    1.6239
+## FIRM_TAX                      4.6739
+## GTO_G                        15.8748
+## INC                          72.2551
+## ING_F                        36.9537
+## ING_GOB                      15.8748
+## K_h                          17.2815
+## K_f                          31.0967
+## K_g                           0.9811
+## L_h                          34.1330
+## PIT_base                     51.4145
+## PI_TAX                        1.2090
+## PREST_SOC                     4.0619
+## PREST_SOC_F                   1.5234
+## PREST_SOC_G                   2.5385
+## SAV                           8.7525
+## SAV_F                        13.3251
+## SAV_G                         2.2845
+## TOTAL_TAX                    13.2698
+## TR_EMP                       17.4313
+## TR_GOV                        0.5564
+## U                            27.9409
+## VAT                           7.3870
+## WALRAS                        0.0000
+## p__Manu                       1.0000
+## p__Prim                       1.0000
+## p__Serv                       1.0000
+## pi__Manu                      0.0000
+## pi__Prim                      0.0000
+## pi__Serv                      0.0000
+## D__Manu                       3.2875
+## D__Prim                      14.1629
+## D__Serv                      35.9626
+## GG__Manu                      0.0667
+## GG__Prim                      0.0172
+## GG__Serv                      9.9768
+## I__Manu                      16.4160
+## I__Prim                       0.1618
+## I__Serv                       3.4409
+## K__Manu                      11.5960
+## K__Prim                      13.1918
+## K__Serv                      24.5716
+## L__Manu                       8.1743
+## L__Prim                       1.1501
+## L__Serv                      24.8087
+## Y__Manu                      19.7702
+## Y__Prim                      14.3419
+## Y__Serv                      49.3803</code></pre>
+</div>
+<div id="analysis-iva" class="section level1">
+<h1>ANALYSIS IVA</h1>
+<pre class="r"><code>vars_to_compare &lt;- c(&quot;VAT&quot;, &quot;PI_TAX&quot;, &quot;FIRM_TAX&quot;, &quot;INC&quot;, &quot;TOTAL_TAX&quot;, &quot;U&quot;, &quot;Y__Manu&quot;, &quot;Y__Prim&quot;, &quot;Y__Serv&quot;, &quot;D__Manu&quot;, &quot;D__Prim&quot;, &quot;D__Serv&quot;)
+
+comp_iva &lt;- data.frame(
+    Variable = vars_to_compare,
+    Base = as.numeric(res_base[vars_to_compare]),
+    Shock = as.numeric(res_shock_iva[vars_to_compare])
+)
+
+comp_iva$Diff_Pct &lt;- (comp_iva$Shock / comp_iva$Base - 1) * 100
+
+
+
+cat(&quot;--- SIMULATION RESULTS: 10% VAT INCREASE ---\n&quot;)</code></pre>
+<pre><code>## --- SIMULATION RESULTS: 10% VAT INCREASE ---</code></pre>
+<pre class="r"><code>print(comp_iva)</code></pre>
+<pre><code>##     Variable      Base     Shock    Diff_Pct
+## 1        VAT  7.386977  8.149673 10.32487895
+## 2     PI_TAX  1.208967  1.208834 -0.01096854
+## 3   FIRM_TAX  4.673899  4.673899  0.00000000
+## 4        INC 72.255142 72.405199  0.20767596
+## 5  TOTAL_TAX 13.269843 14.032406  5.74659278
+## 6          U 27.940914 27.871086 -0.24991216
+## 7    Y__Manu 19.770212 19.873111  0.52047464
+## 8    Y__Prim 14.341871 14.327318 -0.10147331
+## 9    Y__Serv 49.380253 49.291907 -0.17890955
+## 10   D__Manu  3.287545  3.253997 -1.02047689
+## 11   D__Prim 14.162856 14.146976 -0.11212364
+## 12   D__Serv 35.962563 35.884408 -0.21732590</code></pre>
+</div>
+<div id="shock-10-incremento-pit" class="section level1">
+<h1>SHOCK: 10% Incremento PIT</h1>
+<pre class="r"><code># Nota: Usamos una lista limpia para evitar errores de nombres (name-mangling) en gEcon
+pit_calibrated &lt;- get_par_values(model)[&quot;pit&quot;]</code></pre>
+<pre><code>## Model parameters:
+## 
+##                       Value
+## fit                   0.150
+## k_total_data         49.359
+## l_total_data         34.133
+## omega                 0.500
+## par_k_h               0.350
+## par_k_f               0.630
+## par_k_g               0.020
+## pit                   0.024
+## pit_data              1.209
+## por_sav               0.121
+## por_cont              0.104
+## por_tremp             0.472
+## por_trgov             0.035
+## por_cont_soc_f        0.783
+## por_pres_soc_f        0.041
+## por_pres_soc_g        0.160
+## por_cont_soc_g        0.217
+## alpha__Manu           0.009
+## alpha__Prim           0.130
+## alpha__Serv           0.861
+## beta_k__Manu          0.587
+## beta_k__Prim          0.920
+## beta_k__Serv          0.498
+## beta_l__Manu          0.414
+## beta_l__Prim          0.080
+## beta_l__Serv          0.502
+## d_data__Manu          3.288
+## d_data__Serv         35.963
+## gamma__Manu           1.970
+## gamma__Prim           1.322
+## gamma__Serv           2.000
+## gg_market_data__Manu  0.084
+## gg_market_data__Prim  0.018
+## gg_market_data__Serv 10.394
+## l_data__Manu          8.174
+## l_data__Prim          1.150
+## l_data__Serv         24.809
+## por_inv__Manu         0.820
+## por_inv__Prim         0.008
+## por_inv__Serv         0.172
+## vat__Manu             0.256
+## vat__Prim             0.019
+## vat__Serv             0.042
+## y_data__Manu         19.770
+## y_data__Prim         14.342
+## y_data__Serv         49.380</code></pre>
+<pre class="r"><code>pit_shock &lt;- as.numeric(pit_calibrated) * 1.1
+
+model_shock_pit &lt;- initval_calibr_par(model, list(pit = pit_shock))</code></pre>
+<pre><code>## Warning in initval_calibr_par(model, list(pit = pit_shock)): initial values of
+## the following calibrated parameters have not been set: &quot;alpha__Manu&quot;,
+## &quot;alpha__Prim&quot;, &quot;alpha__Serv&quot;, &quot;beta_k__Manu&quot;, &quot;beta_k__Prim&quot;, &quot;beta_k__Serv&quot;,
+## &quot;beta_l__Manu&quot;, &quot;beta_l__Prim&quot;, &quot;beta_l__Serv&quot;, &quot;gamma__Manu&quot;, &quot;gamma__Prim&quot;,
+## &quot;gamma__Serv&quot;</code></pre>
+<pre class="r"><code>model_shock_pit &lt;- steady_state(model_shock_pit, calibration = FALSE)</code></pre>
+<pre><code>## Equilibrium has been FOUND</code></pre>
+<pre class="r"><code>res_shock_pit &lt;- get_ss_values(model_shock_pit)</code></pre>
+<pre><code>## Equilibrium values:
+## 
+##                    Equilibrium value
+## lambda__CONSUMER_1            0.4987
+## p_k                           1.0000
+## w                             1.0002
+## BTINC                        73.4911
+## CONT_SOC                      7.4711
+## CONT_SOC_F                    5.8494
+## CONT_SOC_G                    1.6218
+## FIRM_TAX                      4.6739
+## GTO_G                        16.0066
+## INC                          72.1611
+## ING_F                        36.9461
+## ING_GOB                      16.0066
+## K_h                          17.2815
+## K_f                          31.0967
+## K_g                           0.9811
+## L_h                          34.1330
+## PIT_base                     51.4198
+## PI_TAX                        1.3300
+## PREST_SOC                     4.0827
+## PREST_SOC_F                   1.5231
+## PREST_SOC_G                   2.5596
+## SAV                           8.7411
+## SAV_F                        13.3214
+## SAV_G                         2.3906
+## TOTAL_TAX                    13.4037
+## TR_EMP                       17.4277
+## TR_GOV                        0.5610
+## U                            27.9029
+## VAT                           7.3998
+## WALRAS                        0.0000
+## p__Manu                       1.0001
+## p__Prim                       1.0000
+## p__Serv                       1.0001
+## pi__Manu                      0.0000
+## pi__Prim                      0.0000
+## pi__Serv                      0.0000
+## D__Manu                       3.2831
+## D__Prim                      14.1439
+## D__Serv                      35.9133
+## GG__Manu                      0.0667
+## GG__Prim                      0.0172
+## GG__Serv                      9.9761
+## I__Manu                      16.4762
+## I__Prim                       0.1624
+## I__Serv                       3.4535
+## K__Manu                      11.6294
+## K__Prim                      13.1750
+## K__Serv                      24.5549
+## L__Manu                       8.1966
+## L__Prim                       1.1485
+## L__Serv                      24.7880
+## Y__Manu                      19.8259
+## Y__Prim                      14.3235
+## Y__Serv                      49.3429</code></pre>
+</div>
+<div id="analysis-pit" class="section level1">
+<h1>ANALYSIS PIT</h1>
+<pre class="r"><code>comp_pit &lt;- data.frame(
+    Variable = vars_to_compare,
+    Base = as.numeric(res_base[vars_to_compare]),
+    Shock = as.numeric(res_shock_pit[vars_to_compare])
+)
+
+comp_pit$Diff_Pct &lt;- (comp_pit$Shock / comp_pit$Base - 1) * 100
+
+cat(&quot;--- SIMULATION RESULTS: 10% PIT INCREASE ---\n&quot;)</code></pre>
+<pre><code>## --- SIMULATION RESULTS: 10% PIT INCREASE ---</code></pre>
+<pre class="r"><code>print(comp_pit)</code></pre>
+<pre><code>##     Variable      Base     Shock    Diff_Pct
+## 1        VAT  7.386977  7.399802  0.17361961
+## 2     PI_TAX  1.208967  1.329999 10.01118721
+## 3   FIRM_TAX  4.673899  4.673899  0.00000000
+## 4        INC 72.255142 72.161114 -0.13013351
+## 5  TOTAL_TAX 13.269843 13.403700  1.00873232
+## 6          U 27.940914 27.902898 -0.13605558
+## 7    Y__Manu 19.770212 19.825947  0.28191280
+## 8    Y__Prim 14.341871 14.323528 -0.12790193
+## 9    Y__Serv 49.380253 49.342861 -0.07572139
+## 10   D__Manu  3.287545  3.283066 -0.13625709
+## 11   D__Prim 14.162856 14.143919 -0.13370798
+## 12   D__Serv 35.962563 35.913317 -0.13693732</code></pre>
 </div>
 
 
