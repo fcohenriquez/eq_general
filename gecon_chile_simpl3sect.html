@@ -374,7 +374,7 @@ cat(&quot;Balance de Hogares (Ingreso - Gasto):&quot;, sum(as.numeric(chile_sam[
 <h2>2. Construcción del Modelo GCN</h2>
 <pre class="r"><code># El modelo usa un mapeo 1:1 entre actividades y productos simplificado
 model &lt;- make_model(&quot;cge_calib_chile_2008_simpl3sect.gcn&quot;)</code></pre>
-<pre><code>## model parsed in 0.01s
+<pre><code>## model parsed in 0.03s
 ## model loaded in 0.05s</code></pre>
 <pre class="r"><code># Extracción de datos de la SAM (Precios normalizados a 1)
 Y_vals &lt;- as.numeric(diag(as.matrix(chile_sam[sam_a, sam_p])))

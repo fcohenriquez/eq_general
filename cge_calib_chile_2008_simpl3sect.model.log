@@ -1,4 +1,4 @@
-Generated on 2026-03-05 09:40:30 by gEcon ver. 1.2.3 (2025-04-13)
+Generated on 2026-03-05 09:57:35 by gEcon ver. 1.2.3 (2025-04-13)
 http://gecon.r-forge.r-project.org/
 
 Model name: cge_calib_chile_2008_simpl3sect
@@ -37,8 +37,6 @@ Block: <p::P> PRODUCTION
     pi<p> = -p_k * K<p> + p<p> * Y<p> - w * L<p>
  Constraints:
     -Y<p> + gamma<p> * K<p>^beta_k<p> * L<p>^beta_l<p> = 0    (lambda__PRODUCTION_1<p>)
- Identities:
-    D<p> + GG<p> + I<p> - Y<p> = 0
  First order conditions:
     -lambda__PRODUCTION_1<p> + p<p> = 0    (Y<p>)
     -p_k + beta_k<p> * gamma<p> * lambda__PRODUCTION_1<p> * K<p>^(-1 + beta_k<p>) * L<p>^beta_l<p> = 0    (K<p>)
@@ -46,6 +44,10 @@ Block: <p::P> PRODUCTION
  First order conditions after reduction:
     -p_k + beta_k<p> * gamma<p> * p<p> * K<p>^(-1 + beta_k<p>) * L<p>^beta_l<p> = 0    (K<p>)
     -w + beta_l<p> * gamma<p> * p<p> * K<p>^beta_k<p> * L<p>^(-1 + beta_l<p>) = 0    (L<p>)
+
+Block: <p::P> PRODUCTS
+ Identities:
+    D<p> + GG<p> + I<p> - Y<p> = 0
 
 Block: FIRM
  Identities:

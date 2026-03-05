@@ -78,16 +78,19 @@ block <p::P>PRODUCTION
         Y<p>[] = gamma<p> * K<p>[]^beta_k<p> * L<p>[]^beta_l<p>;
     };
     
-    identities
-    {
-        Y<p>[] = D<p>[] + GG<p>[] + I<p>[];
-    };
-    
     calibration
     {
         beta_k<p> + beta_l<p> = 1 -> beta_k<p>;
         L<p>[] = l_data<p> -> beta_l<p>;
         Y<p>[] = y_data<p> -> gamma<p>;
+    };
+};
+
+block <p::P>PRODUCTS
+{
+    identities
+    {
+        Y<p>[] = D<p>[] + GG<p>[] + I<p>[];
     };
 };
 

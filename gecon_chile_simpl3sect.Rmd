@@ -185,3 +185,29 @@ print(comparison)
 # Panel de variables institucionales
 var_info(model, variables = c("U", "INC", "ING_GOB", "VAT", "TOTAL_TAX", "SAV", "WALRAS"))
 ```
+# Estadisticas de residuos
+
+```{r}
+get_residuals(model)
+Norm(model@init_residual_vector)
+Norm(model@residual_vector)
+
+```
+# Estadisticas de valores obtenidos
+
+```{r}
+var_info(model, all =T)
+```
+
+```{r}
+get_par_values(model)
+```
+
+```{r}
+library (pracma)
+Norm(model@init_residual_vector)
+Norm(model@residual_vector)
+
+```
+
+

@@ -1,10 +1,10 @@
-# Generated on 2026-03-05 09:40:30 by gEcon ver. 1.2.3 (2025-04-13)
+# Generated on 2026-03-05 09:57:35 by gEcon ver. 1.2.3 (2025-04-13)
 # http://gecon.r-forge.r-project.org/
 
 # Model name: cge_calib_chile_2008_simpl3sect
 
 # info
-info__ <- c("cge_calib_chile_2008_simpl3sect", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl3sect.gcn", "2026-03-05 09:40:30", "false")
+info__ <- c("cge_calib_chile_2008_simpl3sect", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/cge_calib_chile_2008_simpl3sect.gcn", "2026-03-05 09:57:35", "false")
 
 # index sets
 index_sets__ <- list(P = c("Manu", "Prim", "Serv"),
