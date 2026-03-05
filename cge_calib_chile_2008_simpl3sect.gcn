@@ -18,68 +18,7 @@ indexsets
 block CONSUMER
 {
 
-### VARIABLES
 
-    # k_total_data				Capital total
-	# par_k_h					% particip hogar en capital
-	# l_total_data				Trabajo total
-	#L_h[]						Trabajo de los hogares
-	#por_l_h					% del trabajo de los hogares
-	#K_h[]						Capital perteneciente a los hogares
-	#D<p>[]						Demanda de los hogares por el producto p
-	#SAV[]						Ahorro de los hogares
-	#CONT_SOC[]					Contribuciones sociales de los hogares (dadas por los hogares a las empresas y al gobierno)
-	#TR_EMP[]					Transferencias desde las empresas
-	#TR_GOV[]					Transferencias desde el gobierno
-	#PREST_SOC[]				Prestaciones sociales (entregadas por el gobierno y las empresas)
-	# por_ps[p,s]				% de la produccion del producto p en el sector s
-	#t_prod<s>					Tasa de impuesto a la produccion (suma de los impuestos a la produccion, especifico e iva cobrados a la actividad s)
-	#x_data<pi,s>				Gasto en el produicto pi por el sector sector
-	#data_prod_s<s,p>			la produccion de p en s
-	# M<p>[]				Importaciones del bien p
-	#G<p>[]					Gasto del gobierno en el bien p
-	#I<p>[]					Gasto en inversión en el bien p
-	#EXPORT<p>[]			exportaciones del bien p (por ahora lo tengo pagando iva)
-	#por_x[]				Porcentaje en la demanda agregada de las exportaciones
-	#por_m<p>				Porcentaje en la oferta de importaciones, incluye el arancel
-	# DA<p>[] 				demanda agregada del bien. Esta en pesos despues de iva
-	#OA<p>[]				oferta agregada del bien. Esta en pesos antes de iva
-	# K_f[]				capital de las empresas
-	#par_k_f			% participacion de las empresas en el capital
-	#fit                impuesto sobre los ingresos del capital de las empresas
-	#ING_F[]			ingresos totales de las empresas
-	#por_sav_f			% del ahorro de las empresas (como % de sus ingresos)
-	#SAV_F[]			Ahorro de las empresas
-	#CONT_SOC_F[]		Contribuciones sociales pagadas a las empresas
-	#por_cont_soc_f		% de las contribuciones sociales pagadas a las empresas
-	#PREST_SOC_F[]		Prestaciones sociales de las empresas
-	#por_l_row		% del trajabo de ROW
-	#par_k_row		% participacion de ROW en el capital
-	#par_k_pago_row	% de los ingresos del capital domestico que vienen de ROW
-	#por_sav_row	% del ahorro de ROW (como % de sus ingresos)
-	#ING_ROW[]		ingresos totales obtenidos por ROW
-	#SAV_ROW[]		Ahorro de ROW
-	#SAV_TOT[]		Ahorros totales
-	#por_inv_p<p>		porcentaje de la demanda agregada del bien p en ahorro 
-	#ING_GOB[]			Ingresos Totales del gobierno
-	#par_k_g			% participacion del gobierno en el capital
-	#K_g[]				Capital del gobierno
-	#por_cont_soc_g		% de las contribuciones sociales pagasdas al gobierno
-	#CONT_SOC_G[]		Contrib soc recibidas por el gobierno
-	#TOTAl_tax[]		Impuestos totales
-	#por_gg_p<p>		% de la demanda en gasto de gobierno
-	#data_gg_p<p>		Gasto de gobierno en  el producto p
-	#PREST_SOC_G[]
-	#por_pres_soc_g		% de las prestaciones sociales pagadas por el gobierno
-	#PROD_T[]			Impuesto a la produccion
-	#VAT[]				IVA
-	#DIR_T[]			Impuesto a la renta
-	#ARANC[]			Arancel
-	#por_sav_g			% de ahorro del gobierno
-	
-	
-	
-	
 	
     definitions
     {
@@ -182,11 +121,19 @@ block GOB
         K_g[] = k_total_data * par_k_g;
         CONT_SOC_G[] = CONT_SOC[] * por_cont_soc_g;
         VAT[] = SUM<p::P>((vat<p> * p<p>[]) * (D<p>[] + GG<p>[] + I<p>[]));
+		
+		PI_TAX[]=pit * PIT_base[];
+		FIRM_TAX[]=fit * (K_f[] * p_k[]);
         
-        TOTAL_TAX[] = VAT[] + pit * PIT_base[] + fit * (K_f[] * p_k[]);
+        TOTAL_TAX[] = VAT[] + PI_TAX[] + FIRM_TAX[];
         
         # Link to SAM data (market price * quantity)
         <p::P>p<p>[] * GG<p>[] * (1 + vat<p>) = gg_market_data<p>;    
+    };
+    
+    calibration
+    {
+        PI_TAX[] = pit_data -> pit;
     };
 };
 

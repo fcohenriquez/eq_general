@@ -1,4 +1,4 @@
-% Generated on 2026-03-05 09:57:35 by gEcon ver. 1.2.3 (2025-04-13)
+% Generated on 2026-03-05 13:22:48 by gEcon ver. 1.2.3 (2025-04-13)
 % http://gecon.r-forge.r-project.org/
 
 % Model name: cge_calib_chile_2008_simpl3sect
@@ -166,7 +166,13 @@ K^{\mathrm{g}} = {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\m
 {V\!A\!T} = \sum_{p\in P} {{{v\!a\!t}}^{\langle p\rangle}} {{p}^{\langle p\rangle}} \left({D}^{\langle p\rangle} + {{G\!G}}^{\langle p\rangle} + {I}^{\langle p\rangle}\right)
 \end{equation}
 \begin{equation}
-{T\!O\!T\!A\!L}^{\mathrm{TAX}} = {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}}
+\Pi^{\mathrm{TAX}} = {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}}
+\end{equation}
+\begin{equation}
+{F\!I\!R\!M}^{\mathrm{TAX}} = {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}}
+\end{equation}
+\begin{equation}
+{T\!O\!T\!A\!L}^{\mathrm{TAX}} = {F\!I\!R\!M}^{\mathrm{TAX}} + \Pi^{\mathrm{TAX}} + {V\!A\!T}
 \end{equation}
 \begin{equation}
 p\in P\colon\quad {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = {{g\!g}^{\mathrm{market}^{\mathrm{data}}}}^{\langle p\rangle}
@@ -216,6 +222,9 @@ l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
 -{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{g}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}} = 0
 \end{equation}
 \begin{equation}
+-{F\!I\!R\!M}^{\mathrm{TAX}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
 {G\!T\!O}^{\mathrm{G}} - {I\!N\!G}^{\mathrm{GOB}} = 0
 \end{equation}
 \begin{equation}
@@ -229,6 +238,9 @@ l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
 \end{equation}
 \begin{equation}
 L^{\mathrm{h}} - \sum_{p\in P} {L}^{\langle p\rangle} = 0
+\end{equation}
+\begin{equation}
+-\Pi^{\mathrm{TAX}} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} = 0
 \end{equation}
 \begin{equation}
 -{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{f}}}}} {{I\!N\!G}^{\mathrm{F}}} = 0
@@ -270,10 +282,10 @@ U - \left(\sum_{p\in P} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^
 {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
 \end{equation}
 \begin{equation}
-K^{\mathrm{h}} + K^{\mathrm{f}} + K^{\mathrm{g}} - \sum_{p\in P} {K}^{\langle p\rangle} = 0
+{F\!I\!R\!M}^{\mathrm{TAX}} + \Pi^{\mathrm{TAX}} - {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} = 0
 \end{equation}
 \begin{equation}
--{T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+K^{\mathrm{h}} + K^{\mathrm{f}} + K^{\mathrm{g}} - \sum_{p\in P} {K}^{\langle p\rangle} = 0
 \end{equation}
 \begin{equation}
 -{G\!T\!O}^{\mathrm{G}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {S\!A\!V}^{\mathrm{G}} + {T\!R}^{\mathrm{GOV}} + \sum_{p\in P} {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = 0
@@ -359,6 +371,9 @@ l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
 -{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{g}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}} = 0
 \end{equation}
 \begin{equation}
+-{F\!I\!R\!M}^{\mathrm{TAX}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
 {G\!T\!O}^{\mathrm{G}} - {I\!N\!G}^{\mathrm{GOB}} = 0
 \end{equation}
 \begin{equation}
@@ -369,6 +384,9 @@ l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
 \end{equation}
 \begin{equation}
 -K^{\mathrm{g}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{g}}}} = 0
+\end{equation}
+\begin{equation}
+-\Pi^{\mathrm{TAX}} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} = 0
 \end{equation}
 \begin{equation}
 -{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{f}}}}} {{I\!N\!G}^{\mathrm{F}}} = 0
@@ -428,10 +446,10 @@ U - \left({{\alpha}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{{D}^{\langle \mat
 {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
 \end{equation}
 \begin{equation}
-L^{\mathrm{h}} - {L}^{\langle \mathrm{Manu}\rangle} - {L}^{\langle \mathrm{Prim}\rangle} - {L}^{\langle \mathrm{Serv}\rangle} = 0
+{F\!I\!R\!M}^{\mathrm{TAX}} + \Pi^{\mathrm{TAX}} - {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} = 0
 \end{equation}
 \begin{equation}
--{T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+L^{\mathrm{h}} - {L}^{\langle \mathrm{Manu}\rangle} - {L}^{\langle \mathrm{Prim}\rangle} - {L}^{\langle \mathrm{Serv}\rangle} = 0
 \end{equation}
 \begin{equation}
 -{V\!A\!T} + {{{v\!a\!t}}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} \left({D}^{\langle \mathrm{Manu}\rangle} + {{G\!G}}^{\langle \mathrm{Manu}\rangle} + {I}^{\langle \mathrm{Manu}\rangle}\right) + {{{v\!a\!t}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} \left({D}^{\langle \mathrm{Prim}\rangle} + {{G\!G}}^{\langle \mathrm{Prim}\rangle} + {I}^{\langle \mathrm{Prim}\rangle}\right) + {{{v\!a\!t}}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}} \left({D}^{\langle \mathrm{Serv}\rangle} + {{G\!G}}^{\langle \mathrm{Serv}\rangle} + {I}^{\langle \mathrm{Serv}\rangle}\right) = 0
@@ -477,6 +495,9 @@ K^{\mathrm{h}} + K^{\mathrm{f}} + K^{\mathrm{g}} - {K}^{\langle \mathrm{Manu}\ra
 
 \section{Calibrating equations}
 
+\begin{equation}
+-{p\!i\!t}^{\mathrm{data}} + \Pi^{\mathrm{TAX}} = 0
+\end{equation}
 \begin{equation}
 -{d^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Manu}}\rangle} + {D}^{\langle \mathrm{Manu}\rangle} = 0
 \end{equation}

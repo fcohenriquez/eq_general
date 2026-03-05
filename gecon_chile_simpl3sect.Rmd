@@ -93,7 +93,7 @@ model <- set_free_par(model, c(
     por_cont_soc_g = chile_sam["Gobierno", "Cont_soc"] / CONT_SOC_H_val,
     por_pres_soc_f = PREST_SOC_F_val / ING_F_val,
     por_pres_soc_g = PREST_SOC_G_val / ING_GOB_val,
-    pit = DIR_TAX_H_val / PIT_base_val,
+    pit_data = DIR_TAX_H_val,
     fit = FIT_val / K_f_val,
     por_sav = SAV_H_val / INC_val,
     por_cont = CONT_SOC_H_val / INC_val,
@@ -127,6 +127,8 @@ varlist <- list(
     SAV_G = ING_GOB_val - sum(GG_market) - TR_GOV_val - PREST_SOC_G_val,
     CONT_SOC = CONT_SOC_H_val, CONT_SOC_F = chile_sam["Empresas", "Cont_soc"], CONT_SOC_G = chile_sam["Gobierno", "Cont_soc"],
     TR_EMP = TR_EMP_val, TR_GOV = TR_GOV_val,
+    PI_TAX = DIR_TAX_H_val,
+    FIRM_TAX=FIT_val,
     TOTAL_TAX = sum(chile_sam["IVA", sam_p]) + DIR_TAX_H_val + FIT_val,
     VAT = sum(chile_sam["IVA", sam_p]), WALRAS = 0
 )
@@ -147,6 +149,7 @@ varlist <- c(
 # Parámetros calibrados
 listcalib <- c(
     get_flow_values(alpha_vec, "alpha", p_names),
+    pit = DIR_TAX_H_val / PIT_base_val,
     get_flow_values(1 - L_vals / Y_vals, "beta_k", p_names),
     get_flow_values(L_vals / Y_vals, "beta_l", p_names),
     get_flow_values(Y_vals / (K_vals^(1 - L_vals / Y_vals) * L_vals^(L_vals / Y_vals)), "gamma", p_names)
@@ -183,7 +186,7 @@ print("Comparación de Output (Y):")
 print(comparison)
 
 # Panel de variables institucionales
-var_info(model, variables = c("U", "INC", "ING_GOB", "VAT", "TOTAL_TAX", "SAV", "WALRAS"))
+var_info(model, variables = c("U", "INC", "ING_GOB", "VAT", "PI_TAX", "TOTAL_TAX", "SAV", "WALRAS"))
 ```
 # Estadisticas de residuos
 
@@ -191,12 +194,11 @@ var_info(model, variables = c("U", "INC", "ING_GOB", "VAT", "TOTAL_TAX", "SAV", 
 get_residuals(model)
 Norm(model@init_residual_vector)
 Norm(model@residual_vector)
-
 ```
 # Estadisticas de valores obtenidos
 
 ```{r}
-var_info(model, all =T)
+var_info(model, all = T)
 ```
 
 ```{r}
@@ -204,10 +206,48 @@ get_par_values(model)
 ```
 
 ```{r}
-library (pracma)
+library(pracma)
 Norm(model@init_residual_vector)
 Norm(model@residual_vector)
-
 ```
+
+
+
+# 2. SHOCK: 10% VAT Increase
+```{r}
+vat_rates_shock <- vat_rates * 1.1
+
+model_shock <- set_free_par(model, get_flow_values(vat_rates_shock, "vat", p_names))
+
+model_shock <- steady_state(model_shock, calibration = F) # Simulation, not calibration
+
+res_shock <- get_ss_values(model_shock)
+res_base <- get_ss_values(model)
+```
+
+
+# 3. ANALYSIS
+```{r}
+vars_to_compare <- c("VAT", "PI_TAX", "FIRM_TAX" , "INC", "TOTAL_TAX", "U", "Y__Manu", "Y__Prim", "Y__Serv", "D__Manu", "D__Prim", "D__Serv")
+
+comp <- data.frame(
+
+    Variable = vars_to_compare,
+
+    Base = as.numeric(res_base[vars_to_compare]),
+
+    Shock = as.numeric(res_shock[vars_to_compare])
+
+)
+
+comp$Diff_Pct <- (comp$Shock / comp$Base - 1) * 100
+
+
+
+cat("--- SIMULATION RESULTS: 10% VAT INCREASE ---\n")
+
+print(comp)
+```
+
 
 
