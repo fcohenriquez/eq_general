@@ -1,0 +1,178 @@
+Generated on 2026-03-05 15:30:14 by gEcon ver. 1.2.3 (2025-04-13)
+http://gecon.r-forge.r-project.org/
+
+Model name: cge_calib_chile_2008_simpl3sect1
+
+Index sets (3):
+    A = { 'Manu', 'Prim', 'Serv' }
+    P = { 'Manu', 'Prim', 'Serv' }
+    P_SP = { 'Manu', 'Serv' }
+
+Block: CONSUMER
+ Definitions:
+    u = (SUM<p::P> alpha<p> * D<p>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1)
+ Controls:
+    <p::P> D<p>
+ Objective:
+    U = (SUM<p::P> alpha<p> * D<p>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1)
+ Constraints:
+    -CONT_SOC + INC - SAV - SUM<p::P> p<p> * D<p> * (1 + vat<p>) = 0    (lambda__CONSUMER_1)
+ Identities:
+    BTINC - INC - pit * PIT_base = 0
+    -BTINC + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h + w * L_h = 0
+    -PIT_base + p_k * K_h + w * L_h = 0
+    -K_h + k_total_data * par_k_h = 0
+    l_total_data - L_h = 0
+    -SAV + por_sav * INC = 0
+    -CONT_SOC + por_cont * INC = 0
+    -TR_EMP + por_tremp * ING_F = 0
+    -TR_GOV + por_trgov * ING_GOB = 0
+    -PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0
+ First order conditions:
+    <p::P> alpha<p> * D<p>^(-1 + omega^-1 * (-1 + omega)) * (SUM<p::P> alpha<p> * D<p>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<p> * (1 + vat<p>) = 0    (<p::P> D<p>)
+
+Block: <a::A> PRODUCTION
+ Definitions:
+    p_v<a> = SUM<p::P> make_share<a,p> * p<p>
+ Controls:
+    V<a>, K<a>, L<a>
+ Objective:
+    pi<a> = -p_k * K<a> + V<a> * (SUM<p::P> make_share<a,p> * p<p>) - w * L<a>
+ Constraints:
+    -V<a> + gamma<a> * K<a>^beta_k<a> * L<a>^beta_l<a> = 0    (lambda__PRODUCTION_1<a>)
+ Identities:
+    <p::P> -Y_ap<a,p> + make_share<a,p> * V<a> = 0
+ First order conditions:
+    -lambda__PRODUCTION_1<a> + SUM<p::P> make_share<a,p> * p<p> = 0    (V<a>)
+    -p_k + beta_k<a> * gamma<a> * lambda__PRODUCTION_1<a> * K<a>^(-1 + beta_k<a>) * L<a>^beta_l<a> = 0    (K<a>)
+    -w + beta_l<a> * gamma<a> * lambda__PRODUCTION_1<a> * K<a>^beta_k<a> * L<a>^(-1 + beta_l<a>) = 0    (L<a>)
+ First order conditions after reduction:
+    -p_k + beta_k<a> * gamma<a> * K<a>^(-1 + beta_k<a>) * L<a>^beta_l<a> * (SUM<p::P> make_share<a,p> * p<p>) = 0    (K<a>)
+    -w + beta_l<a> * gamma<a> * K<a>^beta_k<a> * L<a>^(-1 + beta_l<a>) * (SUM<p::P> make_share<a,p> * p<p>) = 0    (L<a>)
+
+Block: <p::P> PRODUCTS
+ Identities:
+    D<p> + GG<p> + I<p> - SUM<a::A> Y_ap<a,p> = 0
+
+Block: FIRM
+ Identities:
+    CONT_SOC_F - ING_F + p_k * K_f = 0
+    ING_F - PREST_SOC_F - SAV_F - TR_EMP - fit * p_k * K_f = 0
+    -K_f + k_total_data * par_k_f = 0
+    -CONT_SOC_F + por_cont_soc_f * CONT_SOC = 0
+    -PREST_SOC_F + por_pres_soc_f * ING_F = 0
+
+Block: GOB
+ Identities:
+    CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0
+    -GTO_G + PREST_SOC_G + SAV_G + TR_GOV + SUM<p::P> p<p> * GG<p> * (1 + vat<p>) = 0
+    GTO_G - ING_GOB = 0
+    -PREST_SOC_G + por_pres_soc_g * ING_GOB = 0
+    -K_g + k_total_data * par_k_g = 0
+    -CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0
+    -VAT + SUM<p::P> vat<p> * p<p> * (D<p> + GG<p> + I<p>) = 0
+    -PI_TAX + pit * PIT_base = 0
+    -FIRM_TAX + fit * p_k * K_f = 0
+    FIRM_TAX + PI_TAX - TOTAL_TAX + VAT = 0
+    <p::P> gg_market_data<p> - p<p> * GG<p> * (1 + vat<p>) = 0
+
+Block: EQUILIBRIUM
+ Identities:
+    L_h - SUM<a::A> L<a> = 0
+    K_h + K_f + K_g - SUM<a::A> K<a> = 0
+    SAV + SAV_F + SAV_G + WALRAS - SUM<p::P> p<p> * I<p> * (1 + vat<p>) = 0
+    <p::P_SP> por_inv<p> * I<'Prim'> - por_inv<'Prim'> * I<p> = 0
+    1 - p_k = 0
+
+Variables (63):
+    lambda__CONSUMER_1, p_k, w, BTINC, CONT_SOC, CONT_SOC_F, CONT_SOC_G, FIRM_TAX, GTO_G, INC, ING_F, ING_GOB, K_h, K_f, K_g, L_h, PIT_base, PI_TAX, PREST_SOC, PREST_SOC_F, PREST_SOC_G, SAV, SAV_F, SAV_G, TOTAL_TAX, TR_EMP, TR_GOV, U, VAT, WALRAS, p<'Manu'>, p<'Prim'>, p<'Serv'>, pi<'Manu'>, pi<'Prim'>, pi<'Serv'>, D<'Manu'>, D<'Prim'>, D<'Serv'>, GG<'Manu'>, GG<'Prim'>, GG<'Serv'>, I<'Manu'>, I<'Prim'>, I<'Serv'>, K<'Manu'>, K<'Prim'>, K<'Serv'>, L<'Manu'>, L<'Prim'>, L<'Serv'>, V<'Manu'>, V<'Prim'>, V<'Serv'>, Y_ap<'Manu','Manu'>, Y_ap<'Manu','Prim'>, Y_ap<'Manu','Serv'>, Y_ap<'Prim','Manu'>, Y_ap<'Prim','Prim'>, Y_ap<'Prim','Serv'>, Y_ap<'Serv','Manu'>, Y_ap<'Serv','Prim'>, Y_ap<'Serv','Serv'>
+
+Parameters (55):
+    fit, k_total_data, l_total_data, omega, par_k_h, par_k_f, par_k_g, pit, pit_data, por_sav, por_cont, por_tremp, por_trgov, por_cont_soc_f, por_pres_soc_f, por_pres_soc_g, por_cont_soc_g, alpha<'Manu'>, alpha<'Prim'>, alpha<'Serv'>, beta_k<'Manu'>, beta_k<'Prim'>, beta_k<'Serv'>, beta_l<'Manu'>, beta_l<'Prim'>, beta_l<'Serv'>, d_data<'Manu'>, d_data<'Serv'>, gamma<'Manu'>, gamma<'Prim'>, gamma<'Serv'>, gg_market_data<'Manu'>, gg_market_data<'Prim'>, gg_market_data<'Serv'>, l_data<'Manu'>, l_data<'Prim'>, l_data<'Serv'>, make_share<'Manu','Manu'>, make_share<'Manu','Prim'>, make_share<'Manu','Serv'>, make_share<'Prim','Manu'>, make_share<'Prim','Prim'>, make_share<'Prim','Serv'>, make_share<'Serv','Manu'>, make_share<'Serv','Prim'>, make_share<'Serv','Serv'>, por_inv<'Manu'>, por_inv<'Prim'>, por_inv<'Serv'>, v_data<'Manu'>, v_data<'Prim'>, v_data<'Serv'>, vat<'Manu'>, vat<'Prim'>, vat<'Serv'>
+
+Free parameters (42):
+    fit, k_total_data, l_total_data, omega, par_k_h, par_k_f, par_k_g, pit_data, por_sav, por_cont, por_tremp, por_trgov, por_cont_soc_f, por_pres_soc_f, por_pres_soc_g, por_cont_soc_g, d_data<'Manu'>, d_data<'Serv'>, gg_market_data<'Manu'>, gg_market_data<'Prim'>, gg_market_data<'Serv'>, l_data<'Manu'>, l_data<'Prim'>, l_data<'Serv'>, make_share<'Manu','Manu'>, make_share<'Manu','Prim'>, make_share<'Manu','Serv'>, make_share<'Prim','Manu'>, make_share<'Prim','Prim'>, make_share<'Prim','Serv'>, make_share<'Serv','Manu'>, make_share<'Serv','Prim'>, make_share<'Serv','Serv'>, por_inv<'Manu'>, por_inv<'Prim'>, por_inv<'Serv'>, v_data<'Manu'>, v_data<'Prim'>, v_data<'Serv'>, vat<'Manu'>, vat<'Prim'>, vat<'Serv'>
+
+Calibrated parameters (13):
+    pit, alpha<'Manu'>, alpha<'Prim'>, alpha<'Serv'>, beta_k<'Manu'>, beta_k<'Prim'>, beta_k<'Serv'>, beta_l<'Manu'>, beta_l<'Prim'>, beta_l<'Serv'>, gamma<'Manu'>, gamma<'Prim'>, gamma<'Serv'>
+
+Equations (63):
+ (1)  1 - p_k = 0
+ (2)  l_total_data - L_h = 0
+ (3)  gg_market_data<'Manu'> - p<'Manu'> * GG<'Manu'> * (1 + vat<'Manu'>) = 0
+ (4)  gg_market_data<'Prim'> - p<'Prim'> * GG<'Prim'> * (1 + vat<'Prim'>) = 0
+ (5)  gg_market_data<'Serv'> - p<'Serv'> * GG<'Serv'> * (1 + vat<'Serv'>) = 0
+ (6)  -p_k + beta_k<'Manu'> * gamma<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * K<'Manu'>^(-1 + beta_k<'Manu'>) * L<'Manu'>^beta_l<'Manu'> = 0
+ (7)  -p_k + beta_k<'Prim'> * gamma<'Prim'> * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * K<'Prim'>^(-1 + beta_k<'Prim'>) * L<'Prim'>^beta_l<'Prim'> = 0
+ (8)  -p_k + beta_k<'Serv'> * gamma<'Serv'> * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * K<'Serv'>^(-1 + beta_k<'Serv'>) * L<'Serv'>^beta_l<'Serv'> = 0
+ (9)  -w + beta_l<'Manu'> * gamma<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * K<'Manu'>^beta_k<'Manu'> * L<'Manu'>^(-1 + beta_l<'Manu'>) = 0
+ (10)  -w + beta_l<'Prim'> * gamma<'Prim'> * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * K<'Prim'>^beta_k<'Prim'> * L<'Prim'>^(-1 + beta_l<'Prim'>) = 0
+ (11)  -w + beta_l<'Serv'> * gamma<'Serv'> * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * K<'Serv'>^beta_k<'Serv'> * L<'Serv'>^(-1 + beta_l<'Serv'>) = 0
+ (12)  -CONT_SOC + por_cont * INC = 0
+ (13)  -CONT_SOC_F + por_cont_soc_f * CONT_SOC = 0
+ (14)  -CONT_SOC_G + por_cont_soc_g * CONT_SOC = 0
+ (15)  -FIRM_TAX + fit * p_k * K_f = 0
+ (16)  GTO_G - ING_GOB = 0
+ (17)  -K_h + k_total_data * par_k_h = 0
+ (18)  -K_f + k_total_data * par_k_f = 0
+ (19)  -K_g + k_total_data * par_k_g = 0
+ (20)  -PI_TAX + pit * PIT_base = 0
+ (21)  -PREST_SOC_F + por_pres_soc_f * ING_F = 0
+ (22)  -PREST_SOC_G + por_pres_soc_g * ING_GOB = 0
+ (23)  -SAV + por_sav * INC = 0
+ (24)  -TR_EMP + por_tremp * ING_F = 0
+ (25)  -TR_GOV + por_trgov * ING_GOB = 0
+ (26)  U - (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0
+ (27)  -V<'Manu'> + gamma<'Manu'> * K<'Manu'>^beta_k<'Manu'> * L<'Manu'>^beta_l<'Manu'> = 0
+ (28)  -V<'Prim'> + gamma<'Prim'> * K<'Prim'>^beta_k<'Prim'> * L<'Prim'>^beta_l<'Prim'> = 0
+ (29)  -V<'Serv'> + gamma<'Serv'> * K<'Serv'>^beta_k<'Serv'> * L<'Serv'>^beta_l<'Serv'> = 0
+ (30)  -Y_ap<'Manu','Manu'> + make_share<'Manu','Manu'> * V<'Manu'> = 0
+ (31)  -Y_ap<'Manu','Prim'> + make_share<'Manu','Prim'> * V<'Manu'> = 0
+ (32)  -Y_ap<'Manu','Serv'> + make_share<'Manu','Serv'> * V<'Manu'> = 0
+ (33)  -Y_ap<'Prim','Manu'> + make_share<'Prim','Manu'> * V<'Prim'> = 0
+ (34)  -Y_ap<'Prim','Prim'> + make_share<'Prim','Prim'> * V<'Prim'> = 0
+ (35)  -Y_ap<'Prim','Serv'> + make_share<'Prim','Serv'> * V<'Prim'> = 0
+ (36)  -Y_ap<'Serv','Manu'> + make_share<'Serv','Manu'> * V<'Serv'> = 0
+ (37)  -Y_ap<'Serv','Prim'> + make_share<'Serv','Prim'> * V<'Serv'> = 0
+ (38)  -Y_ap<'Serv','Serv'> + make_share<'Serv','Serv'> * V<'Serv'> = 0
+ (39)  por_inv<'Manu'> * I<'Prim'> - por_inv<'Prim'> * I<'Manu'> = 0
+ (40)  por_inv<'Serv'> * I<'Prim'> - por_inv<'Prim'> * I<'Serv'> = 0
+ (41)  alpha<'Manu'> * D<'Manu'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'Manu'> * (1 + vat<'Manu'>) = 0
+ (42)  alpha<'Prim'> * D<'Prim'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'Prim'> * (1 + vat<'Prim'>) = 0
+ (43)  alpha<'Serv'> * D<'Serv'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'Serv'> * (1 + vat<'Serv'>) = 0
+ (44)  BTINC - INC - pit * PIT_base = 0
+ (45)  CONT_SOC_F - ING_F + p_k * K_f = 0
+ (46)  -PIT_base + p_k * K_h + w * L_h = 0
+ (47)  -PREST_SOC + PREST_SOC_F + PREST_SOC_G = 0
+ (48)  CONT_SOC_G - ING_GOB + TOTAL_TAX + p_k * K_g = 0
+ (49)  FIRM_TAX + PI_TAX - TOTAL_TAX + VAT = 0
+ (50)  L_h - L<'Manu'> - L<'Prim'> - L<'Serv'> = 0
+ (51)  -VAT + vat<'Manu'> * p<'Manu'> * (D<'Manu'> + GG<'Manu'> + I<'Manu'>) + vat<'Prim'> * p<'Prim'> * (D<'Prim'> + GG<'Prim'> + I<'Prim'>) + vat<'Serv'> * p<'Serv'> * (D<'Serv'> + GG<'Serv'> + I<'Serv'>) = 0
+ (52)  pi<'Manu'> + p_k * K<'Manu'> + w * L<'Manu'> - V<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) = 0
+ (53)  pi<'Prim'> + p_k * K<'Prim'> + w * L<'Prim'> - V<'Prim'> * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) = 0
+ (54)  pi<'Serv'> + p_k * K<'Serv'> + w * L<'Serv'> - V<'Serv'> * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) = 0
+ (55)  ING_F - PREST_SOC_F - SAV_F - TR_EMP - fit * p_k * K_f = 0
+ (56)  -BTINC + PREST_SOC + TR_EMP + TR_GOV + p_k * K_h + w * L_h = 0
+ (57)  -CONT_SOC + INC - SAV - p<'Manu'> * D<'Manu'> * (1 + vat<'Manu'>) - p<'Prim'> * D<'Prim'> * (1 + vat<'Prim'>) - p<'Serv'> * D<'Serv'> * (1 + vat<'Serv'>) = 0
+ (58)  K_h + K_f + K_g - K<'Manu'> - K<'Prim'> - K<'Serv'> = 0
+ (59)  D<'Manu'> + GG<'Manu'> + I<'Manu'> - Y_ap<'Manu','Manu'> - Y_ap<'Prim','Manu'> - Y_ap<'Serv','Manu'> = 0
+ (60)  D<'Prim'> + GG<'Prim'> + I<'Prim'> - Y_ap<'Manu','Prim'> - Y_ap<'Prim','Prim'> - Y_ap<'Serv','Prim'> = 0
+ (61)  D<'Serv'> + GG<'Serv'> + I<'Serv'> - Y_ap<'Manu','Serv'> - Y_ap<'Prim','Serv'> - Y_ap<'Serv','Serv'> = 0
+ (62)  -GTO_G + PREST_SOC_G + SAV_G + TR_GOV + p<'Manu'> * GG<'Manu'> * (1 + vat<'Manu'>) + p<'Prim'> * GG<'Prim'> * (1 + vat<'Prim'>) + p<'Serv'> * GG<'Serv'> * (1 + vat<'Serv'>) = 0
+ (63)  SAV + SAV_F + SAV_G + WALRAS - p<'Manu'> * I<'Manu'> * (1 + vat<'Manu'>) - p<'Prim'> * I<'Prim'> * (1 + vat<'Prim'>) - p<'Serv'> * I<'Serv'> * (1 + vat<'Serv'>) = 0
+
+Calibrating equations (13):
+ (1)  -pit_data + PI_TAX = 0
+ (2)  -d_data<'Manu'> + D<'Manu'> = 0
+ (3)  -d_data<'Serv'> + D<'Serv'> = 0
+ (4)  -l_data<'Manu'> + L<'Manu'> = 0
+ (5)  -l_data<'Prim'> + L<'Prim'> = 0
+ (6)  -l_data<'Serv'> + L<'Serv'> = 0
+ (7)  -v_data<'Manu'> + V<'Manu'> = 0
+ (8)  -v_data<'Prim'> + V<'Prim'> = 0
+ (9)  -v_data<'Serv'> + V<'Serv'> = 0
+ (10)  -1 + beta_k<'Manu'> + beta_l<'Manu'> = 0
+ (11)  -1 + beta_k<'Prim'> + beta_l<'Prim'> = 0
+ (12)  -1 + beta_k<'Serv'> + beta_l<'Serv'> = 0
+ (13)  -1 + alpha<'Manu'> + alpha<'Prim'> + alpha<'Serv'> = 0
+

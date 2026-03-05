@@ -1,0 +1,162 @@
+# ############################################################################
+# Unified 1-to-1 CGE model for SAM Chile 2008 (Refined Identities)
+# ############################################################################
+
+options
+{
+    output LaTeX = TRUE;
+    output LaTeX landscape = TRUE;
+    output logfile = TRUE;
+};
+
+indexsets
+{
+    A = { 'Manu', 'Prim', 'Serv' };
+    P = { 'Manu', 'Prim', 'Serv' };
+    P_SP = { 'Manu', 'Serv' };
+};
+
+block CONSUMER
+{
+    definitions
+    {
+        u[] = (SUM<p::P>(alpha<p> * D<p>[]^((omega - 1)/omega)))^(omega/(omega - 1));
+    };
+
+    controls
+    {
+        <p::P>D<p>[];
+    };
+
+    objective
+    {
+        U[] = u[];
+    };
+    
+    constraints
+    {
+        SUM<p::P>(D<p>[] * p<p>[] * (1 + vat<p>)) + SAV[] + CONT_SOC[] = INC[];
+    };
+    
+    identities
+    {
+        INC[] = BTINC[] - pit * PIT_base[];
+        BTINC[] = K_h[] * p_k[] + L_h[] * w[] + TR_EMP[] + TR_GOV[] + PREST_SOC[];
+        PIT_base[] = K_h[] * p_k[] + L_h[] * w[];
+        
+        K_h[] = k_total_data * par_k_h;
+        L_h[] = l_total_data;
+        SAV[] = por_sav * INC[];
+        CONT_SOC[] = por_cont * INC[];
+
+        TR_EMP[] = por_tremp * ING_F[]; 
+        TR_GOV[] = por_trgov * ING_GOB[];
+        
+        PREST_SOC[] = PREST_SOC_F[] + PREST_SOC_G[];
+    };
+    
+    calibration
+    {
+        <p::P_SP>D<p>[] = d_data<p> -> alpha<p>;
+        SUM<p::P>(alpha<p>) = 1 -> alpha<'Prim'>;
+    };
+};
+
+block <a::A>PRODUCTION
+{
+    definitions
+    {
+        p_v<a>[] = SUM<p::P>(make_share<a, p> * p<p>[]);
+    };
+
+    controls
+    {
+        V<a>[], K<a>[], L<a>[];
+    };
+
+    objective
+    {
+        pi<a>[] = V<a>[] * p_v<a>[] - K<a>[] * p_k[] - L<a>[] * w[];
+    };
+    
+    constraints
+    {
+        V<a>[] = gamma<a> * K<a>[]^beta_k<a> * L<a>[]^beta_l<a>;
+    };
+    
+    identities
+    {
+        # Y_ap is the production of product p by activity a
+        <p::P>Y_ap<a, p>[] = make_share<a, p> * V<a>[];
+    };
+    
+    calibration
+    {
+        beta_k<a> + beta_l<a> = 1 -> beta_k<a>;
+        L<a>[] = l_data<a> -> beta_l<a>;
+        V<a>[] = v_data<a> -> gamma<a>;
+    };
+};
+
+block <p::P>PRODUCTS
+{
+    identities
+    {
+        SUM<a::A>(Y_ap<a, p>[]) = D<p>[] + GG<p>[] + I<p>[];
+    };
+};
+
+block FIRM
+{
+    identities
+    {
+        ING_F[] = K_f[] * p_k[] + CONT_SOC_F[];
+        SAV_F[] = ING_F[] - TR_EMP[] - PREST_SOC_F[] - fit * (K_f[] * p_k[]);
+        K_f[] = k_total_data * par_k_f;
+        CONT_SOC_F[] = CONT_SOC[] * por_cont_soc_f;
+        PREST_SOC_F[] = ING_F[] * por_pres_soc_f;
+    };
+};
+
+block GOB
+{
+    identities
+    {
+        ING_GOB[] = K_g[] * p_k[] + CONT_SOC_G[] + TOTAL_TAX[];
+        GTO_G[] = SUM<p::P>(p<p>[] * GG<p>[] * (1 + vat<p>)) + TR_GOV[] + PREST_SOC_G[] + SAV_G[];
+        ING_GOB[] = GTO_G[];
+        PREST_SOC_G[] = ING_GOB[] * por_pres_soc_g;
+        
+        K_g[] = k_total_data * par_k_g;
+        CONT_SOC_G[] = CONT_SOC[] * por_cont_soc_g;
+        VAT[] = SUM<p::P>((vat<p> * p<p>[]) * (D<p>[] + GG<p>[] + I<p>[]));
+		
+		PI_TAX[]=pit * PIT_base[];
+		FIRM_TAX[]=fit * (K_f[] * p_k[]);
+        
+        TOTAL_TAX[] = VAT[] + PI_TAX[] + FIRM_TAX[];
+        
+        # Link to SAM data (market price * quantity)
+        <p::P>p<p>[] * GG<p>[] * (1 + vat<p>) = gg_market_data<p>;    
+    };
+    
+    calibration
+    {
+        PI_TAX[] = pit_data -> pit;
+    };
+};
+
+block EQUILIBRIUM
+{
+    identities 
+    {
+        SUM<a::A>(L<a>[]) = L_h[];
+        SUM<a::A>(K<a>[]) = K_h[] + K_f[] + K_g[];
+
+        SUM<p::P>(I<p>[] * p<p>[] * (1 + vat<p>)) = SAV[] + SAV_F[] + SAV_G[] + WALRAS[];
+
+        <p::P_SP> I<p>[] * por_inv<'Prim'> = por_inv<p> * I<'Prim'>[];
+
+        p_k[] = 1;
+    };
+};

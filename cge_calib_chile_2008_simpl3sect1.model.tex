@@ -1,0 +1,579 @@
+% Generated on 2026-03-05 15:30:14 by gEcon ver. 1.2.3 (2025-04-13)
+% http://gecon.r-forge.r-project.org/
+
+% Model name: cge_calib_chile_2008_simpl3sect1
+
+\section*{Index sets}
+
+$$A = \{ \mathrm{Manu}, \mathrm{Prim}, \mathrm{Serv} \}$$
+$$P = \{ \mathrm{Manu}, \mathrm{Prim}, \mathrm{Serv} \}$$
+$$P^{\mathrm{SP}} = \{ \mathrm{Manu}, \mathrm{Serv} \}$$
+
+\section{CONSUMER}
+
+\subsection{Optimisation problem}
+
+\begin{align}
+&\max_{\left({D}^{\langle p\rangle}\right)_{p\in P}
+} U = \left(\sum_{p\in P} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{{\omega} \left(-1 + \omega\right)^{-1}}\\
+&\mathrm{s.t.:}\nonumber\\
+& {C\!O\!N\!T}^{\mathrm{SOC}} + {S\!A\!V} + \sum_{p\in P} {{p}^{\langle p\rangle}} {{D}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = {I\!N\!C} \quad \left(\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}\right)
+\end{align}
+
+
+\subsection{Identities}
+
+\begin{equation}
+{I\!N\!C} = {B\!T\!I\!N\!C} - {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}}
+\end{equation}
+\begin{equation}
+{B\!T\!I\!N\!C} = {P\!R\!E\!S\!T}^{\mathrm{SOC}} + {T\!R}^{\mathrm{EMP}} + {T\!R}^{\mathrm{GOV}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} + {w} {L^{\mathrm{h}}}
+\end{equation}
+\begin{equation}
+{P\!I\!T}^{\mathrm{base}} = {p^{\mathrm{k}}} {K^{\mathrm{h}}} + {w} {L^{\mathrm{h}}}
+\end{equation}
+\begin{equation}
+K^{\mathrm{h}} = {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{h}}}}
+\end{equation}
+\begin{equation}
+L^{\mathrm{h}} = l^{\mathrm{total}^{\mathrm{data}}}
+\end{equation}
+\begin{equation}
+{S\!A\!V} = {{p\!o\!r}^{\mathrm{sav}}} {{I\!N\!C}}
+\end{equation}
+\begin{equation}
+{C\!O\!N\!T}^{\mathrm{SOC}} = {{p\!o\!r}^{\mathrm{cont}}} {{I\!N\!C}}
+\end{equation}
+\begin{equation}
+{T\!R}^{\mathrm{EMP}} = {{p\!o\!r}^{\mathrm{tremp}}} {{I\!N\!G}^{\mathrm{F}}}
+\end{equation}
+\begin{equation}
+{T\!R}^{\mathrm{GOV}} = {{p\!o\!r}^{\mathrm{trgov}}} {{I\!N\!G}^{\mathrm{GOB}}}
+\end{equation}
+\begin{equation}
+{P\!R\!E\!S\!T}^{\mathrm{SOC}} = {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}}
+\end{equation}
+
+
+\subsection{First order conditions}
+
+\begin{equation}
+p\in P\colon\quad {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left(\sum_{p\in P} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} - {\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}} {{p}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = 0
+ \quad \left({D}^{\langle p\rangle}\right)
+\end{equation}
+
+
+
+
+\section{PRODUCTION $a\in A$}
+
+\subsection{Optimisation problem}
+
+\begin{align}
+&\max_{{V}^{\langle a\rangle}, {K}^{\langle a\rangle}, {L}^{\langle a\rangle}
+} {\pi}^{\langle a\rangle} = -{p^{\mathrm{k}}} {{K}^{\langle a\rangle}} + {{V}^{\langle a\rangle}} \left(\sum_{p\in P} {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{p}^{\langle p\rangle}}\right) - {w} {{L}^{\langle a\rangle}}\\
+&\mathrm{s.t.:}\nonumber\\
+& {V}^{\langle a\rangle} = {{\gamma}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{{\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{{\beta^{\mathrm{l}}}^{\langle a\rangle}}} \quad \left({\lambda^{\mathrm{PRODUCTION}^{\mathrm{1}}}}^{\langle a\rangle}\right)
+\end{align}
+
+
+\subsection{Identities}
+
+\begin{equation}
+p\in P\colon\quad {Y^{\mathrm{ap}}}^{\langle a,p\rangle} = {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{V}^{\langle a\rangle}}
+\end{equation}
+
+
+\subsection{First order conditions}
+
+\begin{equation}
+-{\lambda^{\mathrm{PRODUCTION}^{\mathrm{1}}}}^{\langle a\rangle} + \sum_{p\in P} {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{p}^{\langle p\rangle}} = 0
+ \quad \left({V}^{\langle a\rangle}\right)
+\end{equation}
+\begin{equation}
+-p^{\mathrm{k}} + {{\beta^{\mathrm{k}}}^{\langle a\rangle}} {{\gamma}^{\langle a\rangle}} {{\lambda^{\mathrm{PRODUCTION}^{\mathrm{1}}}}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{-1 + {\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{{\beta^{\mathrm{l}}}^{\langle a\rangle}}} = 0
+ \quad \left({K}^{\langle a\rangle}\right)
+\end{equation}
+\begin{equation}
+-w + {{\beta^{\mathrm{l}}}^{\langle a\rangle}} {{\gamma}^{\langle a\rangle}} {{\lambda^{\mathrm{PRODUCTION}^{\mathrm{1}}}}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{{\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{-1 + {\beta^{\mathrm{l}}}^{\langle a\rangle}}} = 0
+ \quad \left({L}^{\langle a\rangle}\right)
+\end{equation}
+
+
+\subsection{First order conditions after reduction}
+
+\begin{equation}
+-p^{\mathrm{k}} + {{\beta^{\mathrm{k}}}^{\langle a\rangle}} {{\gamma}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{-1 + {\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{{\beta^{\mathrm{l}}}^{\langle a\rangle}}} \left(\sum_{p\in P} {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{p}^{\langle p\rangle}}\right) = 0
+ \quad \left({K}^{\langle a\rangle}\right)
+\end{equation}
+\begin{equation}
+-w + {{\beta^{\mathrm{l}}}^{\langle a\rangle}} {{\gamma}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{{\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{-1 + {\beta^{\mathrm{l}}}^{\langle a\rangle}}} \left(\sum_{p\in P} {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{p}^{\langle p\rangle}}\right) = 0
+ \quad \left({L}^{\langle a\rangle}\right)
+\end{equation}
+
+
+
+
+\section{PRODUCTS $p\in P$}
+
+\subsection{Identities}
+
+\begin{equation}
+\sum_{a\in A} {Y^{\mathrm{ap}}}^{\langle a,p\rangle} = {D}^{\langle p\rangle} + {{G\!G}}^{\langle p\rangle} + {I}^{\langle p\rangle}
+\end{equation}
+
+
+
+
+\section{FIRM}
+
+\subsection{Identities}
+
+\begin{equation}
+{I\!N\!G}^{\mathrm{F}} = {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {p^{\mathrm{k}}} {K^{\mathrm{f}}}
+\end{equation}
+\begin{equation}
+{S\!A\!V}^{\mathrm{F}} = {I\!N\!G}^{\mathrm{F}} - {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} - {T\!R}^{\mathrm{EMP}} - {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}}
+\end{equation}
+\begin{equation}
+K^{\mathrm{f}} = {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{f}}}}
+\end{equation}
+\begin{equation}
+{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{F}}} = {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{f}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}}
+\end{equation}
+\begin{equation}
+{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} = {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{f}}}}} {{I\!N\!G}^{\mathrm{F}}}
+\end{equation}
+
+
+
+
+\section{GOB}
+
+\subsection{Identities}
+
+\begin{equation}
+{I\!N\!G}^{\mathrm{GOB}} = {C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}}
+\end{equation}
+\begin{equation}
+{G\!T\!O}^{\mathrm{G}} = {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {S\!A\!V}^{\mathrm{G}} + {T\!R}^{\mathrm{GOV}} + \sum_{p\in P} {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right)
+\end{equation}
+\begin{equation}
+{I\!N\!G}^{\mathrm{GOB}} = {G\!T\!O}^{\mathrm{G}}
+\end{equation}
+\begin{equation}
+{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} = {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{g}}}}} {{I\!N\!G}^{\mathrm{GOB}}}
+\end{equation}
+\begin{equation}
+K^{\mathrm{g}} = {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{g}}}}
+\end{equation}
+\begin{equation}
+{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} = {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{g}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}}
+\end{equation}
+\begin{equation}
+{V\!A\!T} = \sum_{p\in P} {{{v\!a\!t}}^{\langle p\rangle}} {{p}^{\langle p\rangle}} \left({D}^{\langle p\rangle} + {{G\!G}}^{\langle p\rangle} + {I}^{\langle p\rangle}\right)
+\end{equation}
+\begin{equation}
+\Pi^{\mathrm{TAX}} = {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}}
+\end{equation}
+\begin{equation}
+{F\!I\!R\!M}^{\mathrm{TAX}} = {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}}
+\end{equation}
+\begin{equation}
+{T\!O\!T\!A\!L}^{\mathrm{TAX}} = {F\!I\!R\!M}^{\mathrm{TAX}} + \Pi^{\mathrm{TAX}} + {V\!A\!T}
+\end{equation}
+\begin{equation}
+p\in P\colon\quad {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = {{g\!g}^{\mathrm{market}^{\mathrm{data}}}}^{\langle p\rangle}
+\end{equation}
+
+
+
+
+\section{EQUILIBRIUM}
+
+\subsection{Identities}
+
+\begin{equation}
+\sum_{a\in A} {L}^{\langle a\rangle} = L^{\mathrm{h}}
+\end{equation}
+\begin{equation}
+\sum_{a\in A} {K}^{\langle a\rangle} = K^{\mathrm{h}} + K^{\mathrm{f}} + K^{\mathrm{g}}
+\end{equation}
+\begin{equation}
+\sum_{p\in P} {{p}^{\langle p\rangle}} {{I}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = {S\!A\!V} + {S\!A\!V}^{\mathrm{F}} + {S\!A\!V}^{\mathrm{G}} + {W\!A\!L\!R\!A\!S}
+\end{equation}
+\begin{equation}
+p\in P^{\mathrm{SP}}\colon\quad {{{p\!o\!r}^{\mathrm{inv}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{I}^{\langle p\rangle}} = {{{p\!o\!r}^{\mathrm{inv}}}^{\langle p\rangle}} {{I}^{\langle \mathrm{Prim}\rangle}}
+\end{equation}
+\begin{equation}
+p^{\mathrm{k}} = 1
+\end{equation}
+
+
+
+
+\section{Equilibrium relationships (before expansion and reduction)}
+
+\begin{equation}
+1 - p^{\mathrm{k}} = 0
+\end{equation}
+\begin{equation}
+l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}} + {{p\!o\!r}^{\mathrm{cont}}} {{I\!N\!C}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{f}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{g}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}} = 0
+\end{equation}
+\begin{equation}
+-{F\!I\!R\!M}^{\mathrm{TAX}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+{G\!T\!O}^{\mathrm{G}} - {I\!N\!G}^{\mathrm{GOB}} = 0
+\end{equation}
+\begin{equation}
+-K^{\mathrm{h}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{h}}}} = 0
+\end{equation}
+\begin{equation}
+-K^{\mathrm{f}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{f}}}} = 0
+\end{equation}
+\begin{equation}
+-K^{\mathrm{g}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{g}}}} = 0
+\end{equation}
+\begin{equation}
+L^{\mathrm{h}} - \sum_{a\in A} {L}^{\langle a\rangle} = 0
+\end{equation}
+\begin{equation}
+-\Pi^{\mathrm{TAX}} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{f}}}}} {{I\!N\!G}^{\mathrm{F}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{g}}}}} {{I\!N\!G}^{\mathrm{GOB}}} = 0
+\end{equation}
+\begin{equation}
+-{S\!A\!V} + {{p\!o\!r}^{\mathrm{sav}}} {{I\!N\!C}} = 0
+\end{equation}
+\begin{equation}
+-{T\!R}^{\mathrm{EMP}} + {{p\!o\!r}^{\mathrm{tremp}}} {{I\!N\!G}^{\mathrm{F}}} = 0
+\end{equation}
+\begin{equation}
+-{T\!R}^{\mathrm{GOV}} + {{p\!o\!r}^{\mathrm{trgov}}} {{I\!N\!G}^{\mathrm{GOB}}} = 0
+\end{equation}
+\begin{equation}
+U - \left(\sum_{p\in P} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{{\omega} \left(-1 + \omega\right)^{-1}} = 0
+\end{equation}
+\begin{equation}
+-{V\!A\!T} + \sum_{p\in P} {{{v\!a\!t}}^{\langle p\rangle}} {{p}^{\langle p\rangle}} \left({D}^{\langle p\rangle} + {{G\!G}}^{\langle p\rangle} + {I}^{\langle p\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{B\!T\!I\!N\!C} - {I\!N\!C} - {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} = 0
+\end{equation}
+\begin{equation}
+{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{F}}} - {I\!N\!G}^{\mathrm{F}} + {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} + {w} {L^{\mathrm{h}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!R\!E\!S\!T}^{\mathrm{SOC}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}} + {I\!N\!C} - {S\!A\!V} - \sum_{p\in P} {{p}^{\langle p\rangle}} {{D}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
+\end{equation}
+\begin{equation}
+{F\!I\!R\!M}^{\mathrm{TAX}} + \Pi^{\mathrm{TAX}} - {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} = 0
+\end{equation}
+\begin{equation}
+K^{\mathrm{h}} + K^{\mathrm{f}} + K^{\mathrm{g}} - \sum_{a\in A} {K}^{\langle a\rangle} = 0
+\end{equation}
+\begin{equation}
+-{G\!T\!O}^{\mathrm{G}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {S\!A\!V}^{\mathrm{G}} + {T\!R}^{\mathrm{GOV}} + \sum_{p\in P} {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{I\!N\!G}^{\mathrm{F}} - {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} - {S\!A\!V}^{\mathrm{F}} - {T\!R}^{\mathrm{EMP}} - {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+{S\!A\!V} + {S\!A\!V}^{\mathrm{F}} + {S\!A\!V}^{\mathrm{G}} + {W\!A\!L\!R\!A\!S} - \sum_{p\in P} {{p}^{\langle p\rangle}} {{I}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+-{B\!T\!I\!N\!C} + {P\!R\!E\!S\!T}^{\mathrm{SOC}} + {T\!R}^{\mathrm{EMP}} + {T\!R}^{\mathrm{GOV}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} + {w} {L^{\mathrm{h}}} = 0
+\end{equation}
+\begin{equation}
+a\in A\colon\quad -p^{\mathrm{k}} + {{\beta^{\mathrm{k}}}^{\langle a\rangle}} {{\gamma}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{-1 + {\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{{\beta^{\mathrm{l}}}^{\langle a\rangle}}} \left(\sum_{p\in P} {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{p}^{\langle p\rangle}}\right) = 0
+\end{equation}
+\begin{equation}
+a\in A\colon\quad -w + {{\beta^{\mathrm{l}}}^{\langle a\rangle}} {{\gamma}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{{\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{-1 + {\beta^{\mathrm{l}}}^{\langle a\rangle}}} \left(\sum_{p\in P} {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{p}^{\langle p\rangle}}\right) = 0
+\end{equation}
+\begin{equation}
+a\in A\colon\quad -{V}^{\langle a\rangle} + {{\gamma}^{\langle a\rangle}} {{{K}^{\langle a\rangle}}^{{\beta^{\mathrm{k}}}^{\langle a\rangle}}} {{{L}^{\langle a\rangle}}^{{\beta^{\mathrm{l}}}^{\langle a\rangle}}} = 0
+\end{equation}
+\begin{equation}
+a\in A\colon\quad {\pi}^{\langle a\rangle} + {p^{\mathrm{k}}} {{K}^{\langle a\rangle}} + {w} {{L}^{\langle a\rangle}} - {{V}^{\langle a\rangle}} \left(\sum_{p\in P} {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{p}^{\langle p\rangle}}\right) = 0
+\end{equation}
+\begin{equation}
+a\in A\colon\quad p\in P\colon\quad -{Y^{\mathrm{ap}}}^{\langle a,p\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle a,p\rangle}} {{V}^{\langle a\rangle}} = 0
+\end{equation}
+\begin{equation}
+p\in P\colon\quad {{g\!g}^{\mathrm{market}^{\mathrm{data}}}}^{\langle p\rangle} - {{p}^{\langle p\rangle}} {{{G\!G}}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+p\in P\colon\quad {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left(\sum_{p\in P} {{\alpha}^{\langle p\rangle}} {{{D}^{\langle p\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} - {\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}} {{p}^{\langle p\rangle}} \left(1 + {{v\!a\!t}}^{\langle p\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+p\in P\colon\quad {D}^{\langle p\rangle} + {{G\!G}}^{\langle p\rangle} + {I}^{\langle p\rangle} - \sum_{a\in A} {Y^{\mathrm{ap}}}^{\langle a,p\rangle} = 0
+\end{equation}
+\begin{equation}
+p\in P^{\mathrm{SP}}\colon\quad {{{p\!o\!r}^{\mathrm{inv}}}^{\langle p\rangle}} {{I}^{\langle \mathrm{Prim}\rangle}} - {{{p\!o\!r}^{\mathrm{inv}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{I}^{\langle p\rangle}} = 0
+\end{equation}
+
+
+
+\section{Equilibrium relationships (after expansion and reduction)}
+
+\begin{equation}
+1 - p^{\mathrm{k}} = 0
+\end{equation}
+\begin{equation}
+l^{\mathrm{total}^{\mathrm{data}}} - L^{\mathrm{h}} = 0
+\end{equation}
+\begin{equation}
+{{g\!g}^{\mathrm{market}^{\mathrm{data}}}}^{\langle \mathrm{\mathrm{Manu}}\rangle} - {{p}^{\langle \mathrm{Manu}\rangle}} {{{G\!G}}^{\langle \mathrm{Manu}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Manu}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{{g\!g}^{\mathrm{market}^{\mathrm{data}}}}^{\langle \mathrm{\mathrm{Prim}}\rangle} - {{p}^{\langle \mathrm{Prim}\rangle}} {{{G\!G}}^{\langle \mathrm{Prim}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Prim}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{{g\!g}^{\mathrm{market}^{\mathrm{data}}}}^{\langle \mathrm{\mathrm{Serv}}\rangle} - {{p}^{\langle \mathrm{Serv}\rangle}} {{{G\!G}}^{\langle \mathrm{Serv}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Serv}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+-p^{\mathrm{k}} + {{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{\gamma}^{\langle \mathrm{\mathrm{Manu}}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) {{{K}^{\langle \mathrm{Manu}\rangle}}^{-1 + {\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}}} {{{L}^{\langle \mathrm{Manu}\rangle}}^{{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-p^{\mathrm{k}} + {{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{\gamma}^{\langle \mathrm{\mathrm{Prim}}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) {{{K}^{\langle \mathrm{Prim}\rangle}}^{-1 + {\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}}} {{{L}^{\langle \mathrm{Prim}\rangle}}^{{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-p^{\mathrm{k}} + {{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{\gamma}^{\langle \mathrm{\mathrm{Serv}}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) {{{K}^{\langle \mathrm{Serv}\rangle}}^{-1 + {\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}}} {{{L}^{\langle \mathrm{Serv}\rangle}}^{{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-w + {{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{\gamma}^{\langle \mathrm{\mathrm{Manu}}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) {{{K}^{\langle \mathrm{Manu}\rangle}}^{{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}}} {{{L}^{\langle \mathrm{Manu}\rangle}}^{-1 + {\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-w + {{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{\gamma}^{\langle \mathrm{\mathrm{Prim}}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) {{{K}^{\langle \mathrm{Prim}\rangle}}^{{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}}} {{{L}^{\langle \mathrm{Prim}\rangle}}^{-1 + {\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-w + {{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{\gamma}^{\langle \mathrm{\mathrm{Serv}}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) {{{K}^{\langle \mathrm{Serv}\rangle}}^{{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}}} {{{L}^{\langle \mathrm{Serv}\rangle}}^{-1 + {\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}} + {{p\!o\!r}^{\mathrm{cont}}} {{I\!N\!C}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{f}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {{p\!o\!r}^{\mathrm{cont}^{\mathrm{soc}^{\mathrm{g}}}}} {{C\!O\!N\!T}^{\mathrm{SOC}}} = 0
+\end{equation}
+\begin{equation}
+-{F\!I\!R\!M}^{\mathrm{TAX}} + {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+{G\!T\!O}^{\mathrm{G}} - {I\!N\!G}^{\mathrm{GOB}} = 0
+\end{equation}
+\begin{equation}
+-K^{\mathrm{h}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{h}}}} = 0
+\end{equation}
+\begin{equation}
+-K^{\mathrm{f}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{f}}}} = 0
+\end{equation}
+\begin{equation}
+-K^{\mathrm{g}} + {k^{\mathrm{total}^{\mathrm{data}}}} {{p\!a\!r}^{\mathrm{k}^{\mathrm{g}}}} = 0
+\end{equation}
+\begin{equation}
+-\Pi^{\mathrm{TAX}} + {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{f}}}}} {{I\!N\!G}^{\mathrm{F}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {{p\!o\!r}^{\mathrm{pres}^{\mathrm{soc}^{\mathrm{g}}}}} {{I\!N\!G}^{\mathrm{GOB}}} = 0
+\end{equation}
+\begin{equation}
+-{S\!A\!V} + {{p\!o\!r}^{\mathrm{sav}}} {{I\!N\!C}} = 0
+\end{equation}
+\begin{equation}
+-{T\!R}^{\mathrm{EMP}} + {{p\!o\!r}^{\mathrm{tremp}}} {{I\!N\!G}^{\mathrm{F}}} = 0
+\end{equation}
+\begin{equation}
+-{T\!R}^{\mathrm{GOV}} + {{p\!o\!r}^{\mathrm{trgov}}} {{I\!N\!G}^{\mathrm{GOB}}} = 0
+\end{equation}
+\begin{equation}
+U - \left({{\alpha}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{{D}^{\langle \mathrm{Manu}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{{D}^{\langle \mathrm{Prim}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{{D}^{\langle \mathrm{Serv}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{{\omega} \left(-1 + \omega\right)^{-1}} = 0
+\end{equation}
+\begin{equation}
+-{V}^{\langle \mathrm{Manu}\rangle} + {{\gamma}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{{K}^{\langle \mathrm{Manu}\rangle}}^{{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}}} {{{L}^{\langle \mathrm{Manu}\rangle}}^{{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-{V}^{\langle \mathrm{Prim}\rangle} + {{\gamma}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{{K}^{\langle \mathrm{Prim}\rangle}}^{{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}}} {{{L}^{\langle \mathrm{Prim}\rangle}}^{{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-{V}^{\langle \mathrm{Serv}\rangle} + {{\gamma}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{{K}^{\langle \mathrm{Serv}\rangle}}^{{\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}}} {{{L}^{\langle \mathrm{Serv}\rangle}}^{{\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Manu},\mathrm{Manu}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Manu}}\rangle}} {{V}^{\langle \mathrm{Manu}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Manu},\mathrm{Prim}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Prim}}\rangle}} {{V}^{\langle \mathrm{Manu}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Manu},\mathrm{Serv}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Serv}}\rangle}} {{V}^{\langle \mathrm{Manu}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Prim},\mathrm{Manu}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Manu}}\rangle}} {{V}^{\langle \mathrm{Prim}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Prim},\mathrm{Prim}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Prim}}\rangle}} {{V}^{\langle \mathrm{Prim}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Prim},\mathrm{Serv}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Serv}}\rangle}} {{V}^{\langle \mathrm{Prim}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Serv},\mathrm{Manu}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Manu}}\rangle}} {{V}^{\langle \mathrm{Serv}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Serv},\mathrm{Prim}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Prim}}\rangle}} {{V}^{\langle \mathrm{Serv}\rangle}} = 0
+\end{equation}
+\begin{equation}
+-{Y^{\mathrm{ap}}}^{\langle \mathrm{Serv},\mathrm{Serv}\rangle} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Serv}}\rangle}} {{V}^{\langle \mathrm{Serv}\rangle}} = 0
+\end{equation}
+\begin{equation}
+{{{p\!o\!r}^{\mathrm{inv}}}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{I}^{\langle \mathrm{Prim}\rangle}} - {{{p\!o\!r}^{\mathrm{inv}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{I}^{\langle \mathrm{Manu}\rangle}} = 0
+\end{equation}
+\begin{equation}
+{{{p\!o\!r}^{\mathrm{inv}}}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{I}^{\langle \mathrm{Prim}\rangle}} - {{{p\!o\!r}^{\mathrm{inv}}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{I}^{\langle \mathrm{Serv}\rangle}} = 0
+\end{equation}
+\begin{equation}
+{{\alpha}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{{D}^{\langle \mathrm{Manu}\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left({{\alpha}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{{D}^{\langle \mathrm{Manu}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{{D}^{\langle \mathrm{Prim}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{{D}^{\langle \mathrm{Serv}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} - {\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}} {{p}^{\langle \mathrm{Manu}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Manu}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{{\alpha}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{{D}^{\langle \mathrm{Prim}\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left({{\alpha}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{{D}^{\langle \mathrm{Manu}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{{D}^{\langle \mathrm{Prim}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{{D}^{\langle \mathrm{Serv}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} - {\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}} {{p}^{\langle \mathrm{Prim}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Prim}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{{\alpha}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{{D}^{\langle \mathrm{Serv}\rangle}}^{-1 + {\omega}^{-1} \left(-1 + \omega\right)}} {\left({{\alpha}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{{D}^{\langle \mathrm{Manu}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{{D}^{\langle \mathrm{Prim}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}} + {{\alpha}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{{D}^{\langle \mathrm{Serv}\rangle}}^{{\omega}^{-1} \left(-1 + \omega\right)}}\right)^{-1 + {\omega} \left(-1 + \omega\right)^{-1}}} - {\lambda^{\mathrm{CONSUMER}^{\mathrm{1}}}} {{p}^{\langle \mathrm{Serv}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Serv}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{B\!T\!I\!N\!C} - {I\!N\!C} - {{p\!i\!t}} {{P\!I\!T}^{\mathrm{base}}} = 0
+\end{equation}
+\begin{equation}
+{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{F}}} - {I\!N\!G}^{\mathrm{F}} + {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!I\!T}^{\mathrm{base}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} + {w} {L^{\mathrm{h}}} = 0
+\end{equation}
+\begin{equation}
+-{P\!R\!E\!S\!T}^{\mathrm{SOC}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} = 0
+\end{equation}
+\begin{equation}
+{C\!O\!N\!T}^{\mathrm{SOC}^{\mathrm{G}}} - {I\!N\!G}^{\mathrm{GOB}} + {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {p^{\mathrm{k}}} {K^{\mathrm{g}}} = 0
+\end{equation}
+\begin{equation}
+{F\!I\!R\!M}^{\mathrm{TAX}} + \Pi^{\mathrm{TAX}} - {T\!O\!T\!A\!L}^{\mathrm{TAX}} + {V\!A\!T} = 0
+\end{equation}
+\begin{equation}
+L^{\mathrm{h}} - {L}^{\langle \mathrm{Manu}\rangle} - {L}^{\langle \mathrm{Prim}\rangle} - {L}^{\langle \mathrm{Serv}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{V\!A\!T} + {{{v\!a\!t}}^{\langle \mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} \left({D}^{\langle \mathrm{Manu}\rangle} + {{G\!G}}^{\langle \mathrm{Manu}\rangle} + {I}^{\langle \mathrm{Manu}\rangle}\right) + {{{v\!a\!t}}^{\langle \mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} \left({D}^{\langle \mathrm{Prim}\rangle} + {{G\!G}}^{\langle \mathrm{Prim}\rangle} + {I}^{\langle \mathrm{Prim}\rangle}\right) + {{{v\!a\!t}}^{\langle \mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}} \left({D}^{\langle \mathrm{Serv}\rangle} + {{G\!G}}^{\langle \mathrm{Serv}\rangle} + {I}^{\langle \mathrm{Serv}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{\pi}^{\langle \mathrm{Manu}\rangle} + {p^{\mathrm{k}}} {{K}^{\langle \mathrm{Manu}\rangle}} + {w} {{L}^{\langle \mathrm{Manu}\rangle}} - {{V}^{\langle \mathrm{Manu}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Manu}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) = 0
+\end{equation}
+\begin{equation}
+{\pi}^{\langle \mathrm{Prim}\rangle} + {p^{\mathrm{k}}} {{K}^{\langle \mathrm{Prim}\rangle}} + {w} {{L}^{\langle \mathrm{Prim}\rangle}} - {{V}^{\langle \mathrm{Prim}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Prim}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) = 0
+\end{equation}
+\begin{equation}
+{\pi}^{\langle \mathrm{Serv}\rangle} + {p^{\mathrm{k}}} {{K}^{\langle \mathrm{Serv}\rangle}} + {w} {{L}^{\langle \mathrm{Serv}\rangle}} - {{V}^{\langle \mathrm{Serv}\rangle}} \left({{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Manu}}\rangle}} {{p}^{\langle \mathrm{Manu}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Prim}}\rangle}} {{p}^{\langle \mathrm{Prim}\rangle}} + {{{m\!a\!k\!e}^{\mathrm{share}}}^{\langle \mathrm{\mathrm{Serv}},\mathrm{\mathrm{Serv}}\rangle}} {{p}^{\langle \mathrm{Serv}\rangle}}\right) = 0
+\end{equation}
+\begin{equation}
+{I\!N\!G}^{\mathrm{F}} - {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{F}}} - {S\!A\!V}^{\mathrm{F}} - {T\!R}^{\mathrm{EMP}} - {{f\!i\!t}} {p^{\mathrm{k}}} {K^{\mathrm{f}}} = 0
+\end{equation}
+\begin{equation}
+-{B\!T\!I\!N\!C} + {P\!R\!E\!S\!T}^{\mathrm{SOC}} + {T\!R}^{\mathrm{EMP}} + {T\!R}^{\mathrm{GOV}} + {p^{\mathrm{k}}} {K^{\mathrm{h}}} + {w} {L^{\mathrm{h}}} = 0
+\end{equation}
+\begin{equation}
+-{C\!O\!N\!T}^{\mathrm{SOC}} + {I\!N\!C} - {S\!A\!V} - {{p}^{\langle \mathrm{Manu}\rangle}} {{D}^{\langle \mathrm{Manu}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Manu}}\rangle}\right) - {{p}^{\langle \mathrm{Prim}\rangle}} {{D}^{\langle \mathrm{Prim}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Prim}}\rangle}\right) - {{p}^{\langle \mathrm{Serv}\rangle}} {{D}^{\langle \mathrm{Serv}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Serv}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+K^{\mathrm{h}} + K^{\mathrm{f}} + K^{\mathrm{g}} - {K}^{\langle \mathrm{Manu}\rangle} - {K}^{\langle \mathrm{Prim}\rangle} - {K}^{\langle \mathrm{Serv}\rangle} = 0
+\end{equation}
+\begin{equation}
+{D}^{\langle \mathrm{Manu}\rangle} + {{G\!G}}^{\langle \mathrm{Manu}\rangle} + {I}^{\langle \mathrm{Manu}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Manu},\mathrm{Manu}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Prim},\mathrm{Manu}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Serv},\mathrm{Manu}\rangle} = 0
+\end{equation}
+\begin{equation}
+{D}^{\langle \mathrm{Prim}\rangle} + {{G\!G}}^{\langle \mathrm{Prim}\rangle} + {I}^{\langle \mathrm{Prim}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Manu},\mathrm{Prim}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Prim},\mathrm{Prim}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Serv},\mathrm{Prim}\rangle} = 0
+\end{equation}
+\begin{equation}
+{D}^{\langle \mathrm{Serv}\rangle} + {{G\!G}}^{\langle \mathrm{Serv}\rangle} + {I}^{\langle \mathrm{Serv}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Manu},\mathrm{Serv}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Prim},\mathrm{Serv}\rangle} - {Y^{\mathrm{ap}}}^{\langle \mathrm{Serv},\mathrm{Serv}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{G\!T\!O}^{\mathrm{G}} + {P\!R\!E\!S\!T}^{\mathrm{SOC}^{\mathrm{G}}} + {S\!A\!V}^{\mathrm{G}} + {T\!R}^{\mathrm{GOV}} + {{p}^{\langle \mathrm{Manu}\rangle}} {{{G\!G}}^{\langle \mathrm{Manu}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Manu}}\rangle}\right) + {{p}^{\langle \mathrm{Prim}\rangle}} {{{G\!G}}^{\langle \mathrm{Prim}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Prim}}\rangle}\right) + {{p}^{\langle \mathrm{Serv}\rangle}} {{{G\!G}}^{\langle \mathrm{Serv}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Serv}}\rangle}\right) = 0
+\end{equation}
+\begin{equation}
+{S\!A\!V} + {S\!A\!V}^{\mathrm{F}} + {S\!A\!V}^{\mathrm{G}} + {W\!A\!L\!R\!A\!S} - {{p}^{\langle \mathrm{Manu}\rangle}} {{I}^{\langle \mathrm{Manu}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Manu}}\rangle}\right) - {{p}^{\langle \mathrm{Prim}\rangle}} {{I}^{\langle \mathrm{Prim}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Prim}}\rangle}\right) - {{p}^{\langle \mathrm{Serv}\rangle}} {{I}^{\langle \mathrm{Serv}\rangle}} \left(1 + {{v\!a\!t}}^{\langle \mathrm{\mathrm{Serv}}\rangle}\right) = 0
+\end{equation}
+
+
+
+\section{Calibrating equations}
+
+\begin{equation}
+-{p\!i\!t}^{\mathrm{data}} + \Pi^{\mathrm{TAX}} = 0
+\end{equation}
+\begin{equation}
+-{d^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Manu}}\rangle} + {D}^{\langle \mathrm{Manu}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{d^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Serv}}\rangle} + {D}^{\langle \mathrm{Serv}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{l^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Manu}}\rangle} + {L}^{\langle \mathrm{Manu}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{l^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Prim}}\rangle} + {L}^{\langle \mathrm{Prim}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{l^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Serv}}\rangle} + {L}^{\langle \mathrm{Serv}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{v^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Manu}}\rangle} + {V}^{\langle \mathrm{Manu}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{v^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Prim}}\rangle} + {V}^{\langle \mathrm{Prim}\rangle} = 0
+\end{equation}
+\begin{equation}
+-{v^{\mathrm{data}}}^{\langle \mathrm{\mathrm{Serv}}\rangle} + {V}^{\langle \mathrm{Serv}\rangle} = 0
+\end{equation}
+\begin{equation}
+-1 + {\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Manu}}\rangle} + {\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Manu}}\rangle} = 0
+\end{equation}
+\begin{equation}
+-1 + {\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Prim}}\rangle} + {\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Prim}}\rangle} = 0
+\end{equation}
+\begin{equation}
+-1 + {\beta^{\mathrm{k}}}^{\langle \mathrm{\mathrm{Serv}}\rangle} + {\beta^{\mathrm{l}}}^{\langle \mathrm{\mathrm{Serv}}\rangle} = 0
+\end{equation}
+\begin{equation}
+-1 + {\alpha}^{\langle \mathrm{\mathrm{Manu}}\rangle} + {\alpha}^{\langle \mathrm{\mathrm{Prim}}\rangle} + {\alpha}^{\langle \mathrm{\mathrm{Serv}}\rangle} = 0
+\end{equation}
+
+
+
+
+
