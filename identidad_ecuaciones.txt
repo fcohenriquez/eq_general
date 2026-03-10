@@ -1,0 +1,316 @@
+=================================================
+      INDICE DE ECUACIONES DEL MODELO            
+=================================================
+
+ID   1: 1 - exr = 0
+ID   2: 1 - pk = 0
+ID   3: fact_row_in_k_data - RiK = 0
+ID   4: fact_row_in_l_data - RiL = 0
+ID   5: e_data<'Manu'> - Exports<'Manu'> = 0
+ID   6: e_data<'Prim'> - Exports<'Prim'> = 0
+ID   7: e_data<'Serv'> - Exports<'Serv'> = 0
+ID   8: gg_market_data<'Manu'> - p<'Manu'> * G<'Manu'> * (1 + vat<'Manu'>) = 0
+ID   9: gg_market_data<'Prim'> - p<'Prim'> * G<'Prim'> * (1 + vat<'Prim'>) = 0
+ID  10: gg_market_data<'Serv'> - p<'Serv'> * G<'Serv'> * (1 + vat<'Serv'>) = 0
+ID  11: m_data<'Manu'> - Imports<'Manu'> = 0
+ID  12: m_data<'Prim'> - Imports<'Prim'> = 0
+ID  13: m_data<'Serv'> - Imports<'Serv'> = 0
+ID  14: var_exis_data<'Manu'> - VarExis<'Manu'> = 0
+ID  15: var_exis_data<'Prim'> - VarExis<'Prim'> = 0
+ID  16: var_exis_data<'Serv'> - VarExis<'Serv'> = 0
+ID  17: -pk + beta_k<'Manu'> * gamma<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Manu'> - t_imp_espec<'Manu'> - t_iva_prod<'Manu'>) * K<'Manu'>^(-1 + beta_k<'Manu'>) * L<'Manu'>^beta_l<'Manu'> * X<'Manu','Manu'>^beta_x<'Manu','Manu'> * X<'Prim','Manu'>^beta_x<'Prim','Manu'> * X<'Serv','Manu'>^beta_x<'Serv','Manu'> = 0
+ID  18: -pk + beta_k<'Prim'> * gamma<'Prim'> * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Prim'> - t_imp_espec<'Prim'> - t_iva_prod<'Prim'>) * K<'Prim'>^(-1 + beta_k<'Prim'>) * L<'Prim'>^beta_l<'Prim'> * X<'Manu','Prim'>^beta_x<'Manu','Prim'> * X<'Prim','Prim'>^beta_x<'Prim','Prim'> * X<'Serv','Prim'>^beta_x<'Serv','Prim'> = 0
+ID  19: -pk + beta_k<'Serv'> * gamma<'Serv'> * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Serv'> - t_imp_espec<'Serv'> - t_iva_prod<'Serv'>) * K<'Serv'>^(-1 + beta_k<'Serv'>) * L<'Serv'>^beta_l<'Serv'> * X<'Manu','Serv'>^beta_x<'Manu','Serv'> * X<'Prim','Serv'>^beta_x<'Prim','Serv'> * X<'Serv','Serv'>^beta_x<'Serv','Serv'> = 0
+ID  20: -w + beta_l<'Manu'> * gamma<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Manu'> - t_imp_espec<'Manu'> - t_iva_prod<'Manu'>) * K<'Manu'>^beta_k<'Manu'> * L<'Manu'>^(-1 + beta_l<'Manu'>) * X<'Manu','Manu'>^beta_x<'Manu','Manu'> * X<'Prim','Manu'>^beta_x<'Prim','Manu'> * X<'Serv','Manu'>^beta_x<'Serv','Manu'> = 0
+ID  21: -w + beta_l<'Prim'> * gamma<'Prim'> * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Prim'> - t_imp_espec<'Prim'> - t_iva_prod<'Prim'>) * K<'Prim'>^beta_k<'Prim'> * L<'Prim'>^(-1 + beta_l<'Prim'>) * X<'Manu','Prim'>^beta_x<'Manu','Prim'> * X<'Prim','Prim'>^beta_x<'Prim','Prim'> * X<'Serv','Prim'>^beta_x<'Serv','Prim'> = 0
+ID  22: -w + beta_l<'Serv'> * gamma<'Serv'> * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Serv'> - t_imp_espec<'Serv'> - t_iva_prod<'Serv'>) * K<'Serv'>^beta_k<'Serv'> * L<'Serv'>^(-1 + beta_l<'Serv'>) * X<'Manu','Serv'>^beta_x<'Manu','Serv'> * X<'Prim','Serv'>^beta_x<'Prim','Serv'> * X<'Serv','Serv'>^beta_x<'Serv','Serv'> = 0
+ID  23: -CS + por_cont * INC = 0
+ID  24: -CSf + por_cont_soc_f * CS = 0
+ID  25: -CSg + por_cont_soc_g * CS = 0
+ID  26: -FIRMTAX + fit * pk * Kf = 0
+ID  27: GTg - INGG = 0
+ID  28: -Kf + k_total_data * par_k_f = 0
+ID  29: -Kg + k_total_data * par_k_g = 0
+ID  30: -Kh + k_total_data * par_k_h = 0
+ID  31: -Lh + l_total_data * par_l_h = 0
+ID  32: -PITAX + pit * PITB = 0
+ID  33: -PSf + por_pres_soc_f * INGF = 0
+ID  34: -PSg + por_pres_soc_g * INGG = 0
+ID  35: -RoK + k_total_data * par_k_row = 0
+ID  36: -RoL + l_total_data * par_l_row = 0
+ID  37: -SAV + por_sav * INC = 0
+ID  38: -TREMP + por_tremp * INGF = 0
+ID  39: -TRGOV + por_trgov * INGG = 0
+ID  40: U - (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0
+ID  41: -p<'Manu'> + beta_x<'Manu','Manu'> * gamma<'Manu'> * X<'Manu','Manu'>^-1 * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Manu'> - t_imp_espec<'Manu'> - t_iva_prod<'Manu'>) * K<'Manu'>^beta_k<'Manu'> * L<'Manu'>^beta_l<'Manu'> * X<'Manu','Manu'>^beta_x<'Manu','Manu'> * X<'Prim','Manu'>^beta_x<'Prim','Manu'> * X<'Serv','Manu'>^beta_x<'Serv','Manu'> = 0
+ID  42: -p<'Manu'> + beta_x<'Manu','Prim'> * gamma<'Prim'> * X<'Manu','Prim'>^-1 * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Prim'> - t_imp_espec<'Prim'> - t_iva_prod<'Prim'>) * K<'Prim'>^beta_k<'Prim'> * L<'Prim'>^beta_l<'Prim'> * X<'Manu','Prim'>^beta_x<'Manu','Prim'> * X<'Prim','Prim'>^beta_x<'Prim','Prim'> * X<'Serv','Prim'>^beta_x<'Serv','Prim'> = 0
+ID  43: -p<'Manu'> + beta_x<'Manu','Serv'> * gamma<'Serv'> * X<'Manu','Serv'>^-1 * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Serv'> - t_imp_espec<'Serv'> - t_iva_prod<'Serv'>) * K<'Serv'>^beta_k<'Serv'> * L<'Serv'>^beta_l<'Serv'> * X<'Manu','Serv'>^beta_x<'Manu','Serv'> * X<'Prim','Serv'>^beta_x<'Prim','Serv'> * X<'Serv','Serv'>^beta_x<'Serv','Serv'> = 0
+ID  44: -p<'Prim'> + beta_x<'Prim','Manu'> * gamma<'Manu'> * X<'Prim','Manu'>^-1 * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Manu'> - t_imp_espec<'Manu'> - t_iva_prod<'Manu'>) * K<'Manu'>^beta_k<'Manu'> * L<'Manu'>^beta_l<'Manu'> * X<'Manu','Manu'>^beta_x<'Manu','Manu'> * X<'Prim','Manu'>^beta_x<'Prim','Manu'> * X<'Serv','Manu'>^beta_x<'Serv','Manu'> = 0
+ID  45: -p<'Prim'> + beta_x<'Prim','Prim'> * gamma<'Prim'> * X<'Prim','Prim'>^-1 * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Prim'> - t_imp_espec<'Prim'> - t_iva_prod<'Prim'>) * K<'Prim'>^beta_k<'Prim'> * L<'Prim'>^beta_l<'Prim'> * X<'Manu','Prim'>^beta_x<'Manu','Prim'> * X<'Prim','Prim'>^beta_x<'Prim','Prim'> * X<'Serv','Prim'>^beta_x<'Serv','Prim'> = 0
+ID  46: -p<'Prim'> + beta_x<'Prim','Serv'> * gamma<'Serv'> * X<'Prim','Serv'>^-1 * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Serv'> - t_imp_espec<'Serv'> - t_iva_prod<'Serv'>) * K<'Serv'>^beta_k<'Serv'> * L<'Serv'>^beta_l<'Serv'> * X<'Manu','Serv'>^beta_x<'Manu','Serv'> * X<'Prim','Serv'>^beta_x<'Prim','Serv'> * X<'Serv','Serv'>^beta_x<'Serv','Serv'> = 0
+ID  47: -p<'Serv'> + beta_x<'Serv','Manu'> * gamma<'Manu'> * X<'Serv','Manu'>^-1 * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Manu'> - t_imp_espec<'Manu'> - t_iva_prod<'Manu'>) * K<'Manu'>^beta_k<'Manu'> * L<'Manu'>^beta_l<'Manu'> * X<'Manu','Manu'>^beta_x<'Manu','Manu'> * X<'Prim','Manu'>^beta_x<'Prim','Manu'> * X<'Serv','Manu'>^beta_x<'Serv','Manu'> = 0
+ID  48: -p<'Serv'> + beta_x<'Serv','Prim'> * gamma<'Prim'> * X<'Serv','Prim'>^-1 * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Prim'> - t_imp_espec<'Prim'> - t_iva_prod<'Prim'>) * K<'Prim'>^beta_k<'Prim'> * L<'Prim'>^beta_l<'Prim'> * X<'Manu','Prim'>^beta_x<'Manu','Prim'> * X<'Prim','Prim'>^beta_x<'Prim','Prim'> * X<'Serv','Prim'>^beta_x<'Serv','Prim'> = 0
+ID  49: -p<'Serv'> + beta_x<'Serv','Serv'> * gamma<'Serv'> * X<'Serv','Serv'>^-1 * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Serv'> - t_imp_espec<'Serv'> - t_iva_prod<'Serv'>) * K<'Serv'>^beta_k<'Serv'> * L<'Serv'>^beta_l<'Serv'> * X<'Manu','Serv'>^beta_x<'Manu','Serv'> * X<'Prim','Serv'>^beta_x<'Prim','Serv'> * X<'Serv','Serv'>^beta_x<'Serv','Serv'> = 0
+ID  50: -pe<'Manu'> + p_world_e<'Manu'> * exr = 0
+ID  51: -pe<'Prim'> + p_world_e<'Prim'> * exr = 0
+ID  52: -pe<'Serv'> + p_world_e<'Serv'> * exr = 0
+ID  53: -pm<'Manu'> + exr * (1 + tariff<'Manu'>)^-1 = 0
+ID  54: -pm<'Prim'> + exr * (1 + tariff<'Prim'>)^-1 = 0
+ID  55: -pm<'Serv'> + exr * (1 + tariff<'Serv'>)^-1 = 0
+ID  56: -V<'Manu'> + gamma<'Manu'> * K<'Manu'>^beta_k<'Manu'> * L<'Manu'>^beta_l<'Manu'> * X<'Manu','Manu'>^beta_x<'Manu','Manu'> * X<'Prim','Manu'>^beta_x<'Prim','Manu'> * X<'Serv','Manu'>^beta_x<'Serv','Manu'> = 0
+ID  57: -V<'Prim'> + gamma<'Prim'> * K<'Prim'>^beta_k<'Prim'> * L<'Prim'>^beta_l<'Prim'> * X<'Manu','Prim'>^beta_x<'Manu','Prim'> * X<'Prim','Prim'>^beta_x<'Prim','Prim'> * X<'Serv','Prim'>^beta_x<'Serv','Prim'> = 0
+ID  58: -V<'Serv'> + gamma<'Serv'> * K<'Serv'>^beta_k<'Serv'> * L<'Serv'>^beta_l<'Serv'> * X<'Manu','Serv'>^beta_x<'Manu','Serv'> * X<'Prim','Serv'>^beta_x<'Prim','Serv'> * X<'Serv','Serv'>^beta_x<'Serv','Serv'> = 0
+ID  59: -Yap<'Manu','Manu'> + make_share<'Manu','Manu'> * V<'Manu'> = 0
+ID  60: -Yap<'Manu','Prim'> + make_share<'Prim','Manu'> * V<'Prim'> = 0
+ID  61: -Yap<'Manu','Serv'> + make_share<'Serv','Manu'> * V<'Serv'> = 0
+ID  62: -Yap<'Prim','Manu'> + make_share<'Manu','Prim'> * V<'Manu'> = 0
+ID  63: -Yap<'Prim','Prim'> + make_share<'Prim','Prim'> * V<'Prim'> = 0
+ID  64: -Yap<'Prim','Serv'> + make_share<'Serv','Prim'> * V<'Serv'> = 0
+ID  65: -Yap<'Serv','Manu'> + make_share<'Manu','Serv'> * V<'Manu'> = 0
+ID  66: -Yap<'Serv','Prim'> + make_share<'Prim','Serv'> * V<'Prim'> = 0
+ID  67: -Yap<'Serv','Serv'> + make_share<'Serv','Serv'> * V<'Serv'> = 0
+ID  68: por_inv<'Manu'> * I<'Prim'> - por_inv<'Prim'> * I<'Manu'> = 0
+ID  69: por_inv<'Serv'> * I<'Prim'> - por_inv<'Prim'> * I<'Serv'> = 0
+ID  70: alpha<'Manu'> * D<'Manu'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Manu'> * (1 + vat<'Manu'>) = 0
+ID  71: alpha<'Prim'> * D<'Prim'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Prim'> * (1 + vat<'Prim'>) = 0
+ID  72: alpha<'Serv'> * D<'Serv'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Serv'> * (1 + vat<'Serv'>) = 0
+ID  73: CSf - INGF + pk * Kf = 0
+ID  74: -PITB + pk * Kh + w * Lh = 0
+ID  75: -PS + PSf + PSg = 0
+ID  76: CSg - INGG + Tax + pk * Kg = 0
+ID  77: -RENT_M + Imports<'Manu'> * (p<'Manu'> - pm<'Manu'> * (1 + tariff<'Manu'>)) + Imports<'Prim'> * (p<'Prim'> - pm<'Prim'> * (1 + tariff<'Prim'>)) + Imports<'Serv'> * (p<'Serv'> - pm<'Serv'> * (1 + tariff<'Serv'>)) = 0
+ID  78: -RENT_E + Exports<'Manu'> * (-p<'Manu'> + pe<'Manu'>) + Exports<'Prim'> * (-p<'Prim'> + pe<'Prim'>) + Exports<'Serv'> * (-p<'Serv'> + pe<'Serv'>) = 0
+ID  79: -VAT_DEMAND + vat<'Manu'> * p<'Manu'> * (D<'Manu'> + G<'Manu'> + I<'Manu'> + VarExis<'Manu'>) + vat<'Prim'> * p<'Prim'> * (D<'Prim'> + G<'Prim'> + I<'Prim'> + VarExis<'Prim'>) + vat<'Serv'> * p<'Serv'> * (D<'Serv'> + G<'Serv'> + I<'Serv'> + VarExis<'Serv'>) = 0
+ID  80: VAT_DEMAND + VAT_OUTPUT - VAT + VAT_IMPORTS = 0
+ID  81: -VAT_OUTPUT + t_iva_prod<'Manu'> * revenue<'Manu'> + t_iva_prod<'Prim'> * revenue<'Prim'> + t_iva_prod<'Serv'> * revenue<'Serv'> = 0
+ID  82: -VAT_IMPORTS + vat<'Manu'> * Imports<'Manu'> * (1 + tariff<'Manu'>) + vat<'Prim'> * Imports<'Prim'> * (1 + tariff<'Prim'>) + vat<'Serv'> * Imports<'Serv'> * (1 + tariff<'Serv'>) = 0
+ID  83: -revenue<'Manu'> + p<'Manu'> * Yap<'Manu','Manu'> + p<'Prim'> * Yap<'Prim','Manu'> + p<'Serv'> * Yap<'Serv','Manu'> = 0
+ID  84: -revenue<'Prim'> + p<'Manu'> * Yap<'Manu','Prim'> + p<'Prim'> * Yap<'Prim','Prim'> + p<'Serv'> * Yap<'Serv','Prim'> = 0
+ID  85: -revenue<'Serv'> + p<'Manu'> * Yap<'Manu','Serv'> + p<'Prim'> * Yap<'Prim','Serv'> + p<'Serv'> * Yap<'Serv','Serv'> = 0
+ID  86: X<'Manu','Manu'> + X<'Manu','Prim'> + X<'Manu','Serv'> - X_total<'Manu'> = 0
+ID  87: X<'Prim','Manu'> + X<'Prim','Prim'> + X<'Prim','Serv'> - X_total<'Prim'> = 0
+ID  88: X<'Serv','Manu'> + X<'Serv','Prim'> + X<'Serv','Serv'> - X_total<'Serv'> = 0
+ID  89: k_total_data - RiK - K<'Manu'> - K<'Prim'> - K<'Serv'> = 0
+ID  90: l_total_data - RiL - L<'Manu'> - L<'Prim'> - L<'Serv'> = 0
+ID  91: BTINC - INC - PITAX + RENT_M + RENT_E = 0
+ID  92: INGF - PSf - SAVf - TREMP - fit * pk * Kf = 0
+ID  93: -BTINC + PS + TREMP + TRGOV + pk * Kh + w * Lh = 0
+ID  94: CS - INC + SAV + p<'Manu'> * D<'Manu'> * (1 + vat<'Manu'>) + p<'Prim'> * D<'Prim'> * (1 + vat<'Prim'>) + p<'Serv'> * D<'Serv'> * (1 + vat<'Serv'>) = 0
+ID  95: -GTg + PSg + SAVg + TRGOV + p<'Manu'> * G<'Manu'> * (1 + vat<'Manu'>) + p<'Prim'> * G<'Prim'> * (1 + vat<'Prim'>) + p<'Serv'> * G<'Serv'> * (1 + vat<'Serv'>) = 0
+ID  96: pi<'Manu'> + pk * K<'Manu'> + w * L<'Manu'> + p<'Manu'> * X<'Manu','Manu'> + p<'Prim'> * X<'Prim','Manu'> + p<'Serv'> * X<'Serv','Manu'> - V<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Manu','Prim'> * p<'Prim'> + make_share<'Manu','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Manu'> - t_imp_espec<'Manu'> - t_iva_prod<'Manu'>) = 0
+ID  97: pi<'Prim'> + pk * K<'Prim'> + w * L<'Prim'> + p<'Manu'> * X<'Manu','Prim'> + p<'Prim'> * X<'Prim','Prim'> + p<'Serv'> * X<'Serv','Prim'> - V<'Prim'> * (make_share<'Prim','Manu'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Prim','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Prim'> - t_imp_espec<'Prim'> - t_iva_prod<'Prim'>) = 0
+ID  98: pi<'Serv'> + pk * K<'Serv'> + w * L<'Serv'> + p<'Manu'> * X<'Manu','Serv'> + p<'Prim'> * X<'Prim','Serv'> + p<'Serv'> * X<'Serv','Serv'> - V<'Serv'> * (make_share<'Serv','Manu'> * p<'Manu'> + make_share<'Serv','Prim'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - t_imp_prod<'Serv'> - t_imp_espec<'Serv'> - t_iva_prod<'Serv'>) = 0
+ID  99: SAV + SAVf + SAVg + SAVrow + WALRAS - p<'Manu'> * (1 + vat<'Manu'>) * (I<'Manu'> + VarExis<'Manu'>) - p<'Prim'> * (1 + vat<'Prim'>) * (I<'Prim'> + VarExis<'Prim'>) - p<'Serv'> * (1 + vat<'Serv'>) * (I<'Serv'> + VarExis<'Serv'>) = 0
+ID 100: FIRMTAX + PITAX - Tax + VAT + tariff<'Manu'> * Imports<'Manu'> + tariff<'Prim'> * Imports<'Prim'> + tariff<'Serv'> * Imports<'Serv'> + revenue<'Manu'> * (t_imp_prod<'Manu'> + t_imp_espec<'Manu'>) + revenue<'Prim'> * (t_imp_prod<'Prim'> + t_imp_espec<'Prim'>) + revenue<'Serv'> * (t_imp_prod<'Serv'> + t_imp_espec<'Serv'>) = 0
+ID 101: D<'Manu'> + Exports<'Manu'> + G<'Manu'> + I<'Manu'> - Imports<'Manu'> + VarExis<'Manu'> + X_total<'Manu'> - Yap<'Manu','Manu'> - Yap<'Manu','Prim'> - Yap<'Manu','Serv'> = 0
+ID 102: D<'Prim'> + Exports<'Prim'> + G<'Prim'> + I<'Prim'> - Imports<'Prim'> + VarExis<'Prim'> + X_total<'Prim'> - Yap<'Prim','Manu'> - Yap<'Prim','Prim'> - Yap<'Prim','Serv'> = 0
+ID 103: D<'Serv'> + Exports<'Serv'> + G<'Serv'> + I<'Serv'> - Imports<'Serv'> + VarExis<'Serv'> + X_total<'Serv'> - Yap<'Serv','Manu'> - Yap<'Serv','Prim'> - Yap<'Serv','Serv'> = 0
+ID 104: -SAVrow - pk * RiK + pk * RoK - w * RiL + w * RoL - pe<'Manu'> * Exports<'Manu'> - pe<'Prim'> * Exports<'Prim'> - pe<'Serv'> * Exports<'Serv'> + Imports<'Manu'> * (1 + tariff<'Manu'>)^-1 + Imports<'Prim'> * (1 + tariff<'Prim'>)^-1 + Imports<'Serv'> * (1 + tariff<'Serv'>)^-1 = 0
+
+--- DETALLE DE RESIDUOS ---
+Initial residuals:
+        Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5         Eq. 6         Eq. 7 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+        Eq. 8         Eq. 9        Eq. 10        Eq. 11        Eq. 12        Eq. 13        Eq. 14 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 15        Eq. 16        Eq. 17        Eq. 18        Eq. 19        Eq. 20        Eq. 21 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 22        Eq. 23        Eq. 24        Eq. 25        Eq. 26        Eq. 27        Eq. 28 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 29        Eq. 30        Eq. 31        Eq. 32        Eq. 33        Eq. 34        Eq. 35 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 36        Eq. 37        Eq. 38        Eq. 39        Eq. 40        Eq. 41        Eq. 42 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 43        Eq. 44        Eq. 45        Eq. 46        Eq. 47        Eq. 48        Eq. 49 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 50        Eq. 51        Eq. 52        Eq. 53        Eq. 54        Eq. 55        Eq. 56 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 57        Eq. 58        Eq. 59        Eq. 60        Eq. 61        Eq. 62        Eq. 63 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 64        Eq. 65        Eq. 66        Eq. 67        Eq. 68        Eq. 69        Eq. 70 
+        0.000         0.000         0.000         0.000         0.000         0.000         1.065 
+       Eq. 71        Eq. 72        Eq. 73        Eq. 74        Eq. 75        Eq. 76        Eq. 77 
+        1.153         0.954         0.000         0.000         0.000         0.000         0.000 
+       Eq. 78        Eq. 79        Eq. 80        Eq. 81        Eq. 82        Eq. 83        Eq. 84 
+        0.000         0.000         0.000         0.000         4.997         0.000         0.000 
+       Eq. 85        Eq. 86        Eq. 87        Eq. 88        Eq. 89        Eq. 90        Eq. 91 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 92        Eq. 93        Eq. 94        Eq. 95        Eq. 96        Eq. 97        Eq. 98 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 99       Eq. 100       Eq. 101       Eq. 102       Eq. 103       Eq. 104  Calibr Eq. 1 
+        0.000         0.010         0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5  Calibr Eq. 6  Calibr Eq. 7  Calibr Eq. 8 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 9 Calibr Eq. 10 Calibr Eq. 11 Calibr Eq. 12 Calibr Eq. 13 Calibr Eq. 14 Calibr Eq. 15 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 16 Calibr Eq. 17 Calibr Eq. 18 Calibr Eq. 19 Calibr Eq. 20 Calibr Eq. 21 Calibr Eq. 22 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 23 
+        0.000 
+
+Equations with the largest initial residuals:
+Eq. 82, Eq. 71, Eq. 70, Eq. 72, Eq. 100
+
+Final residuals:
+        Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5         Eq. 6         Eq. 7 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+        Eq. 8         Eq. 9        Eq. 10        Eq. 11        Eq. 12        Eq. 13        Eq. 14 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 15        Eq. 16        Eq. 17        Eq. 18        Eq. 19        Eq. 20        Eq. 21 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 22        Eq. 23        Eq. 24        Eq. 25        Eq. 26        Eq. 27        Eq. 28 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 29        Eq. 30        Eq. 31        Eq. 32        Eq. 33        Eq. 34        Eq. 35 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 36        Eq. 37        Eq. 38        Eq. 39        Eq. 40        Eq. 41        Eq. 42 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 43        Eq. 44        Eq. 45        Eq. 46        Eq. 47        Eq. 48        Eq. 49 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 50        Eq. 51        Eq. 52        Eq. 53        Eq. 54        Eq. 55        Eq. 56 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 57        Eq. 58        Eq. 59        Eq. 60        Eq. 61        Eq. 62        Eq. 63 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 64        Eq. 65        Eq. 66        Eq. 67        Eq. 68        Eq. 69        Eq. 70 
+        0.000         0.000         0.000         0.000         0.000         0.000         1.065 
+       Eq. 71        Eq. 72        Eq. 73        Eq. 74        Eq. 75        Eq. 76        Eq. 77 
+        1.153         0.954         0.000         0.000         0.000         0.000         0.000 
+       Eq. 78        Eq. 79        Eq. 80        Eq. 81        Eq. 82        Eq. 83        Eq. 84 
+        0.000         0.000         0.000         0.000         4.997         0.000         0.000 
+       Eq. 85        Eq. 86        Eq. 87        Eq. 88        Eq. 89        Eq. 90        Eq. 91 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 92        Eq. 93        Eq. 94        Eq. 95        Eq. 96        Eq. 97        Eq. 98 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+       Eq. 99       Eq. 100       Eq. 101       Eq. 102       Eq. 103       Eq. 104  Calibr Eq. 1 
+        0.000         0.010         0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5  Calibr Eq. 6  Calibr Eq. 7  Calibr Eq. 8 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 9 Calibr Eq. 10 Calibr Eq. 11 Calibr Eq. 12 Calibr Eq. 13 Calibr Eq. 14 Calibr Eq. 15 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 16 Calibr Eq. 17 Calibr Eq. 18 Calibr Eq. 19 Calibr Eq. 20 Calibr Eq. 21 Calibr Eq. 22 
+        0.000         0.000         0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 23 
+        0.000 
+
+Equations with the largest final residuals:
+Eq. 82, Eq. 71, Eq. 70, Eq. 72, Eq. 100
+ID 209: NA                                                           | Residual: 4.997485
+ID  82: -VAT_IMPORTS + vat<'Manu'> * Imports<'Manu'> * (1 + tariff<'Manu'>) + vat<'Prim'> * Imports<'Prim'> * (1 + tariff<'Prim'>) + vat<'Serv'> * Imports<'Serv'> * (1 + tariff<'Serv'>) = 0 | Residual: 4.997485
+ID  71: alpha<'Prim'> * D<'Prim'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Prim'> * (1 + vat<'Prim'>) = 0 | Residual: 1.152881
+ID 198: NA                                                           | Residual: 1.152881
+ID  70: alpha<'Manu'> * D<'Manu'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Manu'> * (1 + vat<'Manu'>) = 0 | Residual: 1.064558
+ID 197: NA                                                           | Residual: 1.064558
+ID  72: alpha<'Serv'> * D<'Serv'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Serv'> * (1 + vat<'Serv'>) = 0 | Residual: 0.953963
+ID 199: NA                                                           | Residual: 0.953963
+ID 100: FIRMTAX + PITAX - Tax + VAT + tariff<'Manu'> * Imports<'Manu'> + tariff<'Prim'> * Imports<'Prim'> + tariff<'Serv'> * Imports<'Serv'> + revenue<'Manu'> * (t_imp_prod<'Manu'> + t_imp_espec<'Manu'>) + revenue<'Prim'> * (t_imp_prod<'Prim'> + t_imp_espec<'Prim'>) + revenue<'Serv'> * (t_imp_prod<'Serv'> + t_imp_espec<'Serv'>) = 0 | Residual: 0.010152
+ID 227: NA                                                           | Residual: 0.010152
+
+--- VALORES DE CAPITAL ---
+K_vals (R):  11.595957678, 13.191752925, 24.571594442 
+Equilibrium values:
+
+                   Equilibrium value
+exr                           1.0000
+lambda__CONSUMER_1            0.4711
+pk                            1.0000
+w                             1.0000
+BTINC                        71.2375
+CS                            7.4809
+CSf                           5.8570
+CSg                           1.6239
+FIRMTAX                       4.6739
+GTg                          18.8434
+INC                          70.0286
+INGF                         36.9537
+INGG                         18.8434
+Kf                           31.0967
+Kg                            0.9811
+Kh                           12.0607
+Lh                           34.1314
+PITAX                         1.2090
+PITB                         46.1921
+PS                            5.5068
+PSf                           1.5234
+PSg                           3.9834
+RiL                           0.0000
+RiK                           4.7541
+RoK                           9.9748
+RoL                           0.0017
+RENT_M                        0.0000
+RENT_E                        0.0000
+SAV                           5.4080
+SAVf                         13.3251
+SAVg                          2.2573
+SAVrow                        3.3718
+Tax                          16.2385
+TREMP                        17.4313
+TRGOV                         2.1074
+U                            26.9177
+VAT_DEMAND                    5.8671
+VAT_OUTPUT                    1.5198
+VAT                           7.3870
+VAT_IMPORTS                   0.0000
+WALRAS                        0.0000
+p__Manu                       1.0000
+p__Prim                       1.0000
+p__Serv                       1.0000
+pe__Manu                      1.0000
+pe__Prim                      1.0000
+pe__Serv                      1.0000
+pi__Manu                      0.0000
+pi__Prim                      0.0000
+pi__Serv                      0.0000
+pm__Manu                      0.9820
+pm__Prim                      0.9864
+pm__Serv                      1.0000
+revenue__Manu                64.2157
+revenue__Prim                30.8143
+revenue__Serv                88.5478
+D__Manu                      20.4354
+D__Prim                       0.9902
+D__Serv                      32.4323
+Exports__Manu                13.4899
+Exports__Prim                18.4058
+Exports__Serv                 7.0575
+G__Manu                       0.0741
+G__Prim                       0.0143
+G__Serv                      10.2657
+I__Manu                      17.1203
+I__Prim                       0.2108
+I__Serv                       3.5324
+Imports__Manu                27.3792
+Imports__Prim                 5.8210
+Imports__Serv                 4.4750
+K__Manu                      11.5960
+K__Prim                      13.1918
+K__Serv                      24.5716
+L__Manu                       7.1011
+L__Prim                       2.9878
+L__Serv                      24.0441
+V__Manu                      64.2157
+V__Prim                      30.8143
+V__Serv                      88.5478
+VarExis__Manu                 1.1227
+VarExis__Prim                -0.0761
+VarExis__Serv                 0.0080
+X__Manu__Manu                22.1154
+X__Manu__Prim                 6.9138
+X__Manu__Serv                11.3966
+X__Prim__Manu                11.9280
+X__Prim__Prim                 3.1605
+X__Prim__Serv                 0.1641
+X__Serv__Manu                10.2553
+X__Serv__Prim                 4.4457
+X__Serv__Serv                25.7904
+X_total__Manu                40.4258
+X_total__Prim                15.2526
+X_total__Serv                40.4914
+Yap__Manu__Manu              62.7237
+Yap__Manu__Prim               1.0697
+Yap__Manu__Serv               1.4954
+Yap__Prim__Manu               0.1736
+Yap__Prim__Prim              28.8030
+Yap__Prim__Serv               0.0000
+Yap__Serv__Manu               1.3184
+Yap__Serv__Prim               0.9416
+Yap__Serv__Serv              87.0524
+K in model:  11.595957678, 13.191752925, 24.571594442 

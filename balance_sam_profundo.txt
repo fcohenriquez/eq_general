@@ -1,0 +1,26 @@
+=================================================
+        DIAGNOSTICO DE BALANCE DE LA SAM         
+=================================================
+
+--- Balance por Cuentas (Ingreso - Gasto) ---
+Cuenta: Hogares         | Ing:     142.48 | Gto:     142.48 | Diff:      -0.00
+Cuenta: Empresas        | Ing:      73.91 | Gto:      73.91 | Diff:       0.00
+Cuenta: Gobierno        | Ing:      37.69 | Gto:      37.69 | Diff:      -0.00
+Cuenta: row             | Ing:      94.16 | Gto:      94.16 | Diff:      -0.00
+Cuenta: Capital         | Ing:     108.23 | Gto:     108.23 | Diff:      -0.00
+Cuenta: Trabajo         | Ing:      68.27 | Gto:      68.27 | Diff:       0.00
+Cuenta: Cont_soc        | Ing:      14.96 | Gto:      14.96 | Diff:       0.00
+Cuenta: Pres_soc        | Ing:      11.01 | Gto:      11.01 | Diff:       0.00
+Cuenta: Imp_dir         | Ing:      11.77 | Gto:      11.77 | Diff:       0.00
+Cuenta: IVA             | Ing:      14.77 | Gto:      14.77 | Diff:       0.00
+Cuenta: Arancel         | Ing:       1.15 | Gto:       1.15 | Diff:       0.00
+Cuenta: Imp_prod        | Ing:       2.89 | Gto:       2.89 | Diff:       0.00
+Cuenta: Imptos_Espec    | Ing:       1.90 | Gto:       1.90 | Diff:       0.00
+Cuenta: S-I             | Ing:      48.72 | Gto:      48.72 | Diff:       0.00
+Cuenta: Var_Exis        | Ing:       2.37 | Gto:       2.37 | Diff:       0.00
+
+--- Desglose de Cuentas Problemáticas ---
+Cont_soc: Pagado por Hogares: 7.480883 Recibido por F+G: 7.480883 Diff: -8.881784e-16 
+Pres_soc: Recibido por Hogares: 5.506767 Pagado por F+G: 5.506767 Diff: 0 
+Trabajo (L): Total Recibido: 68.26606 Total Pagado: 68.26606 Diff: 1.7e-08 
+Capital (K): Total Recibido: 108.2267 Total Pagado: 108.2267 Diff: -6e-08 

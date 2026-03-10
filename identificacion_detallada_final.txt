@@ -1,0 +1,59 @@
+=================================================
+   IDENTIFICACION DE ECUACIONES Y ESTRUCTURA     
+=================================================
+
+RESIDUOS REPORTADOS (70, 71, 72, 76, 99):
+ID  70: initial.Eq. 70                 | Residual: 0.000000
+ID  71: initial.Eq. 71                 | Residual: 1.064558
+ID  72: initial.Eq. 72                 | Residual: 1.152881
+ID  76: initial.Eq. 76                 | Residual: 0.000000
+ID  99: initial.Eq. 99                 | Residual: -0.000000
+
+--- REVISIÓN DE BALANCE DE FACTORES ---
+Trabajo (L) - Fila:
+        Act prim Act manu Act serv Prod prim Prod manu Prod serv Trabajo Capital Hogares Empresas
+Trabajo 2.987827 7.101081 24.04412         0         0         0       0       0       0        0
+        Gobierno Cont_soc Pres_soc Imp_dir Imp_prod Imptos_Espec IVA Arancel row S-I Var_Exis
+Trabajo        0        0        0       0        0            0   0       0   0   0        0
+           Total
+Trabajo 34.13303
+Trabajo (L) - Columna:
+ [1]  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+ [9] 34.13135949  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+[17]  0.00000000  0.00000000  0.00167188  0.00000000  0.00000000 34.13303137
+
+Capital (K) - Fila:
+        Act prim Act manu Act serv Prod prim Prod manu Prod serv Trabajo Capital Hogares Empresas
+Capital 13.19175 11.59596 24.57159         0         0         0       0       0       0        0
+        Gobierno Cont_soc Pres_soc Imp_dir Imp_prod Imptos_Espec IVA Arancel      row S-I Var_Exis
+Capital        0        0        0       0        0            0   0       0 4.754054   0        0
+           Total
+Capital 54.11336
+Capital (K) - Columna:
+ [1]  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+ [9] 12.0607358 31.0967094  0.9810935  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000
+[17]  0.0000000  0.0000000  9.9748206  0.0000000  0.0000000 54.1133592
+
+--- REVISIÓN DE IMPUESTOS DIRECTOS ---
+Imp_dir - Fila:
+        Act prim Act manu Act serv Prod prim Prod manu Prod serv Trabajo Capital  Hogares Empresas
+Imp_dir        0        0        0         0         0         0       0       0 1.208967 4.673899
+        Gobierno Cont_soc Pres_soc Imp_dir Imp_prod Imptos_Espec IVA Arancel row S-I Var_Exis
+Imp_dir        0        0        0       0        0            0   0       0   0   0        0
+           Total
+Imp_dir 5.882866
+
+--- REVISIÓN DE IVA ---
+IVA - Fila:
+      Act prim   Act manu Act serv Prod prim Prod manu Prod serv Trabajo Capital Hogares Empresas
+IVA 0.01273369 0.02032866 1.486779 0.2547659  5.033784 0.5785855       0       0       0        0
+    Gobierno Cont_soc Pres_soc Imp_dir Imp_prod Imptos_Espec IVA Arancel row S-I Var_Exis    Total
+IVA        0        0        0       0        0            0   0       0   0   0        0 7.386977
+
+--- VALORES DE ACTIVIDADES (sam_a) ---
+[1] "Act manu" "Act prim" "Act serv"
+            Act manu    Act prim  Act serv
+Trabajo   7.10108079  2.98782689 24.044124
+Capital  11.59595768 13.19175293 24.571594
+IVA       0.02032866  0.01273369  1.486779
+Imp_prod  0.24861446  0.10199653  1.094243

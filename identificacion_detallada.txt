@@ -1,0 +1,70 @@
+=================================================
+   DIAGNOSTICO DE ECUACIONES Y CUENTAS SAM       
+=================================================
+
+RESIDUOS REPORTADOS (70, 71, 72, 76, 99):
+ID  70: initial.Eq. 70                 | Residual: 0.000000
+ID  71: initial.Eq. 71                 | Residual: 1.064558
+ID  72: initial.Eq. 72                 | Residual: 1.152881
+ID  76: initial.Eq. 76                 | Residual: 0.000000
+ID  99: initial.Eq. 99                 | Residual: -0.000000
+
+--- MATRIX ROWS (IMPUESTOS Y FACTORES) ---
+
+Fila: IVA 
+[1] 0.01273369 0.02032866 1.48677915 0.25476587 5.03378400 0.57858551 7.38697689
+Suma Fila: 14.77395 
+
+Fila: Imp_dir 
+[1] 1.208967 4.673899 5.882866
+Suma Fila: 11.76573 
+
+Fila: Trabajo 
+[1]  2.987827  7.101081 24.044124 34.133031
+Suma Fila: 68.26606 
+
+Fila: Capital 
+[1] 13.191753 11.595958 24.571594  4.754054 54.113359
+Suma Fila: 108.2267 
+
+Fila: Imp_prod 
+[1] 0.1019965 0.2486145 1.0942427 1.4448537
+Suma Fila: 2.889707 
+
+Fila: Imptos_Espec 
+[1] 0.9510015 0.9510015
+Suma Fila: 1.902003 
+
+--- MATRIX COLS (IMPUESTOS Y FACTORES) ---
+
+Columna: IVA 
+[1] 7.386977 7.386977
+Suma Columna: 14.77395 
+
+Columna: Imp_dir 
+[1] 5.882866 5.882866
+Suma Columna: 11.76573 
+
+Columna: Trabajo 
+[1] 34.13135949  0.00167188 34.13303137
+Suma Columna: 68.26606 
+
+Columna: Capital 
+[1] 12.0607358 31.0967094  0.9810935  9.9748206 54.1133592
+Suma Columna: 108.2267 
+
+Columna: Imp_prod 
+[1] 1.444854 1.444854
+Suma Columna: 2.889707 
+
+Columna: Imptos_Espec 
+[1] 0.9510015 0.9510015
+Suma Columna: 1.902003 
+
+--- DEFINICIONES EN R (Verificación de Balances) ---
+TOTAL_TAX_SAM (R):    22.12133 
+DIR_TAX_H_val (R):   1.208967 
+FIT_val (R):         4.673899 
+OTH_DIR_TAX_val (R): 5.882866 
+SAV_G_val (R):       2.257313 
+ING_GOB_val (R):     24.7263 

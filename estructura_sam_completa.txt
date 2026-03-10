@@ -1,0 +1,51 @@
+=================================================
+      ESTRUCTURA Y VALORES DE LA MATRIZ SAM      
+=================================================
+
+DIMENSIONES:
+[1] 22 22
+
+NOMBRES DE FILAS (ROWS):
+ [1] "Act prim"     "Act manu"     "Act serv"     "Prod prim"    "Prod manu"    "Prod serv"   
+ [7] "Trabajo"      "Capital"      "Hogares"      "Empresas"     "Gobierno"     "Cont_soc"    
+[13] "Pres_soc"     "Imp_dir"      "Imp_prod"     "Imptos_Espec" "IVA"          "Arancel"     
+[19] "row"          "S-I"          "Var_Exis"     "Total"       
+
+NOMBRES DE COLUMNAS (COLS):
+ [1] "Act prim"     "Act manu"     "Act serv"     "Prod prim"    "Prod manu"    "Prod serv"   
+ [7] "Trabajo"      "Capital"      "Hogares"      "Empresas"     "Gobierno"     "Cont_soc"    
+[13] "Pres_soc"     "Imp_dir"      "Imp_prod"     "Imptos_Espec" "IVA"          "Arancel"     
+[19] "row"          "S-I"          "Var_Exis"     "Total"       
+
+--- REVISIÓN DE CUENTA 'IVA' ---
+Fila IVA (Primeros 20 valores):
+      Act prim   Act manu Act serv Prod prim Prod manu Prod serv Trabajo Capital Hogares Empresas
+IVA 0.01273369 0.02032866 1.486779 0.2547659  5.033784 0.5785855       0       0       0        0
+    Gobierno Cont_soc Pres_soc Imp_dir Imp_prod Imptos_Espec IVA Arancel row S-I
+IVA        0        0        0       0        0            0   0       0   0   0
+
+Suma Fila IVA: 14.77395 
+Columna IVA (Primeros 20 valores):
+ [1] 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+[11] 7.386977 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+
+--- REVISIÓN DE CUENTAS DE FACTORES ---
+
+Factor: Trabajo 
+Suma Fila (Ingreso): 68.26606 
+Suma Columna (Pago): 68.26606 
+Pagos de Actividades (sam_a):
+        Act manu Act prim Act serv
+Trabajo 7.101081 2.987827 24.04412
+
+Factor: Capital 
+Suma Fila (Ingreso): 108.2267 
+Suma Columna (Pago): 108.2267 
+Pagos de Actividades (sam_a):
+        Act manu Act prim Act serv
+Capital 11.59596 13.19175 24.57159
+
+--- REVISIÓN DE DEMANDA FINAL ---
+Columnas sam_p: Prod manu Prod prim Prod serv 
+Hogares column (sam_p keys)?
+[1] 23.089911  1.211592 32.838168

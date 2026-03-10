@@ -1,0 +1,248 @@
+=================================================
+      DIAGNOSTICO QUIRURGICO DE RESIDUOS         
+=================================================
+
+RESIDUOS (Top 10):
+  ID         Nombre   Residual
+  94 initial.Eq. 94 -5.8828657
+ 220   final.Eq. 94 -5.8828657
+  99 initial.Eq. 99 -5.8828657
+ 225   final.Eq. 99 -5.8828657
+  71 initial.Eq. 71  1.1528807
+ 197   final.Eq. 71  1.1528807
+  70 initial.Eq. 70  1.0645577
+ 196   final.Eq. 70  1.0645577
+  72 initial.Eq. 72  0.9539628
+ 198   final.Eq. 72  0.9539628
+
+--- VALORES DE IMPUESTOS EN EL MODELO (SS) ---
+Equilibrium values:
+
+                   Equilibrium value
+exr                           1.0000
+lambda__CONSUMER_1            0.4711
+pk                            1.0000
+w                             1.0000
+BTINC                        71.2375
+CS                            7.4809
+CSf                           5.8570
+CSg                           1.6239
+FIRMTAX                       4.6739
+GTg                          24.7263
+INC                          70.0286
+INGF                         36.9537
+INGG                         24.7263
+Kf                           31.0967
+Kg                            0.9811
+Kh                           12.0607
+Lh                           34.1314
+PITAX                         1.2090
+PITB                         46.1921
+PS                            5.5068
+PSf                           1.5234
+PSg                           3.9834
+RiL                           0.0000
+RiK                           4.7541
+RoK                           9.9748
+RoL                           0.0017
+RENT_M                        0.0000
+RENT_E                        0.0000
+SAV                           5.4080
+SAVf                         13.3251
+SAVg                          2.2573
+SAVrow                        3.3718
+Tax                          22.1213
+TREMP                        17.4313
+TRGOV                         2.1074
+U                            26.9177
+VAT_DEMAND                    5.8671
+VAT_OUTPUT                    1.5198
+VAT                           7.3870
+WALRAS                        0.0000
+p__Manu                       1.0000
+p__Prim                       1.0000
+p__Serv                       1.0000
+pe__Manu                      1.0000
+pe__Prim                      1.0000
+pe__Serv                      1.0000
+pi__Manu                      0.0000
+pi__Prim                      0.0000
+pi__Serv                      0.0000
+pm__Manu                      0.9820
+pm__Prim                      0.9864
+pm__Serv                      1.0000
+revenue__Manu                64.2157
+revenue__Prim                30.8143
+revenue__Serv                88.5478
+D__Manu                      20.4354
+D__Prim                       0.9902
+D__Serv                      32.4323
+Exports__Manu                13.4899
+Exports__Prim                18.4058
+Exports__Serv                 7.0575
+G__Manu                       0.0741
+G__Prim                       0.0143
+G__Serv                      10.2657
+I__Manu                      17.1203
+I__Prim                       0.2108
+I__Serv                       3.5324
+Imports__Manu                27.3792
+Imports__Prim                 5.8210
+Imports__Serv                 4.4750
+K__Manu                      11.5960
+K__Prim                      13.1918
+K__Serv                      24.5716
+L__Manu                       7.1011
+L__Prim                       2.9878
+L__Serv                      24.0441
+V__Manu                      64.2157
+V__Prim                      30.8143
+V__Serv                      88.5478
+VarExis__Manu                 1.1227
+VarExis__Prim                -0.0761
+VarExis__Serv                 0.0080
+X__Manu__Manu                22.1154
+X__Manu__Prim                 6.9138
+X__Manu__Serv                11.3966
+X__Prim__Manu                11.9280
+X__Prim__Prim                 3.1605
+X__Prim__Serv                 0.1641
+X__Serv__Manu                10.2553
+X__Serv__Prim                 4.4457
+X__Serv__Serv                25.7904
+X_total__Manu                40.4258
+X_total__Prim                15.2526
+X_total__Serv                40.4914
+Yap__Manu__Manu              62.7237
+Yap__Manu__Prim               1.0697
+Yap__Manu__Serv               1.4954
+Yap__Prim__Manu               0.1736
+Yap__Prim__Prim              28.8030
+Yap__Prim__Serv               0.0000
+Yap__Serv__Manu               1.3184
+Yap__Serv__Prim               0.9416
+Yap__Serv__Serv              87.0524
+PITAX     : 1.208967
+FIRMTAX   : 4.673899
+Tax       : 22.121327
+INGG      : 24.726299
+GTg       : 24.726299
+INC       : 70.028559
+BTINC     : 71.237526
+
+--- VALORES DE PARAMETROS EN EL MODELO ---
+Model parameters:
+
+                        Value
+fact_row_in_k_data      4.754
+fact_row_in_l_data      0.000
+fit                     0.150
+fit_data                4.674
+k_total_data           54.113
+l_total_data           34.133
+omega                   0.500
+par_k_h                 0.223
+par_l_h                 1.000
+par_k_f                 0.575
+par_k_g                 0.018
+par_k_row               0.184
+par_l_row               0.000
+pit                     0.026
+pit_data                1.209
+por_sav                 0.077
+por_cont                0.107
+por_tremp               0.472
+por_trgov               0.085
+por_cont_soc_f          0.783
+por_pres_soc_f          0.041
+por_pres_soc_g          0.161
+por_cont_soc_g          0.217
+alpha__Manu             0.307
+alpha__Prim             0.001
+alpha__Serv             0.692
+beta_k__Manu            0.184
+beta_k__Prim            0.430
+beta_k__Serv            0.286
+beta_l__Manu            0.113
+beta_l__Prim            0.097
+beta_l__Serv            0.280
+beta_x__Manu__Manu      0.351
+beta_x__Manu__Prim      0.225
+beta_x__Manu__Serv      0.133
+beta_x__Prim__Manu      0.189
+beta_x__Prim__Prim      0.103
+beta_x__Prim__Serv      0.002
+beta_x__Serv__Manu      0.163
+beta_x__Serv__Prim      0.145
+beta_x__Serv__Serv      0.300
+d_data__Manu           20.435
+d_data__Serv           32.432
+e_data__Manu           13.490
+e_data__Prim           18.406
+e_data__Serv            7.058
+gamma__Manu             4.734
+gamma__Prim             4.234
+gamma__Serv             3.994
+gg_market_data__Manu    0.084
+gg_market_data__Prim    0.018
+gg_market_data__Serv   10.394
+l_data__Manu            7.101
+l_data__Prim            2.988
+l_data__Serv           24.044
+m_data__Manu           27.379
+m_data__Prim            5.821
+m_data__Serv            4.475
+make_share__Manu__Manu  0.977
+make_share__Manu__Prim  0.003
+make_share__Manu__Serv  0.020
+make_share__Prim__Manu  0.035
+make_share__Prim__Prim  0.935
+make_share__Prim__Serv  0.031
+make_share__Serv__Manu  0.017
+make_share__Serv__Prim  0.000
+make_share__Serv__Serv  0.983
+p_world_e__Manu         1.000
+p_world_e__Prim         1.000
+p_world_e__Serv         1.000
+por_inv__Manu           0.821
+por_inv__Prim           0.010
+por_inv__Serv           0.169
+t_imp_prod__Manu        0.004
+t_imp_prod__Prim        0.003
+t_imp_prod__Serv        0.012
+t_imp_espec__Manu       0.015
+t_imp_espec__Prim       0.000
+t_imp_espec__Serv       0.000
+t_iva_prod__Manu        0.000
+t_iva_prod__Prim        0.000
+t_iva_prod__Serv        0.017
+tariff__Manu            0.018
+tariff__Prim            0.014
+tariff__Serv            0.000
+v_data__Manu           64.216
+v_data__Prim           30.814
+v_data__Serv           88.548
+vat__Manu               0.130
+vat__Prim               0.224
+vat__Serv               0.013
+var_exis_data__Manu     1.123
+var_exis_data__Prim    -0.076
+var_exis_data__Serv     0.008
+x_data__Manu__Manu     22.115
+x_data__Manu__Prim      6.914
+x_data__Manu__Serv     11.397
+x_data__Prim__Manu     11.928
+x_data__Prim__Prim      3.160
+x_data__Prim__Serv      0.164
+x_data__Serv__Manu     10.255
+x_data__Serv__Prim      4.446
+x_data__Serv__Serv     25.790
+pit       : 0.026173
+fit       : 0.150302
+pit_data  : 1.208967
+fit_data  : 4.673899
+
+--- BALANCE DE GOBIERNO EN R ---
+ING_GOB_val (R): 24.7263 
+TOTAL_TAX_SAM (R): 22.12133 
+TOTAL_DIR_TAX_SAM: 11.76573 

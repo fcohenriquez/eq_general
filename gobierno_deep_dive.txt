@@ -1,0 +1,38 @@
+=================================================
+      ANALISIS DE LA CUENTA GOBIERNO (SAM)       
+=================================================
+
+FILA GOBIERNO (INGRESOS):
+[1]  0.9810935  1.6238783  5.8828657  1.4448537  0.9510015  7.3869769  0.5727635 18.8434331
+Suma Fila (Ingresos Totales): 37.68687 
+
+COLUMNA GOBIERNO (GASTOS):
+[1]  0.01753297  0.08372026 10.39411222  2.10737953  3.98337510  2.25731300 18.84343309
+Suma Columna (Gastos Totales): 37.68687 
+
+--- DETALLE DE IMPUESTOS Y TRANSFERENCIAS ---
+Imp_dir Row:
+        Act prim Act manu Act serv Prod prim Prod manu Prod serv Trabajo Capital  Hogares Empresas
+Imp_dir        0        0        0         0         0         0       0       0 1.208967 4.673899
+        Gobierno Cont_soc Pres_soc Imp_dir Imp_prod Imptos_Espec IVA Arancel row S-I Var_Exis
+Imp_dir        0        0        0       0        0            0   0       0   0   0        0
+           Total
+Imp_dir 5.882866
+
+Imp_dir Column (Adónde va):
+ [1] 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+[11] 5.882866 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+[21] 0.000000 5.882866
+
+Cont_soc Row:
+         Act prim Act manu Act serv Prod prim Prod manu Prod serv Trabajo Capital  Hogares Empresas
+Cont_soc        0        0        0         0         0         0       0       0 7.480883        0
+         Gobierno Cont_soc Pres_soc Imp_dir Imp_prod Imptos_Espec IVA Arancel row S-I Var_Exis
+Cont_soc        0        0        0       0        0            0   0       0   0   0        0
+            Total
+Cont_soc 7.480883
+
+Cont_soc Column:
+ [1] 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 5.857005
+[11] 1.623878 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+[21] 0.000000 7.480883

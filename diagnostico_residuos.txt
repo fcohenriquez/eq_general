@@ -1,0 +1,22 @@
+Balance de Hogares (Ingreso - Gasto): -71.23753 
+model parsed in 0.1s
+model loaded in 0.08s
+--- Verificación de Base Imponible (PIT_base) ---
+Ingresos de Capital de Hogares (K_h_val): 12.06074 
+Ingresos del Trabajo de Hogares (L_h_val): 34.13136 
+Base Imponible Total (PIT_base_val): 46.1921 
+-----------------------------------------------
+--- Verificación de Balanza de Pagos ---
+Ahorro Externo Calibrado (SAV_ROW_val): 2.808978 
+----------------------------------------
+
+--- Verificación de Ingresos del Trabajo (SAM vs Modelo) ---
+Suma de 'Trabajo' en la SAM (filas Act): 34.13303 
+Valor de L_h_val en el modelo: 34.13136 
+PIT_base_val (K_h + L_h): 46.1921 
+-----------------------------------------------------------
+Norma de residuos iniciales: 0 
+
+Error ejecutando el script R:
+<simpleError in steady_state(model, calibration = T): evaluation of steady-state equations' residuals has not been successful: Error in ss_prep(model, use_jac, calibration, last_solver_iter): values of the following free parameters have not been specified (all values have to be set before searching for equilibrium): "d_data__Manu", "d_data__Serv", "por_inv__Manu", "por_inv__Prim", "por_inv__Serv", "vat__Manu", "vat__Prim", "vat__Serv", "var_exis_data__Manu", "var_exis_data__Prim", "var_exis_data__Serv"
+>

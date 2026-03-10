@@ -1,0 +1,248 @@
+Generated on 2026-03-10 14:18:13 by gEcon ver. 1.2.3 (2025-04-13)
+http://gecon.r-forge.r-project.org/
+
+Model name: cge_calib_chile_3_sect_comp
+
+1 ERROR, see bottom of this logfile
+
+
+Index sets (2):
+    P = { 'Manu', 'Prim', 'Serv' }
+    S = { 'Manu', 'Prim', 'Serv' }
+
+Block: CONSUMER
+ Controls:
+    <p::P> D<p>
+ Objective:
+    U = (SUM<idx_c::P> alpha<idx_c> * D<idx_c>^omega)^(omega^-1)
+ Identities:
+    -CS + INC - SAV - SUM<idx_i_1::P> p<idx_i_1> * D<idx_i_1> * (1 + vat<idx_i_1>) = 0
+    BTINC - INC - PITAX + RENT_M + RENT_E = 0
+    -BTINC + PSh + TRGOV + TREMP + pk * Kh + pk * RoK + w * Lh + w * RoL = 0
+    -SAV + por_sav * INC = 0
+    -CS + por_cont * INC = 0
+ First order conditions:
+    <p::P> alpha<p> * D<p>^(-1 + omega) * (SUM<idx_c::P> alpha<idx_c> * D<idx_c>^omega)^(-1 + omega^-1) = 0    (<p::P> D<p>)
+
+Block: <s::S> ACT
+ Definitions:
+    pv<s> = SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>
+ Controls:
+    V<s>, K<s>, L<s>, <p::P> X<p,s>
+ Objective:
+    pi<s> = -pk * K<s> - w * L<s> + V<s> * (1 - tes<s> - tis<s> - tps<s>) * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) - SUM<idx_x_o::P> p<idx_x_o> * X<idx_x_o,s>
+ Constraints:
+    -V<s> + gamma<s> * K<s>^betak<s> * L<s>^betal<s> * (PROD<idx_p_c::P> X<idx_p_c,s>^betax<idx_p_c,s>) = 0    (lambda__ACT_1<s>)
+ Identities:
+    <p::P> -Yap<p,s> + make_share<p,s> * V<s> = 0
+    -revenue<s> + SUM<idx_rev::P> p<idx_rev> * Yap<idx_rev,s> = 0
+    -net_revenue<s> + revenue<s> * (1 - tes<s> - tis<s> - tps<s>) = 0
+ First order conditions:
+    -lambda__ACT_1<s> + (1 - tes<s> - tis<s> - tps<s>) * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) = 0    (V<s>)
+    -pk + betak<s> * gamma<s> * lambda__ACT_1<s> * K<s>^(-1 + betak<s>) * L<s>^betal<s> * (PROD<idx_p_c::P> X<idx_p_c,s>^betax<idx_p_c,s>) = 0    (K<s>)
+    -w + betal<s> * gamma<s> * lambda__ACT_1<s> * K<s>^betak<s> * L<s>^(-1 + betal<s>) * (PROD<idx_p_c::P> X<idx_p_c,s>^betax<idx_p_c,s>) = 0    (L<s>)
+    <p::P> -p<p> + betax<p,s> * gamma<s> * lambda__ACT_1<s> * X<p,s>^-1 * K<s>^betak<s> * L<s>^betal<s> * (PROD<idx_p_c::P> X<idx_p_c,s>^betax<idx_p_c,s>) = 0    (<p::P> X<p,s>)
+ First order conditions after reduction:
+    -pk + betak<s> * gamma<s> * (1 - tes<s> - tis<s> - tps<s>) * K<s>^(-1 + betak<s>) * L<s>^betal<s> * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) * (PROD<idx_p_c::P> X<idx_p_c,s>^betax<idx_p_c,s>) = 0    (K<s>)
+    -w + betal<s> * gamma<s> * (1 - tes<s> - tis<s> - tps<s>) * K<s>^betak<s> * L<s>^(-1 + betal<s>) * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) * (PROD<idx_p_c::P> X<idx_p_c,s>^betax<idx_p_c,s>) = 0    (L<s>)
+    <p::P> -p<p> + betax<p,s> * gamma<s> * X<p,s>^-1 * (1 - tes<s> - tis<s> - tps<s>) * K<s>^betak<s> * L<s>^betal<s> * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) * (PROD<idx_p_c::P> X<idx_p_c,s>^betax<idx_p_c,s>) = 0    (<p::P> X<p,s>)
+
+Block: <p::P> MKT
+ Identities:
+    -X_total<p> + SUM<idx_idx_s::S> X<p,idx_idx_s> = 0
+    D<p> + Exports<p> + G<p> + I<p> - Imports<p> + VarExis<p> + X_total<p> - SUM<idx_idx_s_2::S> Yap<p,idx_idx_s_2> = 0
+    -pm<p> + exr * (1 + tar<p>)^-1 = 0
+    -pe<p> + pworlde<p> * exr = 0
+    edp<p> - Exports<p> = 0
+    mdp<p> - Imports<p> = 0
+
+Block: FIRM
+ Identities:
+    CSf - INGF + pk * Kf = 0
+    -FIRMTAX + INGF - PSf - SAVf - TREMP = 0
+    -TREMP + por_tremp * INGF = 0
+    -Kf + k_total_data * par_k_f = 0
+    -CSf + por_cont_soc_f * CS = 0
+    -PSf + por_pres_soc_f * INGF = 0
+
+Block: GOB
+ Identities:
+    CSg - INGG + Tax + pk * Kg = 0
+    -GTg + PSg + TRGOV + SUM<idx_gob_p::P> p<idx_gob_p> * G<idx_gob_p> * (1 + vat<idx_gob_p>) = 0
+    -TRGOV + por_trgov * INGG = 0
+    -GTg + INGG - SAVg = 0
+    -PSg + por_pres_soc_g * INGG = 0
+    -Kg + k_total_data * par_k_g = 0
+    -CSg + por_cont_soc_g * CS = 0
+    -VAT_DEMAND + SUM<idx_v_d::P> vat<idx_v_d> * p<idx_v_d> * (D<idx_v_d> + G<idx_v_d> + I<idx_v_d> + VarExis<idx_v_d>) = 0
+    -VAT_OUTPUT + SUM<idx_v_o::S> tis<idx_v_o> * revenue<idx_v_o> = 0
+    VAT_DEMAND + VAT_OUTPUT - VAT = 0
+    -PITB + pk * Kh + w * Lh = 0
+    -PITAX + pit * PITB = 0
+    -FIRMTAX + fit * pk * Kf = 0
+    FIRMTAX + PITAX - Tax + VAT + SUM<idx_idx_t_p::P> tar<idx_idx_t_p> * pm<idx_idx_t_p> * Imports<idx_idx_t_p> + SUM<idx_idx_t_s::S> revenue<idx_idx_t_s> * (tes<idx_idx_t_s> + tps<idx_idx_t_s>) = 0
+    <p::P> gg_market_data_p<p> - p<p> * G<p> * (1 + vat<p>) = 0
+
+Block: EQUILIBRIUM
+ Identities:
+    l_total_data - RiL - SUM<idx_e_l::S> L<idx_e_l> = 0
+    <p::P> pinv<p> * I<'Manu'> - pinv<'Manu'> * I<p> = 0
+    <p::P> vexist<p> - VarExis<p> = 0
+    -RoK + k_total_data * par_k_row = 0
+    -RoL + l_total_data * par_l_row = 0
+    fact_row_in_k_data - RiK = 0
+    fact_row_in_l_data - RiL = 0
+    -RENT_M + SUM<idx_m_r::P> Imports<idx_m_r> * (p<idx_m_r> - pm<idx_m_r> * (1 + tar<idx_m_r>)) = 0
+    -RENT_E + SUM<idx_e_r::P> Exports<idx_e_r> * (-p<idx_e_r> + pe<idx_e_r>) = 0
+    1 - pk = 0
+    1 - exr = 0
+    -Kh + k_total_data * par_k_h = 0
+    -Lh + l_total_data * par_l_h = 0
+    pshdata - PSh = 0
+
+Variables (103):
+    exr, pk, w, BTINC, CS, CSf, CSg, FIRMTAX, GTg, INC, INGF, INGG, Kf, Kg, Kh, Lh, PITAX, PITB, PSh, PSf, PSg, RiL, RiK, RoK, RoL, RENT_M, RENT_E, SAV, SAVf, SAVg, Tax, TRGOV, TREMP, U, VAT_DEMAND, VAT_OUTPUT, VAT, net_revenue<'Manu'>, net_revenue<'Prim'>, net_revenue<'Serv'>, p<'Manu'>, p<'Prim'>, p<'Serv'>, pe<'Manu'>, pe<'Prim'>, pe<'Serv'>, pi<'Manu'>, pi<'Prim'>, pi<'Serv'>, pm<'Manu'>, pm<'Prim'>, pm<'Serv'>, revenue<'Manu'>, revenue<'Prim'>, revenue<'Serv'>, D<'Manu'>, D<'Prim'>, D<'Serv'>, Exports<'Manu'>, Exports<'Prim'>, Exports<'Serv'>, G<'Manu'>, G<'Prim'>, G<'Serv'>, I<'Manu'>, I<'Prim'>, I<'Serv'>, Imports<'Manu'>, Imports<'Prim'>, Imports<'Serv'>, K<'Manu'>, K<'Prim'>, K<'Serv'>, L<'Manu'>, L<'Prim'>, L<'Serv'>, V<'Manu'>, V<'Prim'>, V<'Serv'>, VarExis<'Manu'>, VarExis<'Prim'>, VarExis<'Serv'>, X<'Manu','Manu'>, X<'Manu','Prim'>, X<'Manu','Serv'>, X<'Prim','Manu'>, X<'Prim','Prim'>, X<'Prim','Serv'>, X<'Serv','Manu'>, X<'Serv','Prim'>, X<'Serv','Serv'>, X_total<'Manu'>, X_total<'Prim'>, X_total<'Serv'>, Yap<'Manu','Manu'>, Yap<'Manu','Prim'>, Yap<'Manu','Serv'>, Yap<'Prim','Manu'>, Yap<'Prim','Prim'>, Yap<'Prim','Serv'>, Yap<'Serv','Manu'>, Yap<'Serv','Prim'>, Yap<'Serv','Serv'>
+
+Parameters (92):
+    dstManu, dstServ, fact_row_in_k_data, fact_row_in_l_data, fit, fitdata, k_total_data, l_total_data, omega, par_k_f, par_k_g, par_k_row, par_l_row, par_k_h, par_l_h, pit, pitdata, por_sav, por_cont, por_tremp, por_cont_soc_f, por_pres_soc_f, por_trgov, por_pres_soc_g, por_cont_soc_g, pshdata, alpha<'Manu'>, alpha<'Prim'>, alpha<'Serv'>, betak<'Manu'>, betak<'Prim'>, betak<'Serv'>, betal<'Manu'>, betal<'Prim'>, betal<'Serv'>, betax<'Manu','Manu'>, betax<'Manu','Prim'>, betax<'Manu','Serv'>, betax<'Prim','Manu'>, betax<'Prim','Prim'>, betax<'Prim','Serv'>, betax<'Serv','Manu'>, betax<'Serv','Prim'>, betax<'Serv','Serv'>, edp<'Manu'>, edp<'Prim'>, edp<'Serv'>, gamma<'Manu'>, gamma<'Prim'>, gamma<'Serv'>, gg_market_data_p<'Manu'>, gg_market_data_p<'Prim'>, gg_market_data_p<'Serv'>, make_share<'Manu','Manu'>, make_share<'Manu','Prim'>, make_share<'Manu','Serv'>, make_share<'Prim','Manu'>, make_share<'Prim','Prim'>, make_share<'Prim','Serv'>, make_share<'Serv','Manu'>, make_share<'Serv','Prim'>, make_share<'Serv','Serv'>, mdp<'Manu'>, mdp<'Prim'>, mdp<'Serv'>, pinv<'Manu'>, pinv<'Prim'>, pinv<'Serv'>, pworlde<'Manu'>, pworlde<'Prim'>, pworlde<'Serv'>, tar<'Manu'>, tar<'Prim'>, tar<'Serv'>, tes<'Manu'>, tes<'Prim'>, tes<'Serv'>, tis<'Manu'>, tis<'Prim'>, tis<'Serv'>, tps<'Manu'>, tps<'Prim'>, tps<'Serv'>, vat<'Manu'>, vat<'Prim'>, vat<'Serv'>, vexist<'Manu'>, vexist<'Prim'>, vexist<'Serv'>, vst<'Manu'>, vst<'Prim'>, vst<'Serv'>
+
+Free parameters (69):
+    dstManu, dstServ, fact_row_in_k_data, fact_row_in_l_data, fitdata, k_total_data, l_total_data, omega, par_k_f, par_k_g, par_k_row, par_l_row, par_k_h, par_l_h, pitdata, por_sav, por_cont, por_tremp, por_cont_soc_f, por_pres_soc_f, por_trgov, por_pres_soc_g, por_cont_soc_g, pshdata, edp<'Manu'>, edp<'Prim'>, edp<'Serv'>, gg_market_data_p<'Manu'>, gg_market_data_p<'Prim'>, gg_market_data_p<'Serv'>, make_share<'Manu','Manu'>, make_share<'Manu','Prim'>, make_share<'Manu','Serv'>, make_share<'Prim','Manu'>, make_share<'Prim','Prim'>, make_share<'Prim','Serv'>, make_share<'Serv','Manu'>, make_share<'Serv','Prim'>, make_share<'Serv','Serv'>, mdp<'Manu'>, mdp<'Prim'>, mdp<'Serv'>, pinv<'Manu'>, pinv<'Prim'>, pinv<'Serv'>, pworlde<'Manu'>, pworlde<'Prim'>, pworlde<'Serv'>, tar<'Manu'>, tar<'Prim'>, tar<'Serv'>, tes<'Manu'>, tes<'Prim'>, tes<'Serv'>, tis<'Manu'>, tis<'Prim'>, tis<'Serv'>, tps<'Manu'>, tps<'Prim'>, tps<'Serv'>, vat<'Manu'>, vat<'Prim'>, vat<'Serv'>, vexist<'Manu'>, vexist<'Prim'>, vexist<'Serv'>, vst<'Manu'>, vst<'Prim'>, vst<'Serv'>
+
+Calibrated parameters (23):
+    fit, pit, alpha<'Manu'>, alpha<'Prim'>, alpha<'Serv'>, betak<'Manu'>, betak<'Prim'>, betak<'Serv'>, betal<'Manu'>, betal<'Prim'>, betal<'Serv'>, betax<'Manu','Manu'>, betax<'Manu','Prim'>, betax<'Manu','Serv'>, betax<'Prim','Manu'>, betax<'Prim','Prim'>, betax<'Prim','Serv'>, betax<'Serv','Manu'>, betax<'Serv','Prim'>, betax<'Serv','Serv'>, gamma<'Manu'>, gamma<'Prim'>, gamma<'Serv'>
+
+Equations (104):
+ (1)  0 = 0
+ (2)  1 - exr = 0
+ (3)  1 - pk = 0
+ (4)  fact_row_in_k_data - RiK = 0
+ (5)  fact_row_in_l_data - RiL = 0
+ (6)  pshdata - PSh = 0
+ (7)  edp<'Manu'> - Exports<'Manu'> = 0
+ (8)  edp<'Prim'> - Exports<'Prim'> = 0
+ (9)  edp<'Serv'> - Exports<'Serv'> = 0
+ (10)  gg_market_data_p<'Manu'> - p<'Manu'> * G<'Manu'> * (1 + vat<'Manu'>) = 0
+ (11)  gg_market_data_p<'Prim'> - p<'Prim'> * G<'Prim'> * (1 + vat<'Prim'>) = 0
+ (12)  gg_market_data_p<'Serv'> - p<'Serv'> * G<'Serv'> * (1 + vat<'Serv'>) = 0
+ (13)  mdp<'Manu'> - Imports<'Manu'> = 0
+ (14)  mdp<'Prim'> - Imports<'Prim'> = 0
+ (15)  mdp<'Serv'> - Imports<'Serv'> = 0
+ (16)  vexist<'Manu'> - VarExis<'Manu'> = 0
+ (17)  vexist<'Prim'> - VarExis<'Prim'> = 0
+ (18)  vexist<'Serv'> - VarExis<'Serv'> = 0
+ (19)  -pk + betak<'Manu'> * gamma<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Prim','Manu'> * p<'Prim'> + make_share<'Serv','Manu'> * p<'Serv'>) * (1 - tes<'Manu'> - tis<'Manu'> - tps<'Manu'>) * K<'Manu'>^(-1 + betak<'Manu'>) * L<'Manu'>^betal<'Manu'> * X<'Manu','Manu'>^betax<'Manu','Manu'> * X<'Prim','Manu'>^betax<'Prim','Manu'> * X<'Serv','Manu'>^betax<'Serv','Manu'> = 0
+ (20)  -pk + betak<'Prim'> * gamma<'Prim'> * (make_share<'Manu','Prim'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Serv','Prim'> * p<'Serv'>) * (1 - tes<'Prim'> - tis<'Prim'> - tps<'Prim'>) * K<'Prim'>^(-1 + betak<'Prim'>) * L<'Prim'>^betal<'Prim'> * X<'Manu','Prim'>^betax<'Manu','Prim'> * X<'Prim','Prim'>^betax<'Prim','Prim'> * X<'Serv','Prim'>^betax<'Serv','Prim'> = 0
+ (21)  -pk + betak<'Serv'> * gamma<'Serv'> * (make_share<'Manu','Serv'> * p<'Manu'> + make_share<'Prim','Serv'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - tes<'Serv'> - tis<'Serv'> - tps<'Serv'>) * K<'Serv'>^(-1 + betak<'Serv'>) * L<'Serv'>^betal<'Serv'> * X<'Manu','Serv'>^betax<'Manu','Serv'> * X<'Prim','Serv'>^betax<'Prim','Serv'> * X<'Serv','Serv'>^betax<'Serv','Serv'> = 0
+ (22)  -w + betal<'Manu'> * gamma<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Prim','Manu'> * p<'Prim'> + make_share<'Serv','Manu'> * p<'Serv'>) * (1 - tes<'Manu'> - tis<'Manu'> - tps<'Manu'>) * K<'Manu'>^betak<'Manu'> * L<'Manu'>^(-1 + betal<'Manu'>) * X<'Manu','Manu'>^betax<'Manu','Manu'> * X<'Prim','Manu'>^betax<'Prim','Manu'> * X<'Serv','Manu'>^betax<'Serv','Manu'> = 0
+ (23)  -w + betal<'Prim'> * gamma<'Prim'> * (make_share<'Manu','Prim'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Serv','Prim'> * p<'Serv'>) * (1 - tes<'Prim'> - tis<'Prim'> - tps<'Prim'>) * K<'Prim'>^betak<'Prim'> * L<'Prim'>^(-1 + betal<'Prim'>) * X<'Manu','Prim'>^betax<'Manu','Prim'> * X<'Prim','Prim'>^betax<'Prim','Prim'> * X<'Serv','Prim'>^betax<'Serv','Prim'> = 0
+ (24)  -w + betal<'Serv'> * gamma<'Serv'> * (make_share<'Manu','Serv'> * p<'Manu'> + make_share<'Prim','Serv'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - tes<'Serv'> - tis<'Serv'> - tps<'Serv'>) * K<'Serv'>^betak<'Serv'> * L<'Serv'>^(-1 + betal<'Serv'>) * X<'Manu','Serv'>^betax<'Manu','Serv'> * X<'Prim','Serv'>^betax<'Prim','Serv'> * X<'Serv','Serv'>^betax<'Serv','Serv'> = 0
+ (25)  -CS + por_cont * INC = 0
+ (26)  -CSf + por_cont_soc_f * CS = 0
+ (27)  -CSg + por_cont_soc_g * CS = 0
+ (28)  -FIRMTAX + fit * pk * Kf = 0
+ (29)  -Kf + k_total_data * par_k_f = 0
+ (30)  -Kg + k_total_data * par_k_g = 0
+ (31)  -Kh + k_total_data * par_k_h = 0
+ (32)  -Lh + l_total_data * par_l_h = 0
+ (33)  -PITAX + pit * PITB = 0
+ (34)  -PSf + por_pres_soc_f * INGF = 0
+ (35)  -PSg + por_pres_soc_g * INGG = 0
+ (36)  -RoK + k_total_data * par_k_row = 0
+ (37)  -RoL + l_total_data * par_l_row = 0
+ (38)  -SAV + por_sav * INC = 0
+ (39)  -TRGOV + por_trgov * INGG = 0
+ (40)  -TREMP + por_tremp * INGF = 0
+ (41)  U - (alpha<'Manu'> * D<'Manu'>^omega + alpha<'Prim'> * D<'Prim'>^omega + alpha<'Serv'> * D<'Serv'>^omega)^(omega^-1) = 0
+ (42)  -net_revenue<'Manu'> + revenue<'Manu'> * (1 - tes<'Manu'> - tis<'Manu'> - tps<'Manu'>) = 0
+ (43)  -net_revenue<'Prim'> + revenue<'Prim'> * (1 - tes<'Prim'> - tis<'Prim'> - tps<'Prim'>) = 0
+ (44)  -net_revenue<'Serv'> + revenue<'Serv'> * (1 - tes<'Serv'> - tis<'Serv'> - tps<'Serv'>) = 0
+ (45)  -p<'Manu'> + betax<'Manu','Manu'> * gamma<'Manu'> * X<'Manu','Manu'>^-1 * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Prim','Manu'> * p<'Prim'> + make_share<'Serv','Manu'> * p<'Serv'>) * (1 - tes<'Manu'> - tis<'Manu'> - tps<'Manu'>) * K<'Manu'>^betak<'Manu'> * L<'Manu'>^betal<'Manu'> * X<'Manu','Manu'>^betax<'Manu','Manu'> * X<'Prim','Manu'>^betax<'Prim','Manu'> * X<'Serv','Manu'>^betax<'Serv','Manu'> = 0
+ (46)  -p<'Manu'> + betax<'Manu','Prim'> * gamma<'Prim'> * X<'Manu','Prim'>^-1 * (make_share<'Manu','Prim'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Serv','Prim'> * p<'Serv'>) * (1 - tes<'Prim'> - tis<'Prim'> - tps<'Prim'>) * K<'Prim'>^betak<'Prim'> * L<'Prim'>^betal<'Prim'> * X<'Manu','Prim'>^betax<'Manu','Prim'> * X<'Prim','Prim'>^betax<'Prim','Prim'> * X<'Serv','Prim'>^betax<'Serv','Prim'> = 0
+ (47)  -p<'Manu'> + betax<'Manu','Serv'> * gamma<'Serv'> * X<'Manu','Serv'>^-1 * (make_share<'Manu','Serv'> * p<'Manu'> + make_share<'Prim','Serv'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - tes<'Serv'> - tis<'Serv'> - tps<'Serv'>) * K<'Serv'>^betak<'Serv'> * L<'Serv'>^betal<'Serv'> * X<'Manu','Serv'>^betax<'Manu','Serv'> * X<'Prim','Serv'>^betax<'Prim','Serv'> * X<'Serv','Serv'>^betax<'Serv','Serv'> = 0
+ (48)  -p<'Prim'> + betax<'Prim','Manu'> * gamma<'Manu'> * X<'Prim','Manu'>^-1 * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Prim','Manu'> * p<'Prim'> + make_share<'Serv','Manu'> * p<'Serv'>) * (1 - tes<'Manu'> - tis<'Manu'> - tps<'Manu'>) * K<'Manu'>^betak<'Manu'> * L<'Manu'>^betal<'Manu'> * X<'Manu','Manu'>^betax<'Manu','Manu'> * X<'Prim','Manu'>^betax<'Prim','Manu'> * X<'Serv','Manu'>^betax<'Serv','Manu'> = 0
+ (49)  -p<'Prim'> + betax<'Prim','Prim'> * gamma<'Prim'> * X<'Prim','Prim'>^-1 * (make_share<'Manu','Prim'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Serv','Prim'> * p<'Serv'>) * (1 - tes<'Prim'> - tis<'Prim'> - tps<'Prim'>) * K<'Prim'>^betak<'Prim'> * L<'Prim'>^betal<'Prim'> * X<'Manu','Prim'>^betax<'Manu','Prim'> * X<'Prim','Prim'>^betax<'Prim','Prim'> * X<'Serv','Prim'>^betax<'Serv','Prim'> = 0
+ (50)  -p<'Prim'> + betax<'Prim','Serv'> * gamma<'Serv'> * X<'Prim','Serv'>^-1 * (make_share<'Manu','Serv'> * p<'Manu'> + make_share<'Prim','Serv'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - tes<'Serv'> - tis<'Serv'> - tps<'Serv'>) * K<'Serv'>^betak<'Serv'> * L<'Serv'>^betal<'Serv'> * X<'Manu','Serv'>^betax<'Manu','Serv'> * X<'Prim','Serv'>^betax<'Prim','Serv'> * X<'Serv','Serv'>^betax<'Serv','Serv'> = 0
+ (51)  -p<'Serv'> + betax<'Serv','Manu'> * gamma<'Manu'> * X<'Serv','Manu'>^-1 * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Prim','Manu'> * p<'Prim'> + make_share<'Serv','Manu'> * p<'Serv'>) * (1 - tes<'Manu'> - tis<'Manu'> - tps<'Manu'>) * K<'Manu'>^betak<'Manu'> * L<'Manu'>^betal<'Manu'> * X<'Manu','Manu'>^betax<'Manu','Manu'> * X<'Prim','Manu'>^betax<'Prim','Manu'> * X<'Serv','Manu'>^betax<'Serv','Manu'> = 0
+ (52)  -p<'Serv'> + betax<'Serv','Prim'> * gamma<'Prim'> * X<'Serv','Prim'>^-1 * (make_share<'Manu','Prim'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Serv','Prim'> * p<'Serv'>) * (1 - tes<'Prim'> - tis<'Prim'> - tps<'Prim'>) * K<'Prim'>^betak<'Prim'> * L<'Prim'>^betal<'Prim'> * X<'Manu','Prim'>^betax<'Manu','Prim'> * X<'Prim','Prim'>^betax<'Prim','Prim'> * X<'Serv','Prim'>^betax<'Serv','Prim'> = 0
+ (53)  -p<'Serv'> + betax<'Serv','Serv'> * gamma<'Serv'> * X<'Serv','Serv'>^-1 * (make_share<'Manu','Serv'> * p<'Manu'> + make_share<'Prim','Serv'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - tes<'Serv'> - tis<'Serv'> - tps<'Serv'>) * K<'Serv'>^betak<'Serv'> * L<'Serv'>^betal<'Serv'> * X<'Manu','Serv'>^betax<'Manu','Serv'> * X<'Prim','Serv'>^betax<'Prim','Serv'> * X<'Serv','Serv'>^betax<'Serv','Serv'> = 0
+ (54)  -pe<'Manu'> + pworlde<'Manu'> * exr = 0
+ (55)  -pe<'Prim'> + pworlde<'Prim'> * exr = 0
+ (56)  -pe<'Serv'> + pworlde<'Serv'> * exr = 0
+ (57)  -pm<'Manu'> + exr * (1 + tar<'Manu'>)^-1 = 0
+ (58)  -pm<'Prim'> + exr * (1 + tar<'Prim'>)^-1 = 0
+ (59)  -pm<'Serv'> + exr * (1 + tar<'Serv'>)^-1 = 0
+ (60)  -V<'Manu'> + gamma<'Manu'> * K<'Manu'>^betak<'Manu'> * L<'Manu'>^betal<'Manu'> * X<'Manu','Manu'>^betax<'Manu','Manu'> * X<'Prim','Manu'>^betax<'Prim','Manu'> * X<'Serv','Manu'>^betax<'Serv','Manu'> = 0
+ (61)  -V<'Prim'> + gamma<'Prim'> * K<'Prim'>^betak<'Prim'> * L<'Prim'>^betal<'Prim'> * X<'Manu','Prim'>^betax<'Manu','Prim'> * X<'Prim','Prim'>^betax<'Prim','Prim'> * X<'Serv','Prim'>^betax<'Serv','Prim'> = 0
+ (62)  -V<'Serv'> + gamma<'Serv'> * K<'Serv'>^betak<'Serv'> * L<'Serv'>^betal<'Serv'> * X<'Manu','Serv'>^betax<'Manu','Serv'> * X<'Prim','Serv'>^betax<'Prim','Serv'> * X<'Serv','Serv'>^betax<'Serv','Serv'> = 0
+ (63)  -Yap<'Manu','Manu'> + make_share<'Manu','Manu'> * V<'Manu'> = 0
+ (64)  -Yap<'Manu','Prim'> + make_share<'Manu','Prim'> * V<'Prim'> = 0
+ (65)  -Yap<'Manu','Serv'> + make_share<'Manu','Serv'> * V<'Serv'> = 0
+ (66)  -Yap<'Prim','Manu'> + make_share<'Prim','Manu'> * V<'Manu'> = 0
+ (67)  -Yap<'Prim','Prim'> + make_share<'Prim','Prim'> * V<'Prim'> = 0
+ (68)  -Yap<'Prim','Serv'> + make_share<'Prim','Serv'> * V<'Serv'> = 0
+ (69)  -Yap<'Serv','Manu'> + make_share<'Serv','Manu'> * V<'Manu'> = 0
+ (70)  -Yap<'Serv','Prim'> + make_share<'Serv','Prim'> * V<'Prim'> = 0
+ (71)  -Yap<'Serv','Serv'> + make_share<'Serv','Serv'> * V<'Serv'> = 0
+ (72)  pinv<'Prim'> * I<'Manu'> - pinv<'Manu'> * I<'Prim'> = 0
+ (73)  pinv<'Serv'> * I<'Manu'> - pinv<'Manu'> * I<'Serv'> = 0
+ (74)  CSf - INGF + pk * Kf = 0
+ (75)  -GTg + INGG - SAVg = 0
+ (76)  -PITB + pk * Kh + w * Lh = 0
+ (77)  VAT_DEMAND + VAT_OUTPUT - VAT = 0
+ (78)  CSg - INGG + Tax + pk * Kg = 0
+ (79)  -RENT_M + Imports<'Manu'> * (p<'Manu'> - pm<'Manu'> * (1 + tar<'Manu'>)) + Imports<'Prim'> * (p<'Prim'> - pm<'Prim'> * (1 + tar<'Prim'>)) + Imports<'Serv'> * (p<'Serv'> - pm<'Serv'> * (1 + tar<'Serv'>)) = 0
+ (80)  -RENT_E + Exports<'Manu'> * (-p<'Manu'> + pe<'Manu'>) + Exports<'Prim'> * (-p<'Prim'> + pe<'Prim'>) + Exports<'Serv'> * (-p<'Serv'> + pe<'Serv'>) = 0
+ (81)  -VAT_DEMAND + vat<'Manu'> * p<'Manu'> * (D<'Manu'> + G<'Manu'> + I<'Manu'> + VarExis<'Manu'>) + vat<'Prim'> * p<'Prim'> * (D<'Prim'> + G<'Prim'> + I<'Prim'> + VarExis<'Prim'>) + vat<'Serv'> * p<'Serv'> * (D<'Serv'> + G<'Serv'> + I<'Serv'> + VarExis<'Serv'>) = 0
+ (82)  -VAT_OUTPUT + tis<'Manu'> * revenue<'Manu'> + tis<'Prim'> * revenue<'Prim'> + tis<'Serv'> * revenue<'Serv'> = 0
+ (83)  -revenue<'Manu'> + p<'Manu'> * Yap<'Manu','Manu'> + p<'Prim'> * Yap<'Prim','Manu'> + p<'Serv'> * Yap<'Serv','Manu'> = 0
+ (84)  -revenue<'Prim'> + p<'Manu'> * Yap<'Manu','Prim'> + p<'Prim'> * Yap<'Prim','Prim'> + p<'Serv'> * Yap<'Serv','Prim'> = 0
+ (85)  -revenue<'Serv'> + p<'Manu'> * Yap<'Manu','Serv'> + p<'Prim'> * Yap<'Prim','Serv'> + p<'Serv'> * Yap<'Serv','Serv'> = 0
+ (86)  X<'Manu','Manu'> + X<'Manu','Prim'> + X<'Manu','Serv'> - X_total<'Manu'> = 0
+ (87)  X<'Prim','Manu'> + X<'Prim','Prim'> + X<'Prim','Serv'> - X_total<'Prim'> = 0
+ (88)  X<'Serv','Manu'> + X<'Serv','Prim'> + X<'Serv','Serv'> - X_total<'Serv'> = 0
+ (89)  l_total_data - RiL - L<'Manu'> - L<'Prim'> - L<'Serv'> = 0
+ (90)  BTINC - INC - PITAX + RENT_M + RENT_E = 0
+ (91)  -FIRMTAX + INGF - PSf - SAVf - TREMP = 0
+ (92)  -CS + INC - SAV - p<'Manu'> * D<'Manu'> * (1 + vat<'Manu'>) - p<'Prim'> * D<'Prim'> * (1 + vat<'Prim'>) - p<'Serv'> * D<'Serv'> * (1 + vat<'Serv'>) = 0
+ (93)  -GTg + PSg + TRGOV + p<'Manu'> * G<'Manu'> * (1 + vat<'Manu'>) + p<'Prim'> * G<'Prim'> * (1 + vat<'Prim'>) + p<'Serv'> * G<'Serv'> * (1 + vat<'Serv'>) = 0
+ (94)  pi<'Manu'> + pk * K<'Manu'> + w * L<'Manu'> + p<'Manu'> * X<'Manu','Manu'> + p<'Prim'> * X<'Prim','Manu'> + p<'Serv'> * X<'Serv','Manu'> - V<'Manu'> * (make_share<'Manu','Manu'> * p<'Manu'> + make_share<'Prim','Manu'> * p<'Prim'> + make_share<'Serv','Manu'> * p<'Serv'>) * (1 - tes<'Manu'> - tis<'Manu'> - tps<'Manu'>) = 0
+ (95)  pi<'Prim'> + pk * K<'Prim'> + w * L<'Prim'> + p<'Manu'> * X<'Manu','Prim'> + p<'Prim'> * X<'Prim','Prim'> + p<'Serv'> * X<'Serv','Prim'> - V<'Prim'> * (make_share<'Manu','Prim'> * p<'Manu'> + make_share<'Prim','Prim'> * p<'Prim'> + make_share<'Serv','Prim'> * p<'Serv'>) * (1 - tes<'Prim'> - tis<'Prim'> - tps<'Prim'>) = 0
+ (96)  pi<'Serv'> + pk * K<'Serv'> + w * L<'Serv'> + p<'Manu'> * X<'Manu','Serv'> + p<'Prim'> * X<'Prim','Serv'> + p<'Serv'> * X<'Serv','Serv'> - V<'Serv'> * (make_share<'Manu','Serv'> * p<'Manu'> + make_share<'Prim','Serv'> * p<'Prim'> + make_share<'Serv','Serv'> * p<'Serv'>) * (1 - tes<'Serv'> - tis<'Serv'> - tps<'Serv'>) = 0
+ (97)  -BTINC + PSh + TRGOV + TREMP + pk * Kh + pk * RoK + w * Lh + w * RoL = 0
+ (98)  FIRMTAX + PITAX - Tax + VAT + revenue<'Manu'> * (tes<'Manu'> + tps<'Manu'>) + revenue<'Prim'> * (tes<'Prim'> + tps<'Prim'>) + revenue<'Serv'> * (tes<'Serv'> + tps<'Serv'>) + tar<'Manu'> * pm<'Manu'> * Imports<'Manu'> + tar<'Prim'> * pm<'Prim'> * Imports<'Prim'> + tar<'Serv'> * pm<'Serv'> * Imports<'Serv'> = 0
+ (99)  D<'Manu'> + Exports<'Manu'> + G<'Manu'> + I<'Manu'> - Imports<'Manu'> + VarExis<'Manu'> + X_total<'Manu'> - Yap<'Manu','Manu'> - Yap<'Manu','Prim'> - Yap<'Manu','Serv'> = 0
+ (100)  D<'Prim'> + Exports<'Prim'> + G<'Prim'> + I<'Prim'> - Imports<'Prim'> + VarExis<'Prim'> + X_total<'Prim'> - Yap<'Prim','Manu'> - Yap<'Prim','Prim'> - Yap<'Prim','Serv'> = 0
+ (101)  D<'Serv'> + Exports<'Serv'> + G<'Serv'> + I<'Serv'> - Imports<'Serv'> + VarExis<'Serv'> + X_total<'Serv'> - Yap<'Serv','Manu'> - Yap<'Serv','Prim'> - Yap<'Serv','Serv'> = 0
+ (102)  alpha<'Manu'> * D<'Manu'>^(-1 + omega) * (alpha<'Manu'> * D<'Manu'>^omega + alpha<'Prim'> * D<'Prim'>^omega + alpha<'Serv'> * D<'Serv'>^omega)^(-1 + omega^-1) = 0
+ (103)  alpha<'Prim'> * D<'Prim'>^(-1 + omega) * (alpha<'Manu'> * D<'Manu'>^omega + alpha<'Prim'> * D<'Prim'>^omega + alpha<'Serv'> * D<'Serv'>^omega)^(-1 + omega^-1) = 0
+ (104)  alpha<'Serv'> * D<'Serv'>^(-1 + omega) * (alpha<'Manu'> * D<'Manu'>^omega + alpha<'Prim'> * D<'Prim'>^omega + alpha<'Serv'> * D<'Serv'>^omega)^(-1 + omega^-1) = 0
+
+Calibrating equations (23):
+ (1)  -dstManu + D<'Manu'> = 0
+ (2)  -dstServ + D<'Serv'> = 0
+ (3)  -fitdata + FIRMTAX = 0
+ (4)  -pitdata + PITAX = 0
+ (5)  -vst<'Manu'> + V<'Manu'> = 0
+ (6)  -vst<'Prim'> + V<'Prim'> = 0
+ (7)  -vst<'Serv'> + V<'Serv'> = 0
+ (8)  pk * K<'Manu'> - betak<'Manu'> * net_revenue<'Manu'> = 0
+ (9)  pk * K<'Prim'> - betak<'Prim'> * net_revenue<'Prim'> = 0
+ (10)  pk * K<'Serv'> - betak<'Serv'> * net_revenue<'Serv'> = 0
+ (11)  w * L<'Manu'> - betal<'Manu'> * net_revenue<'Manu'> = 0
+ (12)  w * L<'Prim'> - betal<'Prim'> * net_revenue<'Prim'> = 0
+ (13)  w * L<'Serv'> - betal<'Serv'> * net_revenue<'Serv'> = 0
+ (14)  p<'Manu'> * X<'Manu','Manu'> - betax<'Manu','Manu'> * net_revenue<'Manu'> = 0
+ (15)  p<'Manu'> * X<'Manu','Prim'> - betax<'Manu','Prim'> * net_revenue<'Prim'> = 0
+ (16)  p<'Manu'> * X<'Manu','Serv'> - betax<'Manu','Serv'> * net_revenue<'Serv'> = 0
+ (17)  p<'Prim'> * X<'Prim','Manu'> - betax<'Prim','Manu'> * net_revenue<'Manu'> = 0
+ (18)  p<'Prim'> * X<'Prim','Prim'> - betax<'Prim','Prim'> * net_revenue<'Prim'> = 0
+ (19)  p<'Prim'> * X<'Prim','Serv'> - betax<'Prim','Serv'> * net_revenue<'Serv'> = 0
+ (20)  p<'Serv'> * X<'Serv','Manu'> - betax<'Serv','Manu'> * net_revenue<'Manu'> = 0
+ (21)  p<'Serv'> * X<'Serv','Prim'> - betax<'Serv','Prim'> * net_revenue<'Prim'> = 0
+ (22)  p<'Serv'> * X<'Serv','Serv'> - betax<'Serv','Serv'> * net_revenue<'Serv'> = 0
+ (23)  -1 + alpha<'Manu'>^omega + alpha<'Prim'>^omega + alpha<'Serv'>^omega = 0
+
+
+1 ERROR
+(gEcon model error 1): There are only 103 variables but there are 104 model equations

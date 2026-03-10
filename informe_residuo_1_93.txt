@@ -1,0 +1,42 @@
+=================================================
+      DIAGNOSTICO DE RESIDUO 1.93                
+=================================================
+
+TOP RESIDUOS:
+  ID   Residual
+  14 -1.9366294
+ 141 -1.9366294
+ 101  1.9366294
+ 228  1.9366294
+  70  1.0303426
+ 197  1.0303426
+  71  0.9925092
+ 198  0.9925092
+  72  0.9683864
+ 199  0.9683864
+                                                                                                                                                                                                                                                                                                             Equacion
+                                                                                                                                                                                                                                                                          var_exis_data<'Manu'> - VarExis<'Manu'> = 0
+                                                                                                                                                                                                                                                                                                                 <NA>
+                                                                                                                                         D<'Manu'> + Exports<'Manu'> + G<'Manu'> + I<'Manu'> - Imports<'Manu'> + VarExis<'Manu'> + X_total<'Manu'> - Yap<'Manu','Manu'> - Yap<'Manu','Prim'> - Yap<'Manu','Serv'> = 0
+                                                                                                                                                                                                                                                                                                                 <NA>
+ alpha<'Manu'> * D<'Manu'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Manu'> * (1 + vat<'Manu'>) = 0
+                                                                                                                                                                                                                                                                                                                 <NA>
+ alpha<'Prim'> * D<'Prim'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Prim'> * (1 + vat<'Prim'>) = 0
+                                                                                                                                                                                                                                                                                                                 <NA>
+ alpha<'Serv'> * D<'Serv'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'Manu'> * D<'Manu'>^(omega^-1 * (-1 + omega)) + alpha<'Prim'> * D<'Prim'>^(omega^-1 * (-1 + omega)) + alpha<'Serv'> * D<'Serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) + lambda__CONSUMER_1 * p<'Serv'> * (1 + vat<'Serv'>) = 0
+                                                                                                                                                                                                                                                                                                                 <NA>
+
+--- AUDITORIA DE BALANCE SAM (R) ---
+Desbalances en la SAM (Row - Col):
+[1] Cuenta Dif   
+<0 rows> (o 0- extensión row.names)
+
+--- BALANCE DE GOBIERNO (ANALITICO) ---
+ING_GOB_val:  18.84343 
+GTg_val (Sum components):  18.84343 
+SAV_G_val:    2.257313 
+
+--- CALCULO DE IVA IMPORTACIONES ---
+VAT_IMPORTS_val (Initial):  2.348164 
+VAT_IMPORTS (Model formula):  2.348164 
+Tax Rows Sum (SAM):  16.23846 

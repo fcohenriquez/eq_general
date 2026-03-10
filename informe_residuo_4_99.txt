@@ -1,0 +1,152 @@
+=================================================
+      DIAGNOSTICO DE RESIDUO 4.99                
+=================================================
+
+TOP RESIDUOS:
+  ID          Nombre      Residual
+ 209    final.Eq. 82  4.997485e+00
+  82  initial.Eq. 82  4.997485e+00
+  71  initial.Eq. 71  1.152881e+00
+ 198    final.Eq. 71  1.152881e+00
+  70  initial.Eq. 70  1.064558e+00
+ 197    final.Eq. 70  1.064558e+00
+  72  initial.Eq. 72  9.539628e-01
+ 199    final.Eq. 72  9.539628e-01
+ 100 initial.Eq. 100  1.015250e-02
+ 227   final.Eq. 100  1.015250e-02
+ 207    final.Eq. 80 -7.457747e-09
+  95  initial.Eq. 95 -7.457741e-09
+ 222    final.Eq. 95 -7.457741e-09
+  58  initial.Eq. 58 -1.421085e-14
+ 185    final.Eq. 58 -1.421085e-14
+
+--- VALORES DE CUENTAS GOBIERNO (MODELO) ---
+Equilibrium values:
+
+                   Equilibrium value
+exr                           1.0000
+lambda__CONSUMER_1            0.4711
+pk                            1.0000
+w                             1.0000
+BTINC                        71.2375
+CS                            7.4809
+CSf                           5.8570
+CSg                           1.6239
+FIRMTAX                       4.6739
+GTg                          18.8434
+INC                          70.0286
+INGF                         36.9537
+INGG                         18.8434
+Kf                           31.0967
+Kg                            0.9811
+Kh                           12.0607
+Lh                           34.1314
+PITAX                         1.2090
+PITB                         46.1921
+PS                            5.5068
+PSf                           1.5234
+PSg                           3.9834
+RiL                           0.0000
+RiK                           4.7541
+RoK                           9.9748
+RoL                           0.0017
+RENT_M                        0.0000
+RENT_E                        0.0000
+SAV                           5.4080
+SAVf                         13.3251
+SAVg                          2.2573
+SAVrow                        3.3718
+Tax                          16.2385
+TREMP                        17.4313
+TRGOV                         2.1074
+U                            26.9177
+VAT_DEMAND                    5.8671
+VAT_OUTPUT                    1.5198
+VAT                           7.3870
+VAT_IMPORTS                   0.0000
+WALRAS                        0.0000
+p__Manu                       1.0000
+p__Prim                       1.0000
+p__Serv                       1.0000
+pe__Manu                      1.0000
+pe__Prim                      1.0000
+pe__Serv                      1.0000
+pi__Manu                      0.0000
+pi__Prim                      0.0000
+pi__Serv                      0.0000
+pm__Manu                      0.9820
+pm__Prim                      0.9864
+pm__Serv                      1.0000
+revenue__Manu                64.2157
+revenue__Prim                30.8143
+revenue__Serv                88.5478
+D__Manu                      20.4354
+D__Prim                       0.9902
+D__Serv                      32.4323
+Exports__Manu                13.4899
+Exports__Prim                18.4058
+Exports__Serv                 7.0575
+G__Manu                       0.0741
+G__Prim                       0.0143
+G__Serv                      10.2657
+I__Manu                      17.1203
+I__Prim                       0.2108
+I__Serv                       3.5324
+Imports__Manu                27.3792
+Imports__Prim                 5.8210
+Imports__Serv                 4.4750
+K__Manu                      11.5960
+K__Prim                      13.1918
+K__Serv                      24.5716
+L__Manu                       7.1011
+L__Prim                       2.9878
+L__Serv                      24.0441
+V__Manu                      64.2157
+V__Prim                      30.8143
+V__Serv                      88.5478
+VarExis__Manu                 1.1227
+VarExis__Prim                -0.0761
+VarExis__Serv                 0.0080
+X__Manu__Manu                22.1154
+X__Manu__Prim                 6.9138
+X__Manu__Serv                11.3966
+X__Prim__Manu                11.9280
+X__Prim__Prim                 3.1605
+X__Prim__Serv                 0.1641
+X__Serv__Manu                10.2553
+X__Serv__Prim                 4.4457
+X__Serv__Serv                25.7904
+X_total__Manu                40.4258
+X_total__Prim                15.2526
+X_total__Serv                40.4914
+Yap__Manu__Manu              62.7237
+Yap__Manu__Prim               1.0697
+Yap__Manu__Serv               1.4954
+Yap__Prim__Manu               0.1736
+Yap__Prim__Prim              28.8030
+Yap__Prim__Serv               0.0000
+Yap__Serv__Manu               1.3184
+Yap__Serv__Prim               0.9416
+Yap__Serv__Serv              87.0524
+INGG      : 18.843433
+GTg       : 18.843433
+Tax       : 16.238461
+VAT       : 7.386977
+PITAX     : 1.208967
+FIRMTAX   : 4.673899
+CSg       : 1.623878
+Kg        : 0.981093
+TRGOV     : 2.107380
+PSg       : 3.983375
+SAVg      : 2.257313
+
+--- VALORES EN R (SAM) ---
+TOTAL_TAX_SAM:  16.23846 
+ING_GOB_val:    18.84343 
+K_g_val:        0.9810935 
+CSg_val:        1.623878 
+
+--- IDENTIFICACION DE COMPONENTES TAX ---
+TAX_IVA_val:      7.386977 
+TAX_IMP_PROD_val: 1.444854 
+TAX_DIR_val:      5.882866 

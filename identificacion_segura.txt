@@ -1,0 +1,38 @@
+=================================================
+   DIAGNOSTICO DE ECUACIONES Y TAX ROWS          
+=================================================
+
+RESIDUOS REPORTADOS:
+ID  70: initial.Eq. 70                 | Residual: 0.000000
+ID  71: initial.Eq. 71                 | Residual: 1.064558
+ID  72: initial.Eq. 72                 | Residual: 1.152881
+ID  76: initial.Eq. 76                 | Residual: 0.000000
+ID  99: initial.Eq. 99                 | Residual: -0.000000
+
+MAYORES RESIDUOS (Vectores completos):
+              Name           Val
+95  initial.Eq. 95 -5.882866e+00
+222   final.Eq. 95 -5.882866e+00
+72  initial.Eq. 72  1.152881e+00
+199   final.Eq. 72  1.152881e+00
+71  initial.Eq. 71  1.064558e+00
+198   final.Eq. 71  1.064558e+00
+73  initial.Eq. 73  9.539628e-01
+200   final.Eq. 73  9.539628e-01
+98  initial.Eq. 98  8.000001e-09
+225   final.Eq. 98  8.000001e-09
+
+--- MATRIX ROW: Imp_dir ---
+[1] 1.208967 4.673899 5.882866
+Suma Imp_dir Row: 11.76573 
+
+--- MATRIX ROW: IVA ---
+[1] 0.01273369 0.02032866 1.48677915 0.25476587 5.03378400 0.57858551 7.38697689
+Suma IVA Row: 14.77395 
+
+--- MATRIX COLUMN: IVA ---
+[1] 7.386977 7.386977
+
+--- GOBIERNO COMPARISON ---
+INGG (R): 24.7263 
+Tax (R):  22.12133 

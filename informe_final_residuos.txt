@@ -1,0 +1,32 @@
+Norma del residuo: 8.923706e-07 
+                                val
+initial.Eq. 104        4.680124e-07
+final.Eq. 104          4.680124e-07
+initial.Eq. 96        -4.230000e-07
+final.Eq. 96          -4.230000e-07
+initial.Eq. 100        8.000001e-09
+final.Eq. 100          8.000001e-09
+initial.Eq. 103        6.182766e-09
+final.Eq. 103          6.182766e-09
+initial.Eq. 99         5.000008e-09
+final.Eq. 99           5.000008e-09
+initial.Eq. 60        -4.734488e-09
+final.Eq. 60          -4.734488e-09
+initial.Eq. 61        -4.233485e-09
+final.Eq. 61          -4.233485e-09
+initial.Eq. 62        -3.994444e-09
+final.Eq. 62          -3.994444e-09
+initial.Eq. 102        2.114966e-09
+final.Eq. 102          2.114966e-09
+initial.Eq. 78        -2.000000e-09
+final.Eq. 78          -2.000000e-09
+initial.Eq. 98         1.999993e-09
+final.Eq. 98           1.999993e-09
+initial.Eq. 26        -7.829293e-10
+final.Eq. 26          -7.829293e-10
+initial.Eq. 40        -4.717045e-10
+final.Eq. 40          -4.717045e-10
+initial.Calibr Eq. 9   4.297043e-10
+final.Calibr Eq. 9     4.297043e-10
+initial.Calibr Eq. 14  3.510614e-10
+final.Calibr Eq. 14    3.510614e-10

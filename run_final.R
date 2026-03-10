@@ -1,0 +1,148 @@
+library(gEcon.iosam)
+
+# 1. SAM Processing
+chile_sam <- read.csv("macro_sam_2008_3sect.csv", row.names = 1, check.names = FALSE)
+chile_sam[is.na(chile_sam)] <- 0
+
+p_names <- s_names <- c("Manu", "Prim", "Serv")
+sam_p <- c("Prod manu", "Prod prim", "Prod serv")
+sam_a <- c("Act manu", "Act prim", "Act serv")
+
+# 2. Model Creation
+model <- make_model("cge_calib_chile_3_sect_comp.gcn")
+
+# 3. Data Extraction
+make_matrix <- as.matrix(chile_sam[sam_a, sam_p])
+rownames(make_matrix) <- s_names
+V_sector_vals <- rowSums(make_matrix)
+make_share_matrix <- make_matrix / V_sector_vals
+X_matrix <- as.matrix(chile_sam[sam_p, sam_a])
+L_vals <- as.numeric(chile_sam["Trabajo", sam_a])
+names(L_vals) <- s_names
+K_vals <- as.numeric(chile_sam["Capital", sam_a])
+names(K_vals) <- s_names
+
+D_m <- as.numeric(chile_sam[sam_p, "Hogares"])
+G_m <- as.numeric(chile_sam[sam_p, "Gobierno"])
+I_m <- as.numeric(chile_sam[sam_p, "S-I"])
+V_m <- as.numeric(chile_sam[sam_p, "Var_Exis"])
+M_m <- as.numeric(chile_sam["row", sam_p])
+E_m <- as.numeric(chile_sam[sam_p, "row"])
+Ar_m <- as.numeric(chile_sam["Arancel", sam_p])
+
+vat_r <- as.numeric(chile_sam["IVA", sam_p]) / (D_m + G_m + I_m + V_m - as.numeric(chile_sam["IVA", sam_p]) + 1e-9)
+D_v <- D_m / (1 + vat_r)
+G_v <- G_m / (1 + vat_r)
+I_v <- I_m / (1 + vat_r)
+VarEx_v <- V_m / (1 + vat_r)
+
+# 4. Institutional
+Lh_val <- chile_sam["Hogares", "Trabajo"]
+Kh_val <- chile_sam["Hogares", "Capital"]
+Kf_val <- chile_sam["Empresas", "Capital"]
+Kg_val <- chile_sam["Gobierno", "Capital"]
+RoK_val <- chile_sam["row", "Capital"]
+RoL_val <- chile_sam["row", "Trabajo"]
+RiK_val <- chile_sam["Capital", "row"]
+RiL_val <- chile_sam["Trabajo", "row"]
+
+BTINC_v <- sum(chile_sam["Hogares", !names(chile_sam) %in% c("Total")])
+INGG_v <- sum(chile_sam["Gobierno", !names(chile_sam) %in% c("Total")])
+INGF_v <- sum(chile_sam["Empresas", !names(chile_sam) %in% c("Total")])
+INC_val <- BTINC_v - chile_sam["Imp_dir", "Hogares"]
+k_tot <- sum(K_vals) + RoK_val
+l_tot <- sum(L_vals) + RoL_val
+
+# 5. Parameters
+t_iva_r <- as.numeric(chile_sam["IVA", sam_a]) / V_sector_vals
+t_pro_r <- as.numeric(chile_sam["Imp_prod", sam_a]) / V_sector_vals
+t_esp_r <- if ("Imptos_Espec" %in% rownames(chile_sam)) as.numeric(chile_sam["Imptos_Espec", sam_a]) / V_sector_vals else rep(0, 3)
+
+net_rev <- V_sector_vals * (1 - t_iva_r - t_pro_r - t_esp_r)
+bk <- K_vals / (net_rev + 1e-9)
+bl <- L_vals / (net_rev + 1e-9)
+bx <- t(X_matrix) / (net_rev + 1e-9)
+gamma_v <- V_sector_vals / (K_vals^bk * L_vals^bl * apply(t(X_matrix)^bx, 1, prod) + 1e-9)
+alpha_v_unsc <- (1 + vat_r) * D_v^0.5
+alpha_scale <- sum(alpha_v_unsc^0.5)
+alpha_v <- alpha_v_unsc / (alpha_scale^2)
+U_val <- (sum(alpha_v * D_v^0.5))^(1 / 0.5)
+lambda_val <- U_val / sum(D_v * (1 + vat_r))
+
+par_flat <- c(
+    omega = 0.5, k_total_data = k_tot, l_total_data = l_tot,
+    par_k_h = Kh_val / k_tot, par_k_f = Kf_val / k_tot,
+    par_k_g = Kg_val / k_tot, par_k_row = RoK_val / k_tot,
+    par_l_h = Lh_val / l_tot, par_l_row = RoL_val / l_tot,
+    por_cont = chile_sam["Cont_soc", "Hogares"] / (INC_val + 1e-9),
+    por_sav = chile_sam["S-I", "Hogares"] / (INC_val + 1e-9), pshdata = chile_sam["Hogares", "Pres_soc"],
+    pitdata = chile_sam["Imp_dir", "Hogares"], fitdata = chile_sam["Imp_dir", "Empresas"],
+    por_trgov = chile_sam["Hogares", "Gobierno"] / (INGG_v + 1e-9), por_tremp = chile_sam["Hogares", "Empresas"] / (INGF_v + 1e-9),
+    por_cont_soc_f = chile_sam["Empresas", "Cont_soc"] / (chile_sam["Cont_soc", "Hogares"] + 1e-9),
+    por_cont_soc_g = chile_sam["Gobierno", "Cont_soc"] / (chile_sam["Cont_soc", "Hogares"] + 1e-9),
+    por_pres_soc_f = chile_sam["Pres_soc", "Empresas"] / (INGF_v + 1e-9), por_pres_soc_g = chile_sam["Pres_soc", "Gobierno"] / (INGG_v + 1e-9),
+    fact_row_in_k_data = RiK_val, fact_row_in_l_data = RiL_val,
+    dstManu = D_v[1], dstServ = D_v[3],
+    get_flow_values(vat_r, "vat", p_names),
+    get_flow_values(Ar_m / (M_m + 1e-9), "tar", p_names),
+    get_flow_values(t_pro_r, "tps", s_names),
+    get_flow_values(t_esp_r, "tes", s_names),
+    get_flow_values(t_iva_r, "tis", s_names),
+    get_flow_values(G_m, "gg_market_data_p", p_names),
+    get_flow_values(VarEx_v, "vexist", p_names),
+    get_flow_values(E_m, "edp", p_names),
+    get_flow_values(M_m + Ar_m, "mdp", p_names),
+    get_flow_values(V_sector_vals, "vst", s_names),
+    get_flow_values(t(make_share_matrix), "make_share", p_names, s_names),
+    get_flow_values(I_v / (sum(I_v) + 1e-9), "pinv", p_names),
+    get_flow_values(rep(1, 3), "pworlde", p_names)
+)
+model <- set_free_par(model, par_flat)
+
+# 6. Initialize
+model <- initval_calibr_par(model, unlist(list(
+    pit = chile_sam["Imp_dir", "Hogares"] / (Kh_val + Lh_val + 1e-9),
+    fit = chile_sam["Imp_dir", "Empresas"] / (Kf_val + 1e-9),
+    get_flow_values(alpha_v, "alpha", p_names), get_flow_values(gamma_v, "gamma", s_names),
+    get_flow_values(bk, "betak", s_names), get_flow_values(bl, "betal", s_names),
+    get_flow_values(t(bx), "betax", p_names, s_names)
+)))
+
+var_list <- list(
+    INC = INC_val, BTINC = BTINC_v, INGF = INGF_v, INGG = INGG_v,
+    GTg = sum(chile_sam[!rownames(chile_sam) %in% c("Total"), "Gobierno"]) - chile_sam["S-I", "Gobierno"],
+    SAV = chile_sam["S-I", "Hogares"], CS = chile_sam["Cont_soc", "Hogares"], CSf = chile_sam["Empresas", "Cont_soc"], SAVf = chile_sam["S-I", "Empresas"],
+    FIRMTAX = chile_sam["Imp_dir", "Empresas"], PITAX = chile_sam["Imp_dir", "Hogares"],
+    PSf = chile_sam["Pres_soc", "Empresas"], PSg = chile_sam["Pres_soc", "Gobierno"], TREMP = chile_sam["Hogares", "Empresas"],
+    TRGOV = chile_sam["Hogares", "Gobierno"], PSh = chile_sam["Hogares", "Pres_soc"],
+    Tax = sum(chile_sam["Gobierno", c("Imp_dir", "Imp_prod", "IVA", "Arancel")]) + (if ("Imptos_Espec" %in% rownames(chile_sam)) chile_sam["Gobierno", "Imptos_Espec"] else 0),
+    VAT = sum(chile_sam["IVA", !names(chile_sam) %in% c("Total")]),
+    VAT_DEMAND = sum(vat_r * (D_v + G_v + I_v + VarEx_v)), VAT_OUTPUT = sum(t_iva_r * V_sector_vals),
+    SAVg = chile_sam["S-I", "Gobierno"], CSg = chile_sam["Gobierno", "Cont_soc"],
+    RiK = RiK_val, RiL = RiL_val, RoK = RoK_val, RoL = RoL_val,
+    pk = 1, w = 1, exr = 1, Kh = Kh_val, Lh = Lh_val, Kf = Kf_val, Kg = Kg_val,
+    RENT_M = 0, RENT_E = 0, PITB = Kh_val + Lh_val,
+    U = U_val, lambda__CONSUMER_1 = lambda_val
+)
+v_vecs <- list(
+    get_flow_values(rep(0, 3), "pi", s_names), get_flow_values(rep(1, 3), "p", p_names),
+    get_flow_values(rep(1, 3), "pe", p_names), get_flow_values(1 / (1 + Ar_m / (M_m + 1e-9)), "pm", p_names),
+    get_flow_values(D_v, "D", p_names), get_flow_values(G_v, "G", p_names), get_flow_values(I_v, "I", p_names),
+    get_flow_values(E_m, "Exports", p_names), get_flow_values(M_m + Ar_m, "Imports", p_names),
+    get_flow_values(VarEx_v, "VarExis", p_names), get_flow_values(V_sector_vals, "V", s_names),
+    get_flow_values(t(make_matrix), "Yap", p_names, s_names), get_flow_values(rowSums(X_matrix), "X_total", p_names),
+    get_flow_values(V_sector_vals, "revenue", s_names), get_flow_values(net_rev, "net_revenue", s_names),
+    get_flow_values(K_vals, "K", s_names), get_flow_values(L_vals, "L", s_names),
+    get_flow_values(X_matrix, "X", p_names, s_names)
+)
+model <- initval_var(model, c(unlist(var_list), unlist(v_vecs)))
+
+# 7. Steady State
+model_calib <- steady_state(model, calibration = TRUE)
+
+res <- get_residuals(model_calib)
+sink("informe_final_residuos.txt")
+cat("Norma del residuo:", norm(unlist(res), "2"), "\n")
+print(head(data.frame(val = unlist(res))[order(-abs(unlist(res))), , drop = F], 30))
+sink()
+cat("Finalizado. Norma:", norm(unlist(res), "2"), "\n")
