@@ -62,15 +62,16 @@ net_rev <- V_sector_vals * (1 - t_iva_r - t_pro_r - t_esp_r)
 bk <- K_vals / (net_rev + 1e-9)
 bl <- L_vals / (net_rev + 1e-9)
 bx <- t(X_matrix) / (net_rev + 1e-9)
+omega_val <- 0.5
 gamma_v <- V_sector_vals / (K_vals^bk * L_vals^bl * apply(t(X_matrix)^bx, 1, prod) + 1e-9)
-alpha_v_unsc <- (1 + vat_r) * D_v^0.5
-alpha_scale <- sum(alpha_v_unsc^0.5)
-alpha_v <- alpha_v_unsc / (alpha_scale^2)
-U_val <- (sum(alpha_v * D_v^0.5))^(1 / 0.5)
+alpha_v_unsc <- (1 + vat_r) * D_v^(1/omega_val)
+alpha_scale <- sum(alpha_v_unsc)
+alpha_v <- alpha_v_unsc / alpha_scale
+U_val <- (sum(alpha_v * D_v^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
 lambda_val <- U_val / sum(D_v * (1 + vat_r))
 
 par_flat <- c(
-    omega = 0.5, k_total_data = k_tot, l_total_data = l_tot,
+    omega = omega_val, k_total_data = k_tot, l_total_data = l_tot,
     par_k_h = Kh_val / k_tot, par_k_f = Kf_val / k_tot,
     par_k_g = Kg_val / k_tot, par_k_row = RoK_val / k_tot,
     par_l_h = Lh_val / l_tot, par_l_row = RoL_val / l_tot,

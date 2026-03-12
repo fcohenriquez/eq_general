@@ -79,14 +79,15 @@ bk <- K_vals / (net_rev + 1e-9)
 bl <- L_vals / (net_rev + 1e-9)
 bx <- t(X_matrix) / (net_rev + 1e-9)
 gamma_v <- V_sector_vals / (K_vals^bk * L_vals^bl * apply(t(X_matrix)^bx, 1, prod) + 1e-9)
-alpha_v_unsc <- (1 + vat_r) * D_v^0.5
-alpha_scale <- sum(alpha_v_unsc^0.5)
-alpha_v <- alpha_v_unsc / (alpha_scale^2)
-U_val <- (sum(alpha_v * D_v^0.5))^(1 / 0.5)
+omega_val <- 0.5
+alpha_v_unsc <- (1 + vat_r) * D_v^(1/omega_val)
+alpha_scale <- sum(alpha_v_unsc)
+alpha_v <- alpha_v_unsc / alpha_scale
+U_val <- (sum(alpha_v * D_v^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
 lambda_val <- U_val / sum(D_v * (1 + vat_r))
 
 par_flat <- c(
-    omega = 0.5, k_total_data = k_tot, l_total_data = l_tot,
+    omega = omega_val, k_total_data = k_tot, l_total_data = l_tot,
     par_k_h = Kh_val / k_tot, par_k_f = Kf_val / k_tot,
     par_k_g = Kg_val / k_tot, par_k_row = RoK_val / k_tot,
     par_l_h = Lh_val / l_tot, par_l_row = RoL_val / l_tot,
@@ -158,13 +159,13 @@ model <- initval_var(model, c(unlist(var_list), unlist(v_vecs)))
 
 ```{r }
 # Verificación de residuos iniciales (Debería ser 0)
-cat("Norma de residuos iniciales:", Norm(model@init_residual_vector), "\n")
+cat("Norma de residuos iniciales:", pracma::Norm(model@init_residual_vector), "\n")
 
 # Solución del Steady State
 model <- steady_state(model, calibration = T)
 
 # Verificación final
-cat("Norma de residuos final:", Norm(model@residual_vector), "\n")
+cat("Norma de residuos final:", pracma::Norm(model@residual_vector), "\n")
 ```
 
 ## 6. Resultados de Equilibrio vs SAM
@@ -192,8 +193,8 @@ var_info(model, variables = c("U", "INC", "INGG", "VAT", "PITAX", "Tax", "SAV"))
 
 ```{r}
 get_residuals(model)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
+pracma::Norm(model@init_residual_vector)
+pracma::Norm(model@residual_vector)
 ```
 # Estadisticas de valores obtenidos
 
@@ -207,8 +208,8 @@ get_par_values(model)
 
 ```{r}
 library(pracma)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
+pracma::Norm(model@init_residual_vector)
+pracma::Norm(model@residual_vector)
 ```
 # SIMULACIONES DE INCREMENTOS DE IMPUESTOS
 
@@ -228,7 +229,7 @@ res_base <- get_ss_values(model)
 
 # ANALYSIS IVA
 ```{r}
-vars_to_compare <- c("VAT", "PITAX", "FIRMTAX", "INC", "Tax", "U", "V__Manu", "V__Prim", "V__Serv", "D__Manu", "D__Prim", "D__Serv")
+vars_to_compare <- c("VAT", "PITAX", "FIRMTAX", "Tax", "U", "D__Manu", "D__Prim", "D__Serv")
 
 comp_iva <- data.frame(
     Variable = vars_to_compare,

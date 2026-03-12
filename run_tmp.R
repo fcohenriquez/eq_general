@@ -299,13 +299,13 @@ model <- initval_var(model, unlist(varlist))
 
 ## -------------------------------------------------------------------------------------------------
 # Verificación de residuos iniciales (Debería ser 0)
-cat("Norma de residuos iniciales:", Norm(model@init_residual_vector), "\n")
+cat("Norma de residuos iniciales:", pracma::Norm(model@init_residual_vector), "\n")
 
 # Solución del Steady State
 model <- steady_state(model, calibration = T)
 
 # Verificación final
-cat("Norma de residuos final:", Norm(model@residual_vector), "\n")
+cat("Norma de residuos final:", pracma::Norm(model@residual_vector), "\n")
 
 
 ## -------------------------------------------------------------------------------------------------
@@ -330,8 +330,8 @@ var_info(model, variables = c("U", "INC", "INGG", "VAT", "PITAX", "Tax", "SAV", 
 
 ## -------------------------------------------------------------------------------------------------
 get_residuals(model)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
+pracma::Norm(model@init_residual_vector)
+pracma::Norm(model@residual_vector)
 
 
 ## -------------------------------------------------------------------------------------------------
@@ -344,8 +344,8 @@ get_par_values(model)
 
 ## -------------------------------------------------------------------------------------------------
 library(pracma)
-Norm(model@init_residual_vector)
-Norm(model@residual_vector)
+pracma::Norm(model@init_residual_vector)
+pracma::Norm(model@residual_vector)
 
 
 ## -------------------------------------------------------------------------------------------------

@@ -13,7 +13,7 @@ block CONSUMER
 
     objective
     {
-        U[] = (SUM<idx_c::P>(alpha<idx_c> * (D<idx_c>[]^((omega - 1)/omega))))^(omega/(omega - 1));
+        U[] = (SUM<idx_c::P>(alpha<idx_c> * D<idx_c>[]^((omega - 1)/omega)))^(omega/(omega - 1));
     };
 
     constraints
@@ -33,7 +33,7 @@ block CONSUMER
     {
         D<'Manu'>[] = dstManu -> alpha<'Manu'>;
         D<'Serv'>[] = dstServ -> alpha<'Serv'>;
-        SUM<idx_a::P>(alpha<idx_a>) = 1 -> alpha<'Prim'>;
+        SUM<idx_a::P>(alpha<idx_a>^omega) = 1 -> alpha<'Prim'>;
     };
 };
 
