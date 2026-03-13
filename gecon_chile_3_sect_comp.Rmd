@@ -188,6 +188,43 @@ print(Y_ap_equilibrium)
 
 # Panel de variables institucionales
 var_info(model, variables = c("U", "INC", "INGG", "VAT", "PITAX", "Tax", "SAV"))
+
+# Cálculo y Descomposición del PIB (Enfoque del Gasto)
+PIB_SAM <- sum(D_m) + sum(G_m) + sum(I_m) + sum(V_m) + sum(E_m) - sum(M_m)
+cat("\nDescomposición del PIB (Enfoque del Gasto) - Valores SAM:\n")
+cat("Consumo Hogares (C):       ", round(sum(D_m), 2), "\n")
+cat("Consumo Gobierno (G):      ", round(sum(G_m), 2), "\n")
+cat("Inversión (I):             ", round(sum(I_m), 2), "\n")
+cat("Var. Existencias (V):      ", round(sum(V_m), 2), "\n")
+cat("Exportaciones (X):         ", round(sum(E_m), 2), "\n")
+cat("Importaciones (M) (-):     ", round(sum(M_m), 2), "\n")
+cat("--------------------------------------------------\n")
+cat("PIB Total:                 ", round(PIB_SAM, 2), "\n\n")
+
+# Desde los resultados del modelo en equilibrio
+ss_vals <- get_ss_values(model)
+p_eq <- ss_vals[paste0("p__", p_names)]
+pm_eq <- ss_vals[paste0("pm__", p_names)]
+pe_eq <- ss_vals[paste0("pe__", p_names)]
+
+C_model <- sum(ss_vals[paste0("D__", p_names)] * p_eq * (1 + vat_r))
+G_model <- sum(ss_vals[paste0("G__", p_names)] * p_eq * (1 + vat_r))
+I_model <- sum(ss_vals[paste0("I__", p_names)] * p_eq * (1 + vat_r))
+V_model <- sum(ss_vals[paste0("VarExis__", p_names)] * p_eq * (1 + vat_r))
+X_model <- sum(ss_vals[paste0("Exports__", p_names)] * pe_eq)
+M_model <- sum(ss_vals[paste0("Imports__", p_names)] * pm_eq)
+
+pib_model <- C_model + G_model + I_model + V_model + X_model - M_model
+
+pib_df <- data.frame(
+    Componente = c("Consumo_Hog", "Consumo_Gob", "Inversion", "Var_Exist", "Exports", "Imports_(-)", "PIB_Total"),
+    SAM_Base = c(sum(D_m), sum(G_m), sum(I_m), sum(V_m), sum(E_m), sum(M_m), PIB_SAM),
+    Modelo_Eq = c(C_model, G_model, I_model, V_model, X_model, M_model, pib_model)
+)
+pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
+
+print("Comparación de Descomposición del PIB:")
+print(pib_df)
 ```
 # Estadisticas de residuos
 
