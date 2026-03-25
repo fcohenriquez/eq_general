@@ -1,0 +1,76 @@
+﻿Rscript.exe : Loading 
+required package: MASS
+En línea: 1 Carácter: 1
++ & "C:\Users\francisco
+.henriquez\AppData\Loca
+l\Programs\R\R-4.5.1\bi
+n\ ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Loading requi   
+ red package: MASS:    
+String) [], Remote    
+Exception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Loading required 
+package: Matrix
+Loading required 
+package: nleqslv
+Loading required 
+package: Rcpp
+This is gEcon version 
+1.2.3 (2025-04-13)
+http://gecon.r-forge.r-
+project.org/
+
+Attaching package: 
+'pracma'
+
+The following objects 
+are masked from 
+'package:Matrix':
+
+    expm, lu, tril, 
+triu
+
+[1] "gecon_chile_6_sect.R"
+model parsed in 0.13s
+model loaded in 0.08s
+Error in 
+set_free_par(model, 
+par_flat) : 
+  the following are 
+not model parameters: 
+"tar__prod_Agri", 
+"tar__prod_Min", 
+"tar__prod_Manu", "tar_
+_prod_elect_agua_gas", 
+"tar__prod_const", 
+"tar__prod_serv"
+Calls: source -> 
+withVisible -> eval -> 
+eval -> set_free_par
+In addition: Warning 
+message:
+In make_model("cge_cali
+b_chile_6_sect.gcn") : 
+(gEcon warning): the 
+number of variables / 
+equations exceeds 100 
+and Rcpp output option 
+is set to false - this 
+may lead to long 
+compilation of model 
+equations (by JIT 
+compiler); if this is 
+the case, consider 
+using option "output R 
+Rcpp = TRUE"
+Execution halted

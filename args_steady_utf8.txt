@@ -1,0 +1,39 @@
+﻿Rscript.exe : Loading 
+required package: MASS
+En línea: 1 Carácter: 1
++ & "C:\Users\francisco
+.henriquez\AppData\Loca
+l\Programs\R\R-4.5.1\bi
+n\ ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Loading requi   
+ red package: MASS:    
+String) [], Remote    
+Exception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Loading required 
+package: Matrix
+Loading required 
+package: nleqslv
+Loading required 
+package: Rcpp
+This is gEcon version 
+1.2.3 (2025-04-13)
+http://gecon.r-forge.r-
+project.org/
+Dotted pair list of 7
+ $ model           : symbol 
+ $ solver          : chr "nleqslv"
+ $ use_jac         : logi TRUE
+ $ calibration     : logi TRUE
+ $ last_solver_iter: logi FALSE
+ $ options_list    : NULL
+ $ solver_status   : logi FALSE

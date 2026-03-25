@@ -1,0 +1,38 @@
+﻿Rscript.exe : Loading 
+required package: MASS
+En línea: 1 Carácter: 1
++ & "C:\Users\francisco.h
+enriquez\AppData\Local\Pr
+ograms\R\R-4.5.1\bin\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  (Loading required pa   
+ ckage: MASS:String)     
+[], RemoteException
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 
+Loading required 
+package: Matrix
+Loading required 
+package: nleqslv
+Loading required 
+package: Rcpp
+This is gEcon version 
+1.2.3 (2025-04-13)
+http://gecon.r-forge.r-pr
+oject.org/
+
+Attaching package: 
+'pracma'
+
+The following objects 
+are masked from 
+'package:Matrix':
+
+    expm, lu, tril, triu
+

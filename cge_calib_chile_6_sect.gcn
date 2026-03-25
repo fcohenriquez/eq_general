@@ -1,0 +1,132 @@
+indexsets
+{
+  P = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const', 'prod_serv'};
+  Pmc = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const', 'prod_serv'};
+  S = { 'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_const', 'Act_serv' };
+};
+
+block CONSUMER
+{
+    controls
+    {
+        <idx_d::P> D<idx_d>[];
+    };
+
+    objective
+    {
+        U[] = (SUM<idx_c::P>(alpha<idx_c> * (D<idx_c>[]^((omega - 1.0)/omega))))^(omega/(omega - 1.0));
+    };
+
+    constraints
+    {
+        SUM<idx_i_1::P>(p<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+    };
+    
+    identities
+    {
+        INC[] = BTINC[] - PITAX[] + RENT_M[] + RENT_E[];
+        BTINC[] = pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
+        SAV[] = INC[] * por_sav;
+        CS[] = INC[] * por_cont;
+    };
+
+    calibration
+    {
+        <idx_cal::P> D<idx_cal>[] = dst<idx_cal> -> alpha<idx_cal>;
+    };
+};
+
+block <s::S>SECTORS
+{
+    controls
+    {
+        V<s>[], K<s>[], L<s>[], <idx_x::P> X<idx_x, s>[];
+    };
+
+    objective
+    {
+        pi<s>[] = V<s>[] * (SUM<idx_pv::P>(p<idx_pv>[] * make_share<idx_pv, s>)) * (1.0 - tps<s> - tes<s>) 
+                  - K<s>[] * pk[] - L<s>[] * w[] - SUM<idx_x_o::P>(X<idx_x_o, s>[] * p<idx_x_o>[]);
+    };
+
+    constraints
+    {
+        # Full Cobb-Douglas production function (K, L, and intermediates)
+        V<s>[] = gamma<s> * (K<s>[]^betak<s>) * (L<s>[]^betal<s>) * PROD<idx_p_c::P>(X<idx_p_c, s>[]^betax<idx_p_c, s>);
+    };
+
+    identities
+    {
+        <idx_y::P> Yap<idx_y, s>[] = V<s>[] * make_share<idx_y, s>;
+        revenue<s>[] = SUM<idx_rev::P>(Yap<idx_rev, s>[] * p<idx_rev>[]);
+        net_revenue<s>[] = revenue<s>[] * (1.0 - tps<s> - tes<s>);
+    };
+
+    calibration
+    {
+        V<s>[] = vst<s> -> gamma<s>;
+        K<s>[] * pk[] = net_revenue<s>[] * betak<s> -> betak<s>;
+        L<s>[] * w[] = net_revenue<s>[] * betal<s> -> betal<s>;
+        <idx_calx::P> X<idx_calx, s>[] * p<idx_calx>[] = net_revenue<s>[] * betax<idx_calx, s> -> betax<idx_calx, s>;
+    };
+};
+
+block PRODUCTS
+{
+    identities
+    {
+
+        <idx_mc::Pmc> SUM<idx_s::S>(Yap<idx_mc, idx_s>[]) + mdp<idx_mc> + VAT_p<idx_mc>[] + Arancel_p<idx_mc>[] = 
+               D<idx_mc>[] + (gg_market_data_p<idx_mc>/(p<idx_mc>[] + 0.000000001)) + (I_data<idx_mc>/(p<idx_mc>[] + 0.000000001)) + vexist<idx_mc> + SUM<idx_act::S>(X<idx_mc, idx_act>[]) + edp<idx_mc>;
+        
+        <idx_pv::P> VAT_p<idx_pv>[] = vat<idx_pv> * p<idx_pv>[] * (D<idx_pv>[] + (gg_market_data_p<idx_pv>/(p<idx_pv>[] + 0.000000001)) + (I_data<idx_pv>/(p<idx_pv>[] + 0.000000001)) + vexist<idx_pv> + SUM<idx_act_v::S>(X<idx_pv, idx_act_v>[]));
+        <idx_pa::P> Arancel_p<idx_pa>[] = tar_rate<idx_pa> * p<idx_pa>[] * (D<idx_pa>[] + (gg_market_data_p<idx_pa>/(p<idx_pa>[] + 0.000000001)) + (I_data<idx_pa>/(p<idx_pa>[] + 0.000000001)) + vexist<idx_pa> + SUM<idx_act_a::S>(X<idx_pa, idx_act_a>[]));
+
+        <idx_p_m::P> pm<idx_p_m>[] = pworldm<idx_p_m> * exr[] / (1.0 + tar_rate<idx_p_m>);
+        <idx_p_e::P> pe<idx_p_e>[] = pworlde<idx_p_e> * exr[];
+    };
+};
+
+block FIRM
+{
+    identities
+    {
+        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
+        SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
+        TREMP[] = INGF[] * por_tremp;
+        Kf[] = k_total_data * par_k_f;
+        FIRMTAX[] = fit * (Kf[] * pk[]);
+    };
+};
+
+block GOB
+{
+    identities
+    {
+        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
+        TRGOV[] = INGG[] * por_trgov;
+        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p>) + TRGOV[] + INGG[] * por_pres_soc_g);
+        Kg[] = k_total_data * par_k_g;
+        VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
+        PITAX[] = pit * (pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
+        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + 
+                SUM<idx_s::S>((tps<idx_s> + tes<idx_s>) * revenue<idx_s>[]) +
+                SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
+    };
+};
+
+block EQUILIBRIUM
+{
+    identities 
+    {
+        SUM<idx_e_l::S>(L<idx_e_l>[]) + l_total_data * par_l_row = l_total_data;
+        RENT_M[] = SUM<idx_m_r::P>(mdp<idx_m_r> * (p<idx_m_r>[] - pm<idx_m_r>[] * (1.0 + tar_rate<idx_m_r>)));
+        RENT_E[] = SUM<idx_e_r::P>(edp<idx_e_r> * (pe<idx_e_r>[] - p<idx_e_r>[]));
+        pk[] = 1.0;
+        exr[] = 1.0;
+        Kh[] = k_total_data * par_k_h;
+        Lh[] = l_total_data * par_l_h;
+        PSh[] = pshdata;
+    }
+}
+

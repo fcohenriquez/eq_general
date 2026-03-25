@@ -1,0 +1,376 @@
+Generated on 2026-03-20 18:46:09 by gEcon ver. 1.2.3 (2025-04-13)
+http://gecon.r-forge.r-project.org/
+
+Model name: cge_calib_chile_6_sect
+
+1 ERROR, see bottom of this logfile
+
+
+Index sets (3):
+    P = { 'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const', 'prod_serv' }
+    Pmc = { 'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const', 'prod_serv' }
+    S = { 'act_Agri', 'act_Min', 'act_Manu', 'act_elect_agua_gas', 'act_const', 'act_serv' }
+
+Block: CONSUMER
+ Controls:
+    <idx_d::P> D<idx_d>
+ Objective:
+    U = (SUM<idx_c::P> alpha<idx_c> * D<idx_c>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1)
+ Constraints:
+    -CS + INC - SAV - SUM<idx_i_1::P> p<idx_i_1> * D<idx_i_1> * (1 + tm_rate<idx_i_1> + vat<idx_i_1>) = 0    (lambda__CONSUMER_1)
+ Identities:
+    BTINC - INC - PITAX + RENT_M + RENT_E = 0
+    fact_row_in_k_data + fact_row_in_l_data - BTINC + PSh + TRGOV + TREMP + pk * Kh + w * Lh = 0
+    -SAV + por_sav * INC = 0
+    -CS + por_cont * INC = 0
+ First order conditions:
+    <idx_d::P> alpha<idx_d> * D<idx_d>^(-1 + omega^-1 * (-1 + omega)) * (SUM<idx_c::P> alpha<idx_c> * D<idx_c>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<idx_d> * (1 + tm_rate<idx_d> + vat<idx_d>) = 0    (<idx_d::P> D<idx_d>)
+
+Block: <s::S> SECTORS
+ Controls:
+    V<s>, K<s>, L<s>, V_VA<s>, V_INT<s>, <idx_x::P> X<idx_x,s>
+ Objective:
+    pi<s> = -pk * K<s> - w * L<s> + V<s> * (1 - tes<s> - tps<s>) * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) - SUM<idx_x_o::P> p<idx_x_o> * X<idx_x_o,s>
+ Constraints:
+    -V<s> + V_VA<s> = 0    (lambda__SECTORS_1<s>)
+    V_VA<s> - V_INT<s> = 0    (lambda__SECTORS_2<s>)
+    -V_VA<s> + gamma<s> * K<s>^betak<s> * L<s>^betal<s> = 0    (lambda__SECTORS_3<s>)
+    <idx_x::P> -X<idx_x,s> + betax<idx_x,s> * V_INT<s> = 0    (<idx_x::P> lambda__SECTORS_4<s,idx_x>)
+ Identities:
+    <idx_y::P> -Yap<idx_y,s> + make_share<idx_y,s> * V<s> = 0
+    -revenue<s> + SUM<idx_rev::P> p<idx_rev> * Yap<idx_rev,s> = 0
+    -net_revenue<s> + revenue<s> * (1 - tes<s> - tps<s>) = 0
+ First order conditions:
+    -lambda__SECTORS_1<s> + (1 - tes<s> - tps<s>) * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) = 0    (V<s>)
+    -pk + betak<s> * gamma<s> * lambda__SECTORS_3<s> * K<s>^(-1 + betak<s>) * L<s>^betal<s> = 0    (K<s>)
+    -w + betal<s> * gamma<s> * lambda__SECTORS_3<s> * K<s>^betak<s> * L<s>^(-1 + betal<s>) = 0    (L<s>)
+    lambda__SECTORS_1<s> + lambda__SECTORS_2<s> - lambda__SECTORS_3<s> = 0    (V_VA<s>)
+    -lambda__SECTORS_2<s> + SUM<idx_x::P> betax<idx_x,s> * lambda__SECTORS_4<s,idx_x> = 0    (V_INT<s>)
+    <idx_x::P> -lambda__SECTORS_4<s,idx_x> - p<idx_x> = 0    (<idx_x::P> X<idx_x,s>)
+ First order conditions after reduction:
+    -pk + betak<s> * gamma<s> * ((1 - tes<s> - tps<s>) * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) + SUM<idx_x::P> betax<idx_x,s> * lambda__SECTORS_4<s,idx_x>) * K<s>^(-1 + betak<s>) * L<s>^betal<s> = 0    (K<s>)
+    -w + betal<s> * gamma<s> * ((1 - tes<s> - tps<s>) * (SUM<idx_pv::P> make_share<idx_pv,s> * p<idx_pv>) + SUM<idx_x::P> betax<idx_x,s> * lambda__SECTORS_4<s,idx_x>) * K<s>^betak<s> * L<s>^(-1 + betal<s>) = 0    (L<s>)
+    <idx_x::P> -lambda__SECTORS_4<s,idx_x> - p<idx_x> = 0    (<idx_x::P> X<idx_x,s>)
+
+Block: PRODUCTS
+ Identities:
+    <idx_mc::Pmc> edp<idx_mc> - mdp<idx_mc> + vexist<idx_mc> + D<idx_mc> + gg_market_data_p<idx_mc> * (1e-09 + p<idx_mc>)^-1 + I_data<idx_mc> * (1e-09 + p<idx_mc>)^-1 - SUM<idx_s::S> Yap<idx_mc,idx_s> + SUM<idx_act::S> X<idx_mc,idx_act> = 0
+    <idx_pm::P> -pm<idx_pm> + pworldm<idx_pm> * exr * (1 + tar<idx_pm>)^-1 = 0
+    <idx_pe::P> -pe<idx_pe> + pworlde<idx_pe> * exr = 0
+
+Block: FIRM
+ Identities:
+    -INGF + por_cont_soc_f * CS + pk * Kf = 0
+    -FIRMTAX + INGF - SAVf - TREMP - por_pres_soc_f * INGF - por_tr_f_g * INGF = 0
+    -TREMP + por_tremp * INGF = 0
+    -Kf + k_total_data * par_k_f = 0
+    -FIRMTAX + fit * pk * Kf = 0
+
+Block: GOB
+ Identities:
+    -INGG + Tax + por_tr_f_g * INGF + por_cont_soc_g * CS + pk * Kg = 0
+    -TRGOV + por_trgov * INGG = 0
+    INGG - SAVg - TRGOV - por_pres_soc_g * INGG - SUM<idx_p::P> gg_market_data_p<idx_p> = 0
+    -Kg + k_total_data * par_k_g = 0
+    -VAT + SUM<idx_v::P> vat<idx_v> * p<idx_v> * (D<idx_v> + gg_market_data_p<idx_v> * (1e-09 + p<idx_v>)^-1) = 0
+    -PITAX + pit * (fact_row_in_k_data + fact_row_in_l_data + PSh + TRGOV + TREMP + pk * Kh + w * Lh) = 0
+    FIRMTAX + PITAX - Tax + VAT + SUM<idx_p2::P> mdp<idx_p2> * tar<idx_p2> * pm<idx_p2> * (1 + tar<idx_p2>) + SUM<idx_s::S> tps<idx_s> * revenue<idx_s> = 0
+
+Block: EQUILIBRIUM
+ Identities:
+    l_total_data - l_total_data * par_l_row - SUM<idx_e_l::S> L<idx_e_l> = 0
+    k_total_data - k_total_data * par_k_row - SUM<idx_e_k::S> K<idx_e_k> = 0
+    -RENT_M + SUM<idx_m_r::P> mdp<idx_m_r> * (p<idx_m_r> - pm<idx_m_r> * (1 + tar<idx_m_r>)) = 0
+    -RENT_E + SUM<idx_e_r::P> edp<idx_e_r> * (-p<idx_e_r> + pe<idx_e_r>) = 0
+    1 - pk = 0
+    1 - exr = 0
+    -Kh + k_total_data * par_k_h = 0
+    -Lh + l_total_data * par_l_h = 0
+    pshdata - PSh = 0
+
+Variables (206):
+    exr, lambda__CONSUMER_1, pk, w, BTINC, CS, FIRMTAX, INC, INGF, INGG, Kf, Kg, Kh, Lh, PITAX, PSh, RENT_M, RENT_E, SAV, SAVf, SAVg, Tax, TRGOV, TREMP, U, VAT, lambda__SECTORS_4<'act_Agri','prod_Agri'>, lambda__SECTORS_4<'act_Agri','prod_Min'>, lambda__SECTORS_4<'act_Agri','prod_Manu'>, lambda__SECTORS_4<'act_Agri','prod_elect_agua_gas'>, lambda__SECTORS_4<'act_Agri','prod_const'>, lambda__SECTORS_4<'act_Agri','prod_serv'>, lambda__SECTORS_4<'act_Min','prod_Agri'>, lambda__SECTORS_4<'act_Min','prod_Min'>, lambda__SECTORS_4<'act_Min','prod_Manu'>, lambda__SECTORS_4<'act_Min','prod_elect_agua_gas'>, lambda__SECTORS_4<'act_Min','prod_const'>, lambda__SECTORS_4<'act_Min','prod_serv'>, lambda__SECTORS_4<'act_Manu','prod_Agri'>, lambda__SECTORS_4<'act_Manu','prod_Min'>, lambda__SECTORS_4<'act_Manu','prod_Manu'>, lambda__SECTORS_4<'act_Manu','prod_elect_agua_gas'>, lambda__SECTORS_4<'act_Manu','prod_const'>, lambda__SECTORS_4<'act_Manu','prod_serv'>, lambda__SECTORS_4<'act_elect_agua_gas','prod_Agri'>, lambda__SECTORS_4<'act_elect_agua_gas','prod_Min'>, lambda__SECTORS_4<'act_elect_agua_gas','prod_Manu'>, lambda__SECTORS_4<'act_elect_agua_gas','prod_elect_agua_gas'>, lambda__SECTORS_4<'act_elect_agua_gas','prod_const'>, lambda__SECTORS_4<'act_elect_agua_gas','prod_serv'>, lambda__SECTORS_4<'act_const','prod_Agri'>, lambda__SECTORS_4<'act_const','prod_Min'>, lambda__SECTORS_4<'act_const','prod_Manu'>, lambda__SECTORS_4<'act_const','prod_elect_agua_gas'>, lambda__SECTORS_4<'act_const','prod_const'>, lambda__SECTORS_4<'act_const','prod_serv'>, lambda__SECTORS_4<'act_serv','prod_Agri'>, lambda__SECTORS_4<'act_serv','prod_Min'>, lambda__SECTORS_4<'act_serv','prod_Manu'>, lambda__SECTORS_4<'act_serv','prod_elect_agua_gas'>, lambda__SECTORS_4<'act_serv','prod_const'>, lambda__SECTORS_4<'act_serv','prod_serv'>, net_revenue<'act_Agri'>, net_revenue<'act_Min'>, net_revenue<'act_Manu'>, net_revenue<'act_elect_agua_gas'>, net_revenue<'act_const'>, net_revenue<'act_serv'>, p<'prod_Agri'>, p<'prod_Min'>, p<'prod_Manu'>, p<'prod_elect_agua_gas'>, p<'prod_const'>, p<'prod_serv'>, pe<'prod_Agri'>, pe<'prod_Min'>, pe<'prod_Manu'>, pe<'prod_elect_agua_gas'>, pe<'prod_const'>, pe<'prod_serv'>, pi<'act_Agri'>, pi<'act_Min'>, pi<'act_Manu'>, pi<'act_elect_agua_gas'>, pi<'act_const'>, pi<'act_serv'>, pm<'prod_Agri'>, pm<'prod_Min'>, pm<'prod_Manu'>, pm<'prod_elect_agua_gas'>, pm<'prod_const'>, pm<'prod_serv'>, revenue<'act_Agri'>, revenue<'act_Min'>, revenue<'act_Manu'>, revenue<'act_elect_agua_gas'>, revenue<'act_const'>, revenue<'act_serv'>, D<'prod_Agri'>, D<'prod_Min'>, D<'prod_Manu'>, D<'prod_elect_agua_gas'>, D<'prod_const'>, D<'prod_serv'>, K<'act_Agri'>, K<'act_Min'>, K<'act_Manu'>, K<'act_elect_agua_gas'>, K<'act_const'>, K<'act_serv'>, L<'act_Agri'>, L<'act_Min'>, L<'act_Manu'>, L<'act_elect_agua_gas'>, L<'act_const'>, L<'act_serv'>, V<'act_Agri'>, V<'act_Min'>, V<'act_Manu'>, V<'act_elect_agua_gas'>, V<'act_const'>, V<'act_serv'>, V_VA<'act_Agri'>, V_VA<'act_Min'>, V_VA<'act_Manu'>, V_VA<'act_elect_agua_gas'>, V_VA<'act_const'>, V_VA<'act_serv'>, V_INT<'act_Agri'>, V_INT<'act_Min'>, V_INT<'act_Manu'>, V_INT<'act_elect_agua_gas'>, V_INT<'act_const'>, V_INT<'act_serv'>, X<'prod_Agri','act_Agri'>, X<'prod_Agri','act_Min'>, X<'prod_Agri','act_Manu'>, X<'prod_Agri','act_elect_agua_gas'>, X<'prod_Agri','act_const'>, X<'prod_Agri','act_serv'>, X<'prod_Min','act_Agri'>, X<'prod_Min','act_Min'>, X<'prod_Min','act_Manu'>, X<'prod_Min','act_elect_agua_gas'>, X<'prod_Min','act_const'>, X<'prod_Min','act_serv'>, X<'prod_Manu','act_Agri'>, X<'prod_Manu','act_Min'>, X<'prod_Manu','act_Manu'>, X<'prod_Manu','act_elect_agua_gas'>, X<'prod_Manu','act_const'>, X<'prod_Manu','act_serv'>, X<'prod_elect_agua_gas','act_Agri'>, X<'prod_elect_agua_gas','act_Min'>, X<'prod_elect_agua_gas','act_Manu'>, X<'prod_elect_agua_gas','act_elect_agua_gas'>, X<'prod_elect_agua_gas','act_const'>, X<'prod_elect_agua_gas','act_serv'>, X<'prod_const','act_Agri'>, X<'prod_const','act_Min'>, X<'prod_const','act_Manu'>, X<'prod_const','act_elect_agua_gas'>, X<'prod_const','act_const'>, X<'prod_const','act_serv'>, X<'prod_serv','act_Agri'>, X<'prod_serv','act_Min'>, X<'prod_serv','act_Manu'>, X<'prod_serv','act_elect_agua_gas'>, X<'prod_serv','act_const'>, X<'prod_serv','act_serv'>, Yap<'prod_Agri','act_Agri'>, Yap<'prod_Agri','act_Min'>, Yap<'prod_Agri','act_Manu'>, Yap<'prod_Agri','act_elect_agua_gas'>, Yap<'prod_Agri','act_const'>, Yap<'prod_Agri','act_serv'>, Yap<'prod_Min','act_Agri'>, Yap<'prod_Min','act_Min'>, Yap<'prod_Min','act_Manu'>, Yap<'prod_Min','act_elect_agua_gas'>, Yap<'prod_Min','act_const'>, Yap<'prod_Min','act_serv'>, Yap<'prod_Manu','act_Agri'>, Yap<'prod_Manu','act_Min'>, Yap<'prod_Manu','act_Manu'>, Yap<'prod_Manu','act_elect_agua_gas'>, Yap<'prod_Manu','act_const'>, Yap<'prod_Manu','act_serv'>, Yap<'prod_elect_agua_gas','act_Agri'>, Yap<'prod_elect_agua_gas','act_Min'>, Yap<'prod_elect_agua_gas','act_Manu'>, Yap<'prod_elect_agua_gas','act_elect_agua_gas'>, Yap<'prod_elect_agua_gas','act_const'>, Yap<'prod_elect_agua_gas','act_serv'>, Yap<'prod_const','act_Agri'>, Yap<'prod_const','act_Min'>, Yap<'prod_const','act_Manu'>, Yap<'prod_const','act_elect_agua_gas'>, Yap<'prod_const','act_const'>, Yap<'prod_const','act_serv'>, Yap<'prod_serv','act_Agri'>, Yap<'prod_serv','act_Min'>, Yap<'prod_serv','act_Manu'>, Yap<'prod_serv','act_elect_agua_gas'>, Yap<'prod_serv','act_const'>, Yap<'prod_serv','act_serv'>
+
+Parameters (203):
+    fact_row_in_k_data, fact_row_in_l_data, fit, k_total_data, l_total_data, omega, par_k_f, par_k_g, par_l_row, par_k_row, par_k_h, par_l_h, pit, por_sav, por_cont, por_cont_soc_f, por_pres_soc_f, por_tr_f_g, por_tremp, por_cont_soc_g, por_trgov, por_pres_soc_g, pshdata, alpha<'prod_Agri'>, alpha<'prod_Min'>, alpha<'prod_Manu'>, alpha<'prod_elect_agua_gas'>, alpha<'prod_const'>, alpha<'prod_serv'>, betak<'act_Agri'>, betak<'act_Min'>, betak<'act_Manu'>, betak<'act_elect_agua_gas'>, betak<'act_const'>, betak<'act_serv'>, betal<'act_Agri'>, betal<'act_Min'>, betal<'act_Manu'>, betal<'act_elect_agua_gas'>, betal<'act_const'>, betal<'act_serv'>, betax<'prod_Agri','act_Agri'>, betax<'prod_Agri','act_Min'>, betax<'prod_Agri','act_Manu'>, betax<'prod_Agri','act_elect_agua_gas'>, betax<'prod_Agri','act_const'>, betax<'prod_Agri','act_serv'>, betax<'prod_Min','act_Agri'>, betax<'prod_Min','act_Min'>, betax<'prod_Min','act_Manu'>, betax<'prod_Min','act_elect_agua_gas'>, betax<'prod_Min','act_const'>, betax<'prod_Min','act_serv'>, betax<'prod_Manu','act_Agri'>, betax<'prod_Manu','act_Min'>, betax<'prod_Manu','act_Manu'>, betax<'prod_Manu','act_elect_agua_gas'>, betax<'prod_Manu','act_const'>, betax<'prod_Manu','act_serv'>, betax<'prod_elect_agua_gas','act_Agri'>, betax<'prod_elect_agua_gas','act_Min'>, betax<'prod_elect_agua_gas','act_Manu'>, betax<'prod_elect_agua_gas','act_elect_agua_gas'>, betax<'prod_elect_agua_gas','act_const'>, betax<'prod_elect_agua_gas','act_serv'>, betax<'prod_const','act_Agri'>, betax<'prod_const','act_Min'>, betax<'prod_const','act_Manu'>, betax<'prod_const','act_elect_agua_gas'>, betax<'prod_const','act_const'>, betax<'prod_const','act_serv'>, betax<'prod_serv','act_Agri'>, betax<'prod_serv','act_Min'>, betax<'prod_serv','act_Manu'>, betax<'prod_serv','act_elect_agua_gas'>, betax<'prod_serv','act_const'>, betax<'prod_serv','act_serv'>, dst<'prod_Agri'>, dst<'prod_Min'>, dst<'prod_Manu'>, dst<'prod_elect_agua_gas'>, dst<'prod_const'>, dst<'prod_serv'>, edp<'prod_Agri'>, edp<'prod_Min'>, edp<'prod_Manu'>, edp<'prod_elect_agua_gas'>, edp<'prod_const'>, edp<'prod_serv'>, gamma<'act_Agri'>, gamma<'act_Min'>, gamma<'act_Manu'>, gamma<'act_elect_agua_gas'>, gamma<'act_const'>, gamma<'act_serv'>, gg_market_data_p<'prod_Agri'>, gg_market_data_p<'prod_Min'>, gg_market_data_p<'prod_Manu'>, gg_market_data_p<'prod_elect_agua_gas'>, gg_market_data_p<'prod_const'>, gg_market_data_p<'prod_serv'>, make_share<'prod_Agri','act_Agri'>, make_share<'prod_Agri','act_Min'>, make_share<'prod_Agri','act_Manu'>, make_share<'prod_Agri','act_elect_agua_gas'>, make_share<'prod_Agri','act_const'>, make_share<'prod_Agri','act_serv'>, make_share<'prod_Min','act_Agri'>, make_share<'prod_Min','act_Min'>, make_share<'prod_Min','act_Manu'>, make_share<'prod_Min','act_elect_agua_gas'>, make_share<'prod_Min','act_const'>, make_share<'prod_Min','act_serv'>, make_share<'prod_Manu','act_Agri'>, make_share<'prod_Manu','act_Min'>, make_share<'prod_Manu','act_Manu'>, make_share<'prod_Manu','act_elect_agua_gas'>, make_share<'prod_Manu','act_const'>, make_share<'prod_Manu','act_serv'>, make_share<'prod_elect_agua_gas','act_Agri'>, make_share<'prod_elect_agua_gas','act_Min'>, make_share<'prod_elect_agua_gas','act_Manu'>, make_share<'prod_elect_agua_gas','act_elect_agua_gas'>, make_share<'prod_elect_agua_gas','act_const'>, make_share<'prod_elect_agua_gas','act_serv'>, make_share<'prod_const','act_Agri'>, make_share<'prod_const','act_Min'>, make_share<'prod_const','act_Manu'>, make_share<'prod_const','act_elect_agua_gas'>, make_share<'prod_const','act_const'>, make_share<'prod_const','act_serv'>, make_share<'prod_serv','act_Agri'>, make_share<'prod_serv','act_Min'>, make_share<'prod_serv','act_Manu'>, make_share<'prod_serv','act_elect_agua_gas'>, make_share<'prod_serv','act_const'>, make_share<'prod_serv','act_serv'>, mdp<'prod_Agri'>, mdp<'prod_Min'>, mdp<'prod_Manu'>, mdp<'prod_elect_agua_gas'>, mdp<'prod_const'>, mdp<'prod_serv'>, pworldm<'prod_Agri'>, pworldm<'prod_Min'>, pworldm<'prod_Manu'>, pworldm<'prod_elect_agua_gas'>, pworldm<'prod_const'>, pworldm<'prod_serv'>, pworlde<'prod_Agri'>, pworlde<'prod_Min'>, pworlde<'prod_Manu'>, pworlde<'prod_elect_agua_gas'>, pworlde<'prod_const'>, pworlde<'prod_serv'>, tar<'prod_Agri'>, tar<'prod_Min'>, tar<'prod_Manu'>, tar<'prod_elect_agua_gas'>, tar<'prod_const'>, tar<'prod_serv'>, tes<'act_Agri'>, tes<'act_Min'>, tes<'act_Manu'>, tes<'act_elect_agua_gas'>, tes<'act_const'>, tes<'act_serv'>, tm_rate<'prod_Agri'>, tm_rate<'prod_Min'>, tm_rate<'prod_Manu'>, tm_rate<'prod_elect_agua_gas'>, tm_rate<'prod_const'>, tm_rate<'prod_serv'>, tps<'act_Agri'>, tps<'act_Min'>, tps<'act_Manu'>, tps<'act_elect_agua_gas'>, tps<'act_const'>, tps<'act_serv'>, vat<'prod_Agri'>, vat<'prod_Min'>, vat<'prod_Manu'>, vat<'prod_elect_agua_gas'>, vat<'prod_const'>, vat<'prod_serv'>, vexist<'prod_Agri'>, vexist<'prod_Min'>, vexist<'prod_Manu'>, vexist<'prod_elect_agua_gas'>, vexist<'prod_const'>, vexist<'prod_serv'>, vst<'act_Agri'>, vst<'act_Min'>, vst<'act_Manu'>, vst<'act_elect_agua_gas'>, vst<'act_const'>, vst<'act_serv'>, I_data<'prod_Agri'>, I_data<'prod_Min'>, I_data<'prod_Manu'>, I_data<'prod_elect_agua_gas'>, I_data<'prod_const'>, I_data<'prod_serv'>
+
+Free parameters (143):
+    fact_row_in_k_data, fact_row_in_l_data, fit, k_total_data, l_total_data, omega, par_k_f, par_k_g, par_l_row, par_k_row, par_k_h, par_l_h, pit, por_sav, por_cont, por_cont_soc_f, por_pres_soc_f, por_tr_f_g, por_tremp, por_cont_soc_g, por_trgov, por_pres_soc_g, pshdata, dst<'prod_Agri'>, dst<'prod_Min'>, dst<'prod_Manu'>, dst<'prod_elect_agua_gas'>, dst<'prod_const'>, dst<'prod_serv'>, edp<'prod_Agri'>, edp<'prod_Min'>, edp<'prod_Manu'>, edp<'prod_elect_agua_gas'>, edp<'prod_const'>, edp<'prod_serv'>, gg_market_data_p<'prod_Agri'>, gg_market_data_p<'prod_Min'>, gg_market_data_p<'prod_Manu'>, gg_market_data_p<'prod_elect_agua_gas'>, gg_market_data_p<'prod_const'>, gg_market_data_p<'prod_serv'>, make_share<'prod_Agri','act_Agri'>, make_share<'prod_Agri','act_Min'>, make_share<'prod_Agri','act_Manu'>, make_share<'prod_Agri','act_elect_agua_gas'>, make_share<'prod_Agri','act_const'>, make_share<'prod_Agri','act_serv'>, make_share<'prod_Min','act_Agri'>, make_share<'prod_Min','act_Min'>, make_share<'prod_Min','act_Manu'>, make_share<'prod_Min','act_elect_agua_gas'>, make_share<'prod_Min','act_const'>, make_share<'prod_Min','act_serv'>, make_share<'prod_Manu','act_Agri'>, make_share<'prod_Manu','act_Min'>, make_share<'prod_Manu','act_Manu'>, make_share<'prod_Manu','act_elect_agua_gas'>, make_share<'prod_Manu','act_const'>, make_share<'prod_Manu','act_serv'>, make_share<'prod_elect_agua_gas','act_Agri'>, make_share<'prod_elect_agua_gas','act_Min'>, make_share<'prod_elect_agua_gas','act_Manu'>, make_share<'prod_elect_agua_gas','act_elect_agua_gas'>, make_share<'prod_elect_agua_gas','act_const'>, make_share<'prod_elect_agua_gas','act_serv'>, make_share<'prod_const','act_Agri'>, make_share<'prod_const','act_Min'>, make_share<'prod_const','act_Manu'>, make_share<'prod_const','act_elect_agua_gas'>, make_share<'prod_const','act_const'>, make_share<'prod_const','act_serv'>, make_share<'prod_serv','act_Agri'>, make_share<'prod_serv','act_Min'>, make_share<'prod_serv','act_Manu'>, make_share<'prod_serv','act_elect_agua_gas'>, make_share<'prod_serv','act_const'>, make_share<'prod_serv','act_serv'>, mdp<'prod_Agri'>, mdp<'prod_Min'>, mdp<'prod_Manu'>, mdp<'prod_elect_agua_gas'>, mdp<'prod_const'>, mdp<'prod_serv'>, pworldm<'prod_Agri'>, pworldm<'prod_Min'>, pworldm<'prod_Manu'>, pworldm<'prod_elect_agua_gas'>, pworldm<'prod_const'>, pworldm<'prod_serv'>, pworlde<'prod_Agri'>, pworlde<'prod_Min'>, pworlde<'prod_Manu'>, pworlde<'prod_elect_agua_gas'>, pworlde<'prod_const'>, pworlde<'prod_serv'>, tar<'prod_Agri'>, tar<'prod_Min'>, tar<'prod_Manu'>, tar<'prod_elect_agua_gas'>, tar<'prod_const'>, tar<'prod_serv'>, tes<'act_Agri'>, tes<'act_Min'>, tes<'act_Manu'>, tes<'act_elect_agua_gas'>, tes<'act_const'>, tes<'act_serv'>, tm_rate<'prod_Agri'>, tm_rate<'prod_Min'>, tm_rate<'prod_Manu'>, tm_rate<'prod_elect_agua_gas'>, tm_rate<'prod_const'>, tm_rate<'prod_serv'>, tps<'act_Agri'>, tps<'act_Min'>, tps<'act_Manu'>, tps<'act_elect_agua_gas'>, tps<'act_const'>, tps<'act_serv'>, vat<'prod_Agri'>, vat<'prod_Min'>, vat<'prod_Manu'>, vat<'prod_elect_agua_gas'>, vat<'prod_const'>, vat<'prod_serv'>, vexist<'prod_Agri'>, vexist<'prod_Min'>, vexist<'prod_Manu'>, vexist<'prod_elect_agua_gas'>, vexist<'prod_const'>, vexist<'prod_serv'>, vst<'act_Agri'>, vst<'act_Min'>, vst<'act_Manu'>, vst<'act_elect_agua_gas'>, vst<'act_const'>, vst<'act_serv'>, I_data<'prod_Agri'>, I_data<'prod_Min'>, I_data<'prod_Manu'>, I_data<'prod_elect_agua_gas'>, I_data<'prod_const'>, I_data<'prod_serv'>
+
+Calibrated parameters (60):
+    alpha<'prod_Agri'>, alpha<'prod_Min'>, alpha<'prod_Manu'>, alpha<'prod_elect_agua_gas'>, alpha<'prod_const'>, alpha<'prod_serv'>, betak<'act_Agri'>, betak<'act_Min'>, betak<'act_Manu'>, betak<'act_elect_agua_gas'>, betak<'act_const'>, betak<'act_serv'>, betal<'act_Agri'>, betal<'act_Min'>, betal<'act_Manu'>, betal<'act_elect_agua_gas'>, betal<'act_const'>, betal<'act_serv'>, betax<'prod_Agri','act_Agri'>, betax<'prod_Agri','act_Min'>, betax<'prod_Agri','act_Manu'>, betax<'prod_Agri','act_elect_agua_gas'>, betax<'prod_Agri','act_const'>, betax<'prod_Agri','act_serv'>, betax<'prod_Min','act_Agri'>, betax<'prod_Min','act_Min'>, betax<'prod_Min','act_Manu'>, betax<'prod_Min','act_elect_agua_gas'>, betax<'prod_Min','act_const'>, betax<'prod_Min','act_serv'>, betax<'prod_Manu','act_Agri'>, betax<'prod_Manu','act_Min'>, betax<'prod_Manu','act_Manu'>, betax<'prod_Manu','act_elect_agua_gas'>, betax<'prod_Manu','act_const'>, betax<'prod_Manu','act_serv'>, betax<'prod_elect_agua_gas','act_Agri'>, betax<'prod_elect_agua_gas','act_Min'>, betax<'prod_elect_agua_gas','act_Manu'>, betax<'prod_elect_agua_gas','act_elect_agua_gas'>, betax<'prod_elect_agua_gas','act_const'>, betax<'prod_elect_agua_gas','act_serv'>, betax<'prod_const','act_Agri'>, betax<'prod_const','act_Min'>, betax<'prod_const','act_Manu'>, betax<'prod_const','act_elect_agua_gas'>, betax<'prod_const','act_const'>, betax<'prod_const','act_serv'>, betax<'prod_serv','act_Agri'>, betax<'prod_serv','act_Min'>, betax<'prod_serv','act_Manu'>, betax<'prod_serv','act_elect_agua_gas'>, betax<'prod_serv','act_const'>, betax<'prod_serv','act_serv'>, gamma<'act_Agri'>, gamma<'act_Min'>, gamma<'act_Manu'>, gamma<'act_elect_agua_gas'>, gamma<'act_const'>, gamma<'act_serv'>
+
+Equations (207):
+ (1)  1 - exr = 0
+ (2)  1 - pk = 0
+ (3)  pshdata - PSh = 0
+ (4)  -pk + betak<'act_Agri'> * gamma<'act_Agri'> * (betax<'prod_Agri','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_Agri'> + betax<'prod_Min','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_Min'> + betax<'prod_Manu','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_Manu'> + betax<'prod_elect_agua_gas','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_elect_agua_gas'> + betax<'prod_const','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_const'> + betax<'prod_serv','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_serv'> + (1 - tes<'act_Agri'> - tps<'act_Agri'>) * (make_share<'prod_Agri','act_Agri'> * p<'prod_Agri'> + make_share<'prod_Min','act_Agri'> * p<'prod_Min'> + make_share<'prod_Manu','act_Agri'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Agri'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Agri'> * p<'prod_const'> + make_share<'prod_serv','act_Agri'> * p<'prod_serv'>)) * K<'act_Agri'>^(-1 + betak<'act_Agri'>) * L<'act_Agri'>^betal<'act_Agri'> = 0
+ (5)  -pk + betak<'act_Min'> * gamma<'act_Min'> * (betax<'prod_Agri','act_Min'> * lambda__SECTORS_4<'act_Min','prod_Agri'> + betax<'prod_Min','act_Min'> * lambda__SECTORS_4<'act_Min','prod_Min'> + betax<'prod_Manu','act_Min'> * lambda__SECTORS_4<'act_Min','prod_Manu'> + betax<'prod_elect_agua_gas','act_Min'> * lambda__SECTORS_4<'act_Min','prod_elect_agua_gas'> + betax<'prod_const','act_Min'> * lambda__SECTORS_4<'act_Min','prod_const'> + betax<'prod_serv','act_Min'> * lambda__SECTORS_4<'act_Min','prod_serv'> + (1 - tes<'act_Min'> - tps<'act_Min'>) * (make_share<'prod_Agri','act_Min'> * p<'prod_Agri'> + make_share<'prod_Min','act_Min'> * p<'prod_Min'> + make_share<'prod_Manu','act_Min'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Min'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Min'> * p<'prod_const'> + make_share<'prod_serv','act_Min'> * p<'prod_serv'>)) * K<'act_Min'>^(-1 + betak<'act_Min'>) * L<'act_Min'>^betal<'act_Min'> = 0
+ (6)  -pk + betak<'act_Manu'> * gamma<'act_Manu'> * (betax<'prod_Agri','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_Agri'> + betax<'prod_Min','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_Min'> + betax<'prod_Manu','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_Manu'> + betax<'prod_elect_agua_gas','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_elect_agua_gas'> + betax<'prod_const','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_const'> + betax<'prod_serv','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_serv'> + (1 - tes<'act_Manu'> - tps<'act_Manu'>) * (make_share<'prod_Agri','act_Manu'> * p<'prod_Agri'> + make_share<'prod_Min','act_Manu'> * p<'prod_Min'> + make_share<'prod_Manu','act_Manu'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Manu'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Manu'> * p<'prod_const'> + make_share<'prod_serv','act_Manu'> * p<'prod_serv'>)) * K<'act_Manu'>^(-1 + betak<'act_Manu'>) * L<'act_Manu'>^betal<'act_Manu'> = 0
+ (7)  -pk + betak<'act_elect_agua_gas'> * gamma<'act_elect_agua_gas'> * (betax<'prod_Agri','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_Agri'> + betax<'prod_Min','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_Min'> + betax<'prod_Manu','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_Manu'> + betax<'prod_elect_agua_gas','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_elect_agua_gas'> + betax<'prod_const','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_const'> + betax<'prod_serv','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_serv'> + (1 - tes<'act_elect_agua_gas'> - tps<'act_elect_agua_gas'>) * (make_share<'prod_Agri','act_elect_agua_gas'> * p<'prod_Agri'> + make_share<'prod_Min','act_elect_agua_gas'> * p<'prod_Min'> + make_share<'prod_Manu','act_elect_agua_gas'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_elect_agua_gas'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_elect_agua_gas'> * p<'prod_const'> + make_share<'prod_serv','act_elect_agua_gas'> * p<'prod_serv'>)) * K<'act_elect_agua_gas'>^(-1 + betak<'act_elect_agua_gas'>) * L<'act_elect_agua_gas'>^betal<'act_elect_agua_gas'> = 0
+ (8)  -pk + betak<'act_const'> * gamma<'act_const'> * (betax<'prod_Agri','act_const'> * lambda__SECTORS_4<'act_const','prod_Agri'> + betax<'prod_Min','act_const'> * lambda__SECTORS_4<'act_const','prod_Min'> + betax<'prod_Manu','act_const'> * lambda__SECTORS_4<'act_const','prod_Manu'> + betax<'prod_elect_agua_gas','act_const'> * lambda__SECTORS_4<'act_const','prod_elect_agua_gas'> + betax<'prod_const','act_const'> * lambda__SECTORS_4<'act_const','prod_const'> + betax<'prod_serv','act_const'> * lambda__SECTORS_4<'act_const','prod_serv'> + (1 - tes<'act_const'> - tps<'act_const'>) * (make_share<'prod_Agri','act_const'> * p<'prod_Agri'> + make_share<'prod_Min','act_const'> * p<'prod_Min'> + make_share<'prod_Manu','act_const'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_const'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_const'> * p<'prod_const'> + make_share<'prod_serv','act_const'> * p<'prod_serv'>)) * K<'act_const'>^(-1 + betak<'act_const'>) * L<'act_const'>^betal<'act_const'> = 0
+ (9)  -pk + betak<'act_serv'> * gamma<'act_serv'> * (betax<'prod_Agri','act_serv'> * lambda__SECTORS_4<'act_serv','prod_Agri'> + betax<'prod_Min','act_serv'> * lambda__SECTORS_4<'act_serv','prod_Min'> + betax<'prod_Manu','act_serv'> * lambda__SECTORS_4<'act_serv','prod_Manu'> + betax<'prod_elect_agua_gas','act_serv'> * lambda__SECTORS_4<'act_serv','prod_elect_agua_gas'> + betax<'prod_const','act_serv'> * lambda__SECTORS_4<'act_serv','prod_const'> + betax<'prod_serv','act_serv'> * lambda__SECTORS_4<'act_serv','prod_serv'> + (1 - tes<'act_serv'> - tps<'act_serv'>) * (make_share<'prod_Agri','act_serv'> * p<'prod_Agri'> + make_share<'prod_Min','act_serv'> * p<'prod_Min'> + make_share<'prod_Manu','act_serv'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_serv'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_serv'> * p<'prod_const'> + make_share<'prod_serv','act_serv'> * p<'prod_serv'>)) * K<'act_serv'>^(-1 + betak<'act_serv'>) * L<'act_serv'>^betal<'act_serv'> = 0
+ (10)  -w + betal<'act_Agri'> * gamma<'act_Agri'> * (betax<'prod_Agri','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_Agri'> + betax<'prod_Min','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_Min'> + betax<'prod_Manu','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_Manu'> + betax<'prod_elect_agua_gas','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_elect_agua_gas'> + betax<'prod_const','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_const'> + betax<'prod_serv','act_Agri'> * lambda__SECTORS_4<'act_Agri','prod_serv'> + (1 - tes<'act_Agri'> - tps<'act_Agri'>) * (make_share<'prod_Agri','act_Agri'> * p<'prod_Agri'> + make_share<'prod_Min','act_Agri'> * p<'prod_Min'> + make_share<'prod_Manu','act_Agri'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Agri'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Agri'> * p<'prod_const'> + make_share<'prod_serv','act_Agri'> * p<'prod_serv'>)) * K<'act_Agri'>^betak<'act_Agri'> * L<'act_Agri'>^(-1 + betal<'act_Agri'>) = 0
+ (11)  -w + betal<'act_Min'> * gamma<'act_Min'> * (betax<'prod_Agri','act_Min'> * lambda__SECTORS_4<'act_Min','prod_Agri'> + betax<'prod_Min','act_Min'> * lambda__SECTORS_4<'act_Min','prod_Min'> + betax<'prod_Manu','act_Min'> * lambda__SECTORS_4<'act_Min','prod_Manu'> + betax<'prod_elect_agua_gas','act_Min'> * lambda__SECTORS_4<'act_Min','prod_elect_agua_gas'> + betax<'prod_const','act_Min'> * lambda__SECTORS_4<'act_Min','prod_const'> + betax<'prod_serv','act_Min'> * lambda__SECTORS_4<'act_Min','prod_serv'> + (1 - tes<'act_Min'> - tps<'act_Min'>) * (make_share<'prod_Agri','act_Min'> * p<'prod_Agri'> + make_share<'prod_Min','act_Min'> * p<'prod_Min'> + make_share<'prod_Manu','act_Min'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Min'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Min'> * p<'prod_const'> + make_share<'prod_serv','act_Min'> * p<'prod_serv'>)) * K<'act_Min'>^betak<'act_Min'> * L<'act_Min'>^(-1 + betal<'act_Min'>) = 0
+ (12)  -w + betal<'act_Manu'> * gamma<'act_Manu'> * (betax<'prod_Agri','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_Agri'> + betax<'prod_Min','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_Min'> + betax<'prod_Manu','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_Manu'> + betax<'prod_elect_agua_gas','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_elect_agua_gas'> + betax<'prod_const','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_const'> + betax<'prod_serv','act_Manu'> * lambda__SECTORS_4<'act_Manu','prod_serv'> + (1 - tes<'act_Manu'> - tps<'act_Manu'>) * (make_share<'prod_Agri','act_Manu'> * p<'prod_Agri'> + make_share<'prod_Min','act_Manu'> * p<'prod_Min'> + make_share<'prod_Manu','act_Manu'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Manu'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Manu'> * p<'prod_const'> + make_share<'prod_serv','act_Manu'> * p<'prod_serv'>)) * K<'act_Manu'>^betak<'act_Manu'> * L<'act_Manu'>^(-1 + betal<'act_Manu'>) = 0
+ (13)  -w + betal<'act_elect_agua_gas'> * gamma<'act_elect_agua_gas'> * (betax<'prod_Agri','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_Agri'> + betax<'prod_Min','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_Min'> + betax<'prod_Manu','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_Manu'> + betax<'prod_elect_agua_gas','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_elect_agua_gas'> + betax<'prod_const','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_const'> + betax<'prod_serv','act_elect_agua_gas'> * lambda__SECTORS_4<'act_elect_agua_gas','prod_serv'> + (1 - tes<'act_elect_agua_gas'> - tps<'act_elect_agua_gas'>) * (make_share<'prod_Agri','act_elect_agua_gas'> * p<'prod_Agri'> + make_share<'prod_Min','act_elect_agua_gas'> * p<'prod_Min'> + make_share<'prod_Manu','act_elect_agua_gas'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_elect_agua_gas'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_elect_agua_gas'> * p<'prod_const'> + make_share<'prod_serv','act_elect_agua_gas'> * p<'prod_serv'>)) * K<'act_elect_agua_gas'>^betak<'act_elect_agua_gas'> * L<'act_elect_agua_gas'>^(-1 + betal<'act_elect_agua_gas'>) = 0
+ (14)  -w + betal<'act_const'> * gamma<'act_const'> * (betax<'prod_Agri','act_const'> * lambda__SECTORS_4<'act_const','prod_Agri'> + betax<'prod_Min','act_const'> * lambda__SECTORS_4<'act_const','prod_Min'> + betax<'prod_Manu','act_const'> * lambda__SECTORS_4<'act_const','prod_Manu'> + betax<'prod_elect_agua_gas','act_const'> * lambda__SECTORS_4<'act_const','prod_elect_agua_gas'> + betax<'prod_const','act_const'> * lambda__SECTORS_4<'act_const','prod_const'> + betax<'prod_serv','act_const'> * lambda__SECTORS_4<'act_const','prod_serv'> + (1 - tes<'act_const'> - tps<'act_const'>) * (make_share<'prod_Agri','act_const'> * p<'prod_Agri'> + make_share<'prod_Min','act_const'> * p<'prod_Min'> + make_share<'prod_Manu','act_const'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_const'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_const'> * p<'prod_const'> + make_share<'prod_serv','act_const'> * p<'prod_serv'>)) * K<'act_const'>^betak<'act_const'> * L<'act_const'>^(-1 + betal<'act_const'>) = 0
+ (15)  -w + betal<'act_serv'> * gamma<'act_serv'> * (betax<'prod_Agri','act_serv'> * lambda__SECTORS_4<'act_serv','prod_Agri'> + betax<'prod_Min','act_serv'> * lambda__SECTORS_4<'act_serv','prod_Min'> + betax<'prod_Manu','act_serv'> * lambda__SECTORS_4<'act_serv','prod_Manu'> + betax<'prod_elect_agua_gas','act_serv'> * lambda__SECTORS_4<'act_serv','prod_elect_agua_gas'> + betax<'prod_const','act_serv'> * lambda__SECTORS_4<'act_serv','prod_const'> + betax<'prod_serv','act_serv'> * lambda__SECTORS_4<'act_serv','prod_serv'> + (1 - tes<'act_serv'> - tps<'act_serv'>) * (make_share<'prod_Agri','act_serv'> * p<'prod_Agri'> + make_share<'prod_Min','act_serv'> * p<'prod_Min'> + make_share<'prod_Manu','act_serv'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_serv'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_serv'> * p<'prod_const'> + make_share<'prod_serv','act_serv'> * p<'prod_serv'>)) * K<'act_serv'>^betak<'act_serv'> * L<'act_serv'>^(-1 + betal<'act_serv'>) = 0
+ (16)  -CS + por_cont * INC = 0
+ (17)  -FIRMTAX + fit * pk * Kf = 0
+ (18)  -Kf + k_total_data * par_k_f = 0
+ (19)  -Kg + k_total_data * par_k_g = 0
+ (20)  -Kh + k_total_data * par_k_h = 0
+ (21)  -Lh + l_total_data * par_l_h = 0
+ (22)  -PITAX + pit * (fact_row_in_k_data + fact_row_in_l_data + PSh + TRGOV + TREMP + pk * Kh + w * Lh) = 0
+ (23)  -SAV + por_sav * INC = 0
+ (24)  -TRGOV + por_trgov * INGG = 0
+ (25)  -TREMP + por_tremp * INGF = 0
+ (26)  U - (alpha<'prod_Agri'> * D<'prod_Agri'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Min'> * D<'prod_Min'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Manu'> * D<'prod_Manu'>^(omega^-1 * (-1 + omega)) + alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(omega^-1 * (-1 + omega)) + alpha<'prod_const'> * D<'prod_const'>^(omega^-1 * (-1 + omega)) + alpha<'prod_serv'> * D<'prod_serv'>^(omega^-1 * (-1 + omega)))^(omega * (-1 + omega)^-1) = 0
+ (27)  -lambda__SECTORS_4<'act_Agri','prod_Agri'> - p<'prod_Agri'> = 0
+ (28)  -lambda__SECTORS_4<'act_Agri','prod_Min'> - p<'prod_Min'> = 0
+ (29)  -lambda__SECTORS_4<'act_Agri','prod_Manu'> - p<'prod_Manu'> = 0
+ (30)  -lambda__SECTORS_4<'act_Agri','prod_elect_agua_gas'> - p<'prod_elect_agua_gas'> = 0
+ (31)  -lambda__SECTORS_4<'act_Agri','prod_const'> - p<'prod_const'> = 0
+ (32)  -lambda__SECTORS_4<'act_Agri','prod_serv'> - p<'prod_serv'> = 0
+ (33)  -lambda__SECTORS_4<'act_Min','prod_Agri'> - p<'prod_Agri'> = 0
+ (34)  -lambda__SECTORS_4<'act_Min','prod_Min'> - p<'prod_Min'> = 0
+ (35)  -lambda__SECTORS_4<'act_Min','prod_Manu'> - p<'prod_Manu'> = 0
+ (36)  -lambda__SECTORS_4<'act_Min','prod_elect_agua_gas'> - p<'prod_elect_agua_gas'> = 0
+ (37)  -lambda__SECTORS_4<'act_Min','prod_const'> - p<'prod_const'> = 0
+ (38)  -lambda__SECTORS_4<'act_Min','prod_serv'> - p<'prod_serv'> = 0
+ (39)  -lambda__SECTORS_4<'act_Manu','prod_Agri'> - p<'prod_Agri'> = 0
+ (40)  -lambda__SECTORS_4<'act_Manu','prod_Min'> - p<'prod_Min'> = 0
+ (41)  -lambda__SECTORS_4<'act_Manu','prod_Manu'> - p<'prod_Manu'> = 0
+ (42)  -lambda__SECTORS_4<'act_Manu','prod_elect_agua_gas'> - p<'prod_elect_agua_gas'> = 0
+ (43)  -lambda__SECTORS_4<'act_Manu','prod_const'> - p<'prod_const'> = 0
+ (44)  -lambda__SECTORS_4<'act_Manu','prod_serv'> - p<'prod_serv'> = 0
+ (45)  -lambda__SECTORS_4<'act_elect_agua_gas','prod_Agri'> - p<'prod_Agri'> = 0
+ (46)  -lambda__SECTORS_4<'act_elect_agua_gas','prod_Min'> - p<'prod_Min'> = 0
+ (47)  -lambda__SECTORS_4<'act_elect_agua_gas','prod_Manu'> - p<'prod_Manu'> = 0
+ (48)  -lambda__SECTORS_4<'act_elect_agua_gas','prod_elect_agua_gas'> - p<'prod_elect_agua_gas'> = 0
+ (49)  -lambda__SECTORS_4<'act_elect_agua_gas','prod_const'> - p<'prod_const'> = 0
+ (50)  -lambda__SECTORS_4<'act_elect_agua_gas','prod_serv'> - p<'prod_serv'> = 0
+ (51)  -lambda__SECTORS_4<'act_const','prod_Agri'> - p<'prod_Agri'> = 0
+ (52)  -lambda__SECTORS_4<'act_const','prod_Min'> - p<'prod_Min'> = 0
+ (53)  -lambda__SECTORS_4<'act_const','prod_Manu'> - p<'prod_Manu'> = 0
+ (54)  -lambda__SECTORS_4<'act_const','prod_elect_agua_gas'> - p<'prod_elect_agua_gas'> = 0
+ (55)  -lambda__SECTORS_4<'act_const','prod_const'> - p<'prod_const'> = 0
+ (56)  -lambda__SECTORS_4<'act_const','prod_serv'> - p<'prod_serv'> = 0
+ (57)  -lambda__SECTORS_4<'act_serv','prod_Agri'> - p<'prod_Agri'> = 0
+ (58)  -lambda__SECTORS_4<'act_serv','prod_Min'> - p<'prod_Min'> = 0
+ (59)  -lambda__SECTORS_4<'act_serv','prod_Manu'> - p<'prod_Manu'> = 0
+ (60)  -lambda__SECTORS_4<'act_serv','prod_elect_agua_gas'> - p<'prod_elect_agua_gas'> = 0
+ (61)  -lambda__SECTORS_4<'act_serv','prod_const'> - p<'prod_const'> = 0
+ (62)  -lambda__SECTORS_4<'act_serv','prod_serv'> - p<'prod_serv'> = 0
+ (63)  -net_revenue<'act_Agri'> + revenue<'act_Agri'> * (1 - tes<'act_Agri'> - tps<'act_Agri'>) = 0
+ (64)  -net_revenue<'act_Min'> + revenue<'act_Min'> * (1 - tes<'act_Min'> - tps<'act_Min'>) = 0
+ (65)  -net_revenue<'act_Manu'> + revenue<'act_Manu'> * (1 - tes<'act_Manu'> - tps<'act_Manu'>) = 0
+ (66)  -net_revenue<'act_elect_agua_gas'> + revenue<'act_elect_agua_gas'> * (1 - tes<'act_elect_agua_gas'> - tps<'act_elect_agua_gas'>) = 0
+ (67)  -net_revenue<'act_const'> + revenue<'act_const'> * (1 - tes<'act_const'> - tps<'act_const'>) = 0
+ (68)  -net_revenue<'act_serv'> + revenue<'act_serv'> * (1 - tes<'act_serv'> - tps<'act_serv'>) = 0
+ (69)  -pe<'prod_Agri'> + pworlde<'prod_Agri'> * exr = 0
+ (70)  -pe<'prod_Min'> + pworlde<'prod_Min'> * exr = 0
+ (71)  -pe<'prod_Manu'> + pworlde<'prod_Manu'> * exr = 0
+ (72)  -pe<'prod_elect_agua_gas'> + pworlde<'prod_elect_agua_gas'> * exr = 0
+ (73)  -pe<'prod_const'> + pworlde<'prod_const'> * exr = 0
+ (74)  -pe<'prod_serv'> + pworlde<'prod_serv'> * exr = 0
+ (75)  -pm<'prod_Agri'> + pworldm<'prod_Agri'> * exr * (1 + tar<'prod_Agri'>)^-1 = 0
+ (76)  -pm<'prod_Min'> + pworldm<'prod_Min'> * exr * (1 + tar<'prod_Min'>)^-1 = 0
+ (77)  -pm<'prod_Manu'> + pworldm<'prod_Manu'> * exr * (1 + tar<'prod_Manu'>)^-1 = 0
+ (78)  -pm<'prod_elect_agua_gas'> + pworldm<'prod_elect_agua_gas'> * exr * (1 + tar<'prod_elect_agua_gas'>)^-1 = 0
+ (79)  -pm<'prod_const'> + pworldm<'prod_const'> * exr * (1 + tar<'prod_const'>)^-1 = 0
+ (80)  -pm<'prod_serv'> + pworldm<'prod_serv'> * exr * (1 + tar<'prod_serv'>)^-1 = 0
+ (81)  -V<'act_Agri'> + V_VA<'act_Agri'> = 0
+ (82)  -V<'act_Min'> + V_VA<'act_Min'> = 0
+ (83)  -V<'act_Manu'> + V_VA<'act_Manu'> = 0
+ (84)  -V<'act_elect_agua_gas'> + V_VA<'act_elect_agua_gas'> = 0
+ (85)  -V<'act_const'> + V_VA<'act_const'> = 0
+ (86)  -V<'act_serv'> + V_VA<'act_serv'> = 0
+ (87)  -V_VA<'act_Agri'> + gamma<'act_Agri'> * K<'act_Agri'>^betak<'act_Agri'> * L<'act_Agri'>^betal<'act_Agri'> = 0
+ (88)  V_VA<'act_Agri'> - V_INT<'act_Agri'> = 0
+ (89)  -V_VA<'act_Min'> + gamma<'act_Min'> * K<'act_Min'>^betak<'act_Min'> * L<'act_Min'>^betal<'act_Min'> = 0
+ (90)  V_VA<'act_Min'> - V_INT<'act_Min'> = 0
+ (91)  -V_VA<'act_Manu'> + gamma<'act_Manu'> * K<'act_Manu'>^betak<'act_Manu'> * L<'act_Manu'>^betal<'act_Manu'> = 0
+ (92)  V_VA<'act_Manu'> - V_INT<'act_Manu'> = 0
+ (93)  -V_VA<'act_elect_agua_gas'> + gamma<'act_elect_agua_gas'> * K<'act_elect_agua_gas'>^betak<'act_elect_agua_gas'> * L<'act_elect_agua_gas'>^betal<'act_elect_agua_gas'> = 0
+ (94)  V_VA<'act_elect_agua_gas'> - V_INT<'act_elect_agua_gas'> = 0
+ (95)  -V_VA<'act_const'> + gamma<'act_const'> * K<'act_const'>^betak<'act_const'> * L<'act_const'>^betal<'act_const'> = 0
+ (96)  V_VA<'act_const'> - V_INT<'act_const'> = 0
+ (97)  -V_VA<'act_serv'> + gamma<'act_serv'> * K<'act_serv'>^betak<'act_serv'> * L<'act_serv'>^betal<'act_serv'> = 0
+ (98)  V_VA<'act_serv'> - V_INT<'act_serv'> = 0
+ (99)  -X<'prod_Agri','act_Agri'> + betax<'prod_Agri','act_Agri'> * V_INT<'act_Agri'> = 0
+ (100)  -X<'prod_Agri','act_Min'> + betax<'prod_Agri','act_Min'> * V_INT<'act_Min'> = 0
+ (101)  -X<'prod_Agri','act_Manu'> + betax<'prod_Agri','act_Manu'> * V_INT<'act_Manu'> = 0
+ (102)  -X<'prod_Agri','act_elect_agua_gas'> + betax<'prod_Agri','act_elect_agua_gas'> * V_INT<'act_elect_agua_gas'> = 0
+ (103)  -X<'prod_Agri','act_const'> + betax<'prod_Agri','act_const'> * V_INT<'act_const'> = 0
+ (104)  -X<'prod_Agri','act_serv'> + betax<'prod_Agri','act_serv'> * V_INT<'act_serv'> = 0
+ (105)  -X<'prod_Min','act_Agri'> + betax<'prod_Min','act_Agri'> * V_INT<'act_Agri'> = 0
+ (106)  -X<'prod_Min','act_Min'> + betax<'prod_Min','act_Min'> * V_INT<'act_Min'> = 0
+ (107)  -X<'prod_Min','act_Manu'> + betax<'prod_Min','act_Manu'> * V_INT<'act_Manu'> = 0
+ (108)  -X<'prod_Min','act_elect_agua_gas'> + betax<'prod_Min','act_elect_agua_gas'> * V_INT<'act_elect_agua_gas'> = 0
+ (109)  -X<'prod_Min','act_const'> + betax<'prod_Min','act_const'> * V_INT<'act_const'> = 0
+ (110)  -X<'prod_Min','act_serv'> + betax<'prod_Min','act_serv'> * V_INT<'act_serv'> = 0
+ (111)  -X<'prod_Manu','act_Agri'> + betax<'prod_Manu','act_Agri'> * V_INT<'act_Agri'> = 0
+ (112)  -X<'prod_Manu','act_Min'> + betax<'prod_Manu','act_Min'> * V_INT<'act_Min'> = 0
+ (113)  -X<'prod_Manu','act_Manu'> + betax<'prod_Manu','act_Manu'> * V_INT<'act_Manu'> = 0
+ (114)  -X<'prod_Manu','act_elect_agua_gas'> + betax<'prod_Manu','act_elect_agua_gas'> * V_INT<'act_elect_agua_gas'> = 0
+ (115)  -X<'prod_Manu','act_const'> + betax<'prod_Manu','act_const'> * V_INT<'act_const'> = 0
+ (116)  -X<'prod_Manu','act_serv'> + betax<'prod_Manu','act_serv'> * V_INT<'act_serv'> = 0
+ (117)  -X<'prod_elect_agua_gas','act_Agri'> + betax<'prod_elect_agua_gas','act_Agri'> * V_INT<'act_Agri'> = 0
+ (118)  -X<'prod_elect_agua_gas','act_Min'> + betax<'prod_elect_agua_gas','act_Min'> * V_INT<'act_Min'> = 0
+ (119)  -X<'prod_elect_agua_gas','act_Manu'> + betax<'prod_elect_agua_gas','act_Manu'> * V_INT<'act_Manu'> = 0
+ (120)  -X<'prod_elect_agua_gas','act_elect_agua_gas'> + betax<'prod_elect_agua_gas','act_elect_agua_gas'> * V_INT<'act_elect_agua_gas'> = 0
+ (121)  -X<'prod_elect_agua_gas','act_const'> + betax<'prod_elect_agua_gas','act_const'> * V_INT<'act_const'> = 0
+ (122)  -X<'prod_elect_agua_gas','act_serv'> + betax<'prod_elect_agua_gas','act_serv'> * V_INT<'act_serv'> = 0
+ (123)  -X<'prod_const','act_Agri'> + betax<'prod_const','act_Agri'> * V_INT<'act_Agri'> = 0
+ (124)  -X<'prod_const','act_Min'> + betax<'prod_const','act_Min'> * V_INT<'act_Min'> = 0
+ (125)  -X<'prod_const','act_Manu'> + betax<'prod_const','act_Manu'> * V_INT<'act_Manu'> = 0
+ (126)  -X<'prod_const','act_elect_agua_gas'> + betax<'prod_const','act_elect_agua_gas'> * V_INT<'act_elect_agua_gas'> = 0
+ (127)  -X<'prod_const','act_const'> + betax<'prod_const','act_const'> * V_INT<'act_const'> = 0
+ (128)  -X<'prod_const','act_serv'> + betax<'prod_const','act_serv'> * V_INT<'act_serv'> = 0
+ (129)  -X<'prod_serv','act_Agri'> + betax<'prod_serv','act_Agri'> * V_INT<'act_Agri'> = 0
+ (130)  -X<'prod_serv','act_Min'> + betax<'prod_serv','act_Min'> * V_INT<'act_Min'> = 0
+ (131)  -X<'prod_serv','act_Manu'> + betax<'prod_serv','act_Manu'> * V_INT<'act_Manu'> = 0
+ (132)  -X<'prod_serv','act_elect_agua_gas'> + betax<'prod_serv','act_elect_agua_gas'> * V_INT<'act_elect_agua_gas'> = 0
+ (133)  -X<'prod_serv','act_const'> + betax<'prod_serv','act_const'> * V_INT<'act_const'> = 0
+ (134)  -X<'prod_serv','act_serv'> + betax<'prod_serv','act_serv'> * V_INT<'act_serv'> = 0
+ (135)  -Yap<'prod_Agri','act_Agri'> + make_share<'prod_Agri','act_Agri'> * V<'act_Agri'> = 0
+ (136)  -Yap<'prod_Agri','act_Min'> + make_share<'prod_Agri','act_Min'> * V<'act_Min'> = 0
+ (137)  -Yap<'prod_Agri','act_Manu'> + make_share<'prod_Agri','act_Manu'> * V<'act_Manu'> = 0
+ (138)  -Yap<'prod_Agri','act_elect_agua_gas'> + make_share<'prod_Agri','act_elect_agua_gas'> * V<'act_elect_agua_gas'> = 0
+ (139)  -Yap<'prod_Agri','act_const'> + make_share<'prod_Agri','act_const'> * V<'act_const'> = 0
+ (140)  -Yap<'prod_Agri','act_serv'> + make_share<'prod_Agri','act_serv'> * V<'act_serv'> = 0
+ (141)  -Yap<'prod_Min','act_Agri'> + make_share<'prod_Min','act_Agri'> * V<'act_Agri'> = 0
+ (142)  -Yap<'prod_Min','act_Min'> + make_share<'prod_Min','act_Min'> * V<'act_Min'> = 0
+ (143)  -Yap<'prod_Min','act_Manu'> + make_share<'prod_Min','act_Manu'> * V<'act_Manu'> = 0
+ (144)  -Yap<'prod_Min','act_elect_agua_gas'> + make_share<'prod_Min','act_elect_agua_gas'> * V<'act_elect_agua_gas'> = 0
+ (145)  -Yap<'prod_Min','act_const'> + make_share<'prod_Min','act_const'> * V<'act_const'> = 0
+ (146)  -Yap<'prod_Min','act_serv'> + make_share<'prod_Min','act_serv'> * V<'act_serv'> = 0
+ (147)  -Yap<'prod_Manu','act_Agri'> + make_share<'prod_Manu','act_Agri'> * V<'act_Agri'> = 0
+ (148)  -Yap<'prod_Manu','act_Min'> + make_share<'prod_Manu','act_Min'> * V<'act_Min'> = 0
+ (149)  -Yap<'prod_Manu','act_Manu'> + make_share<'prod_Manu','act_Manu'> * V<'act_Manu'> = 0
+ (150)  -Yap<'prod_Manu','act_elect_agua_gas'> + make_share<'prod_Manu','act_elect_agua_gas'> * V<'act_elect_agua_gas'> = 0
+ (151)  -Yap<'prod_Manu','act_const'> + make_share<'prod_Manu','act_const'> * V<'act_const'> = 0
+ (152)  -Yap<'prod_Manu','act_serv'> + make_share<'prod_Manu','act_serv'> * V<'act_serv'> = 0
+ (153)  -Yap<'prod_elect_agua_gas','act_Agri'> + make_share<'prod_elect_agua_gas','act_Agri'> * V<'act_Agri'> = 0
+ (154)  -Yap<'prod_elect_agua_gas','act_Min'> + make_share<'prod_elect_agua_gas','act_Min'> * V<'act_Min'> = 0
+ (155)  -Yap<'prod_elect_agua_gas','act_Manu'> + make_share<'prod_elect_agua_gas','act_Manu'> * V<'act_Manu'> = 0
+ (156)  -Yap<'prod_elect_agua_gas','act_elect_agua_gas'> + make_share<'prod_elect_agua_gas','act_elect_agua_gas'> * V<'act_elect_agua_gas'> = 0
+ (157)  -Yap<'prod_elect_agua_gas','act_const'> + make_share<'prod_elect_agua_gas','act_const'> * V<'act_const'> = 0
+ (158)  -Yap<'prod_elect_agua_gas','act_serv'> + make_share<'prod_elect_agua_gas','act_serv'> * V<'act_serv'> = 0
+ (159)  -Yap<'prod_const','act_Agri'> + make_share<'prod_const','act_Agri'> * V<'act_Agri'> = 0
+ (160)  -Yap<'prod_const','act_Min'> + make_share<'prod_const','act_Min'> * V<'act_Min'> = 0
+ (161)  -Yap<'prod_const','act_Manu'> + make_share<'prod_const','act_Manu'> * V<'act_Manu'> = 0
+ (162)  -Yap<'prod_const','act_elect_agua_gas'> + make_share<'prod_const','act_elect_agua_gas'> * V<'act_elect_agua_gas'> = 0
+ (163)  -Yap<'prod_const','act_const'> + make_share<'prod_const','act_const'> * V<'act_const'> = 0
+ (164)  -Yap<'prod_const','act_serv'> + make_share<'prod_const','act_serv'> * V<'act_serv'> = 0
+ (165)  -Yap<'prod_serv','act_Agri'> + make_share<'prod_serv','act_Agri'> * V<'act_Agri'> = 0
+ (166)  -Yap<'prod_serv','act_Min'> + make_share<'prod_serv','act_Min'> * V<'act_Min'> = 0
+ (167)  -Yap<'prod_serv','act_Manu'> + make_share<'prod_serv','act_Manu'> * V<'act_Manu'> = 0
+ (168)  -Yap<'prod_serv','act_elect_agua_gas'> + make_share<'prod_serv','act_elect_agua_gas'> * V<'act_elect_agua_gas'> = 0
+ (169)  -Yap<'prod_serv','act_const'> + make_share<'prod_serv','act_const'> * V<'act_const'> = 0
+ (170)  -Yap<'prod_serv','act_serv'> + make_share<'prod_serv','act_serv'> * V<'act_serv'> = 0
+ (171)  alpha<'prod_Agri'> * D<'prod_Agri'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'prod_Agri'> * D<'prod_Agri'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Min'> * D<'prod_Min'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Manu'> * D<'prod_Manu'>^(omega^-1 * (-1 + omega)) + alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(omega^-1 * (-1 + omega)) + alpha<'prod_const'> * D<'prod_const'>^(omega^-1 * (-1 + omega)) + alpha<'prod_serv'> * D<'prod_serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'prod_Agri'> * (1 + tm_rate<'prod_Agri'> + vat<'prod_Agri'>) = 0
+ (172)  alpha<'prod_Min'> * D<'prod_Min'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'prod_Agri'> * D<'prod_Agri'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Min'> * D<'prod_Min'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Manu'> * D<'prod_Manu'>^(omega^-1 * (-1 + omega)) + alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(omega^-1 * (-1 + omega)) + alpha<'prod_const'> * D<'prod_const'>^(omega^-1 * (-1 + omega)) + alpha<'prod_serv'> * D<'prod_serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'prod_Min'> * (1 + tm_rate<'prod_Min'> + vat<'prod_Min'>) = 0
+ (173)  alpha<'prod_Manu'> * D<'prod_Manu'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'prod_Agri'> * D<'prod_Agri'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Min'> * D<'prod_Min'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Manu'> * D<'prod_Manu'>^(omega^-1 * (-1 + omega)) + alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(omega^-1 * (-1 + omega)) + alpha<'prod_const'> * D<'prod_const'>^(omega^-1 * (-1 + omega)) + alpha<'prod_serv'> * D<'prod_serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'prod_Manu'> * (1 + tm_rate<'prod_Manu'> + vat<'prod_Manu'>) = 0
+ (174)  alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'prod_Agri'> * D<'prod_Agri'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Min'> * D<'prod_Min'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Manu'> * D<'prod_Manu'>^(omega^-1 * (-1 + omega)) + alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(omega^-1 * (-1 + omega)) + alpha<'prod_const'> * D<'prod_const'>^(omega^-1 * (-1 + omega)) + alpha<'prod_serv'> * D<'prod_serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'prod_elect_agua_gas'> * (1 + tm_rate<'prod_elect_agua_gas'> + vat<'prod_elect_agua_gas'>) = 0
+ (175)  alpha<'prod_const'> * D<'prod_const'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'prod_Agri'> * D<'prod_Agri'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Min'> * D<'prod_Min'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Manu'> * D<'prod_Manu'>^(omega^-1 * (-1 + omega)) + alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(omega^-1 * (-1 + omega)) + alpha<'prod_const'> * D<'prod_const'>^(omega^-1 * (-1 + omega)) + alpha<'prod_serv'> * D<'prod_serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'prod_const'> * (1 + tm_rate<'prod_const'> + vat<'prod_const'>) = 0
+ (176)  alpha<'prod_serv'> * D<'prod_serv'>^(-1 + omega^-1 * (-1 + omega)) * (alpha<'prod_Agri'> * D<'prod_Agri'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Min'> * D<'prod_Min'>^(omega^-1 * (-1 + omega)) + alpha<'prod_Manu'> * D<'prod_Manu'>^(omega^-1 * (-1 + omega)) + alpha<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'>^(omega^-1 * (-1 + omega)) + alpha<'prod_const'> * D<'prod_const'>^(omega^-1 * (-1 + omega)) + alpha<'prod_serv'> * D<'prod_serv'>^(omega^-1 * (-1 + omega)))^(-1 + omega * (-1 + omega)^-1) - lambda__CONSUMER_1 * p<'prod_serv'> * (1 + tm_rate<'prod_serv'> + vat<'prod_serv'>) = 0
+ (177)  -INGF + por_cont_soc_f * CS + pk * Kf = 0
+ (178)  BTINC - INC - PITAX + RENT_M + RENT_E = 0
+ (179)  -INGG + Tax + por_tr_f_g * INGF + por_cont_soc_g * CS + pk * Kg = 0
+ (180)  -FIRMTAX + INGF - SAVf - TREMP - por_pres_soc_f * INGF - por_tr_f_g * INGF = 0
+ (181)  -RENT_M + mdp<'prod_Agri'> * (p<'prod_Agri'> - pm<'prod_Agri'> * (1 + tar<'prod_Agri'>)) + mdp<'prod_Min'> * (p<'prod_Min'> - pm<'prod_Min'> * (1 + tar<'prod_Min'>)) + mdp<'prod_Manu'> * (p<'prod_Manu'> - pm<'prod_Manu'> * (1 + tar<'prod_Manu'>)) + mdp<'prod_elect_agua_gas'> * (p<'prod_elect_agua_gas'> - pm<'prod_elect_agua_gas'> * (1 + tar<'prod_elect_agua_gas'>)) + mdp<'prod_const'> * (p<'prod_const'> - pm<'prod_const'> * (1 + tar<'prod_const'>)) + mdp<'prod_serv'> * (p<'prod_serv'> - pm<'prod_serv'> * (1 + tar<'prod_serv'>)) = 0
+ (182)  -RENT_E + edp<'prod_Agri'> * (-p<'prod_Agri'> + pe<'prod_Agri'>) + edp<'prod_Min'> * (-p<'prod_Min'> + pe<'prod_Min'>) + edp<'prod_Manu'> * (-p<'prod_Manu'> + pe<'prod_Manu'>) + edp<'prod_elect_agua_gas'> * (-p<'prod_elect_agua_gas'> + pe<'prod_elect_agua_gas'>) + edp<'prod_const'> * (-p<'prod_const'> + pe<'prod_const'>) + edp<'prod_serv'> * (-p<'prod_serv'> + pe<'prod_serv'>) = 0
+ (183)  -VAT + vat<'prod_Agri'> * p<'prod_Agri'> * (D<'prod_Agri'> + gg_market_data_p<'prod_Agri'> * (1e-09 + p<'prod_Agri'>)^-1) + vat<'prod_Min'> * p<'prod_Min'> * (D<'prod_Min'> + gg_market_data_p<'prod_Min'> * (1e-09 + p<'prod_Min'>)^-1) + vat<'prod_Manu'> * p<'prod_Manu'> * (D<'prod_Manu'> + gg_market_data_p<'prod_Manu'> * (1e-09 + p<'prod_Manu'>)^-1) + vat<'prod_elect_agua_gas'> * p<'prod_elect_agua_gas'> * (D<'prod_elect_agua_gas'> + gg_market_data_p<'prod_elect_agua_gas'> * (1e-09 + p<'prod_elect_agua_gas'>)^-1) + vat<'prod_const'> * p<'prod_const'> * (D<'prod_const'> + gg_market_data_p<'prod_const'> * (1e-09 + p<'prod_const'>)^-1) + vat<'prod_serv'> * p<'prod_serv'> * (D<'prod_serv'> + gg_market_data_p<'prod_serv'> * (1e-09 + p<'prod_serv'>)^-1) = 0
+ (184)  -revenue<'act_Agri'> + p<'prod_Agri'> * Yap<'prod_Agri','act_Agri'> + p<'prod_Min'> * Yap<'prod_Min','act_Agri'> + p<'prod_Manu'> * Yap<'prod_Manu','act_Agri'> + p<'prod_elect_agua_gas'> * Yap<'prod_elect_agua_gas','act_Agri'> + p<'prod_const'> * Yap<'prod_const','act_Agri'> + p<'prod_serv'> * Yap<'prod_serv','act_Agri'> = 0
+ (185)  -revenue<'act_Min'> + p<'prod_Agri'> * Yap<'prod_Agri','act_Min'> + p<'prod_Min'> * Yap<'prod_Min','act_Min'> + p<'prod_Manu'> * Yap<'prod_Manu','act_Min'> + p<'prod_elect_agua_gas'> * Yap<'prod_elect_agua_gas','act_Min'> + p<'prod_const'> * Yap<'prod_const','act_Min'> + p<'prod_serv'> * Yap<'prod_serv','act_Min'> = 0
+ (186)  -revenue<'act_Manu'> + p<'prod_Agri'> * Yap<'prod_Agri','act_Manu'> + p<'prod_Min'> * Yap<'prod_Min','act_Manu'> + p<'prod_Manu'> * Yap<'prod_Manu','act_Manu'> + p<'prod_elect_agua_gas'> * Yap<'prod_elect_agua_gas','act_Manu'> + p<'prod_const'> * Yap<'prod_const','act_Manu'> + p<'prod_serv'> * Yap<'prod_serv','act_Manu'> = 0
+ (187)  -revenue<'act_elect_agua_gas'> + p<'prod_Agri'> * Yap<'prod_Agri','act_elect_agua_gas'> + p<'prod_Min'> * Yap<'prod_Min','act_elect_agua_gas'> + p<'prod_Manu'> * Yap<'prod_Manu','act_elect_agua_gas'> + p<'prod_elect_agua_gas'> * Yap<'prod_elect_agua_gas','act_elect_agua_gas'> + p<'prod_const'> * Yap<'prod_const','act_elect_agua_gas'> + p<'prod_serv'> * Yap<'prod_serv','act_elect_agua_gas'> = 0
+ (188)  -revenue<'act_const'> + p<'prod_Agri'> * Yap<'prod_Agri','act_const'> + p<'prod_Min'> * Yap<'prod_Min','act_const'> + p<'prod_Manu'> * Yap<'prod_Manu','act_const'> + p<'prod_elect_agua_gas'> * Yap<'prod_elect_agua_gas','act_const'> + p<'prod_const'> * Yap<'prod_const','act_const'> + p<'prod_serv'> * Yap<'prod_serv','act_const'> = 0
+ (189)  -revenue<'act_serv'> + p<'prod_Agri'> * Yap<'prod_Agri','act_serv'> + p<'prod_Min'> * Yap<'prod_Min','act_serv'> + p<'prod_Manu'> * Yap<'prod_Manu','act_serv'> + p<'prod_elect_agua_gas'> * Yap<'prod_elect_agua_gas','act_serv'> + p<'prod_const'> * Yap<'prod_const','act_serv'> + p<'prod_serv'> * Yap<'prod_serv','act_serv'> = 0
+ (190)  fact_row_in_k_data + fact_row_in_l_data - BTINC + PSh + TRGOV + TREMP + pk * Kh + w * Lh = 0
+ (191)  k_total_data - K<'act_Agri'> - K<'act_Min'> - K<'act_Manu'> - K<'act_elect_agua_gas'> - K<'act_const'> - K<'act_serv'> - k_total_data * par_k_row = 0
+ (192)  l_total_data - L<'act_Agri'> - L<'act_Min'> - L<'act_Manu'> - L<'act_elect_agua_gas'> - L<'act_const'> - L<'act_serv'> - l_total_data * par_l_row = 0
+ (193)  -CS + INC - SAV - p<'prod_Agri'> * D<'prod_Agri'> * (1 + tm_rate<'prod_Agri'> + vat<'prod_Agri'>) - p<'prod_Min'> * D<'prod_Min'> * (1 + tm_rate<'prod_Min'> + vat<'prod_Min'>) - p<'prod_Manu'> * D<'prod_Manu'> * (1 + tm_rate<'prod_Manu'> + vat<'prod_Manu'>) - p<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'> * (1 + tm_rate<'prod_elect_agua_gas'> + vat<'prod_elect_agua_gas'>) - p<'prod_const'> * D<'prod_const'> * (1 + tm_rate<'prod_const'> + vat<'prod_const'>) - p<'prod_serv'> * D<'prod_serv'> * (1 + tm_rate<'prod_serv'> + vat<'prod_serv'>) = 0
+ (194)  -gg_market_data_p<'prod_Agri'> - gg_market_data_p<'prod_Min'> - gg_market_data_p<'prod_Manu'> - gg_market_data_p<'prod_elect_agua_gas'> - gg_market_data_p<'prod_const'> - gg_market_data_p<'prod_serv'> + INGG - SAVg - TRGOV - por_pres_soc_g * INGG = 0
+ (195)  pi<'act_Agri'> + pk * K<'act_Agri'> + w * L<'act_Agri'> + p<'prod_Agri'> * X<'prod_Agri','act_Agri'> + p<'prod_Min'> * X<'prod_Min','act_Agri'> + p<'prod_Manu'> * X<'prod_Manu','act_Agri'> + p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_Agri'> + p<'prod_const'> * X<'prod_const','act_Agri'> + p<'prod_serv'> * X<'prod_serv','act_Agri'> - V<'act_Agri'> * (1 - tes<'act_Agri'> - tps<'act_Agri'>) * (make_share<'prod_Agri','act_Agri'> * p<'prod_Agri'> + make_share<'prod_Min','act_Agri'> * p<'prod_Min'> + make_share<'prod_Manu','act_Agri'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Agri'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Agri'> * p<'prod_const'> + make_share<'prod_serv','act_Agri'> * p<'prod_serv'>) = 0
+ (196)  pi<'act_Min'> + pk * K<'act_Min'> + w * L<'act_Min'> + p<'prod_Agri'> * X<'prod_Agri','act_Min'> + p<'prod_Min'> * X<'prod_Min','act_Min'> + p<'prod_Manu'> * X<'prod_Manu','act_Min'> + p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_Min'> + p<'prod_const'> * X<'prod_const','act_Min'> + p<'prod_serv'> * X<'prod_serv','act_Min'> - V<'act_Min'> * (1 - tes<'act_Min'> - tps<'act_Min'>) * (make_share<'prod_Agri','act_Min'> * p<'prod_Agri'> + make_share<'prod_Min','act_Min'> * p<'prod_Min'> + make_share<'prod_Manu','act_Min'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Min'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Min'> * p<'prod_const'> + make_share<'prod_serv','act_Min'> * p<'prod_serv'>) = 0
+ (197)  pi<'act_Manu'> + pk * K<'act_Manu'> + w * L<'act_Manu'> + p<'prod_Agri'> * X<'prod_Agri','act_Manu'> + p<'prod_Min'> * X<'prod_Min','act_Manu'> + p<'prod_Manu'> * X<'prod_Manu','act_Manu'> + p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_Manu'> + p<'prod_const'> * X<'prod_const','act_Manu'> + p<'prod_serv'> * X<'prod_serv','act_Manu'> - V<'act_Manu'> * (1 - tes<'act_Manu'> - tps<'act_Manu'>) * (make_share<'prod_Agri','act_Manu'> * p<'prod_Agri'> + make_share<'prod_Min','act_Manu'> * p<'prod_Min'> + make_share<'prod_Manu','act_Manu'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_Manu'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_Manu'> * p<'prod_const'> + make_share<'prod_serv','act_Manu'> * p<'prod_serv'>) = 0
+ (198)  pi<'act_elect_agua_gas'> + pk * K<'act_elect_agua_gas'> + w * L<'act_elect_agua_gas'> + p<'prod_Agri'> * X<'prod_Agri','act_elect_agua_gas'> + p<'prod_Min'> * X<'prod_Min','act_elect_agua_gas'> + p<'prod_Manu'> * X<'prod_Manu','act_elect_agua_gas'> + p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_elect_agua_gas'> + p<'prod_const'> * X<'prod_const','act_elect_agua_gas'> + p<'prod_serv'> * X<'prod_serv','act_elect_agua_gas'> - V<'act_elect_agua_gas'> * (1 - tes<'act_elect_agua_gas'> - tps<'act_elect_agua_gas'>) * (make_share<'prod_Agri','act_elect_agua_gas'> * p<'prod_Agri'> + make_share<'prod_Min','act_elect_agua_gas'> * p<'prod_Min'> + make_share<'prod_Manu','act_elect_agua_gas'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_elect_agua_gas'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_elect_agua_gas'> * p<'prod_const'> + make_share<'prod_serv','act_elect_agua_gas'> * p<'prod_serv'>) = 0
+ (199)  pi<'act_const'> + pk * K<'act_const'> + w * L<'act_const'> + p<'prod_Agri'> * X<'prod_Agri','act_const'> + p<'prod_Min'> * X<'prod_Min','act_const'> + p<'prod_Manu'> * X<'prod_Manu','act_const'> + p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_const'> + p<'prod_const'> * X<'prod_const','act_const'> + p<'prod_serv'> * X<'prod_serv','act_const'> - V<'act_const'> * (1 - tes<'act_const'> - tps<'act_const'>) * (make_share<'prod_Agri','act_const'> * p<'prod_Agri'> + make_share<'prod_Min','act_const'> * p<'prod_Min'> + make_share<'prod_Manu','act_const'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_const'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_const'> * p<'prod_const'> + make_share<'prod_serv','act_const'> * p<'prod_serv'>) = 0
+ (200)  pi<'act_serv'> + pk * K<'act_serv'> + w * L<'act_serv'> + p<'prod_Agri'> * X<'prod_Agri','act_serv'> + p<'prod_Min'> * X<'prod_Min','act_serv'> + p<'prod_Manu'> * X<'prod_Manu','act_serv'> + p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_serv'> + p<'prod_const'> * X<'prod_const','act_serv'> + p<'prod_serv'> * X<'prod_serv','act_serv'> - V<'act_serv'> * (1 - tes<'act_serv'> - tps<'act_serv'>) * (make_share<'prod_Agri','act_serv'> * p<'prod_Agri'> + make_share<'prod_Min','act_serv'> * p<'prod_Min'> + make_share<'prod_Manu','act_serv'> * p<'prod_Manu'> + make_share<'prod_elect_agua_gas','act_serv'> * p<'prod_elect_agua_gas'> + make_share<'prod_const','act_serv'> * p<'prod_const'> + make_share<'prod_serv','act_serv'> * p<'prod_serv'>) = 0
+ (201)  FIRMTAX + PITAX - Tax + VAT + tps<'act_Agri'> * revenue<'act_Agri'> + tps<'act_Min'> * revenue<'act_Min'> + tps<'act_Manu'> * revenue<'act_Manu'> + tps<'act_elect_agua_gas'> * revenue<'act_elect_agua_gas'> + tps<'act_const'> * revenue<'act_const'> + tps<'act_serv'> * revenue<'act_serv'> + mdp<'prod_Agri'> * tar<'prod_Agri'> * pm<'prod_Agri'> * (1 + tar<'prod_Agri'>) + mdp<'prod_Min'> * tar<'prod_Min'> * pm<'prod_Min'> * (1 + tar<'prod_Min'>) + mdp<'prod_Manu'> * tar<'prod_Manu'> * pm<'prod_Manu'> * (1 + tar<'prod_Manu'>) + mdp<'prod_elect_agua_gas'> * tar<'prod_elect_agua_gas'> * pm<'prod_elect_agua_gas'> * (1 + tar<'prod_elect_agua_gas'>) + mdp<'prod_const'> * tar<'prod_const'> * pm<'prod_const'> * (1 + tar<'prod_const'>) + mdp<'prod_serv'> * tar<'prod_serv'> * pm<'prod_serv'> * (1 + tar<'prod_serv'>) = 0
+ (202)  edp<'prod_Agri'> - mdp<'prod_Agri'> + vexist<'prod_Agri'> + D<'prod_Agri'> + X<'prod_Agri','act_Agri'> + X<'prod_Agri','act_Min'> + X<'prod_Agri','act_Manu'> + X<'prod_Agri','act_elect_agua_gas'> + X<'prod_Agri','act_const'> + X<'prod_Agri','act_serv'> - Yap<'prod_Agri','act_Agri'> - Yap<'prod_Agri','act_Min'> - Yap<'prod_Agri','act_Manu'> - Yap<'prod_Agri','act_elect_agua_gas'> - Yap<'prod_Agri','act_const'> - Yap<'prod_Agri','act_serv'> + gg_market_data_p<'prod_Agri'> * (1e-09 + p<'prod_Agri'>)^-1 + I_data<'prod_Agri'> * (1e-09 + p<'prod_Agri'>)^-1 = 0
+ (203)  edp<'prod_Min'> - mdp<'prod_Min'> + vexist<'prod_Min'> + D<'prod_Min'> + X<'prod_Min','act_Agri'> + X<'prod_Min','act_Min'> + X<'prod_Min','act_Manu'> + X<'prod_Min','act_elect_agua_gas'> + X<'prod_Min','act_const'> + X<'prod_Min','act_serv'> - Yap<'prod_Min','act_Agri'> - Yap<'prod_Min','act_Min'> - Yap<'prod_Min','act_Manu'> - Yap<'prod_Min','act_elect_agua_gas'> - Yap<'prod_Min','act_const'> - Yap<'prod_Min','act_serv'> + gg_market_data_p<'prod_Min'> * (1e-09 + p<'prod_Min'>)^-1 + I_data<'prod_Min'> * (1e-09 + p<'prod_Min'>)^-1 = 0
+ (204)  edp<'prod_Manu'> - mdp<'prod_Manu'> + vexist<'prod_Manu'> + D<'prod_Manu'> + X<'prod_Manu','act_Agri'> + X<'prod_Manu','act_Min'> + X<'prod_Manu','act_Manu'> + X<'prod_Manu','act_elect_agua_gas'> + X<'prod_Manu','act_const'> + X<'prod_Manu','act_serv'> - Yap<'prod_Manu','act_Agri'> - Yap<'prod_Manu','act_Min'> - Yap<'prod_Manu','act_Manu'> - Yap<'prod_Manu','act_elect_agua_gas'> - Yap<'prod_Manu','act_const'> - Yap<'prod_Manu','act_serv'> + gg_market_data_p<'prod_Manu'> * (1e-09 + p<'prod_Manu'>)^-1 + I_data<'prod_Manu'> * (1e-09 + p<'prod_Manu'>)^-1 = 0
+ (205)  edp<'prod_elect_agua_gas'> - mdp<'prod_elect_agua_gas'> + vexist<'prod_elect_agua_gas'> + D<'prod_elect_agua_gas'> + X<'prod_elect_agua_gas','act_Agri'> + X<'prod_elect_agua_gas','act_Min'> + X<'prod_elect_agua_gas','act_Manu'> + X<'prod_elect_agua_gas','act_elect_agua_gas'> + X<'prod_elect_agua_gas','act_const'> + X<'prod_elect_agua_gas','act_serv'> - Yap<'prod_elect_agua_gas','act_Agri'> - Yap<'prod_elect_agua_gas','act_Min'> - Yap<'prod_elect_agua_gas','act_Manu'> - Yap<'prod_elect_agua_gas','act_elect_agua_gas'> - Yap<'prod_elect_agua_gas','act_const'> - Yap<'prod_elect_agua_gas','act_serv'> + gg_market_data_p<'prod_elect_agua_gas'> * (1e-09 + p<'prod_elect_agua_gas'>)^-1 + I_data<'prod_elect_agua_gas'> * (1e-09 + p<'prod_elect_agua_gas'>)^-1 = 0
+ (206)  edp<'prod_const'> - mdp<'prod_const'> + vexist<'prod_const'> + D<'prod_const'> + X<'prod_const','act_Agri'> + X<'prod_const','act_Min'> + X<'prod_const','act_Manu'> + X<'prod_const','act_elect_agua_gas'> + X<'prod_const','act_const'> + X<'prod_const','act_serv'> - Yap<'prod_const','act_Agri'> - Yap<'prod_const','act_Min'> - Yap<'prod_const','act_Manu'> - Yap<'prod_const','act_elect_agua_gas'> - Yap<'prod_const','act_const'> - Yap<'prod_const','act_serv'> + gg_market_data_p<'prod_const'> * (1e-09 + p<'prod_const'>)^-1 + I_data<'prod_const'> * (1e-09 + p<'prod_const'>)^-1 = 0
+ (207)  edp<'prod_serv'> - mdp<'prod_serv'> + vexist<'prod_serv'> + D<'prod_serv'> + X<'prod_serv','act_Agri'> + X<'prod_serv','act_Min'> + X<'prod_serv','act_Manu'> + X<'prod_serv','act_elect_agua_gas'> + X<'prod_serv','act_const'> + X<'prod_serv','act_serv'> - Yap<'prod_serv','act_Agri'> - Yap<'prod_serv','act_Min'> - Yap<'prod_serv','act_Manu'> - Yap<'prod_serv','act_elect_agua_gas'> - Yap<'prod_serv','act_const'> - Yap<'prod_serv','act_serv'> + gg_market_data_p<'prod_serv'> * (1e-09 + p<'prod_serv'>)^-1 + I_data<'prod_serv'> * (1e-09 + p<'prod_serv'>)^-1 = 0
+
+Calibrating equations (60):
+ (1)  -dst<'prod_Agri'> + D<'prod_Agri'> = 0
+ (2)  -dst<'prod_Min'> + D<'prod_Min'> = 0
+ (3)  -dst<'prod_Manu'> + D<'prod_Manu'> = 0
+ (4)  -dst<'prod_elect_agua_gas'> + D<'prod_elect_agua_gas'> = 0
+ (5)  -dst<'prod_const'> + D<'prod_const'> = 0
+ (6)  -dst<'prod_serv'> + D<'prod_serv'> = 0
+ (7)  -vst<'act_Agri'> + V<'act_Agri'> = 0
+ (8)  -vst<'act_Min'> + V<'act_Min'> = 0
+ (9)  -vst<'act_Manu'> + V<'act_Manu'> = 0
+ (10)  -vst<'act_elect_agua_gas'> + V<'act_elect_agua_gas'> = 0
+ (11)  -vst<'act_const'> + V<'act_const'> = 0
+ (12)  -vst<'act_serv'> + V<'act_serv'> = 0
+ (13)  pk * K<'act_Agri'> - betak<'act_Agri'> * net_revenue<'act_Agri'> = 0
+ (14)  pk * K<'act_Min'> - betak<'act_Min'> * net_revenue<'act_Min'> = 0
+ (15)  pk * K<'act_Manu'> - betak<'act_Manu'> * net_revenue<'act_Manu'> = 0
+ (16)  pk * K<'act_elect_agua_gas'> - betak<'act_elect_agua_gas'> * net_revenue<'act_elect_agua_gas'> = 0
+ (17)  pk * K<'act_const'> - betak<'act_const'> * net_revenue<'act_const'> = 0
+ (18)  pk * K<'act_serv'> - betak<'act_serv'> * net_revenue<'act_serv'> = 0
+ (19)  w * L<'act_Agri'> - betal<'act_Agri'> * net_revenue<'act_Agri'> = 0
+ (20)  w * L<'act_Min'> - betal<'act_Min'> * net_revenue<'act_Min'> = 0
+ (21)  w * L<'act_Manu'> - betal<'act_Manu'> * net_revenue<'act_Manu'> = 0
+ (22)  w * L<'act_elect_agua_gas'> - betal<'act_elect_agua_gas'> * net_revenue<'act_elect_agua_gas'> = 0
+ (23)  w * L<'act_const'> - betal<'act_const'> * net_revenue<'act_const'> = 0
+ (24)  w * L<'act_serv'> - betal<'act_serv'> * net_revenue<'act_serv'> = 0
+ (25)  p<'prod_Agri'> * X<'prod_Agri','act_Agri'> - betax<'prod_Agri','act_Agri'> * p<'prod_Agri'> * V<'act_Agri'> = 0
+ (26)  p<'prod_Agri'> * X<'prod_Agri','act_Min'> - betax<'prod_Agri','act_Min'> * p<'prod_Agri'> * V<'act_Min'> = 0
+ (27)  p<'prod_Agri'> * X<'prod_Agri','act_Manu'> - betax<'prod_Agri','act_Manu'> * p<'prod_Agri'> * V<'act_Manu'> = 0
+ (28)  p<'prod_Agri'> * X<'prod_Agri','act_elect_agua_gas'> - betax<'prod_Agri','act_elect_agua_gas'> * p<'prod_Agri'> * V<'act_elect_agua_gas'> = 0
+ (29)  p<'prod_Agri'> * X<'prod_Agri','act_const'> - betax<'prod_Agri','act_const'> * p<'prod_Agri'> * V<'act_const'> = 0
+ (30)  p<'prod_Agri'> * X<'prod_Agri','act_serv'> - betax<'prod_Agri','act_serv'> * p<'prod_Agri'> * V<'act_serv'> = 0
+ (31)  p<'prod_Min'> * X<'prod_Min','act_Agri'> - betax<'prod_Min','act_Agri'> * p<'prod_Min'> * V<'act_Agri'> = 0
+ (32)  p<'prod_Min'> * X<'prod_Min','act_Min'> - betax<'prod_Min','act_Min'> * p<'prod_Min'> * V<'act_Min'> = 0
+ (33)  p<'prod_Min'> * X<'prod_Min','act_Manu'> - betax<'prod_Min','act_Manu'> * p<'prod_Min'> * V<'act_Manu'> = 0
+ (34)  p<'prod_Min'> * X<'prod_Min','act_elect_agua_gas'> - betax<'prod_Min','act_elect_agua_gas'> * p<'prod_Min'> * V<'act_elect_agua_gas'> = 0
+ (35)  p<'prod_Min'> * X<'prod_Min','act_const'> - betax<'prod_Min','act_const'> * p<'prod_Min'> * V<'act_const'> = 0
+ (36)  p<'prod_Min'> * X<'prod_Min','act_serv'> - betax<'prod_Min','act_serv'> * p<'prod_Min'> * V<'act_serv'> = 0
+ (37)  p<'prod_Manu'> * X<'prod_Manu','act_Agri'> - betax<'prod_Manu','act_Agri'> * p<'prod_Manu'> * V<'act_Agri'> = 0
+ (38)  p<'prod_Manu'> * X<'prod_Manu','act_Min'> - betax<'prod_Manu','act_Min'> * p<'prod_Manu'> * V<'act_Min'> = 0
+ (39)  p<'prod_Manu'> * X<'prod_Manu','act_Manu'> - betax<'prod_Manu','act_Manu'> * p<'prod_Manu'> * V<'act_Manu'> = 0
+ (40)  p<'prod_Manu'> * X<'prod_Manu','act_elect_agua_gas'> - betax<'prod_Manu','act_elect_agua_gas'> * p<'prod_Manu'> * V<'act_elect_agua_gas'> = 0
+ (41)  p<'prod_Manu'> * X<'prod_Manu','act_const'> - betax<'prod_Manu','act_const'> * p<'prod_Manu'> * V<'act_const'> = 0
+ (42)  p<'prod_Manu'> * X<'prod_Manu','act_serv'> - betax<'prod_Manu','act_serv'> * p<'prod_Manu'> * V<'act_serv'> = 0
+ (43)  p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_Agri'> - betax<'prod_elect_agua_gas','act_Agri'> * p<'prod_elect_agua_gas'> * V<'act_Agri'> = 0
+ (44)  p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_Min'> - betax<'prod_elect_agua_gas','act_Min'> * p<'prod_elect_agua_gas'> * V<'act_Min'> = 0
+ (45)  p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_Manu'> - betax<'prod_elect_agua_gas','act_Manu'> * p<'prod_elect_agua_gas'> * V<'act_Manu'> = 0
+ (46)  p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_elect_agua_gas'> - betax<'prod_elect_agua_gas','act_elect_agua_gas'> * p<'prod_elect_agua_gas'> * V<'act_elect_agua_gas'> = 0
+ (47)  p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_const'> - betax<'prod_elect_agua_gas','act_const'> * p<'prod_elect_agua_gas'> * V<'act_const'> = 0
+ (48)  p<'prod_elect_agua_gas'> * X<'prod_elect_agua_gas','act_serv'> - betax<'prod_elect_agua_gas','act_serv'> * p<'prod_elect_agua_gas'> * V<'act_serv'> = 0
+ (49)  p<'prod_const'> * X<'prod_const','act_Agri'> - betax<'prod_const','act_Agri'> * p<'prod_const'> * V<'act_Agri'> = 0
+ (50)  p<'prod_const'> * X<'prod_const','act_Min'> - betax<'prod_const','act_Min'> * p<'prod_const'> * V<'act_Min'> = 0
+ (51)  p<'prod_const'> * X<'prod_const','act_Manu'> - betax<'prod_const','act_Manu'> * p<'prod_const'> * V<'act_Manu'> = 0
+ (52)  p<'prod_const'> * X<'prod_const','act_elect_agua_gas'> - betax<'prod_const','act_elect_agua_gas'> * p<'prod_const'> * V<'act_elect_agua_gas'> = 0
+ (53)  p<'prod_const'> * X<'prod_const','act_const'> - betax<'prod_const','act_const'> * p<'prod_const'> * V<'act_const'> = 0
+ (54)  p<'prod_const'> * X<'prod_const','act_serv'> - betax<'prod_const','act_serv'> * p<'prod_const'> * V<'act_serv'> = 0
+ (55)  p<'prod_serv'> * X<'prod_serv','act_Agri'> - betax<'prod_serv','act_Agri'> * p<'prod_serv'> * V<'act_Agri'> = 0
+ (56)  p<'prod_serv'> * X<'prod_serv','act_Min'> - betax<'prod_serv','act_Min'> * p<'prod_serv'> * V<'act_Min'> = 0
+ (57)  p<'prod_serv'> * X<'prod_serv','act_Manu'> - betax<'prod_serv','act_Manu'> * p<'prod_serv'> * V<'act_Manu'> = 0
+ (58)  p<'prod_serv'> * X<'prod_serv','act_elect_agua_gas'> - betax<'prod_serv','act_elect_agua_gas'> * p<'prod_serv'> * V<'act_elect_agua_gas'> = 0
+ (59)  p<'prod_serv'> * X<'prod_serv','act_const'> - betax<'prod_serv','act_const'> * p<'prod_serv'> * V<'act_const'> = 0
+ (60)  p<'prod_serv'> * X<'prod_serv','act_serv'> - betax<'prod_serv','act_serv'> * p<'prod_serv'> * V<'act_serv'> = 0
+
+
+1 ERROR
+(gEcon model error 1): There are only 206 variables but there are 207 model equations

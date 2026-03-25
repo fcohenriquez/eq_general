@@ -1,0 +1,23 @@
+﻿Rows:
+ [1] "Act_Agri"            "Act_Min"             "Act_Manu"           
+ [4] "Act_elect_agua_gas"  "Act_const"           "Act_serv"           
+ [7] "prod_Agri"           "prod_Min"            "prod_Manu"          
+[10] "prod_elect_agua_gas" "prod_const"          "prod_serv"          
+[13] "Trabajo"             "Capital"             "Hogares"            
+[16] "Empresas"            "Gobierno"            "Cont_soc"           
+[19] "Pres_soc"            "Imp_dir"             "Imp_prod"           
+[22] "Imptos_Espec"        "IVA"                 "Arancel"            
+[25] "row"                 "S-I"                 "Var_Exis"           
+[28] "Total"              
+
+Cols:
+ [1] "Act_Agri"            "Act_Min"             "Act_Manu"           
+ [4] "Act_elect_agua_gas"  "Act_const"           "Act_serv"           
+ [7] "prod_Agri"           "prod_Min"            "prod_Manu"          
+[10] "prod_elect_agua_gas" "prod_const"          "prod_serv"          
+[13] "Trabajo"             "Capital"             "Hogares"            
+[16] "Empresas"            "Gobierno"            "Cont_soc"           
+[19] "Pres_soc"            "Imp_dir"             "Imp_prod"           
+[22] "Imptos_Espec"        "IVA"                 "Arancel"            
+[25] "row"                 "S-I"                 "Var_Exis"           
+[28] "Total"              

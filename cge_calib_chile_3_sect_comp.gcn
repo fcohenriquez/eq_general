@@ -1,0 +1,157 @@
+indexsets
+{
+    P = { 'Manu', 'Prim', 'Serv' };
+    S = { 'Manu', 'Prim', 'Serv' };
+};
+
+block CONSUMER
+{
+    controls
+    {
+        <p::P> D<p>[];
+    };
+
+    objective
+    {
+        U[] = (SUM<idx_c::P>(alpha<idx_c> * (D<idx_c>[]^((omega - 1)/omega))))^(omega/(omega - 1));
+    };
+
+    constraints
+    {
+        SUM<idx_i_1::P>(p<idx_i_1>[] * D<idx_i_1>[] * (1 + vat<idx_i_1>)) + SAV[] + CS[] = INC[];
+    };
+    
+    identities
+    {
+        INC[] = BTINC[] - PITAX[] + RENT_M[] + RENT_E[];
+        BTINC[] = pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[];
+        SAV[] = INC[] * por_sav;
+        CS[] = INC[] * por_cont;
+    };
+
+    calibration
+    {
+        D<'Manu'>[] = dstManu -> alpha<'Manu'>;
+        D<'Serv'>[] = dstServ -> alpha<'Serv'>;
+        SUM<idx_a::P>(alpha<idx_a>) = 1 -> alpha<'Prim'>;
+    };
+};
+
+block <s::S>SECTORS
+{
+    definitions
+    {
+        pv<s>[] = SUM<idx_pv::P>(p<idx_pv>[] * make_share<idx_pv, s>);
+    };
+
+    controls
+    {
+        V<s>[], K<s>[], L<s>[], <p::P> X<p, s>[];
+    };
+
+    objective
+    {
+        pi<s>[] = V<s>[] * pv<s>[] * (1 - tps<s> - tes<s> - tis<s>) 
+                  - K<s>[] * pk[] - L<s>[] * w[] - SUM<idx_x_o::P>(X<idx_x_o, s>[] * p<idx_x_o>[]);
+    };
+
+    constraints
+    {
+        V<s>[] = gamma<s> * (K<s>[]^betak<s>) * (L<s>[]^betal<s>) * PROD<idx_p_c::P>(X<idx_p_c, s>[]^betax<idx_p_c, s>);
+    };
+
+    identities
+    {
+        <p::P> Yap<p, s>[] = V<s>[] * make_share<p, s>;
+        revenue<s>[] = SUM<idx_rev::P>(Yap<idx_rev, s>[] * p<idx_rev>[]);
+        net_revenue<s>[] = revenue<s>[] * (1 - tps<s> - tes<s> - tis<s>);
+    };
+
+    calibration
+    {
+        V<s>[] = vst<s> -> gamma<s>;
+        K<s>[] * pk[] = net_revenue<s>[] * betak<s> -> betak<s>;
+        L<s>[] * w[] = net_revenue<s>[] * betal<s> -> betal<s>;
+        <p::P> X<p, s>[] * p<p>[] = net_revenue<s>[] * betax<p, s> -> betax<p, s>;
+    };
+};
+
+block <p::P> PRODUCTS
+{
+    identities
+    {
+        X_total<p>[] = SUM<idx_idx_s::S>(X<p, idx_idx_s>[]);
+        SUM<idx_idx_s_2::S>(Yap<p, idx_idx_s_2>[]) + Imports<p>[] = D<p>[] + G<p>[] + I<p>[] + VarExis<p>[] + X_total<p>[] + Exports<p>[];
+        pm<p>[] = (1 / (1 + tar<p>)) * exr[];
+        pe<p>[] = pworlde<p> * exr[];
+        Exports<p>[] = edp<p>;
+        Imports<p>[] = mdp<p>;
+    };
+};
+
+block FIRM
+{
+    identities
+    {
+        INGF[] = Kf[] * pk[] + CSf[];
+        SAVf[] = INGF[] - TREMP[] - PSf[] - FIRMTAX[];
+        TREMP[] = INGF[] * por_tremp;
+        Kf[] = k_total_data * par_k_f;
+        CSf[] = CS[] * por_cont_soc_f;
+        PSf[] = INGF[] * por_pres_soc_f;
+    };
+};
+
+block GOB
+{
+    identities
+    {
+        INGG[] = Kg[] * pk[] + CSg[] + Tax[];
+        GTg[] = SUM<idx_gob_p::P>(p<idx_gob_p>[] * G<idx_gob_p>[] * (1 + vat<idx_gob_p>)) + TRGOV[] + PSg[];
+        TRGOV[] = INGG[] * por_trgov;
+        SAVg[] = INGG[] - GTg[];
+        PSg[] = INGG[] * por_pres_soc_g;
+        Kg[] = k_total_data * par_k_g;
+        CSg[] = CS[] * por_cont_soc_g;
+        VAT_DEMAND[] = SUM<idx_v_d::P>(vat<idx_v_d> * p<idx_v_d>[] * (D<idx_v_d>[] + G<idx_v_d>[] + I<idx_v_d>[] + VarExis<idx_v_d>[]));
+        VAT_OUTPUT[] = SUM<idx_v_o::S>(tis<idx_v_o> * revenue<idx_v_o>[]);
+        VAT[] = VAT_DEMAND[] + VAT_OUTPUT[];
+		PITB[] = Kh[] * pk[] + Lh[] * w[];
+		PITAX[] = pit * PITB[];
+		FIRMTAX[] = fit * (Kf[] * pk[]);
+        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + 
+                SUM<idx_idx_t_s::S>((tps<idx_idx_t_s> + tes<idx_idx_t_s>) * revenue<idx_idx_t_s>[]) +
+                SUM<idx_idx_t_p::P>(tar<idx_idx_t_p> * Imports<idx_idx_t_p>[] * pm<idx_idx_t_p>[]);
+        <p::P> p<p>[] * G<p>[] * (1 + vat<p>) = gg_market_data_p<p>;    
+    };
+
+    calibration
+    {
+        PITAX[] = pitdata -> pit;
+        FIRMTAX[] = fitdata -> fit;
+    };
+};
+
+block EQUILIBRIUM
+{
+    identities 
+    {
+        SUM<idx_e_l::S>(L<idx_e_l>[]) + RoL[] = l_total_data;
+        I<'Prim'>[] * pinv<'Manu'> = pinv<'Prim'> * I<'Manu'>[];
+        I<'Serv'>[] * pinv<'Manu'> = pinv<'Serv'> * I<'Manu'>[];
+        <p::P> VarExis<p>[] = vexist<p>;
+        RoK[] = k_total_data * par_k_row;
+        RoL[] = l_total_data * par_l_row;
+        RiK[] = fact_row_in_k_data;
+        RiL[] = fact_row_in_l_data;
+        RENT_M[] = SUM<idx_m_r::P>(Imports<idx_m_r>[] * (p<idx_m_r>[] - pm<idx_m_r>[] * (1 + tar<idx_m_r>)));
+        RENT_E[] = SUM<idx_e_r::P>(Exports<idx_e_r>[] * (pe<idx_e_r>[] - p<idx_e_r>[]));
+        pk[] = 1;
+        exr[] = 1;
+        w[] = 1;
+        Kh[] = k_total_data * par_k_h;
+        Lh[] = l_total_data * par_l_h;
+        PSh[] = pshdata;
+    };
+};
+

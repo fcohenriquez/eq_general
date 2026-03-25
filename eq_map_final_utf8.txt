@@ -1,0 +1,53 @@
+﻿Rscript.exe : Loading 
+required package: MASS
+En línea: 1 Carácter: 1
++ & "C:\Users\francisco
+.henriquez\AppData\Loca
+l\Programs\R\R-4.5.1\bi
+n\ ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Loading requi   
+ red package: MASS:    
+String) [], Remote    
+Exception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Loading required 
+package: Matrix
+Loading required 
+package: nleqslv
+Loading required 
+package: Rcpp
+This is gEcon version 
+1.2.3 (2025-04-13)
+http://gecon.r-forge.r-
+project.org/
+model parsed in 0.41s
+model loaded in 0.15s
+Warning message:
+In make_model("cge_cali
+b_chile_6_sect.gcn") : 
+(gEcon warning): the 
+number of variables / 
+equations exceeds 100 
+and Rcpp output option 
+is set to false - this 
+may lead to long 
+compilation of model 
+equations (by JIT 
+compiler); if this is 
+the case, consider 
+using option "output R 
+Rcpp = TRUE"
+Error: no slot of name 
+"equations_list" for 
+this object of class 
+"gecon_model"
+Execution halted

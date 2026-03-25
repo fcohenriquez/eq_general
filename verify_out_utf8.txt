@@ -1,0 +1,76 @@
+﻿Rscript.exe : Loading 
+required package: MASS
+En línea: 1 Carácter: 1
++ & "C:\Users\francisco
+.henriquez\AppData\Loca
+l\Programs\R\R-4.5.1\bi
+n\ ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Loading requi   
+ red package: MASS:    
+String) [], Remote    
+Exception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Loading required 
+package: Matrix
+Loading required 
+package: nleqslv
+Loading required 
+package: Rcpp
+This is gEcon version 
+1.2.3 (2025-04-13)
+http://gecon.r-forge.r-
+project.org/
+
+Attaching package: 
+'pracma'
+
+The following objects 
+are masked from 
+'package:Matrix':
+
+    expm, lu, tril, 
+triu
+
+[1] "Loading model..."
+model parsed in 7.57s
+model loaded in 2.57s
+Warning message:
+In make_model("cge_cali
+b_chile_12_sect.gcn") 
+: 
+(gEcon warning): the 
+number of variables / 
+equations exceeds 100 
+and Rcpp output option 
+is set to false - this 
+may lead to long 
+compilation of model 
+equations (by JIT 
+compiler); if this is 
+the case, consider 
+using option "output R 
+Rcpp = TRUE"
+[1] "Starting steady state solver (calibration=TRUE)..."
+[1] "Steady state FOUND."
+Warning message:
+In steady_state(model, 
+calibration = TRUE) :
+  The equilibrium has 
+not been found, 1-norm 
+of residuals is: Inf.
+It is more than 
+requested precision.
+Change initial values 
+and check if the 
+equilibrium can be 
+found.
+Finan Norm 1: NaN 

@@ -1,0 +1,57 @@
+﻿Rscript.exe : Loading 
+required package: MASS
+En línea: 1 Carácter: 1
++ & "C:\Users\francisco
+.henriquez\AppData\Loca
+l\Programs\R\R-4.5.1\bi
+n\ ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Loading requi   
+ red package: MASS:    
+String) [], Remote    
+Exception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Loading required 
+package: Matrix
+Loading required 
+package: nleqslv
+Loading required 
+package: Rcpp
+This is gEcon version 
+1.2.3 (2025-04-13)
+http://gecon.r-forge.r-
+project.org/
+model parsed in 0.39s
+model loaded in 0.14s
+Warning message:
+In make_model("cge_cali
+b_chile_6_sect.gcn") : 
+(gEcon warning): the 
+number of variables / 
+equations exceeds 100 
+and Rcpp output option 
+is set to false - this 
+may lead to long 
+compilation of model 
+equations (by JIT 
+compiler); if this is 
+the case, consider 
+using option "output R 
+Rcpp = TRUE"
+Size: 177 
+Eq 147:  -INGF + por_cont_soc_f * CS + pk * Kf = 0 
+Eq 149:  -INGG + Tax + por_tr_f_g * INGF + por_cont_soc_g * CS + pk * Kg = 0 
+Eq 150:  -FIRMTAX + INGF - SAVf - TREMP - por_pres_soc_f * INGF - por_tr_f_g * INGF = 0 
+Eq 161:  fact_row_in_k_data + fact_row_in_l_data - BTINC + PSh + TRGOV + TREMP + pk * Kh + w * Lh = 0 
+Eq 163:  -CS + INC - SAV - p<'prod_Agri'> * D<'prod_Agri'> * (1 + tar_rate<'prod_Agri'> + tm_rate<'prod_Agri'> + vat<'prod_Agri'>) - p<'prod_Min'> * D<'prod_Min'> * (1 + tar_rate<'prod_Min'> + tm_rate<'prod_Min'> + vat<'prod_Min'>) - p<'prod_Manu'> * D<'prod_Manu'> * (1 + tar_rate<'prod_Manu'> + tm_rate<'prod_Manu'> + vat<'prod_Manu'>) - p<'prod_elect_agua_gas'> * D<'prod_elect_agua_gas'> * (1 + tar_rate<'prod_elect_agua_gas'> + tm_rate<'prod_elect_agua_gas'> + vat<'prod_elect_agua_gas'>) - p<'prod_const'> * D<'prod_const'> * (1 + tar_rate<'prod_const'> + tm_rate<'prod_const'> + vat<'prod_const'>) - p<'prod_serv'> * D<'prod_serv'> * (1 + tar_rate<'prod_serv'> + tm_rate<'prod_serv'> + vat<'prod_serv'>) = 0 
+Eq 164:  -gg_market_data_p<'prod_Agri'> - gg_market_data_p<'prod_Min'> - gg_market_data_p<'prod_Manu'> - gg_market_data_p<'prod_elect_agua_gas'> - gg_market_data_p<'prod_const'> - gg_market_data_p<'prod_serv'> + INGG - SAVg - TRGOV - por_pres_soc_g * INGG = 0 
+Eq 174:  edp<'prod_Manu'> - mdp<'prod_Manu'> + vexist<'prod_Manu'> - Arancel_p<'prod_Manu'> + D<'prod_Manu'> - Margin_p<'prod_Manu'> - VAT_p<'prod_Manu'> + X<'prod_Manu','Act_Agri'> + X<'prod_Manu','Act_Min'> + X<'prod_Manu','Act_Manu'> + X<'prod_Manu','Act_elect_agua_gas'> + X<'prod_Manu','Act_const'> + X<'prod_Manu','Act_serv'> - Yap<'prod_Manu','Act_Agri'> - Yap<'prod_Manu','Act_Min'> - Yap<'prod_Manu','Act_Manu'> - Yap<'prod_Manu','Act_elect_agua_gas'> - Yap<'prod_Manu','Act_const'> - Yap<'prod_Manu','Act_serv'> + gg_market_data_p<'prod_Manu'> * (1e-09 + p<'prod_Manu'>)^-1 + I_data<'prod_Manu'> * (1e-09 + p<'prod_Manu'>)^-1 + is_margin_good<'prod_Manu'> * TOTAL_MARGIN * (1e-09 + p<'prod_Manu'>)^-1 = 0 
+Eq 177:  edp<'prod_serv'> - mdp<'prod_serv'> + vexist<'prod_serv'> - Arancel_p<'prod_serv'> + D<'prod_serv'> - Margin_p<'prod_serv'> - VAT_p<'prod_serv'> + X<'prod_serv','Act_Agri'> + X<'prod_serv','Act_Min'> + X<'prod_serv','Act_Manu'> + X<'prod_serv','Act_elect_agua_gas'> + X<'prod_serv','Act_const'> + X<'prod_serv','Act_serv'> - Yap<'prod_serv','Act_Agri'> - Yap<'prod_serv','Act_Min'> - Yap<'prod_serv','Act_Manu'> - Yap<'prod_serv','Act_elect_agua_gas'> - Yap<'prod_serv','Act_const'> - Yap<'prod_serv','Act_serv'> + gg_market_data_p<'prod_serv'> * (1e-09 + p<'prod_serv'>)^-1 + I_data<'prod_serv'> * (1e-09 + p<'prod_serv'>)^-1 + is_margin_good<'prod_serv'> * TOTAL_MARGIN * (1e-09 + p<'prod_serv'>)^-1 = 0 
