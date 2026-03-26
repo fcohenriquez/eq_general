@@ -1,0 +1,18 @@
+INGG: 77648.2 
+Tax: 54590.73 
+  VAT: 24643.88 
+  PITAX: 4377.367 
+  FIRMTAX: 20763.91 
+  Act_tax: 3713.331 
+  Arancel: 1092.239 
+por_tr_f_g*INGF: 0 
+por_cont_soc_g*CS: 1397.242 
+Kg: 3039.68 
+RHS: 59027.65 
+Gap (RHS-INGG): -18620.55 
+
+=== SAM Gobierno row (income) ===
+     Capital     Empresas     Cont_soc      Imp_dir     Imp_prod Imptos_Espec 
+    3039.680    17102.605     1397.242    25141.277     3713.331     1517.945 
+         IVA      Arancel        Total 
+   24643.881     1092.239    77648.200 

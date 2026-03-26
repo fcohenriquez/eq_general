@@ -1,0 +1,8 @@
+BTINC_sam: 194276.6 
+base_gcn: 194276.6 
+Diff: 0 
+PITAX_sam: 4377.367 
+pit: 0.02253163 
+PITAX_gcn: 4377.367 
+INC_sam: 189899.2 
+INC_gcn: 189899.2 

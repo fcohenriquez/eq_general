@@ -1,0 +1,29 @@
+﻿=== BTINC components ===
+  Trabajo   Capital  Empresas  Gobierno  Pres_soc     Total 
+102890.97  31833.51  18733.76  23436.53  17381.82 194276.59 
+
+BTINC_sam= 388553.2 
+
+=== INGG components ===
+     Capital     Empresas     Cont_soc      Imp_dir     Imp_prod Imptos_Espec 
+    3039.680    17102.605     1397.242    25141.277     3713.331     1517.945 
+         IVA      Arancel        Total 
+   24643.881     1092.239    77648.200 
+
+INGG_sam= 155296.4 
+
+=== Market Clear Manu ===
+Col sum: 448194.7 
+Row sum: 448194.7 
+Make: 126272.5 
+Imports: 80107.97 
+VAT: 15190.07 
+Tar: 1008.831 
+D_m: 78911.98 
+G: 151.6164 
+I: 25242.91 
+V: 884.9986 
+E: 31372.73 
+X_int: 87533.11 
+fact_k_row: 10492 
+fact_l_row: 0 

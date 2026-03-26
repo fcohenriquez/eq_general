@@ -1,0 +1,6 @@
+Gov row with Total: 155296.4 
+Gov row without Total: 77648.2 
+Total col value: 77648.2 
+Imp_dir in Tax_v: 25141.28 
+Imp_dir Gobierno row: 25141.28 
+Imp_dir full: 25141.28 
