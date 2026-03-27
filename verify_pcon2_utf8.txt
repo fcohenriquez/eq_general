@@ -49,18 +49,18 @@ output file:
 gecon_chile_6_sect.R
 
 [1] "gecon_chile_6_sect.R"
-model parsed in 0.33s
+model parsed in 0.31s
 model loaded in 0.11s
 --- Diagnostic Balances in R ---
 Firm Income Balance: 0.00
 Govt Income Balance: 0.00
-HH Budget: INC=189899.22, Spend=166954.45, SAV=8972.35, CS=13972.42, Gap=0.00
+HH Budget: INC=189899.22, Spend=166954.65, SAV=8972.35, CS=13972.42, Gap=-0.20
 --------------------------------
-Norma final de residuos: 0.05283319 
+Norma final de residuos: 0.150968 
 Modelo finalizado.
 Initial residuals:
         Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
-        0.000         0.000         0.000         0.000         0.000 
+        0.000         0.000         0.000         0.100         0.100 
         Eq. 6         Eq. 7         Eq. 8         Eq. 9        Eq. 10 
         0.000         0.000         0.000         0.000         0.000 
        Eq. 11        Eq. 12        Eq. 13        Eq. 14        Eq. 15 
@@ -149,11 +149,11 @@ Calibr Eq. 51 Calibr Eq. 52 Calibr Eq. 53
         0.000         0.000         0.000 
 
 Equations with the largest initial residuals:
-Eq. 161, Eq. 152, Eq. 90, Eq. 78, Eq. 160
+Eq. 4, Eq. 5, Eq. 161, Eq. 152, Eq. 90
 
 Final residuals:
         Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
-        0.000         0.000         0.000         0.000         0.000 
+        0.000         0.000         0.000         0.100         0.100 
         Eq. 6         Eq. 7         Eq. 8         Eq. 9        Eq. 10 
         0.000         0.000         0.000         0.000         0.000 
        Eq. 11        Eq. 12        Eq. 13        Eq. 14        Eq. 15 
@@ -242,7 +242,7 @@ Calibr Eq. 51 Calibr Eq. 52 Calibr Eq. 53
         0.000         0.000         0.000 
 
 Equations with the largest final residuals:
-Eq. 161, Eq. 152, Eq. 90, Eq. 78, Eq. 160
+Eq. 4, Eq. 5, Eq. 161, Eq. 152, Eq. 90
 Warning messages:
 1: In make_model("cge_calib_chil
 e_6_sect.gcn") : 
@@ -259,7 +259,7 @@ TRUE"
 calibration = TRUE) :
   The equilibrium has not been 
 found, 1-norm of residuals is: 
-0.0373476804566053.
+0.1.
 It is more than requested 
 precision.
 Change initial values and check 

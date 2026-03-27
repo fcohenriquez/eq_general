@@ -30,33 +30,15 @@ masked from 'package:Matrix':
 
     expm, lu, tril, triu
 
-
-
-processing file: 
-gecon_chile_6_sect.Rmd
-1/11                  
-2/11 [setup]          
-3/11                  
-4/11 [sam_load]       
-5/11                  
-6/11 [model_gen]      
-7/11                  
-8/11 [solution]       
-9/11                  
-10/11 [unnamed-chunk-1]
-11/11                  
-output file: 
-gecon_chile_6_sect.R
-
 [1] "gecon_chile_6_sect.R"
-model parsed in 0.33s
-model loaded in 0.11s
+model parsed in 0.36s
+model loaded in 0.07s
 --- Diagnostic Balances in R ---
 Firm Income Balance: 0.00
 Govt Income Balance: 0.00
 HH Budget: INC=189899.22, Spend=166954.45, SAV=8972.35, CS=13972.42, Gap=0.00
 --------------------------------
-Norma final de residuos: 0.05283319 
+Norma final de residuos: 0.03734073 
 Modelo finalizado.
 Initial residuals:
         Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
@@ -94,7 +76,7 @@ Initial residuals:
        Eq. 81        Eq. 82        Eq. 83        Eq. 84        Eq. 85 
         0.000         0.000         0.000         0.000         0.000 
        Eq. 86        Eq. 87        Eq. 88        Eq. 89        Eq. 90 
-        0.000         0.000         0.000         0.000        -0.001 
+        0.000         0.000         0.000         0.000         0.000 
        Eq. 91        Eq. 92        Eq. 93        Eq. 94        Eq. 95 
         0.000         0.000         0.000         0.000         0.000 
        Eq. 96        Eq. 97        Eq. 98        Eq. 99       Eq. 100 
@@ -124,7 +106,7 @@ Initial residuals:
       Eq. 156       Eq. 157       Eq. 158       Eq. 159       Eq. 160 
         0.000         0.000         0.000         0.000         0.000 
       Eq. 161       Eq. 162       Eq. 163       Eq. 164       Eq. 165 
-       -0.037         0.000         0.000         0.000         0.000 
+        0.000         0.000         0.000         0.000         0.000 
  Calibr Eq. 1  Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5 
         0.000         0.000         0.000         0.000         0.000 
  Calibr Eq. 6  Calibr Eq. 7  Calibr Eq. 8  Calibr Eq. 9 Calibr Eq. 10 
@@ -149,7 +131,7 @@ Calibr Eq. 51 Calibr Eq. 52 Calibr Eq. 53
         0.000         0.000         0.000 
 
 Equations with the largest initial residuals:
-Eq. 161, Eq. 152, Eq. 90, Eq. 78, Eq. 160
+Eq. 152, Eq. 160, Eq. 158, Eq. 165, Eq. 163
 
 Final residuals:
         Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
@@ -187,7 +169,7 @@ Final residuals:
        Eq. 81        Eq. 82        Eq. 83        Eq. 84        Eq. 85 
         0.000         0.000         0.000         0.000         0.000 
        Eq. 86        Eq. 87        Eq. 88        Eq. 89        Eq. 90 
-        0.000         0.000         0.000         0.000        -0.001 
+        0.000         0.000         0.000         0.000         0.000 
        Eq. 91        Eq. 92        Eq. 93        Eq. 94        Eq. 95 
         0.000         0.000         0.000         0.000         0.000 
        Eq. 96        Eq. 97        Eq. 98        Eq. 99       Eq. 100 
@@ -217,7 +199,7 @@ Final residuals:
       Eq. 156       Eq. 157       Eq. 158       Eq. 159       Eq. 160 
         0.000         0.000         0.000         0.000         0.000 
       Eq. 161       Eq. 162       Eq. 163       Eq. 164       Eq. 165 
-       -0.037         0.000         0.000         0.000         0.000 
+        0.000         0.000         0.000         0.000         0.000 
  Calibr Eq. 1  Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5 
         0.000         0.000         0.000         0.000         0.000 
  Calibr Eq. 6  Calibr Eq. 7  Calibr Eq. 8  Calibr Eq. 9 Calibr Eq. 10 
@@ -242,7 +224,7 @@ Calibr Eq. 51 Calibr Eq. 52 Calibr Eq. 53
         0.000         0.000         0.000 
 
 Equations with the largest final residuals:
-Eq. 161, Eq. 152, Eq. 90, Eq. 78, Eq. 160
+Eq. 152, Eq. 160, Eq. 158, Eq. 165, Eq. 163
 Warning messages:
 1: In make_model("cge_calib_chil
 e_6_sect.gcn") : 
@@ -259,7 +241,7 @@ TRUE"
 calibration = TRUE) :
   The equilibrium has not been 
 found, 1-norm of residuals is: 
-0.0373476804566053.
+0.0373407000079169.
 It is more than requested 
 precision.
 Change initial values and check 

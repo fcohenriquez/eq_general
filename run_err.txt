@@ -30,27 +30,9 @@ masked from 'package:Matrix':
 
     expm, lu, tril, triu
 
-
-
-processing file: 
-gecon_chile_6_sect.Rmd
-1/11                  
-2/11 [setup]          
-3/11                  
-4/11 [sam_load]       
-5/11                  
-6/11 [model_gen]      
-7/11                  
-8/11 [solution]       
-9/11                  
-10/11 [unnamed-chunk-1]
-11/11                  
-output file: 
-gecon_chile_6_sect.R
-
 [1] "gecon_chile_6_sect.R"
-model parsed in 0.33s
-model loaded in 0.11s
+model parsed in 0.31s
+model loaded in 0.17s
 --- Diagnostic Balances in R ---
 Firm Income Balance: 0.00
 Govt Income Balance: 0.00
@@ -227,22 +209,6 @@ Calibr Eq. 11 Calibr Eq. 12 Calibr Eq. 13 Calibr Eq. 14 Calibr Eq. 15
 Calibr Eq. 16 Calibr Eq. 17 Calibr Eq. 18 Calibr Eq. 19 Calibr Eq. 20 
         0.000         0.000         0.000         0.000         0.000 
 Calibr Eq. 21 Calibr Eq. 22 Calibr Eq. 23 Calibr Eq. 24 Calibr Eq. 25 
-        0.000         0.000         0.000         0.000         0.000 
-Calibr Eq. 26 Calibr Eq. 27 Calibr Eq. 28 Calibr Eq. 29 Calibr Eq. 30 
-        0.000         0.000         0.000         0.000         0.000 
-Calibr Eq. 31 Calibr Eq. 32 Calibr Eq. 33 Calibr Eq. 34 Calibr Eq. 35 
-        0.000         0.000         0.000         0.000         0.000 
-Calibr Eq. 36 Calibr Eq. 37 Calibr Eq. 38 Calibr Eq. 39 Calibr Eq. 40 
-        0.000         0.000         0.000         0.000         0.000 
-Calibr Eq. 41 Calibr Eq. 42 Calibr Eq. 43 Calibr Eq. 44 Calibr Eq. 45 
-        0.000         0.000         0.000         0.000         0.000 
-Calibr Eq. 46 Calibr Eq. 47 Calibr Eq. 48 Calibr Eq. 49 Calibr Eq. 50 
-        0.000         0.000         0.000         0.000         0.000 
-Calibr Eq. 51 Calibr Eq. 52 Calibr Eq. 53 
-        0.000         0.000         0.000 
-
-Equations with the largest final residuals:
-Eq. 161, Eq. 152, Eq. 90, Eq. 78, Eq. 160
 Warning messages:
 1: In make_model("cge_calib_chil
 e_6_sect.gcn") : 
@@ -264,3 +230,19 @@ It is more than requested
 precision.
 Change initial values and check 
 if the equilibrium can be found.
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 26 Calibr Eq. 27 Calibr Eq. 28 Calibr Eq. 29 Calibr Eq. 30 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 31 Calibr Eq. 32 Calibr Eq. 33 Calibr Eq. 34 Calibr Eq. 35 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 36 Calibr Eq. 37 Calibr Eq. 38 Calibr Eq. 39 Calibr Eq. 40 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 41 Calibr Eq. 42 Calibr Eq. 43 Calibr Eq. 44 Calibr Eq. 45 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 46 Calibr Eq. 47 Calibr Eq. 48 Calibr Eq. 49 Calibr Eq. 50 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 51 Calibr Eq. 52 Calibr Eq. 53 
+        0.000         0.000         0.000 
+
+Equations with the largest final residuals:
+Eq. 161, Eq. 152, Eq. 90, Eq. 78, Eq. 160

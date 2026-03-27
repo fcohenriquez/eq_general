@@ -58,7 +58,7 @@ vat_r <- IVA_m / domestic_abs_safe
 tar_r <- Ar_m / domestic_abs_safe
 
 # D at purchaser prices (D = D_m in GCN Market Clearing)
-D_v <- pmax(D_m, 0.1)
+D_v <- D_m  # raw SAM values; non-consumed products (Min, const) stay at 0
 
 L_vals <- as.numeric(chile_sam["Trabajo", s_names])
 K_vals <- as.numeric(chile_sam["Capital", s_names])
@@ -82,35 +82,49 @@ net_rev <- revenue_vals * (1 - t_pro_r - t_esp_r)
 bk <- K_vals / (net_rev + pad_floor)
 bl <- L_vals / (net_rev + pad_floor)
 bx <- sweep(X_matrix, 2, net_rev + pad_floor, "/")
-bx <- pmax(bx, 1e-10)  # safe floor for exponents
 
-# Build FOC-consistent X values: for zero SAM entries, X = betax * net_rev
-X_init <- X_matrix
-for (i in 1:6) {
-    for (j in 1:6) {
-        if (X_matrix[i, j] < 0.01) {
-            X_init[i, j] <- bx[i, j] * net_rev[j]  # FOC: X = betax * net_rev / p, p=1
-        }
-    }
-}
+# SA sectors: Act_Agri(1), Act_Manu(3), Act_EAG(4) use 5 products (no prod_const=5)
+# SB sectors: Act_const(5), Act_serv(6) use all 6 products
+# SC sectors: Act_Min(2) uses 4 products (no prod_Agri=1, no prod_const=5)
+sa_idx <- c(1,3,4)  # Act_Agri, Act_Manu, Act_elect_agua_gas
+sb_idx <- c(5,6)    # Act_const, Act_serv
+sc_idx <- 2          # Act_Min
+p5_idx <- c(1,2,3,4,6)  # Pno5: Agri, Min, Manu, EAG, serv
+pmin_idx <- c(2,3,4,6)   # PMin: Min, Manu, EAG, serv
 
-# gamma for full CD (use ALL X terms including FOC-consistent tiny ones)
+# Zero out excluded entries
+bx[5, sa_idx] <- 0  # prod_const not used by SA
+bx[c(1,5), sc_idx] <- 0  # prod_Agri and prod_const not used by SC(Min)
+bx <- pmax(bx, 0)
+# Floor at 1e-10 for included entries
+for (j in sa_idx) bx[p5_idx, j] <- pmax(bx[p5_idx, j], 1e-10)
+for (j in sb_idx) bx[, j] <- pmax(bx[, j], 1e-10)
+for (j in sc_idx) bx[pmin_idx, j] <- pmax(bx[pmin_idx, j], 1e-10)
+
+# Gamma for CD: each group uses its own product set
 gamma_v <- numeric(6)
 for (i in 1:6) {
+    p_set <- if (i %in% sa_idx) p5_idx else if (i %in% sb_idx) 1:6 else pmin_idx
     prod_term <- 1.0
-    for (j in 1:6) {
-        prod_term <- prod_term * (X_init[j, i]^bx[j, i])
+    for (j in p_set) {
+        x_val <- max(X_matrix[j, i], 1e-8)
+        prod_term <- prod_term * (x_val^bx[j, i])
     }
     gamma_v[i] <- V_sector_vals[i] / ( (K_vals[i]^bk[i]) * (L_vals[i]^bl[i]) * prod_term + pad_floor )
 }
 
 omega_val <- 0.5
-# Alpha for CES utility (D at purchaser prices, no tax markup needed)
-alpha_v_unsc <- (D_v)^(1/omega_val)
+# Consumed products index (Pcon): exclude prod_Min(2) and prod_const(5)
+pcon_idx <- c(1,3,4,6)  # Agri, Manu, EAG, serv
+pnc_idx <- c(2,5)  # prod_Min, prod_const (non-consumed)
+
+# Alpha for CES utility (only consumed products)
+D_con <- D_v[pcon_idx]
+alpha_v_unsc <- (D_con)^(1/omega_val)
 alpha_v <- alpha_v_unsc / (sum(alpha_v_unsc) + pad_floor)
 
-U_val <- (sum(alpha_v * D_v^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
-lambda_val <- U_val / (sum(D_m) + pad_floor)
+U_val <- (sum(alpha_v * D_con^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
+lambda_val <- U_val / (sum(D_con) + pad_floor)
 
 get_flow_values <- function(vals, name, idx1 = NULL, idx2 = NULL) {
     res <- as.list(as.numeric(vals))
@@ -165,11 +179,10 @@ Tax_v <- VAT_sum + PITAX_v + FIRMTAX_v + Activity_Tax_sum + Arancel_sum + Imptos
 
 INC_v <- BTINC_v - PITAX_v
 
-# Savings as exact budget residual to ensure zero HH budget gap
+# Savings as exact budget residual (only consumed products in budget)
 CS_h_v <- INC_v * por_cont_h_val
-# por_sav must satisfy budget: sum(D_v) + SAV + CS = INC  AND  SAV = INC*por_sav
-# => por_sav = (INC - sum(D_v) - CS) / INC
-por_sav_h_val <- (INC_v - sum(D_v) - CS_h_v) / (INC_v + pad_floor)
+# por_sav from budget: sum(D_con) + SAV + CS = INC
+por_sav_h_val <- (INC_v - sum(D_con) - CS_h_v) / (INC_v + pad_floor)
 SAV_h_v <- INC_v * por_sav_h_val
 SAVf_v <- INGF_v - TREMP_v - INGF_v * por_pres_soc_f_val - FIRMTAX_v - INGF_v * por_tr_f_g_val
 SAVg_v <- INGG_v - (sum(G_m) + (INGG_v * por_trgov_val) + INGG_v * por_pres_soc_g_val)
@@ -201,7 +214,9 @@ par_flat <- unlist(list(
     fact_row_in_k_data = as.numeric(fact_row_in_k_data), 
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
     imptos_espec_data = sum(as.numeric(chile_sam["Imptos_Espec", colnames(chile_sam) != "Total"])),
-    get_flow_values(D_v, "dst", p_names),
+    x_agri_min_data = X_matrix[1, 2],  # prod_Agri -> Act_Min (excluded from SC production)
+    get_flow_values(D_con, "dst", p_names[pcon_idx]),
+    get_flow_values(c(1e-6, 1e-6), "dst_nc", p_names[pnc_idx]),
     get_flow_values(vat_r, "vat", p_names), 
     get_flow_values(tar_r, "tar_rate", p_names), 
     get_flow_values(rep(1, 6), "pworlde", p_names),
@@ -219,12 +234,23 @@ par_flat <- unlist(list(
 ))
 model <- set_free_par(model, par_flat)
 
-# 2. Calibration parameter guesses
+# Calibration parameter guesses (split for SA/SB/SC)
+sa_names <- s_names[sa_idx]
+sb_names <- s_names[sb_idx]
+sc_names <- s_names[sc_idx]
+p5_names <- p_names[p5_idx]  # Pno5
+pmin_names <- p_names[pmin_idx]  # PMin
+
 calib_par_flat <- unlist(list(
-    get_flow_values(alpha_v, "alpha", p_names), 
+    get_flow_values(alpha_v, "alpha", p_names[pcon_idx]), 
     get_flow_values(gamma_v, "gamma", s_names),
     get_flow_values(bk, "betak", s_names), get_flow_values(bl, "betal", s_names),
-    get_flow_values(bx, "betax", p_names, s_names)
+    # betax for SA sectors: Pno5 (5 products)
+    get_flow_values(bx[p5_idx, sa_idx, drop=FALSE], "betax", p5_names, sa_names),
+    # betax for SB sectors: P (6 products)
+    get_flow_values(bx[, sb_idx, drop=FALSE], "betax", p_names, sb_names),
+    # betax for SC sectors: PMin (4 products)
+    get_flow_values(bx[pmin_idx, sc_idx, drop=FALSE], "betax", pmin_names, sc_names)
 ))
 model <- initval_calibr_par(model, calib_par_flat)
 
@@ -243,12 +269,19 @@ init_vars <- unlist(list(
     var_list,
     get_flow_values(rep(0, 6), "pi", s_names), get_flow_values(rep(1, 6), "p", p_names),
     get_flow_values(rep(1, 6), "pe", p_names), get_flow_values(1 / (1 + tar_r), "pm", p_names),
-    get_flow_values(pmax(D_v, 0.1), "D", p_names), get_flow_values(pmax(V_sector_vals, 0.1), "V", s_names),
+    get_flow_values(pmax(D_con, 0.1), "D", p_names[pcon_idx]),
+    D__prod_Min = 1e-6, D__prod_const = 1e-6,
+    get_flow_values(pmax(V_sector_vals, 0.1), "V", s_names),
     get_flow_values(t(make_matrix), "Yap", p_names, s_names),
     get_flow_values(pmax(revenue_vals, 0.1), "revenue", s_names), 
     get_flow_values(pmax(net_rev, 0.1), "net_revenue", s_names),
     get_flow_values(pmax(K_vals, 0.1), "K", s_names), get_flow_values(pmax(L_vals, 0.1), "L", s_names),
-    get_flow_values(pmax(X_init, 1e-12), "X", p_names, s_names),
+    # X for SA sectors: Pno5 (5 products)
+    get_flow_values(pmax(X_matrix[p5_idx, sa_idx, drop=FALSE], 0.1), "X", p5_names, sa_names),
+    # X for SB sectors: P (6 products)
+    get_flow_values(pmax(X_matrix[, sb_idx, drop=FALSE], 0.1), "X", p_names, sb_names),
+    # X for SC sectors: PMin (4 products)
+    get_flow_values(pmax(X_matrix[pmin_idx, sc_idx, drop=FALSE], 0.1), "X", pmin_names, sc_names),
     get_flow_values(as.numeric(chile_sam["IVA", p_names]), "VAT_p", p_names), 
     get_flow_values(as.numeric(chile_sam["Arancel", p_names]), "Arancel_p", p_names)
 ))
