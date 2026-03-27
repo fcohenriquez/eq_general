@@ -11,13 +11,14 @@ Se va a modelar una economía en que están los elementos domésticos y del sect
 knitr::opts_chunk$set(echo = TRUE)
 library(gEcon.iosam)
 rm(list = ls())
+setwd("~/proyectos/equilibrio_general/eq_general")
 ```
 
 ## 1-4. Initial Setup and Calibration from run_final.R
 
 ```{r setup_model, message=FALSE, warning=FALSE}
 # 1. SAM Processing
-chile_sam <- read.csv("macro_sam_2008_3sect.csv", row.names = 1, check.names = FALSE)
+chile_sam <- read.csv("~/proyectos/equilibrio_general/eq_general/macro_sam_2008_3sect.csv", row.names = 1, check.names = FALSE)
 chile_sam[is.na(chile_sam)] <- 0
 
 # Helper: Mapeo de vectores a nombres de gEcon

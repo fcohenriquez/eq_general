@@ -241,6 +241,7 @@ par_flat <- unlist(list(
     get_flow_values(as.numeric(chile_sam["Imptos_Espec", p_names]), "imptos_espec_p", p_names),
     get_flow_values(t(make_matrix / V_sector_vals), "make_share", p_names, s_names)
 ))
+
 model <- set_free_par(model, par_flat)
 
 # Calibration parameter guesses (split for SA/SB/SC)
@@ -307,8 +308,8 @@ model <- steady_state(model, calibration = TRUE,
 cat("Norma final de residuos:", pracma::Norm(model@residual_vector), "\n")
 cat("Modelo finalizado.\n")
 ```
-# Estadisticas de residuos
 
+# Estadisticas de residuos
 ```{r}
 get_residuals(model)
 pracma::Norm(model@init_residual_vector)
@@ -316,11 +317,101 @@ pracma::Norm(model@residual_vector)
 ```
 
 # Estadisticas de valores obtenidos
-
 ```{r}
 var_info(model, all = T)
+get_par_values(model)
+```
+
+# Cálculo del PIB
+
+```{r}
+#Función para calcular el PIB
+calc_pib <- function(model_obj) {
+    ss_vals <- get_ss_values(model_obj)
+    par_vals <- get_par_values(model_obj)
+    p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
+    p_eq <- ss_vals[paste0("p__", p_names)]
+    # Components from GCN Market Clearing (Expenditure Approach)
+    # GDP = C + G + I + V + X - M
+    # 1. Consumption (Variables D*p)
+    C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
+    # 2. Government and Investment (Parameters G and I are expenditure values in GCN: G/p * p = G)
+    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)], na.rm = TRUE)
+    I_val <- sum(par_vals[paste0("I_data__", p_names)], na.rm = TRUE)
+    # 3. Inventory Changes (Parameter vexist is quantity in GCN: vexist * p)
+    V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
+    # 4. Exports (Parameter edp is quantity in GCN: edp * p)
+    X_val <- sum(par_vals[paste0("edp__", p_names)] * p_eq, na.rm = TRUE)
+    # 5. Imports (Parameter mdp is supply quantity in GCN: mdp * producer_price)
+    M_val <- sum(par_vals[paste0("mdp__", p_names)] * p_eq, na.rm = TRUE)
+    return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
+                PIB = C + G_val + I_val + V_val + X_val - M_val))
+}
 ```
 
 ```{r}
-get_par_values(model)
+# Cálculo y Descomposición del PIB (Enfoque del Gasto)
+PIB_SAM <- sum(D_m) + sum(G_m) + sum(I_m) + sum(V_m) + sum(E_m) - sum(M_m)
+cat("\nDescomposición del PIB (Enfoque del Gasto) - Valores SAM:\n")
+cat("Consumo Hogares (C):       ", round(sum(D_m), 2), "\n")
+cat("Consumo Gobierno (G):      ", round(sum(G_m), 2), "\n")
+cat("Inversión (I):             ", round(sum(I_m), 2), "\n")
+cat("Var. Existencias (V):      ", round(sum(V_m), 2), "\n")
+cat("Exportaciones (X):         ", round(sum(E_m), 2), "\n")
+cat("Importaciones (M) (-):     ", round(sum(M_m), 2), "\n")
+cat("--------------------------------------------------\n")
+cat("PIB Total:                 ", round(PIB_SAM, 2), "\n\n")
+
+# Resultados base
+res_base <- get_ss_values(model)
+pib_model_list <- calc_pib(model)
+pib_base <- pib_model_list$PIB
+
+pib_df <- data.frame(
+    Componente = c("Consumo_Hog", "Consumo_Gob", "Inversion", "Var_Exist", "Exports", "Imports_(-)", "PIB_Total"),
+    SAM_Base = c(sum(D_m), sum(G_m), sum(I_m), sum(V_m), sum(E_m), sum(M_m), PIB_SAM),
+    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I, 
+                  pib_model_list$V, pib_model_list$X, pib_model_list$M, pib_base)
+)
+pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
+print(pib_df)
+```
+
+# SHOCK: 10% Incremento FIT (Impuesto a las Empresas)
+```{r}
+# 1. Definir el shock
+fit_base <- get_par_values(model)["fit"]
+fit_shock <- as.numeric(fit_base) * (1-0.010)
+
+# 2. Aplicar el shock usando set_free_par
+model_shock_fit <- set_free_par(model, list(fit = fit_shock))
+
+# 3. Resolver con Broyden
+model_shock_fit <- steady_state(model_shock_fit, calibration = F, 
+                      options_list = list(xscalm="auto",  max_iter = 100000, tol = 1e-5))
+
+res_shock_fit <- get_ss_values(model_shock_fit)
+pib_shock_list <- calc_pib(model_shock_fit)
+pib_shock_fit <- pib_shock_list$PIB
+```
+
+# ANALYSIS FIT
+```{r}
+# Comparación
+vars_to_compare <- c("INC", "Tax", "SAVf", "INGF", "INGG", "FIRMTAX", "VAT", "pk", "w")
+
+comp_fit <- data.frame(
+    Variable = vars_to_compare,
+    Base = as.numeric(res_base[vars_to_compare]),
+    Shock = as.numeric(res_shock_fit[vars_to_compare])
+)
+
+comp_fit$Diff_Pct <- round((comp_fit$Shock / comp_fit$Base - 1) * 100, 4)
+comp_fit$Impact_Pct_PIB <- round((comp_fit$Shock - comp_fit$Base) / pib_base * 100, 4)
+
+cat("--- RESULTADOS DE LA SIMULACIÓN: INCREMENTO 10% FIT ---\n")
+cat("PIB Base:          ", round(pib_base, 2), "\n")
+cat("PIB Shock:         ", round(pib_shock_fit, 2), "\n")
+cat("Cambio PIB (%):    ", round((pib_shock_fit / pib_base - 1) * 100, 6), "%\n\n")
+print(comp_fit)
 ```
