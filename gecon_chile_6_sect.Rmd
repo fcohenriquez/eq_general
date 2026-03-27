@@ -301,12 +301,26 @@ model <- initval_var(model, init_vars)
 
 ```{r solution}
 # Resolver el modelo
-model <- steady_state(model, calibration = TRUE)
+model <- steady_state(model, calibration = TRUE,
+                      options_list = list(method = "Newton", global = "gline",
+                                        max_iter = 100000, tol = 3e-5))
 cat("Norma final de residuos:", pracma::Norm(model@residual_vector), "\n")
 cat("Modelo finalizado.\n")
 ```
+# Estadisticas de residuos
 
 ```{r}
 get_residuals(model)
+pracma::Norm(model@init_residual_vector)
+pracma::Norm(model@residual_vector)
 ```
 
+# Estadisticas de valores obtenidos
+
+```{r}
+var_info(model, all = T)
+```
+
+```{r}
+get_par_values(model)
+```
