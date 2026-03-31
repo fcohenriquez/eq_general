@@ -1,8 +1,0 @@
-Eq 143: 
--INGG + Tax + por_tr_f_g * INGF + por_cont_soc_g * CS + pk * Kg = 0 
-
-Eq 142: 
-BTINC - INC - PITAX + RENT_M + RENT_E = 0 
-
-Eq 144: 
--FIRMTAX + INGF - SAVf - TREMP - por_pres_soc_f * INGF - por_tr_f_g * INGF = 0 

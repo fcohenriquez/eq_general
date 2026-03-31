@@ -271,6 +271,8 @@ var_list <- list(
     TREMP = TREMP_v, TRGOV = TRGOV_v, PSh = as.numeric(pshdata),
     INC = INC_v, BTINC = BTINC_v, SAV = SAV_h_v, CS = CS_h_v,
     SAVf = SAVf_v, SAVg = SAVg_v,
+    TOTAL_SAV = SAV_h_v + SAVf_v + SAVg_v,
+    inv_adj = 1.0,
     VAT = VAT_sum, Tax = Tax_v,
     pk = 1.0, w = 1.0, exr = 1.0, Kh = Kh_val, Lh = Lh_val, Kf = Kf_val, Kg = Kg_val,
     RENT_M = 0, RENT_E = 0, U = U_val, lambda__CONSUMER_1 = lambda_val
@@ -336,8 +338,10 @@ calc_pib <- function(model_obj) {
     # 1. Consumption (Variables D*p)
     C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
     # 2. Government and Investment (Parameters G and I are expenditure values in GCN: G/p * p = G)
-    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)], na.rm = TRUE)
-    I_val <- sum(par_vals[paste0("I_data__", p_names)], na.rm = TRUE)
+    inv_adj_val <- ss_vals["inv_adj"]
+    if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
+    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_eq, na.rm = TRUE)
+    I_val <- sum(par_vals[paste0("I_data__", p_names)] * p_eq, na.rm = TRUE) * inv_adj_val
     # 3. Inventory Changes (Parameter vexist is quantity in GCN: vexist * p)
     V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
     # 4. Exports (Parameter edp is quantity in GCN: edp * p)
@@ -377,14 +381,14 @@ pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
 print(pib_df)
 ```
 
-# SHOCK: 10% Incremento FIT (Impuesto a las Empresas)
+# SHOCK: 1% Disminución FIT (Impuesto a las Empresas)
 ```{r}
 # 1. Definir el shock
 fit_base <- get_par_values(model)["fit"]
-fit_shock <- as.numeric(fit_base) * (1-0.010)
+fit_shock <- as.numeric(fit_base) + (-0.010)
 
 # 2. Aplicar el shock usando set_free_par
-model_shock_fit <- set_free_par(model, list(fit = fit_shock))
+model_shock_fit <- set_free_par(model, free_par =list(fit = fit_shock))
 
 # 3. Resolver con Broyden
 model_shock_fit <- steady_state(model_shock_fit, calibration = F, 
@@ -398,7 +402,7 @@ pib_shock_fit <- pib_shock_list$PIB
 # ANALYSIS FIT
 ```{r}
 # Comparación
-vars_to_compare <- c("INC", "Tax", "SAVf", "INGF", "INGG", "FIRMTAX", "VAT", "pk", "w")
+vars_to_compare <- c("INC", "Tax", "SAVf", "INGF", "INGG", "FIRMTAX", "VAT", "pk", "w", "TOTAL_SAV", "inv_adj")
 
 comp_fit <- data.frame(
     Variable = vars_to_compare,
@@ -409,9 +413,51 @@ comp_fit <- data.frame(
 comp_fit$Diff_Pct <- round((comp_fit$Shock / comp_fit$Base - 1) * 100, 4)
 comp_fit$Impact_Pct_PIB <- round((comp_fit$Shock - comp_fit$Base) / pib_base * 100, 4)
 
-cat("--- RESULTADOS DE LA SIMULACIÓN: INCREMENTO 10% FIT ---\n")
+cat("--- RESULTADOS DE LA SIMULACIÓN: disminución 1% FIT ---\n")
 cat("PIB Base:          ", round(pib_base, 2), "\n")
 cat("PIB Shock:         ", round(pib_shock_fit, 2), "\n")
 cat("Cambio PIB (%):    ", round((pib_shock_fit / pib_base - 1) * 100, 6), "%\n\n")
 print(comp_fit)
+```
+
+# SHOCK: 10% Incremento IVA (Impuesto al Valor Agregado)
+```{r}
+# 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto)
+p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
+vat_names <- paste0("vat__", p_names)
+vat_base <- get_par_values(model)[vat_names]
+vat_shock <- as.list(as.numeric(vat_base) * 1.10)
+names(vat_shock) <- vat_names
+
+# 2. Aplicar el shock usando set_free_par
+model_shock_vat <- set_free_par(model, free_par = vat_shock)
+
+# 3. Resolver con Broyden
+model_shock_vat <- steady_state(model_shock_vat, calibration = F, 
+                      options_list = list(xscalm="auto",  max_iter = 100000, tol = 1e-5))
+
+res_shock_vat <- get_ss_values(model_shock_vat)
+pib_shock_vat_list <- calc_pib(model_shock_vat)
+pib_shock_vat <- pib_shock_vat_list$PIB
+```
+
+# ANALYSIS IVA
+```{r}
+# Comparación
+vars_to_compare <- c("INC", "Tax", "SAVf", "INGF", "INGG", "FIRMTAX", "VAT", "pk", "w", "TOTAL_SAV", "inv_adj")
+
+comp_vat <- data.frame(
+    Variable = vars_to_compare,
+    Base = as.numeric(res_base[vars_to_compare]),
+    Shock = as.numeric(res_shock_vat[vars_to_compare])
+)
+
+comp_vat$Diff_Pct <- round((comp_vat$Shock / comp_vat$Base - 1) * 100, 4)
+comp_vat$Impact_Pct_PIB <- round((comp_vat$Shock - comp_vat$Base) / pib_base * 100, 4)
+
+cat("--- RESULTADOS DE LA SIMULACIÓN: Aumento 10% IVA ---\n")
+cat("PIB Base:          ", round(pib_base, 2), "\n")
+cat("PIB Shock:         ", round(pib_shock_vat, 2), "\n")
+cat("Cambio PIB (%):    ", round((pib_shock_vat / pib_base - 1) * 100, 6), "%\n\n")
+print(comp_vat)
 ```
