@@ -1,0 +1,77 @@
+---
+title: "calculo pib"
+author: "fh"
+date: "2026-04-01"
+output: html_document
+---
+
+# Cálculo del PIB
+
+```{r}
+#Función para calcular el PIB
+calc_pib <- function(model_obj) {
+    ss_vals <- get_ss_values(model_obj)
+    par_vals <- get_par_values(model_obj)
+    p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
+    p_eq <- ss_vals[paste0("p__", p_names)]
+    # Components from GCN Market Clearing (Expenditure Approach)
+    # GDP = C + G + I + V + X - M
+    # 1. Consumption (Variables D*p)
+    C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
+    # 2. Government and Investment (Parameters G and I are expenditure values in GCN: G/p * p = G)
+    inv_adj_val <- ss_vals["inv_adj"]
+    if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
+    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_eq, na.rm = TRUE)
+    I_val <- sum(par_vals[paste0("I_data__", p_names)] * p_eq, na.rm = TRUE) * inv_adj_val
+    # 3. Inventory Changes (Parameter vexist is quantity in GCN: vexist * p)
+    V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
+    # 4. Exports (Parameter edp is quantity in GCN: edp * p)
+    X_val <- sum(par_vals[paste0("edp__", p_names)] * p_eq, na.rm = TRUE)
+    # 5. Imports (Parameter mdp is supply quantity in GCN: mdp * producer_price)
+    M_val <- sum(par_vals[paste0("mdp__", p_names)] * p_eq, na.rm = TRUE)
+    
+    # Real GDP components (Laspeyres Index at base p=1.0)
+    p_base <- rep(1.0, length(p_names))
+    names(p_base) <- paste0("p__", p_names)
+    C_real <- sum(ss_vals[paste0("D__", p_names)] * p_base, na.rm = TRUE)
+    G_real <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_base, na.rm = TRUE)
+    I_real <- sum(par_vals[paste0("I_data__", p_names)] * p_base, na.rm = TRUE) * inv_adj_val
+    V_real <- sum(par_vals[paste0("vexist__", p_names)] * p_base, na.rm = TRUE)
+    X_real <- sum(par_vals[paste0("edp__", p_names)] * p_base, na.rm = TRUE)
+    M_real <- sum(par_vals[paste0("mdp__", p_names)] * p_base, na.rm = TRUE)
+    
+    return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
+                PIB = C + G_val + I_val + V_val + X_val - M_val,
+                C_real=C_real, G_real=G_real, I_real=I_real, V_real=V_real, X_real=X_real, M_real=M_real,
+                PIB_real = C_real + G_real + I_real + V_real + X_real - M_real))
+}
+```
+
+```{r}
+# Cálculo y Descomposición del PIB (Enfoque del Gasto)
+PIB_SAM <- sum(D_m) + sum(G_m) + sum(I_m) + sum(V_m) + sum(E_m) - sum(M_m)
+cat("\nDescomposición del PIB (Enfoque del Gasto) - Valores SAM:\n")
+cat("Consumo Hogares (C):       ", round(sum(D_m), 2), "\n")
+cat("Consumo Gobierno (G):      ", round(sum(G_m), 2), "\n")
+cat("Inversión (I):             ", round(sum(I_m), 2), "\n")
+cat("Var. Existencias (V):      ", round(sum(V_m), 2), "\n")
+cat("Exportaciones (X):         ", round(sum(E_m), 2), "\n")
+cat("Importaciones (M) (-):     ", round(sum(M_m), 2), "\n")
+cat("--------------------------------------------------\n")
+cat("PIB Total:                 ", round(PIB_SAM, 2), "\n\n")
+
+# Resultados base
+res_base <- get_ss_values(model)
+pib_model_list <- calc_pib(model)
+pib_base <- pib_model_list$PIB
+pib_real_base <- pib_model_list$PIB_real
+
+pib_df <- data.frame(
+    Componente = c("Consumo_Hog", "Consumo_Gob", "Inversion", "Var_Exist", "Exports", "Imports_(-)", "PIB_Total"),
+    SAM_Base = c(sum(D_m), sum(G_m), sum(I_m), sum(V_m), sum(E_m), sum(M_m), PIB_SAM),
+    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I, 
+                  pib_model_list$V, pib_model_list$X, pib_model_list$M, pib_base)
+)
+pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
+print(pib_df)
+```

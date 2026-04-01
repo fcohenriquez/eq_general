@@ -265,6 +265,13 @@ calib_par_flat <- unlist(list(
 model <- initval_calibr_par(model, calib_par_flat)
 
 # 3. Variable initialization
+# Valores iniciales dinámicos para variables agregadas
+TD_initial <- as.numeric(D_m + G_m + I_m + V_m + rowSums(X_matrix) + E_m)
+names(TD_initial) <- p_names
+TD_Dom_initial <- as.numeric(D_m + G_m + I_m + V_m + rowSums(X_matrix))
+names(TD_Dom_initial) <- p_names
+pb_initial <- 1.0 * ((TD_Dom_initial * (1.0 - as.numeric(vat_r) - as.numeric(tar_r)) + E_m) / (TD_initial + 1e-9)) - (as.numeric(chile_sam["Imptos_Espec", p_names]) / (TD_initial + 1e-9))
+
 var_list <- list(
     INGF = INGF_v, INGG = INGG_v,
     FIRMTAX = FIRMTAX_v, PITAX = PITAX_v,
@@ -273,7 +280,7 @@ var_list <- list(
     SAVf = SAVf_v, SAVg = SAVg_v,
     TOTAL_SAV = SAV_h_v + SAVf_v + SAVg_v,
     inv_adj = 1.0,
-    VAT = VAT_sum, Tax = Tax_v,
+    VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, w = 1.0, exr = 1.0, Kh = Kh_val, Lh = Lh_val, Kf = Kf_val, Kg = Kg_val,
     RENT_M = 0, RENT_E = 0, U = U_val, lambda__CONSUMER_1 = lambda_val
 )
@@ -281,6 +288,10 @@ init_vars <- unlist(list(
     var_list,
     get_flow_values(rep(0, 6), "pi", s_names), get_flow_values(rep(1, 6), "p", p_names),
     get_flow_values(rep(1, 6), "pe", p_names), get_flow_values(1 / (1 + tar_r), "pm", p_names),
+    TD_Agri = as.numeric(TD_initial["prod_Agri"]), TD_Const = as.numeric(TD_initial["prod_const"]),
+    get_flow_values(as.numeric(TD_initial[pmin_names]), "TD_PMin", pmin_names),
+    TD_Dom_Agri = as.numeric(TD_Dom_initial["prod_Agri"]), TD_Dom_Const = as.numeric(TD_Dom_initial["prod_const"]),
+    get_flow_values(as.numeric(TD_Dom_initial[pmin_names]), "TD_Dom_PMin", pmin_names),
     get_flow_values(pmax(D_con, 0.1), "D", p_names[pcon_idx]),
     D__prod_Min = 1e-6, D__prod_const = 1e-6,
     get_flow_values(pmax(V_sector_vals, 0.1), "V", s_names),
@@ -304,9 +315,8 @@ model <- initval_var(model, init_vars)
 
 ```{r solution}
 # Resolver el modelo
-model <- steady_state(model, calibration = TRUE,
-                      options_list = list(method = "Newton", global = "gline",
-                                        max_iter = 100000, tol = 3e-5))
+eq_options <- list(method = "Newton", global = "gline", max_iter = 10000, tol = 3e-5)
+model <- steady_state(model, calibration = TRUE, options_list = eq_options)
 cat("Norma final de residuos:", pracma::Norm(model@residual_vector), "\n")
 cat("Modelo finalizado.\n")
 ```
@@ -322,142 +332,4 @@ pracma::Norm(model@residual_vector)
 ```{r}
 var_info(model, all = T)
 get_par_values(model)
-```
-
-# Cálculo del PIB
-
-```{r}
-#Función para calcular el PIB
-calc_pib <- function(model_obj) {
-    ss_vals <- get_ss_values(model_obj)
-    par_vals <- get_par_values(model_obj)
-    p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
-    p_eq <- ss_vals[paste0("p__", p_names)]
-    # Components from GCN Market Clearing (Expenditure Approach)
-    # GDP = C + G + I + V + X - M
-    # 1. Consumption (Variables D*p)
-    C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
-    # 2. Government and Investment (Parameters G and I are expenditure values in GCN: G/p * p = G)
-    inv_adj_val <- ss_vals["inv_adj"]
-    if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
-    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_eq, na.rm = TRUE)
-    I_val <- sum(par_vals[paste0("I_data__", p_names)] * p_eq, na.rm = TRUE) * inv_adj_val
-    # 3. Inventory Changes (Parameter vexist is quantity in GCN: vexist * p)
-    V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
-    # 4. Exports (Parameter edp is quantity in GCN: edp * p)
-    X_val <- sum(par_vals[paste0("edp__", p_names)] * p_eq, na.rm = TRUE)
-    # 5. Imports (Parameter mdp is supply quantity in GCN: mdp * producer_price)
-    M_val <- sum(par_vals[paste0("mdp__", p_names)] * p_eq, na.rm = TRUE)
-    return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
-                PIB = C + G_val + I_val + V_val + X_val - M_val))
-}
-```
-
-```{r}
-# Cálculo y Descomposición del PIB (Enfoque del Gasto)
-PIB_SAM <- sum(D_m) + sum(G_m) + sum(I_m) + sum(V_m) + sum(E_m) - sum(M_m)
-cat("\nDescomposición del PIB (Enfoque del Gasto) - Valores SAM:\n")
-cat("Consumo Hogares (C):       ", round(sum(D_m), 2), "\n")
-cat("Consumo Gobierno (G):      ", round(sum(G_m), 2), "\n")
-cat("Inversión (I):             ", round(sum(I_m), 2), "\n")
-cat("Var. Existencias (V):      ", round(sum(V_m), 2), "\n")
-cat("Exportaciones (X):         ", round(sum(E_m), 2), "\n")
-cat("Importaciones (M) (-):     ", round(sum(M_m), 2), "\n")
-cat("--------------------------------------------------\n")
-cat("PIB Total:                 ", round(PIB_SAM, 2), "\n\n")
-
-# Resultados base
-res_base <- get_ss_values(model)
-pib_model_list <- calc_pib(model)
-pib_base <- pib_model_list$PIB
-
-pib_df <- data.frame(
-    Componente = c("Consumo_Hog", "Consumo_Gob", "Inversion", "Var_Exist", "Exports", "Imports_(-)", "PIB_Total"),
-    SAM_Base = c(sum(D_m), sum(G_m), sum(I_m), sum(V_m), sum(E_m), sum(M_m), PIB_SAM),
-    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I, 
-                  pib_model_list$V, pib_model_list$X, pib_model_list$M, pib_base)
-)
-pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
-print(pib_df)
-```
-
-# SHOCK: 1% Disminución FIT (Impuesto a las Empresas)
-```{r}
-# 1. Definir el shock
-fit_base <- get_par_values(model)["fit"]
-fit_shock <- as.numeric(fit_base) + (-0.010)
-
-# 2. Aplicar el shock usando set_free_par
-model_shock_fit <- set_free_par(model, free_par =list(fit = fit_shock))
-
-# 3. Resolver con Broyden
-model_shock_fit <- steady_state(model_shock_fit, calibration = F, 
-                      options_list = list(xscalm="auto",  max_iter = 100000, tol = 1e-5))
-
-res_shock_fit <- get_ss_values(model_shock_fit)
-pib_shock_list <- calc_pib(model_shock_fit)
-pib_shock_fit <- pib_shock_list$PIB
-```
-
-# ANALYSIS FIT
-```{r}
-# Comparación
-vars_to_compare <- c("INC", "Tax", "SAVf", "INGF", "INGG", "FIRMTAX", "VAT", "pk", "w", "TOTAL_SAV", "inv_adj")
-
-comp_fit <- data.frame(
-    Variable = vars_to_compare,
-    Base = as.numeric(res_base[vars_to_compare]),
-    Shock = as.numeric(res_shock_fit[vars_to_compare])
-)
-
-comp_fit$Diff_Pct <- round((comp_fit$Shock / comp_fit$Base - 1) * 100, 4)
-comp_fit$Impact_Pct_PIB <- round((comp_fit$Shock - comp_fit$Base) / pib_base * 100, 4)
-
-cat("--- RESULTADOS DE LA SIMULACIÓN: disminución 1% FIT ---\n")
-cat("PIB Base:          ", round(pib_base, 2), "\n")
-cat("PIB Shock:         ", round(pib_shock_fit, 2), "\n")
-cat("Cambio PIB (%):    ", round((pib_shock_fit / pib_base - 1) * 100, 6), "%\n\n")
-print(comp_fit)
-```
-
-# SHOCK: 10% Incremento IVA (Impuesto al Valor Agregado)
-```{r}
-# 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto)
-p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
-vat_names <- paste0("vat__", p_names)
-vat_base <- get_par_values(model)[vat_names]
-vat_shock <- as.list(as.numeric(vat_base) * 1.10)
-names(vat_shock) <- vat_names
-
-# 2. Aplicar el shock usando set_free_par
-model_shock_vat <- set_free_par(model, free_par = vat_shock)
-
-# 3. Resolver con Broyden
-model_shock_vat <- steady_state(model_shock_vat, calibration = F, 
-                      options_list = list(xscalm="auto",  max_iter = 100000, tol = 1e-5))
-
-res_shock_vat <- get_ss_values(model_shock_vat)
-pib_shock_vat_list <- calc_pib(model_shock_vat)
-pib_shock_vat <- pib_shock_vat_list$PIB
-```
-
-# ANALYSIS IVA
-```{r}
-# Comparación
-vars_to_compare <- c("INC", "Tax", "SAVf", "INGF", "INGG", "FIRMTAX", "VAT", "pk", "w", "TOTAL_SAV", "inv_adj")
-
-comp_vat <- data.frame(
-    Variable = vars_to_compare,
-    Base = as.numeric(res_base[vars_to_compare]),
-    Shock = as.numeric(res_shock_vat[vars_to_compare])
-)
-
-comp_vat$Diff_Pct <- round((comp_vat$Shock / comp_vat$Base - 1) * 100, 4)
-comp_vat$Impact_Pct_PIB <- round((comp_vat$Shock - comp_vat$Base) / pib_base * 100, 4)
-
-cat("--- RESULTADOS DE LA SIMULACIÓN: Aumento 10% IVA ---\n")
-cat("PIB Base:          ", round(pib_base, 2), "\n")
-cat("PIB Shock:         ", round(pib_shock_vat, 2), "\n")
-cat("Cambio PIB (%):    ", round((pib_shock_vat / pib_base - 1) * 100, 6), "%\n\n")
-print(comp_vat)
 ```

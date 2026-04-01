@@ -152,38 +152,29 @@ block PRODUCTS
 {
     identities
     {
-        # MC for products in Pno5 (X exists in SA+SB+SC except prod_Agri not in SC)
-        # We need separate handling per product. Use PMin for products that exist in all 3 groups.
-        
-        # prod_Agri MC: X in SA and SB only (not in SC=Act_Min). x_agri_min_data accounts for excluded SAM entry.
-        SUM<i_sa_a::SA>(Yap<'prod_Agri', i_sa_a>[]) + SUM<i_sb_a::SB>(Yap<'prod_Agri', i_sb_a>[]) + SUM<i_sc_a::SC>(Yap<'prod_Agri', i_sc_a>[]) + mdp<'prod_Agri'> + VAT_p<'prod_Agri'>[] + Arancel_p<'prod_Agri'>[] + imptos_espec_p<'prod_Agri'> = 
-               D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]) + x_agri_min_data + edp<'prod_Agri'>;
+        # --- DEMANDAS DOMÉSTICAS (TD_Dom) (Excluye Exportaciones para Base Tributaria) ---
+        TD_Dom_Agri[] = D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]) + x_agri_min_data;
+        <idx_mc4::PMin> TD_Dom_PMin<idx_mc4>[] = D<idx_mc4>[] + gg_market_data_p<idx_mc4> + (I_data<idx_mc4> * inv_adj[]) + vexist<idx_mc4> + SUM<i_aa4::SA>(X<idx_mc4, i_aa4>[]) + SUM<i_ab4::SB>(X<idx_mc4, i_ab4>[]) + SUM<i_ac4::SC>(X<idx_mc4, i_ac4>[]);
+        TD_Dom_Const[] = D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_ab_c::SB>(X<'prod_const', i_ab_c>[]);
 
-        # MC for PMin products (X in SA+SB+SC)
-        <idx_mc4::PMin> SUM<i_sa4::SA>(Yap<idx_mc4, i_sa4>[]) + SUM<i_sb4::SB>(Yap<idx_mc4, i_sb4>[]) + SUM<i_sc4::SC>(Yap<idx_mc4, i_sc4>[]) + mdp<idx_mc4> + VAT_p<idx_mc4>[] + Arancel_p<idx_mc4>[] + imptos_espec_p<idx_mc4> = 
-               D<idx_mc4>[] + gg_market_data_p<idx_mc4> + (I_data<idx_mc4> * inv_adj[]) + vexist<idx_mc4> + SUM<i_aa4::SA>(X<idx_mc4, i_aa4>[]) + SUM<i_ab4::SB>(X<idx_mc4, i_ab4>[]) + SUM<i_ac4::SC>(X<idx_mc4, i_ac4>[]) + edp<idx_mc4>;
-        
-        # prod_const MC: X only in SB (not in SA or SC)
-        SUM<i_sa_c::SA>(Yap<'prod_const', i_sa_c>[]) + SUM<i_sb_c::SB>(Yap<'prod_const', i_sb_c>[]) + SUM<i_sc_c::SC>(Yap<'prod_const', i_sc_c>[]) + mdp<'prod_const'> + VAT_p<'prod_const'>[] + Arancel_p<'prod_const'>[] + imptos_espec_p<'prod_const'> = 
-               D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_ab_c::SB>(X<'prod_const', i_ab_c>[]) + edp<'prod_const'>;
-        
-        # VAT for prod_Agri (X in SA+SB only + exogenous x_agri_min_data)
-        VAT_p<'prod_Agri'>[] = vat<'prod_Agri'> * p<'prod_Agri'>[] * (D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_va_a::SA>(X<'prod_Agri', i_va_a>[]) + SUM<i_vb_a::SB>(X<'prod_Agri', i_vb_a>[]) + x_agri_min_data);
-        
-        # VAT for PMin products (X in SA+SB+SC)
-        <idx_pv4::PMin> VAT_p<idx_pv4>[] = vat<idx_pv4> * p<idx_pv4>[] * (D<idx_pv4>[] + gg_market_data_p<idx_pv4> + (I_data<idx_pv4> * inv_adj[]) + vexist<idx_pv4> + SUM<i_va4::SA>(X<idx_pv4, i_va4>[]) + SUM<i_vb4::SB>(X<idx_pv4, i_vb4>[]) + SUM<i_vc4::SC>(X<idx_pv4, i_vc4>[]));
-        
-        # VAT for prod_const (X in SB only)
-        VAT_p<'prod_const'>[] = vat<'prod_const'> * p<'prod_const'>[] * (D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_vbc::SB>(X<'prod_const', i_vbc>[]));
+        # --- DEFINICIÓN DE DEMANDAS TOTALES FÍSICAS (TD) ---
+        TD_Agri[] = TD_Dom_Agri[] + edp<'prod_Agri'>;
+        <idx_t::PMin> TD_PMin<idx_t>[] = TD_Dom_PMin<idx_t>[] + edp<idx_t>;
+        TD_Const[] = TD_Dom_Const[] + edp<'prod_const'>;
 
-        # Arancel for prod_Agri (+ exogenous x_agri_min_data)
-        Arancel_p<'prod_Agri'>[] = tar_rate<'prod_Agri'> * p<'prod_Agri'>[] * (D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_ar::SA>(X<'prod_Agri', i_aa_ar>[]) + SUM<i_ab_ar::SB>(X<'prod_Agri', i_ab_ar>[]) + x_agri_min_data);
-        
-        # Arancel for PMin products
-        <idx_pa4::PMin> Arancel_p<idx_pa4>[] = tar_rate<idx_pa4> * p<idx_pa4>[] * (D<idx_pa4>[] + gg_market_data_p<idx_pa4> + (I_data<idx_pa4> * inv_adj[]) + vexist<idx_pa4> + SUM<i_aa_a4::SA>(X<idx_pa4, i_aa_a4>[]) + SUM<i_ab_a4::SB>(X<idx_pa4, i_ab_a4>[]) + SUM<i_ac_a4::SC>(X<idx_pa4, i_ac_a4>[]));
-        
-        # Arancel for prod_const
-        Arancel_p<'prod_const'>[] = tar_rate<'prod_const'> * p<'prod_const'>[] * (D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_abc_ar::SB>(X<'prod_const', i_abc_ar>[]));
+        # --- VACIADO DE MERCADO FÍSICO Y FISCAL (EVITANDO ILUSIÓN MONETARIA) ---
+        SUM<i_sa_a::SA>(Yap<'prod_Agri', i_sa_a>[]) + SUM<i_sb_a::SB>(Yap<'prod_Agri', i_sb_a>[]) + SUM<i_sc_a::SC>(Yap<'prod_Agri', i_sc_a>[]) + mdp<'prod_Agri'> + (VAT_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (Arancel_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (imptos_espec_p<'prod_Agri'> / p<'prod_Agri'>[]) = TD_Agri[];
+        <idx_mc4b::PMin> SUM<i_sa4b::SA>(Yap<idx_mc4b, i_sa4b>[]) + SUM<i_sb4b::SB>(Yap<idx_mc4b, i_sb4b>[]) + SUM<i_sc4b::SC>(Yap<idx_mc4b, i_sc4b>[]) + mdp<idx_mc4b> + (VAT_p<idx_mc4b>[] / p<idx_mc4b>[]) + (Arancel_p<idx_mc4b>[] / p<idx_mc4b>[]) + (imptos_espec_p<idx_mc4b> / p<idx_mc4b>[]) = TD_PMin<idx_mc4b>[];
+        SUM<i_sa_c::SA>(Yap<'prod_const', i_sa_c>[]) + SUM<i_sb_c::SB>(Yap<'prod_const', i_sb_c>[]) + SUM<i_sc_c::SC>(Yap<'prod_const', i_sc_c>[]) + mdp<'prod_const'> + (VAT_p<'prod_const'>[] / p<'prod_const'>[]) + (Arancel_p<'prod_const'>[] / p<'prod_const'>[]) + (imptos_espec_p<'prod_const'> / p<'prod_const'>[]) = TD_Const[];
+
+        # --- ECUACIONES DE RECAUDACIÓN NOMINAL (Solo sobre TD_Dom) ---
+        VAT_p<'prod_Agri'>[] = vat<'prod_Agri'> * p<'prod_Agri'>[] * TD_Dom_Agri[];
+        <idx_mc4v::PMin> VAT_p<idx_mc4v>[] = vat<idx_mc4v> * p<idx_mc4v>[] * TD_Dom_PMin<idx_mc4v>[];
+        VAT_p<'prod_const'>[] = vat<'prod_const'> * p<'prod_const'>[] * TD_Dom_Const[];
+
+        Arancel_p<'prod_Agri'>[] = tar_rate<'prod_Agri'> * p<'prod_Agri'>[] * TD_Dom_Agri[];
+        <idx_mc4a::PMin> Arancel_p<idx_mc4a>[] = tar_rate<idx_mc4a> * p<idx_mc4a>[] * TD_Dom_PMin<idx_mc4a>[];
+        Arancel_p<'prod_const'>[] = tar_rate<'prod_const'> * p<'prod_const'>[] * TD_Dom_Const[];
 
         <idx_p_m::P> pm<idx_p_m>[] = pworldm<idx_p_m> * exr[] / (1.0 + tar_rate<idx_p_m>);
         <idx_p_e::P> pe<idx_p_e>[] = pworlde<idx_p_e> * exr[];
@@ -212,11 +203,14 @@ block GOB
         Kg[] = k_total_data * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
         PITAX[] = pit * (pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
-        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + 
-                SUM<idx_sa::SA>((tps<idx_sa> + tes<idx_sa>) * revenue<idx_sa>[]) +
-                SUM<idx_sb::SB>((tps<idx_sb> + tes<idx_sb>) * revenue<idx_sb>[]) +
-                SUM<idx_sc::SC>((tps<idx_sc> + tes<idx_sc>) * revenue<idx_sc>[]) +
-                SUM<idx_p2::P>(Arancel_p<idx_p2>[]) + imptos_espec_data;
+        TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
+                  SUM<idx_sb::SB>(tps<idx_sb> * revenue<idx_sb>[]) +
+                  SUM<idx_sc::SC>(tps<idx_sc> * revenue<idx_sc>[]);
+        TESP[] = SUM<idx_sa::SA>(tes<idx_sa> * revenue<idx_sa>[]) +
+                 SUM<idx_sb::SB>(tes<idx_sb> * revenue<idx_sb>[]) +
+                 SUM<idx_sc::SC>(tes<idx_sc> * revenue<idx_sc>[]) + imptos_espec_data;
+        TARANCEL[] = SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
+        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[];
     };
 };
 
@@ -240,7 +234,7 @@ block INVESTMENT
     identities
     {
         TOTAL_SAV[] = SAV[] + SAVf[] + SAVg[];
-        inv_adj[] = TOTAL_SAV[] / (SUM<idx_i_p::P>(I_data<idx_i_p> * p<idx_i_p>[]));
+        inv_adj[] = (TOTAL_SAV[] - SUM<idx_v_p::P>(vexist<idx_v_p> * p<idx_v_p>[])) / (SUM<idx_i_p::P>(I_data<idx_i_p> * p<idx_i_p>[]));
     };
 }
 

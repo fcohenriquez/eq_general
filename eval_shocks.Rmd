@@ -1,0 +1,118 @@
+---
+title: "evaluacion shocks"
+author: "fh"
+date: "2026-04-01"
+output: html_document
+---
+
+# Parametros
+```{r}
+vars_to_compare <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "w", "pk", "exr")
+
+print_macro_impact <- function(name, p_base_list, p_shock_list) {
+    cat(sprintf("--- RESULTADOS DE LA SIMULACIÓN: %s ---\n", name))
+    
+    var_pib_nom <- (p_shock_list$PIB / p_base_list$PIB - 1) * 100
+    var_pib_real <- (p_shock_list$PIB_real / p_base_list$PIB_real - 1) * 100
+    
+    var_c_real <- (p_shock_list$C_real / p_base_list$C_real - 1) * 100
+    var_i_real <- (p_shock_list$I_real / p_base_list$I_real - 1) * 100
+    var_g_real <- (p_shock_list$G_real / p_base_list$G_real - 1) * 100
+    var_x_real <- (p_shock_list$X_real / p_base_list$X_real - 1) * 100
+    var_m_real <- (p_shock_list$M_real / p_base_list$M_real - 1) * 100
+    
+    cat(sprintf("PIB Nominal Base:     %.2f \n", p_base_list$PIB))
+    cat(sprintf("PIB Nominal Shock:    %.2f \n", p_shock_list$PIB))
+    cat(sprintf("Cambio PIB Nominal:   %.6f %%\n", var_pib_nom))
+    cat(sprintf("PIB Real Base:        %.2f \n", p_base_list$PIB_real))
+    cat(sprintf("PIB Real Shock:       %.2f \n", p_shock_list$PIB_real))
+    cat(sprintf("Cambio PIB Real (%%):  %.6f %%\n", var_pib_real))
+    cat("  ├─ Cambios en Componentes Reales:\n")
+    cat(sprintf("     ├─ Consumo (C_real)   : %8.4f %%\n", var_c_real))
+    cat(sprintf("     ├─ Inversión (I_real) : %8.4f %%\n", var_i_real))
+    cat(sprintf("     ├─ Gobierno (G_real)  : %8.4f %%\n", var_g_real))
+    cat(sprintf("     ├─ Exportaciones (X)  : %8.4f %%\n", var_x_real))
+    cat(sprintf("     └─ Importaciones (M)  : %8.4f %%\n\n", var_m_real))
+}
+
+calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {
+    comp <- data.frame(
+        Variable = vars,
+        Base = as.numeric(res_base[vars]),
+        Shock = as.numeric(res_shock[vars])
+    )
+    
+    deflator <- pib_shock_list$PIB / pib_shock_list$PIB_real
+    comp$Shock_Real <- comp$Shock / deflator
+    
+    #comp$Diff_Nominal_Pct <- round((comp$Shock / comp$Base - 1) * 100, 4)
+    comp$Diff_Real_Pct <- round((comp$Shock_Real / comp$Base - 1) * 100, 4)
+    #comp$Impact_PIB_Nominal <- round((comp$Shock - comp$Base) / pib_base * 100, 4)
+    comp$Impact_PIB_Real <- round((comp$Shock_Real - comp$Base) / pib_real_base * 100, 4)
+    
+    return(comp)
+}
+```
+
+
+# SHOCK: 1% Disminución FIT (Impuesto a las Empresas)
+```{r}
+# 1. Definir el shock
+fit_base <- get_par_values(model)["fit"]
+fit_shock <- as.numeric(fit_base) + (-0.010)
+
+# 2. Aplicar el shock usando set_free_par
+model_shock_fit <- set_free_par(model, free_par =list(fit = fit_shock))
+
+# 3. Resolver con Broyden
+model_shock_fit <- steady_state(model_shock_fit, calibration = F, 
+                      options_list = list(xscalm="auto",  max_iter = 100000, tol = 1e-5))
+
+res_shock_fit <- get_ss_values(model_shock_fit)
+pib_shock_list <- calc_pib(model_shock_fit)
+pib_shock_fit <- pib_shock_list$PIB
+pib_shock_fit_real <- pib_shock_list$PIB_real
+```
+
+# ANALYSIS FIT
+```{r}
+# Comparación
+
+comp_fit <- calc_tax_impact(res_base, res_shock_fit, pib_base, pib_real_base, pib_shock_list, vars_to_compare)
+
+print_macro_impact("disminución 1% FIT", pib_model_list, pib_shock_list)
+print(comp_fit)
+```
+
+# SHOCK: 10% Incremento IVA (Impuesto al Valor Agregado)
+```{r}
+# 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto)
+p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
+vat_names <- paste0("vat__", p_names)
+vat_base <- get_par_values(model)[vat_names]
+vat_shock <- as.list(as.numeric(vat_base) * 1.010)
+names(vat_shock) <- vat_names
+
+# 2. Aplicar el shock usando set_free_par
+model_shock_vat <- set_free_par(model, free_par = vat_shock)
+
+# 3. Resolver con Broyden
+model_shock_vat <- steady_state(model_shock_vat, calibration = F, 
+                      options_list = list(xscalm="auto",  max_iter = 100000, tol = 1e-5))
+
+res_shock_vat <- get_ss_values(model_shock_vat)
+pib_shock_vat_list <- calc_pib(model_shock_vat)
+pib_shock_vat <- pib_shock_vat_list$PIB
+pib_shock_vat_real <- pib_shock_vat_list$PIB_real
+```
+
+# ANALYSIS IVA
+```{r}
+# Comparación
+
+
+comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pib_shock_vat_list, vars_to_compare)
+
+print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list)
+print(comp_vat)
+```
