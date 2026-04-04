@@ -36,19 +36,26 @@ print_macro_impact <- function(name, p_base_list, p_shock_list) {
 }
 
 calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {
+    # Clasificar variables: precios vs montos nominales
+    price_vars <- c("w", "pk", "exr")
+    
     comp <- data.frame(
         Variable = vars,
         Base = as.numeric(res_base[vars]),
-        Shock = as.numeric(res_shock[vars])
+        Shock = as.numeric(res_shock[vars]),
+        stringsAsFactors = FALSE
     )
     
-    deflator <- pib_shock_list$PIB / pib_shock_list$PIB_real
-    comp$Shock_Real <- comp$Shock / deflator
+    # Cambio % directo en unidades del numerario (exr=1)
+    # Todos los valores ya son "reales" respecto al numerario, no necesitan deflactarse
+    comp$Cambio_Pct <- round((comp$Shock / comp$Base - 1) * 100, 4)
     
-    #comp$Diff_Nominal_Pct <- round((comp$Shock / comp$Base - 1) * 100, 4)
-    comp$Diff_Real_Pct <- round((comp$Shock_Real / comp$Base - 1) * 100, 4)
-    #comp$Impact_PIB_Nominal <- round((comp$Shock - comp$Base) / pib_base * 100, 4)
-    comp$Impact_PIB_Real <- round((comp$Shock_Real - comp$Base) / pib_real_base * 100, 4)
+    # Impacto como % del PIB real base (solo para montos, no para precios)
+    comp$Impacto_PIB_Pct <- ifelse(
+        comp$Variable %in% price_vars,
+        NA,
+        round((comp$Shock - comp$Base) / pib_real_base * 100, 4)
+    )
     
     return(comp)
 }
