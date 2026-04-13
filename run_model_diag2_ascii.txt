@@ -1,0 +1,19 @@
+Rscript.exe : Cargando paquete requerido: MASS
+En l?nea: 1 Car?cter: 1
++ & 'C:\Users\francisco.henriquez\AppData\Local\Programs\R\R-4.5.1\bin\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Cargando paquete requerido: MASS:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Cargando paquete requerido: Matrix
+Cargando paquete requerido: nleqslv
+Cargando paquete requerido: Rcpp
+This is gEcon version 1.2.3 (2025-04-13)
+http://gecon.r-forge.r-project.org/
+model parsed in 0.36s
+model loaded in 0.17s
+Aviso:
+In make_model("cge_calib_chile_6_sect.gcn") : 
+(gEcon warning): the number of variables / equations exceeds 100 and Rcpp output option is set to false - this may 
+lead to long compilation of model equations (by JIT compiler); if this is the case, consider using option "output R 
+Rcpp = TRUE"

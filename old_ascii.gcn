@@ -4,8 +4,6 @@ indexsets
   Pcon = {'prod_Agri', 'prod_Manu', 'prod_elect_agua_gas', 'prod_serv'};
   Pno5 = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_serv'};
   PMin = {'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_serv'};
-  P_Exp = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_serv'};
-  P_NExp = {'prod_elect_agua_gas', 'prod_const'};
   SA = { 'Act_Agri', 'Act_Manu', 'Act_elect_agua_gas' };
   SB = { 'Act_const', 'Act_serv' };
   SC = { 'Act_Min' };
@@ -31,7 +29,7 @@ block CONSUMER
     
     identities
     {
-        INC[] = BTINC[] - PITAX[];
+        INC[] = BTINC[] - PITAX[] + RENT_M[] + RENT_E[];
         BTINC[] = pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
         SAV[] = INC[] * por_sav;
         CS[] = INC[] * por_cont;
@@ -55,7 +53,7 @@ block <sa::SA>SECTORS_A
 
     objective
     {
-        pi<sa>[] = V<sa>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sa>)) * (1.0 - tps<sa> - tes<sa>) 
+        pi<sa>[] = V<sa>[] * (SUM<idx_pv::P>(p<idx_pv>[] * make_share<idx_pv, sa>)) * (1.0 - tps<sa> - tes<sa>) 
                   - K<sa>[] * pk[] - L<sa>[] * w[] - SUM<idx_x_o::Pno5>(X<idx_x_o, sa>[] * p<idx_x_o>[]);
     };
 
@@ -67,7 +65,7 @@ block <sa::SA>SECTORS_A
     identities
     {
         <idx_y::P> Yap<idx_y, sa>[] = V<sa>[] * make_share<idx_y, sa>;
-        revenue<sa>[] = SUM<idx_rev::P>(Yap<idx_rev, sa>[] * pz<idx_rev>[]);
+        revenue<sa>[] = SUM<idx_rev::P>(Yap<idx_rev, sa>[] * p<idx_rev>[]);
         net_revenue<sa>[] = revenue<sa>[] * (1.0 - tps<sa> - tes<sa>);
     };
 
@@ -90,7 +88,7 @@ block <sb::SB>SECTORS_B
 
     objective
     {
-        pi<sb>[] = V<sb>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sb>)) * (1.0 - tps<sb> - tes<sb>) 
+        pi<sb>[] = V<sb>[] * (SUM<idx_pv::P>(p<idx_pv>[] * make_share<idx_pv, sb>)) * (1.0 - tps<sb> - tes<sb>) 
                   - K<sb>[] * pk[] - L<sb>[] * w[] - SUM<idx_x_o::P>(X<idx_x_o, sb>[] * p<idx_x_o>[]);
     };
 
@@ -102,7 +100,7 @@ block <sb::SB>SECTORS_B
     identities
     {
         <idx_y::P> Yap<idx_y, sb>[] = V<sb>[] * make_share<idx_y, sb>;
-        revenue<sb>[] = SUM<idx_rev::P>(Yap<idx_rev, sb>[] * pz<idx_rev>[]);
+        revenue<sb>[] = SUM<idx_rev::P>(Yap<idx_rev, sb>[] * p<idx_rev>[]);
         net_revenue<sb>[] = revenue<sb>[] * (1.0 - tps<sb> - tes<sb>);
     };
 
@@ -125,7 +123,7 @@ block <sc::SC>SECTORS_C
 
     objective
     {
-        pi<sc>[] = V<sc>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sc>)) * (1.0 - tps<sc> - tes<sc>) 
+        pi<sc>[] = V<sc>[] * (SUM<idx_pv::P>(p<idx_pv>[] * make_share<idx_pv, sc>)) * (1.0 - tps<sc> - tes<sc>) 
                   - K<sc>[] * pk[] - L<sc>[] * w[] - SUM<idx_x_o::PMin>(X<idx_x_o, sc>[] * p<idx_x_o>[]) - x_agri_min_data * p<'prod_Agri'>[];
     };
 
@@ -137,7 +135,7 @@ block <sc::SC>SECTORS_C
     identities
     {
         <idx_y::P> Yap<idx_y, sc>[] = V<sc>[] * make_share<idx_y, sc>;
-        revenue<sc>[] = SUM<idx_rev::P>(Yap<idx_rev, sc>[] * pz<idx_rev>[]);
+        revenue<sc>[] = SUM<idx_rev::P>(Yap<idx_rev, sc>[] * p<idx_rev>[]);
         net_revenue<sc>[] = revenue<sc>[] * (1.0 - tps<sc> - tes<sc>);
     };
 
@@ -150,90 +148,36 @@ block <sc::SC>SECTORS_C
     };
 };
 
-# --- CET: Producer allocates output between domestic sales and exports ---
-block <idx_e::P_Exp>EXPORTER
-{
-    controls
-    {
-        Z<idx_e>[], DS<idx_e>[], EX<idx_e>[];
-    };
-
-    objective
-    {
-        PI_CET<idx_e>[] = pe<idx_e>[] * EX<idx_e>[] + pd<idx_e>[] * DS<idx_e>[] - pz<idx_e>[] * Z<idx_e>[];
-    };
-
-    constraints
-    {
-        Z<idx_e>[] = at<idx_e> * ( gamma_e<idx_e> * EX<idx_e>[] ^ ((sigma_t + 1.0) / sigma_t) + (1.0 - gamma_e<idx_e>) * DS<idx_e>[] ^ ((sigma_t + 1.0) / sigma_t) ) ^ (sigma_t / (sigma_t + 1.0));
-    };
-
-    identities
-    {
-        Z<idx_e>[] = SUM<i_sa::SA>(Yap<idx_e, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_e, i_sb>[]) + SUM<i_sc::SC>(Yap<idx_e, i_sc>[]);
-        pe<idx_e>[] = pworlde<idx_e> * exr[];
-    };
-};
-
-block <idx_ne::P_NExp>NON_EXPORTER
-{
-    identities
-    {
-        Z<idx_ne>[] = SUM<i_sa::SA>(Yap<idx_ne, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_ne, i_sb>[]) + SUM<i_sc::SC>(Yap<idx_ne, i_sc>[]);
-        DS<idx_ne>[] = Z<idx_ne>[];
-        EX<idx_ne>[] = 0.0;
-        pe<idx_ne>[] = pworlde<idx_ne> * exr[];
-        pz<idx_ne>[] = pd<idx_ne>[];
-        PI_CET<idx_ne>[] = 0.0;
-    };
-};
-
-# --- Armington: Zero-profit composite combines domestic goods + imports ---
-block <idx_a::P>IMPORTER
-{
-    controls
-    {
-        Q<idx_a>[], DD<idx_a>[], M<idx_a>[];
-    };
-
-    objective
-    {
-        PI_ARM<idx_a>[] = p<idx_a>[] * Q<idx_a>[] - pd<idx_a>[] * DD<idx_a>[] - pm<idx_a>[] * M<idx_a>[];
-    };
-
-    constraints
-    {
-        Q<idx_a>[] = aq<idx_a> * ( delta_m<idx_a> * M<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) + (1.0 - delta_m<idx_a>) * DD<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) ) ^ (sigma_q / (sigma_q - 1.0));
-    };
-
-    identities
-    {
-        DD<idx_a>[] = DS<idx_a>[];
-        pm<idx_a>[] = pworldm<idx_a> * exr[] * (1.0 + tar_rate<idx_a>);
-    };
-};
-
 block PRODUCTS
 {
     identities
     {
-        # --- DOMESTIC ABSORPTION (DA = TD_Dom) ---
+        # --- DEMANDAS DOM??STICAS (TD_Dom) (Excluye Exportaciones para Base Tributaria) ---
         TD_Dom_Agri[] = D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]) + x_agri_min_data;
         <idx_mc4::PMin> TD_Dom_PMin<idx_mc4>[] = D<idx_mc4>[] + gg_market_data_p<idx_mc4> + (I_data<idx_mc4> * inv_adj[]) + vexist<idx_mc4> + SUM<i_aa4::SA>(X<idx_mc4, i_aa4>[]) + SUM<i_ab4::SB>(X<idx_mc4, i_ab4>[]) + SUM<i_ac4::SC>(X<idx_mc4, i_ac4>[]);
         TD_Dom_Const[] = D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_ab_c::SB>(X<'prod_const', i_ab_c>[]);
 
-        # --- MARKET CLEARING: Q + tax_physical = DA ---
-        Q<'prod_Agri'>[] + (VAT_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (imptos_espec_p<'prod_Agri'> / p<'prod_Agri'>[]) = TD_Dom_Agri[];
-        <idx_mc4b::PMin> Q<idx_mc4b>[] + (VAT_p<idx_mc4b>[] / p<idx_mc4b>[]) + (imptos_espec_p<idx_mc4b> / p<idx_mc4b>[]) = TD_Dom_PMin<idx_mc4b>[];
-        Q<'prod_const'>[] + (VAT_p<'prod_const'>[] / p<'prod_const'>[]) + (imptos_espec_p<'prod_const'> / p<'prod_const'>[]) = TD_Dom_Const[];
+        # --- DEFINICI??N DE DEMANDAS TOTALES F??SICAS (TD) ---
+        TD_Agri[] = TD_Dom_Agri[] + edp<'prod_Agri'>;
+        <idx_t::PMin> TD_PMin<idx_t>[] = TD_Dom_PMin<idx_t>[] + edp<idx_t>;
+        TD_Const[] = TD_Dom_Const[] + edp<'prod_const'>;
 
-        # --- TAX REVENUE ---
+        # --- VACIADO DE MERCADO F??SICO Y FISCAL (EVITANDO ILUSI??N MONETARIA) ---
+        SUM<i_sa_a::SA>(Yap<'prod_Agri', i_sa_a>[]) + SUM<i_sb_a::SB>(Yap<'prod_Agri', i_sb_a>[]) + SUM<i_sc_a::SC>(Yap<'prod_Agri', i_sc_a>[]) + mdp<'prod_Agri'> + (VAT_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (Arancel_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (imptos_espec_p<'prod_Agri'> / p<'prod_Agri'>[]) = TD_Agri[];
+        <idx_mc4b::PMin> SUM<i_sa4b::SA>(Yap<idx_mc4b, i_sa4b>[]) + SUM<i_sb4b::SB>(Yap<idx_mc4b, i_sb4b>[]) + SUM<i_sc4b::SC>(Yap<idx_mc4b, i_sc4b>[]) + mdp<idx_mc4b> + (VAT_p<idx_mc4b>[] / p<idx_mc4b>[]) + (Arancel_p<idx_mc4b>[] / p<idx_mc4b>[]) + (imptos_espec_p<idx_mc4b> / p<idx_mc4b>[]) = TD_PMin<idx_mc4b>[];
+        SUM<i_sa_c::SA>(Yap<'prod_const', i_sa_c>[]) + SUM<i_sb_c::SB>(Yap<'prod_const', i_sb_c>[]) + SUM<i_sc_c::SC>(Yap<'prod_const', i_sc_c>[]) + mdp<'prod_const'> + (VAT_p<'prod_const'>[] / p<'prod_const'>[]) + (Arancel_p<'prod_const'>[] / p<'prod_const'>[]) + (imptos_espec_p<'prod_const'> / p<'prod_const'>[]) = TD_Const[];
+
+        # --- ECUACIONES DE RECAUDACI??N NOMINAL (Solo sobre TD_Dom) ---
         VAT_p<'prod_Agri'>[] = vat<'prod_Agri'> * p<'prod_Agri'>[] * TD_Dom_Agri[];
         <idx_mc4v::PMin> VAT_p<idx_mc4v>[] = vat<idx_mc4v> * p<idx_mc4v>[] * TD_Dom_PMin<idx_mc4v>[];
         VAT_p<'prod_const'>[] = vat<'prod_const'> * p<'prod_const'>[] * TD_Dom_Const[];
 
-        # Tariff on CIF value of imports
-        <idx_ar::P> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
+        Arancel_p<'prod_Agri'>[] = tar_rate<'prod_Agri'> * p<'prod_Agri'>[] * TD_Dom_Agri[];
+        <idx_mc4a::PMin> Arancel_p<idx_mc4a>[] = tar_rate<idx_mc4a> * p<idx_mc4a>[] * TD_Dom_PMin<idx_mc4a>[];
+        Arancel_p<'prod_const'>[] = tar_rate<'prod_const'> * p<'prod_const'>[] * TD_Dom_Const[];
+
+        <idx_p_m::P> pm<idx_p_m>[] = pworldm<idx_p_m> * exr[] / (1.0 + tar_rate<idx_p_m>);
+        <idx_p_e::P> pe<idx_p_e>[] = pworlde<idx_p_e> * exr[];
     };
 };
 
@@ -275,6 +219,8 @@ block EQUILIBRIUM
     identities 
     {
         SUM<idx_ea::SA>(L<idx_ea>[]) + SUM<idx_eb::SB>(L<idx_eb>[]) + SUM<idx_ec::SC>(L<idx_ec>[]) + l_total_data * par_l_row = l_total_data;
+        RENT_M[] = SUM<idx_m_r::P>(mdp<idx_m_r> * (p<idx_m_r>[] - pm<idx_m_r>[] * (1.0 + tar_rate<idx_m_r>)));
+        RENT_E[] = SUM<idx_e_r::P>(edp<idx_e_r> * (pe<idx_e_r>[] - p<idx_e_r>[]));
         SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) + SUM<idx_kc::SC>(K<idx_kc>[]) = k_total_data;
         exr[] = 1.0;
         Kh[] = k_total_data * par_k_h;
@@ -291,3 +237,4 @@ block INVESTMENT
         inv_adj[] = (TOTAL_SAV[] - SUM<idx_v_p::P>(vexist<idx_v_p> * p<idx_v_p>[])) / (SUM<idx_i_p::P>(I_data<idx_i_p> * p<idx_i_p>[]));
     };
 }
+

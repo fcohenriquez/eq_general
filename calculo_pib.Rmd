@@ -14,31 +14,35 @@ calc_pib <- function(model_obj) {
     par_vals <- get_par_values(model_obj)
     p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
     p_eq <- ss_vals[paste0("p__", p_names)]
-    # Components from GCN Market Clearing (Expenditure Approach)
-    # GDP = C + G + I + V + X - M
-    # 1. Consumption (Variables D*p)
+    
+    # Components from Expenditure Approach: GDP = C + G + I + V + X - M
+    # 1. Consumption (D * p)
     C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
-    # 2. Government and Investment (Parameters G and I are expenditure values in GCN: G/p * p = G)
+    # 2. Government (fixed quantities * composite price)
     inv_adj_val <- ss_vals["inv_adj"]
     if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
     G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_eq, na.rm = TRUE)
     I_val <- sum(par_vals[paste0("I_data__", p_names)] * p_eq, na.rm = TRUE) * inv_adj_val
-    # 3. Inventory Changes (Parameter vexist is quantity in GCN: vexist * p)
+    # 3. Inventory Changes
     V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
-    # 4. Exports (Parameter edp is quantity in GCN: edp * p)
-    X_val <- sum(par_vals[paste0("edp__", p_names)] * p_eq, na.rm = TRUE)
-    # 5. Imports (Parameter mdp is supply quantity in GCN: mdp * producer_price)
-    M_val <- sum(par_vals[paste0("mdp__", p_names)] * p_eq, na.rm = TRUE)
+    # 4. Exports (now endogenous variables E, valued at export price pe)
+    pe_eq <- ss_vals[paste0("pe__", p_names)]
+    E_vals <- ss_vals[paste0("EX__", p_names)]
+    X_val <- sum(E_vals * pe_eq, na.rm = TRUE)
+    # 5. Imports (valued at CIF price = pworldm * exr, NOT pm which includes tariffs)
+    pwm_eq <- par_vals[paste0("pworldm__", p_names)]
+    exr_val <- ss_vals["exr"]
+    M_vals <- ss_vals[paste0("M__", p_names)]
+    M_val <- sum(M_vals * pwm_eq * exr_val, na.rm = TRUE)
     
-    # Real GDP components (Laspeyres Index at base p=1.0)
+    # Real GDP components (Laspeyres at base prices)
     p_base <- rep(1.0, length(p_names))
-    names(p_base) <- paste0("p__", p_names)
     C_real <- sum(ss_vals[paste0("D__", p_names)] * p_base, na.rm = TRUE)
     G_real <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_base, na.rm = TRUE)
     I_real <- sum(par_vals[paste0("I_data__", p_names)] * p_base, na.rm = TRUE) * inv_adj_val
     V_real <- sum(par_vals[paste0("vexist__", p_names)] * p_base, na.rm = TRUE)
-    X_real <- sum(par_vals[paste0("edp__", p_names)] * p_base, na.rm = TRUE)
-    M_real <- sum(par_vals[paste0("mdp__", p_names)] * p_base, na.rm = TRUE)
+    X_real <- sum(E_vals * p_base, na.rm = TRUE)
+    M_real <- sum(M_vals * pwm_eq * 1.0, na.rm = TRUE)  # base exr = 1
     
     return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
                 PIB = C + G_val + I_val + V_val + X_val - M_val,

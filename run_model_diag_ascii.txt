@@ -1,0 +1,15 @@
+Rscript.exe : Cargando paquete requerido: MASS
+En l?nea: 1 Car?cter: 1
++ & 'C:\Users\francisco.henriquez\AppData\Local\Programs\R\R-4.5.1\bin\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Cargando paquete requerido: MASS:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Cargando paquete requerido: Matrix
+Cargando paquete requerido: nleqslv
+Cargando paquete requerido: Rcpp
+This is gEcon version 1.2.3 (2025-04-13)
+http://gecon.r-forge.r-project.org/
+Error en make_model("cge_calib_chile_6_sect.gcn"): 
+(gEcon model error 1): There are 238 variables but there are only 234 model equations
+Ejecuci??n interrumpida

@@ -1,0 +1,600 @@
+Rscript.exe : Loading required 
+package: MASS
+En l?nea: 1 Car?cter: 1
++ & 'C:\Users\francisco.henriquez\Ap
+pData\Local\Programs\R\R-4.5.1\bin\ 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSp 
+   ecified: (Loading required pack  
+  age: MASS:String) [], RemoteExc   
+ eption
+    + FullyQualifiedErrorId : Nativ 
+   eCommandError
+ 
+Loading required package: Matrix
+Loading required package: nleqslv
+Loading required package: Rcpp
+This is gEcon version 1.2.3 
+(2025-04-13)
+http://gecon.r-forge.r-project.org/
+
+Attaching package: 'pracma'
+
+The following objects are masked 
+from 'package:Matrix':
+
+    expm, lu, tril, triu
+
+
+
+processing file: 
+gecon_chile_6_sect.Rmd
+1/12                  
+2/12 [setup]          
+3/12                  
+4/12 [sam_load]       
+5/12                  
+6/12 [model_gen]      
+7/12                  
+8/12 [solution]       
+9/12                  
+10/12 [unnamed-chunk-1]
+11/12                  
+12/12 [unnamed-chunk-2]
+output file: C:\Users\FRANCI~1.HEN\A
+ppData\Local\Temp\Rtmp2BitPx\filebcb
+8726b3f73.R
+
+model parsed in 0.39s
+model loaded in 0.14s
+--- Diagnostic Balances in R ---
+Firm Income Balance: 0.00
+Govt Income Balance: 0.00
+HH Budget: INC=189899.22, Spend=166954.45, SAV=8972.35, CS=13972.42, Gap=0.00
+--------------------------------
+--- Armington/CET Calibration ---
+sigma_q=2.0, sigma_t=2.0, rho_q=0.5000, rho_t=1.5000
+gamma_e (CET export share): 0.6557 0.283 0.6349 1 1 0.8407 
+delta_m (Armington import share): 0.2362 0.5258 0.482 0.0125 0.0058 0.1968 
+Q (Armington composite): 22644.65 16952.6 176016.6 15623.32 36931.4 227244 
+DS (domestic sales): 20719.99 7616.96 94899.8 15620.82 36930.13 214371.9 
+p (composite price base): 1 1 1 1 1 1 
+pz (producer price base): 1 1 1 1 1 1 
+--------------------------------
+Norma residuos iniciales: 3368.725 
+Norma residuos finales: 3368.725 
+
+--- Top 20 initial residuals ---
+                      Z__prod_Agri             X__prod_Agri__Act_serv 
+                       2493.564039                        2082.873314 
+  TD_Dom_PMin__prod_elect_agua_gas           Yap__prod_serv__Act_Manu 
+                        377.518231                         368.545045 
+                      Q__prod_serv Yap__prod_serv__Act_elect_agua_gas 
+                        340.570067                         327.506166 
+             V__Act_elect_agua_gas          Yap__prod_serv__Act_const 
+                        314.149896                         226.063593 
+            Q__prod_elect_agua_gas            Yap__prod_serv__Act_Min 
+                        212.994219                         185.114589 
+        VAT_p__prod_elect_agua_gas           Yap__prod_serv__Act_Agri 
+                        184.860907                         112.537649 
+                PI_CET__prod_const                  PI_ARM__prod_Manu 
+                        100.892187                          52.714583 
+            X__prod_Agri__Act_Manu   X__prod_Agri__Act_elect_agua_gas 
+                         25.636479                          17.941768 
+            X__prod_Agri__Act_Agri             TD_Dom_PMin__prod_serv 
+                         12.131594                           9.954315 
+             X__prod_Min__Act_Agri                       Q__prod_Manu 
+                          3.976656                           2.900492 
+Initial residuals:
+        Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
+        0.000         0.000         0.000         0.000         0.000 
+        Eq. 6         Eq. 7         Eq. 8         Eq. 9        Eq. 10 
+        0.004         0.005         0.004         0.021         0.005 
+       Eq. 11        Eq. 12        Eq. 13        Eq. 14        Eq. 15 
+        0.010         0.004         0.005         0.004         0.021 
+       Eq. 16        Eq. 17        Eq. 18        Eq. 19        Eq. 20 
+        0.005         0.010         0.000         0.000         0.000 
+       Eq. 21        Eq. 22        Eq. 23        Eq. 24        Eq. 25 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 26        Eq. 27        Eq. 28        Eq. 29        Eq. 30 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 31        Eq. 32        Eq. 33        Eq. 34        Eq. 35 
+        0.000         0.000         0.000         0.000         0.005 
+       Eq. 36        Eq. 37        Eq. 38        Eq. 39        Eq. 40 
+        0.004         0.021         0.005         0.010         0.004 
+       Eq. 41        Eq. 42        Eq. 43        Eq. 44        Eq. 45 
+        0.005         0.004         0.021         0.005         0.010 
+       Eq. 46        Eq. 47        Eq. 48        Eq. 49        Eq. 50 
+        0.004         0.005         0.004         0.021         0.005 
+       Eq. 51        Eq. 52        Eq. 53        Eq. 54        Eq. 55 
+        0.010         0.004         0.005         0.004         0.021 
+       Eq. 56        Eq. 57        Eq. 58        Eq. 59        Eq. 60 
+        0.005         0.010         0.005         0.010         0.004 
+       Eq. 61        Eq. 62        Eq. 63        Eq. 64        Eq. 65 
+        0.005         0.004         0.021         0.005         0.010 
+       Eq. 66        Eq. 67        Eq. 68        Eq. 69        Eq. 70 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 71        Eq. 72        Eq. 73        Eq. 74        Eq. 75 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 76        Eq. 77        Eq. 78        Eq. 79        Eq. 80 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 81        Eq. 82        Eq. 83        Eq. 84        Eq. 85 
+        0.000         0.000         0.000         0.000        -1.000 
+       Eq. 86        Eq. 87        Eq. 88        Eq. 89        Eq. 90 
+        0.000        -1.000         0.000         0.000         0.000 
+       Eq. 91        Eq. 92        Eq. 93        Eq. 94        Eq. 95 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 96        Eq. 97        Eq. 98        Eq. 99       Eq. 100 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 101       Eq. 102       Eq. 103       Eq. 104       Eq. 105 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 106       Eq. 107       Eq. 108       Eq. 109       Eq. 110 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 111       Eq. 112       Eq. 113       Eq. 114       Eq. 115 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 116       Eq. 117       Eq. 118       Eq. 119       Eq. 120 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 121       Eq. 122       Eq. 123       Eq. 124       Eq. 125 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 126       Eq. 127       Eq. 128       Eq. 129       Eq. 130 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 131       Eq. 132       Eq. 133       Eq. 134       Eq. 135 
+        0.000       100.892         0.882         0.000         0.000 
+      Eq. 136       Eq. 137       Eq. 138       Eq. 139       Eq. 140 
+       52.715         0.000         0.000         1.311         0.000 
+      Eq. 141       Eq. 142       Eq. 143       Eq. 144       Eq. 145 
+        0.000         2.900       212.994         0.058       340.570 
+      Eq. 146       Eq. 147       Eq. 148       Eq. 149       Eq. 150 
+        1.862         0.000       377.518         9.954         0.000 
+      Eq. 151       Eq. 152       Eq. 153       Eq. 154       Eq. 155 
+        1.617       314.150         0.000         2.170         0.000 
+      Eq. 156       Eq. 157       Eq. 158       Eq. 159       Eq. 160 
+        0.000         0.000         0.414       184.861         0.003 
+      Eq. 161       Eq. 162       Eq. 163       Eq. 164       Eq. 165 
+        0.000        12.132        25.636        17.942         1.181 
+      Eq. 166       Eq. 167       Eq. 168       Eq. 169       Eq. 170 
+     2082.873         3.977         0.000         0.000         0.000 
+      Eq. 171       Eq. 172       Eq. 173       Eq. 174       Eq. 175 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 176       Eq. 177       Eq. 178       Eq. 179       Eq. 180 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 181       Eq. 182       Eq. 183       Eq. 184       Eq. 185 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 186       Eq. 187       Eq. 188       Eq. 189       Eq. 190 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 191       Eq. 192       Eq. 193       Eq. 194       Eq. 195 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 196       Eq. 197       Eq. 198       Eq. 199       Eq. 200 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 201       Eq. 202       Eq. 203       Eq. 204       Eq. 205 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 206       Eq. 207       Eq. 208       Eq. 209       Eq. 210 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 211       Eq. 212       Eq. 213       Eq. 214       Eq. 215 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 216       Eq. 217       Eq. 218       Eq. 219       Eq. 220 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 221       Eq. 222       Eq. 223       Eq. 224       Eq. 225 
+        0.000         0.000      -112.538      -368.545      -327.506 
+      Eq. 226       Eq. 227       Eq. 228       Eq. 229       Eq. 230 
+     -226.064         0.000      -185.115     -2493.564         0.000 
+      Eq. 231       Eq. 232       Eq. 233       Eq. 234  Calibr Eq. 1 
+        0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5  Calibr Eq. 6 
+        0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 7  Calibr Eq. 8  Calibr Eq. 9 Calibr Eq. 10 Calibr Eq. 11 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 12 Calibr Eq. 13 Calibr Eq. 14 Calibr Eq. 15 Calibr Eq. 16 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 17 Calibr Eq. 18 Calibr Eq. 19 Calibr Eq. 20 Calibr Eq. 21 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 22 Calibr Eq. 23 Calibr Eq. 24 Calibr Eq. 25 Calibr Eq. 26 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 27 Calibr Eq. 28 Calibr Eq. 29 Calibr Eq. 30 Calibr Eq. 31 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 32 Calibr Eq. 33 Calibr Eq. 34 Calibr Eq. 35 Calibr Eq. 36 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 37 Calibr Eq. 38 Calibr Eq. 39 Calibr Eq. 40 Calibr Eq. 41 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 42 Calibr Eq. 43 Calibr Eq. 44 Calibr Eq. 45 Calibr Eq. 46 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 47 Calibr Eq. 48 Calibr Eq. 49 Calibr Eq. 50 Calibr Eq. 51 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 52 Calibr Eq. 53 
+        0.000         0.000 
+
+Equations with the largest initial residuals:
+Eq. 229, Eq. 166, Eq. 148, Eq. 224, Eq. 145
+
+Final residuals:
+        Eq. 1         Eq. 2         Eq. 3         Eq. 4         Eq. 5 
+        0.000         0.000         0.000         0.000         0.000 
+        Eq. 6         Eq. 7         Eq. 8         Eq. 9        Eq. 10 
+        0.004         0.005         0.004         0.021         0.005 
+       Eq. 11        Eq. 12        Eq. 13        Eq. 14        Eq. 15 
+        0.010         0.004         0.005         0.004         0.021 
+       Eq. 16        Eq. 17        Eq. 18        Eq. 19        Eq. 20 
+        0.005         0.010         0.000         0.000         0.000 
+       Eq. 21        Eq. 22        Eq. 23        Eq. 24        Eq. 25 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 26        Eq. 27        Eq. 28        Eq. 29        Eq. 30 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 31        Eq. 32        Eq. 33        Eq. 34        Eq. 35 
+        0.000         0.000         0.000         0.000         0.005 
+       Eq. 36        Eq. 37        Eq. 38        Eq. 39        Eq. 40 
+        0.004         0.021         0.005         0.010         0.004 
+       Eq. 41        Eq. 42        Eq. 43        Eq. 44        Eq. 45 
+        0.005         0.004         0.021         0.005         0.010 
+       Eq. 46        Eq. 47        Eq. 48        Eq. 49        Eq. 50 
+        0.004         0.005         0.004         0.021         0.005 
+       Eq. 51        Eq. 52        Eq. 53        Eq. 54        Eq. 55 
+        0.010         0.004         0.005         0.004         0.021 
+       Eq. 56        Eq. 57        Eq. 58        Eq. 59        Eq. 60 
+        0.005         0.010         0.005         0.010         0.004 
+       Eq. 61        Eq. 62        Eq. 63        Eq. 64        Eq. 65 
+        0.005         0.004         0.021         0.005         0.010 
+       Eq. 66        Eq. 67        Eq. 68        Eq. 69        Eq. 70 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 71        Eq. 72        Eq. 73        Eq. 74        Eq. 75 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 76        Eq. 77        Eq. 78        Eq. 79        Eq. 80 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 81        Eq. 82        Eq. 83        Eq. 84        Eq. 85 
+        0.000         0.000         0.000         0.000        -1.000 
+       Eq. 86        Eq. 87        Eq. 88        Eq. 89        Eq. 90 
+        0.000        -1.000         0.000         0.000         0.000 
+       Eq. 91        Eq. 92        Eq. 93        Eq. 94        Eq. 95 
+        0.000         0.000         0.000         0.000         0.000 
+       Eq. 96        Eq. 97        Eq. 98        Eq. 99       Eq. 100 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 101       Eq. 102       Eq. 103       Eq. 104       Eq. 105 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 106       Eq. 107       Eq. 108       Eq. 109       Eq. 110 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 111       Eq. 112       Eq. 113       Eq. 114       Eq. 115 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 116       Eq. 117       Eq. 118       Eq. 119       Eq. 120 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 121       Eq. 122       Eq. 123       Eq. 124       Eq. 125 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 126       Eq. 127       Eq. 128       Eq. 129       Eq. 130 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 131       Eq. 132       Eq. 133       Eq. 134       Eq. 135 
+        0.000       100.892         0.882         0.000         0.000 
+      Eq. 136       Eq. 137       Eq. 138       Eq. 139       Eq. 140 
+       52.715         0.000         0.000         1.311         0.000 
+      Eq. 141       Eq. 142       Eq. 143       Eq. 144       Eq. 145 
+        0.000         2.900       212.994         0.058       340.570 
+      Eq. 146       Eq. 147       Eq. 148       Eq. 149       Eq. 150 
+        1.862         0.000       377.518         9.954         0.000 
+      Eq. 151       Eq. 152       Eq. 153       Eq. 154       Eq. 155 
+        1.617       314.150         0.000         2.170         0.000 
+      Eq. 156       Eq. 157       Eq. 158       Eq. 159       Eq. 160 
+        0.000         0.000         0.414       184.861         0.003 
+      Eq. 161       Eq. 162       Eq. 163       Eq. 164       Eq. 165 
+        0.000        12.132        25.636        17.942         1.181 
+      Eq. 166       Eq. 167       Eq. 168       Eq. 169       Eq. 170 
+     2082.873         3.977         0.000         0.000         0.000 
+      Eq. 171       Eq. 172       Eq. 173       Eq. 174       Eq. 175 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 176       Eq. 177       Eq. 178       Eq. 179       Eq. 180 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 181       Eq. 182       Eq. 183       Eq. 184       Eq. 185 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 186       Eq. 187       Eq. 188       Eq. 189       Eq. 190 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 191       Eq. 192       Eq. 193       Eq. 194       Eq. 195 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 196       Eq. 197       Eq. 198       Eq. 199       Eq. 200 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 201       Eq. 202       Eq. 203       Eq. 204       Eq. 205 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 206       Eq. 207       Eq. 208       Eq. 209       Eq. 210 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 211       Eq. 212       Eq. 213       Eq. 214       Eq. 215 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 216       Eq. 217       Eq. 218       Eq. 219       Eq. 220 
+        0.000         0.000         0.000         0.000         0.000 
+      Eq. 221       Eq. 222       Eq. 223       Eq. 224       Eq. 225 
+        0.000         0.000      -112.538      -368.545      -327.506 
+      Eq. 226       Eq. 227       Eq. 228       Eq. 229       Eq. 230 
+     -226.064         0.000      -185.115     -2493.564         0.000 
+      Eq. 231       Eq. 232       Eq. 233       Eq. 234  Calibr Eq. 1 
+        0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 2  Calibr Eq. 3  Calibr Eq. 4  Calibr Eq. 5  Calibr Eq. 6 
+        0.000         0.000         0.000         0.000         0.000 
+ Calibr Eq. 7  Calibr Eq. 8  Calibr Eq. 9 Calibr Eq. 10 Calibr Eq. 11 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 12 Calibr Eq. 13 Calibr Eq. 14 Calibr Eq. 15 Calibr Eq. 16 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 17 Calibr Eq. 18 Calibr Eq. 19 Calibr Eq. 20 Calibr Eq. 21 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 22 Calibr Eq. 23 Calibr Eq. 24 Calibr Eq. 25 Calibr Eq. 26 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 27 Calibr Eq. 28 Calibr Eq. 29 Calibr Eq. 30 Calibr Eq. 31 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 32 Calibr Eq. 33 Calibr Eq. 34 Calibr Eq. 35 Calibr Eq. 36 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 37 Calibr Eq. 38 Calibr Eq. 39 Calibr Eq. 40 Calibr Eq. 41 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 42 Calibr Eq. 43 Calibr Eq. 44 Calibr Eq. 45 Calibr Eq. 46 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 47 Calibr Eq. 48 Calibr Eq. 49 Calibr Eq. 50 Calibr Eq. 51 
+        0.000         0.000         0.000         0.000         0.000 
+Calibr Eq. 52 Calibr Eq. 53 
+        0.000         0.000 
+
+Equations with the largest final residuals:
+Eq. 229, Eq. 166, Eq. 148, Eq. 224, Eq. 145
+Model parameters:
+
+                                                         Value
+fact_row_in_k_data                                       0.000
+fact_row_in_l_data                                       0.000
+fit                                                      0.198
+imptos_espec_data                                     1517.945
+k_total_data                                        129207.074
+l_total_data                                        102890.972
+omega                                                    0.500
+par_k_f                                                  0.811
+par_k_g                                                  0.024
+par_l_row                                                0.000
+par_k_h                                                  0.246
+par_l_h                                                  1.000
+pit                                                      0.022
+por_sav                                                  0.047
+por_cont                                                 0.074
+por_cont_soc_f                                           0.900
+por_pres_soc_f                                           0.068
+por_tr_f_g                                               0.146
+por_tremp                                                0.160
+por_cont_soc_g                                           0.100
+por_trgov                                                0.302
+por_pres_soc_g                                           0.122
+pshdata                                              17381.818
+sigma_t                                                  2.000
+sigma_q                                                  2.000
+x_agri_min_data                                          0.037
+alpha__prod_Agri                                         0.004
+alpha__prod_Manu                                         0.511
+alpha__prod_elect_agua_gas                               0.002
+alpha__prod_serv                                         0.483
+aq__prod_Agri                                            1.568
+aq__prod_Min                                             1.998
+aq__prod_Manu                                            2.009
+aq__prod_elect_agua_gas                                  1.025
+aq__prod_const                                           1.012
+aq__prod_serv                                            1.462
+at__prod_Agri                                            2.208
+at__prod_Min                                             2.435
+at__prod_Manu                                            2.153
+at__prod_elect_agua_gas                               2499.790
+at__prod_const                                        3330.134
+at__prod_serv                                            3.444
+betak__Act_Agri                                          0.247
+betak__Act_Manu                                          0.173
+betak__Act_elect_agua_gas                                0.279
+betak__Act_const                                         0.189
+betak__Act_serv                                          0.257
+betak__Act_Min                                           0.526
+betal__Act_Agri                                          0.114
+betal__Act_Manu                                          0.093
+betal__Act_elect_agua_gas                                0.091
+betal__Act_const                                         0.223
+betal__Act_serv                                          0.310
+betal__Act_Min                                           0.064
+betax__prod_Agri__Act_Agri                               0.084
+betax__prod_Agri__Act_Manu                               0.147
+betax__prod_Agri__Act_elect_agua_gas                     0.003
+betax__prod_Agri__Act_const                              0.000
+betax__prod_Agri__Act_serv                               0.002
+betax__prod_Min__Act_Agri                                0.002
+betax__prod_Min__Act_Manu                                0.092
+betax__prod_Min__Act_elect_agua_gas                      0.240
+betax__prod_Min__Act_const                               0.006
+betax__prod_Min__Act_serv                                0.000
+betax__prod_Min__Act_Min                                 0.082
+betax__prod_Manu__Act_Agri                               0.333
+betax__prod_Manu__Act_Manu                               0.336
+betax__prod_Manu__Act_elect_agua_gas                     0.090
+betax__prod_Manu__Act_const                              0.315
+betax__prod_Manu__Act_serv                               0.112
+betax__prod_Manu__Act_Min                                0.126
+betax__prod_elect_agua_gas__Act_Agri                     0.011
+betax__prod_elect_agua_gas__Act_Manu                     0.032
+betax__prod_elect_agua_gas__Act_elect_agua_gas           0.126
+betax__prod_elect_agua_gas__Act_const                    0.006
+betax__prod_elect_agua_gas__Act_serv                     0.013
+betax__prod_elect_agua_gas__Act_Min                      0.058
+betax__prod_const__Act_const                             0.143
+betax__prod_const__Act_serv                              0.012
+betax__prod_serv__Act_Agri                               0.210
+betax__prod_serv__Act_Manu                               0.127
+betax__prod_serv__Act_elect_agua_gas                     0.171
+betax__prod_serv__Act_const                              0.116
+betax__prod_serv__Act_serv                               0.295
+betax__prod_serv__Act_Min                                0.146
+delta_m__prod_Agri                                       0.236
+delta_m__prod_Min                                        0.526
+delta_m__prod_Manu                                       0.482
+delta_m__prod_elect_agua_gas                             0.013
+delta_m__prod_const                                      0.006
+delta_m__prod_serv                                       0.197
+dst_nc__prod_Min                                         0.000
+dst_nc__prod_const                                       0.000
+dst__prod_Agri                                        6824.841
+dst__prod_Manu                                       78911.976
+dst__prod_elect_agua_gas                              4502.267
+dst__prod_serv                                       76715.369
+gamma__Act_Agri                                          4.767
+gamma__Act_Manu                                          5.884
+gamma__Act_elect_agua_gas                                5.787
+gamma__Act_const                                         5.048
+gamma__Act_serv                                          4.291
+gamma__Act_Min                                           4.185
+gamma_e__prod_Agri                                       0.656
+gamma_e__prod_Min                                        0.283
+gamma_e__prod_Manu                                       0.635
+gamma_e__prod_elect_agua_gas                             1.000
+gamma_e__prod_const                                      1.000
+gamma_e__prod_serv                                       0.841
+gg_market_data_p__prod_Agri                              0.000
+gg_market_data_p__prod_Min                               0.000
+gg_market_data_p__prod_Manu                            151.616
+gg_market_data_p__prod_elect_agua_gas                   94.677
+gg_market_data_p__prod_const                             0.000
+gg_market_data_p__prod_serv                          38489.972
+imptos_espec_p__prod_Agri                                0.000
+imptos_espec_p__prod_Min                                 0.000
+imptos_espec_p__prod_Manu                             1517.945
+imptos_espec_p__prod_elect_agua_gas                      0.000
+imptos_espec_p__prod_const                               0.000
+imptos_espec_p__prod_serv                                0.000
+make_share__prod_Agri__Act_Agri                          0.892
+make_share__prod_Agri__Act_Manu                          0.002
+make_share__prod_Agri__Act_elect_agua_gas                0.000
+make_share__prod_Agri__Act_const                         0.000
+make_share__prod_Agri__Act_serv                          0.021
+make_share__prod_Agri__Act_Min                           0.000
+make_share__prod_Min__Act_Agri                           0.000
+make_share__prod_Min__Act_Manu                           0.004
+make_share__prod_Min__Act_elect_agua_gas                 0.000
+make_share__prod_Min__Act_const                          0.000
+make_share__prod_Min__Act_serv                           0.001
+make_share__prod_Min__Act_Min                            0.939
+make_share__prod_Manu__Act_Agri                          0.000
+make_share__prod_Manu__Act_Manu                          0.920
+make_share__prod_Manu__Act_elect_agua_gas                0.006
+make_share__prod_Manu__Act_const                         0.000
+make_share__prod_Manu__Act_serv                          0.150
+make_share__prod_Manu__Act_Min                           0.044
+make_share__prod_elect_agua_gas__Act_Agri                0.000
+make_share__prod_elect_agua_gas__Act_Manu                0.004
+make_share__prod_elect_agua_gas__Act_elect_agua_gas      0.940
+make_share__prod_elect_agua_gas__Act_const               0.000
+make_share__prod_elect_agua_gas__Act_serv                0.001
+make_share__prod_elect_agua_gas__Act_Min                 0.000
+make_share__prod_const__Act_Agri                         0.000
+make_share__prod_const__Act_Manu                         0.000
+make_share__prod_const__Act_elect_agua_gas               0.001
+make_share__prod_const__Act_const                        0.994
+make_share__prod_const__Act_serv                         0.000
+make_share__prod_const__Act_Min                          0.000
+make_share__prod_serv__Act_Agri                          0.107
+make_share__prod_serv__Act_Manu                          0.069
+make_share__prod_serv__Act_elect_agua_gas                0.054
+make_share__prod_serv__Act_const                         0.006
+make_share__prod_serv__Act_serv                          0.827
+make_share__prod_serv__Act_Min                           0.018
+pworlde__prod_Agri                                       1.000
+pworlde__prod_Min                                        1.000
+pworlde__prod_Manu                                       1.000
+pworlde__prod_elect_agua_gas                             1.000
+pworlde__prod_const                                      1.000
+pworlde__prod_serv                                       1.000
+pworldm__prod_Agri                                       1.000
+pworldm__prod_Min                                        1.000
+pworldm__prod_Manu                                       1.000
+pworldm__prod_elect_agua_gas                             1.000
+pworldm__prod_const                                      1.000
+pworldm__prod_serv                                       1.000
+tar_rate__prod_Agri                                      0.029
+tar_rate__prod_Min                                       0.003
+tar_rate__prod_Manu                                      0.013
+tar_rate__prod_elect_agua_gas                            0.000
+tar_rate__prod_const                                     0.000
+tar_rate__prod_serv                                      0.000
+tes__Act_Agri                                            0.000
+tes__Act_Manu                                            0.000
+tes__Act_elect_agua_gas                                  0.000
+tes__Act_const                                           0.000
+tes__Act_serv                                            0.000
+tes__Act_Min                                             0.000
+tps__Act_Agri                                            0.005
+tps__Act_Manu                                            0.004
+tps__Act_elect_agua_gas                                  0.020
+tps__Act_const                                           0.005
+tps__Act_serv                                            0.010
+tps__Act_Min                                             0.004
+vat__prod_Agri                                           0.039
+vat__prod_Min                                            0.000
+vat__prod_Manu                                           0.079
+vat__prod_elect_agua_gas                                 0.059
+vat__prod_const                                          0.031
+vat__prod_serv                                           0.027
+vexist__prod_Agri                                     -135.482
+Warning messages:
+1: In make_model("cge_calib_chile_6_
+sect.gcn") : 
+(gEcon warning): the number of 
+variables / equations exceeds 100 
+and Rcpp output option is set to 
+false - this may lead to long 
+compilation of model equations (by 
+JIT compiler); if this is the case, 
+consider using option "output R 
+Rcpp = TRUE"
+2: In steady_state(model, 
+calibration = TRUE, options_list = 
+eq_options) :
+vexist__prod_Min                                      -341.217
+vexist__prod_Manu                                      884.999
+vexist__prod_elect_agua_gas                              0.000
+vexist__prod_const                                       0.000
+vexist__prod_serv                                        0.000
+  The equilibrium has not been 
+found, 1-norm of residuals is: 
+2493.56403947104.
+It is more than requested precision.
+Change initial values and check if 
+the equilibrium can be found.
+3: In get_par_values(model) :
+  Presented results for calibrated 
+parameters: alpha__prod_Agri, 
+alpha__prod_Manu, 
+alpha__prod_elect_agua_gas, 
+alpha__prod_serv, betak__Act_Agri, 
+betak__Act_Manu, 
+betak__Act_elect_agua_gas, 
+betak__Act_const, betak__Act_serv, 
+betak__Act_Min, betal__Act_Agri, 
+betal__Act_Manu, 
+betal__Act_elect_agua_gas, 
+betal__Act_const, betal__Act_serv, 
+betal__Act_Min, 
+betax__prod_Agri__Act_Agri, 
+betax__prod_Agri__Act_Manu, betax__p
+rod_Agri__Act_elect_agua_gas, 
+betax__prod_Agri__Act_const, 
+betax__prod_Agri__Act_serv, 
+betax__prod_Min__Act_Agri, 
+betax__prod_Min__Act_Manu, betax__pr
+od_Min__Act_elect_agua_gas, 
+betax__prod_Min__Act_const, 
+betax__prod_Min__Act_serv, 
+betax__prod_Min__Act_Min, 
+betax__prod_Manu__Act_Agri, 
+betax__prod_Manu__Act_Manu, betax__p
+rod_Manu__Act_elect_agua_gas, 
+betax__prod_Manu__Act_const, 
+betax__prod_Manu__Act_serv, 
+betax__prod_Manu__Act_Min, betax__pr
+od_elect_agua_gas__Act_Agri, betax__
+prod_elect_agua_gas__Act_Manu, betax
+__prod_elect_agua_gas__Act_elect_agu
+a_gas, betax__prod_elect_agua_g 
+[... truncated]
+vst__Act_Agri                                        23508.076
+vst__Act_Manu                                        93063.781
+vst__Act_elect_agua_gas                              16295.309
+vst__Act_const                                       37331.912
+vst__Act_serv                                       257611.052
+vst__Act_Min                                         59766.814
+I_data__prod_Agri                                      740.456
+I_data__prod_Min                                         0.000
+I_data__prod_Manu                                    25242.905
+I_data__prod_elect_agua_gas                              0.000
+I_data__prod_const                                   29904.473
+I_data__prod_serv                                    11570.590
