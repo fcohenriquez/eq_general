@@ -109,7 +109,7 @@ for (j in sb_idx) bx[, j] <- pmax(bx[, j], 1e-10)
 for (j in sc_idx) bx[pmin_idx, j] <- pmax(bx[pmin_idx, j], 1e-10)
 
 # Note: gamma_v and alpha_v will be calibrated correctly later using p_base
-omega_val <- 0.5
+omega_val <- 0.5*0+1.5
 # Consumed products index (Pcon): exclude prod_Min(2) and prod_const(5)
 pcon_idx <- c(1,3,4,6)  # Agri, Manu, EAG, serv
 pnc_idx <- c(2,5)  # prod_Min, prod_const (non-consumed)
@@ -310,7 +310,7 @@ par_flat <- unlist(list(
     par_l_h = Lh_val / (sum(L_vals) + chile_sam["row", "Trabajo"] + pad_floor),
     par_l_row = chile_sam["row", "Trabajo"] / (sum(L_vals) + chile_sam["row", "Trabajo"] + pad_floor),
     por_cont = por_cont_h_val, por_sav = por_sav_h_val,
-    por_trgov = por_trgov_val, por_tremp = por_tremp_val, por_tr_f_g = por_tr_f_g_val,
+    trgov_data = TRGOV_v, por_tremp = por_tremp_val, por_tr_f_g = por_tr_f_g_val,
     por_cont_soc_f = por_cont_soc_f_val, por_cont_soc_g = por_cont_soc_g_val,
     por_pres_soc_f = por_pres_soc_f_val, por_pres_soc_g = por_pres_soc_g_val,
     pit = pit_val, fit = fit_val,

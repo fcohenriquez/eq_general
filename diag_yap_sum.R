@@ -1,7 +1,0 @@
-library(knitr)
-knit('gecon_chile_6_sect.Rmd', output = 'temp.R')
-source('temp.R')
-cat('Z_v_serv:', Z_v['prod_serv'], '\n')
-yap_sum_serv <- sum(make_share['prod_serv', ] * V_phys)
-cat('SUM(Yap):', yap_sum_serv, '\n')
-cat('Diff:', Z_v['prod_serv'] - yap_sum_serv, '\n')

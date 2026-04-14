@@ -1,5 +1,0 @@
-make_matrix <- matrix(1:12, nrow=2, dimnames=list(c("p1","p2"), c("s1","s2","s3","s4","s5","s6")))
-make_share <- t(apply(make_matrix, 2, function(col) col / sum(col)))
-print(make_share)
-make_share2 <- apply(make_matrix, 2, function(col) col / sum(col))
-print(make_share2)

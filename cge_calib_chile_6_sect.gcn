@@ -254,7 +254,7 @@ block GOB
     identities
     {
         INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
-        TRGOV[] = INGG[] * por_trgov;
+        TRGOV[] = trgov_data;
         SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * p<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
         Kg[] = k_total_data * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
