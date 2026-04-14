@@ -7,7 +7,7 @@ output: html_document
 
 # Parametros
 ```{r}
-vars_to_compare <- c("U", "Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "TOTAL_SAV", "TRGOV", "INC", "BTINC", "INGG", "w", "pk", "exr", 'inv_adj')
+vars_to_compare <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "TOTAL_SAV", "TRGOV", "INC", "BTINC", "INGG", "w", "pk", "exr", 'inv_adj', "U")
 
 print_macro_impact <- function(name, p_base_list, p_shock_list) {
     cat(sprintf("--- RESULTADOS DE LA SIMULACIÓN: %s ---\n", name))
@@ -79,7 +79,7 @@ calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_sh
 ```{r}
 # 1. Definir el shock
 fit_base <- get_par_values(model)["fit"]
-fit_shock <- as.numeric(fit_base) + (-0.010*.615*4)
+fit_shock <- as.numeric(fit_base) + (-0.010*.615*1)
 
 # 2. Aplicar el shock usando set_free_par
 model_shock_fit <- set_free_par(model, free_par =list(fit = fit_shock))
@@ -100,17 +100,17 @@ pib_shock_fit_real <- pib_shock_list$PIB_real
 
 comp_fit <- calc_tax_impact(res_base, res_shock_fit, pib_base, pib_real_base, pib_shock_list, vars_to_compare)
 
-print_macro_impact("disminución 1% FIT", pib_model_list, pib_shock_list)
+print_macro_impact("disminución 1% de tasa IDPC", pib_model_list, pib_shock_list)
 print(comp_fit)
 ```
 
-# SHOCK: 10% Incremento IVA (Impuesto al Valor Agregado)
+# SHOCK: 1% Incremento IVA (Impuesto al Valor Agregado)
 ```{r}
 # 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto)
 p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
 vat_names <- paste0("vat__", p_names)
 vat_base <- get_par_values(model)[vat_names]
-vat_shock <- as.list(as.numeric(vat_base) * 1.10)
+vat_shock <- as.list(as.numeric(vat_base) * 1.01)
 names(vat_shock) <- vat_names
 
 # 2. Aplicar el shock usando set_free_par

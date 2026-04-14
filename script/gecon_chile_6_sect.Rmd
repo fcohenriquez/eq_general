@@ -8,13 +8,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(gEcon)
 library(pracma)
 rm(list = ls())
-setwd("~/proyectos/equilibrio_general/eq_general")
+# setwd("../") # Es preferible usar rutas relativas desde la ubicación del script o el .Rproj
 ```
 
 ## 1. Procesamiento de la SAM 2022
 
 ```{r sam_load}
-chile_sam_raw <- read.csv("sam_2022_6sect_sinmg.csv", check.names = FALSE, stringsAsFactors = FALSE)
+chile_sam_raw <- read.csv("../data/sam_2022_6sect_sinmg.csv", check.names = FALSE, stringsAsFactors = FALSE)
 
 # Clean names and data
 colnames(chile_sam_raw) <- trimws(colnames(chile_sam_raw))
@@ -125,7 +125,7 @@ get_flow_values <- function(vals, name, idx1 = NULL, idx2 = NULL) {
 ## 2. Creación del Modelo gEcon
 
 ```{r model_gen}
-model <- make_model("cge_calib_chile_6_sect.gcn")
+model <- make_model("../script/cge_calib_chile_6_sect.gcn")
 
 # Basic SAM-derived constants
 pshdata <- chile_sam["Hogares", "Pres_soc"]
