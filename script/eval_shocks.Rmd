@@ -76,7 +76,7 @@ calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_sh
 
 
 # SHOCK: 1% Disminución FIT (Impuesto a las Empresas)
-```{r}
+```{r include=FALSE}
 # 1. Definir el shock
 fit_base <- get_par_values(model)["fit"]
 fit_shock <- as.numeric(fit_base) + (-0.010*.615*1)
@@ -105,7 +105,7 @@ print(comp_fit)
 ```
 
 # SHOCK: 1% Incremento IVA (Impuesto al Valor Agregado)
-```{r}
+```{r include=FALSE}
 # 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto)
 p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
 vat_names <- paste0("vat__", p_names)
@@ -136,3 +136,4 @@ comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pi
 print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list)
 print(comp_vat)
 ```
+
