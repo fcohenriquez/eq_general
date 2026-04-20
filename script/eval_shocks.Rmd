@@ -7,7 +7,7 @@ output: html_document
 
 # Parametros
 ```{r}
-vars_to_compare <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "TOTAL_SAV", "TRGOV", "INC", "BTINC", "INGG", "w", "pk", "exr", 'inv_adj', "U")
+vars_to_compare <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "TOTAL_SAV", "TRGOV", "INC", "BTINC", "INGG", "w", "pk", "exr", 'inv_adj', "U", "u_rate", "LD")
 
 print_macro_impact <- function(name, p_base_list, p_shock_list) {
     cat(sprintf("--- RESULTADOS DE LA SIMULACIÓN: %s ---\n", name))
@@ -26,6 +26,8 @@ print_macro_impact <- function(name, p_base_list, p_shock_list) {
     var_x_nom <- (p_shock_list$X / p_base_list$X - 1) * 100
     var_m_nom <- (p_shock_list$M / p_base_list$M - 1) * 100
     
+    var_u_rate_pp <- (p_shock_list$u_rate - p_base_list$u_rate) * 100
+    
     cat(sprintf("PIB Nominal Base:     %.2f \n", p_base_list$PIB))
     cat(sprintf("PIB Nominal Shock:    %.2f \n", p_shock_list$PIB))
     cat(sprintf("Cambio PIB Nominal:   %.6f %%\n", var_pib_nom))
@@ -43,9 +45,14 @@ print_macro_impact <- function(name, p_base_list, p_shock_list) {
                 p_base_list$X, p_shock_list$X, p_shock_list$X - p_base_list$X))
     cat(sprintf("     Import Base: %10.2f   Shock: %10.2f   Δ: %10.2f\n", 
                 p_base_list$M, p_shock_list$M, p_shock_list$M - p_base_list$M))
-    cat(sprintf("     Bal.Com Base: %10.2f   Shock: %10.2f   Δ: %10.2f\n\n", 
+    cat(sprintf("     Bal.Com Base: %10.2f   Shock: %10.2f   Δ: %10.2f\n", 
                 p_base_list$X - p_base_list$M, p_shock_list$X - p_shock_list$M,
                 (p_shock_list$X - p_shock_list$M) - (p_base_list$X - p_base_list$M)))
+    
+    cat("\n  Mercado Laboral:\n")
+    cat(sprintf("     Tasa Desempleo Base : %8.4f %%\n", p_base_list$u_rate * 100))
+    cat(sprintf("     Tasa Desempleo Shock: %8.4f %%\n", p_shock_list$u_rate * 100))
+    cat(sprintf("     Variación (p.p.)    : %8.4f pp\n\n", var_u_rate_pp))
 }
 
 calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {

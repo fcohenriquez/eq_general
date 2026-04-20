@@ -274,21 +274,11 @@ block EQUILIBRIUM
 {
     identities 
     {
-        # Total Labor Demand (LD)
-        LD[] = SUM<idx_ea::SA>(L<idx_ea>[]) + SUM<idx_eb::SB>(L<idx_eb>[]) + SUM<idx_ec::SC>(L<idx_ec>[]) + l_total_data * par_l_row;
-        
-        # Wage Curve: w = w_pot * (LD / L_force)^phi
-        w[] = w_pot_calib * (LD[] / l_force_data)^phi;
-        
-        # Unemployment rate identity
-        u_rate[] = (l_force_data - LD[]) / l_force_data;
-
-        # Capital Market Clearing (stays fixed)
+        SUM<idx_ea::SA>(L<idx_ea>[]) + SUM<idx_eb::SB>(L<idx_eb>[]) + SUM<idx_ec::SC>(L<idx_ec>[]) + l_total_data * par_l_row = l_total_data;
         SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) + SUM<idx_kc::SC>(K<idx_kc>[]) = k_total_data;
-        
         exr[] = 1.0;
         Kh[] = k_total_data * par_k_h;
-        Lh[] = LD[] * par_l_h;
+        Lh[] = l_total_data * par_l_h;
         PSh[] = pshdata;
     }
 }

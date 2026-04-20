@@ -47,7 +47,8 @@ calc_pib <- function(model_obj) {
     return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
                 PIB = C + G_val + I_val + V_val + X_val - M_val,
                 C_real=C_real, G_real=G_real, I_real=I_real, V_real=V_real, X_real=X_real, M_real=M_real,
-                PIB_real = C_real + G_real + I_real + V_real + X_real - M_real))
+                PIB_real = C_real + G_real + I_real + V_real + X_real - M_real,
+                u_rate = ss_vals["u_rate"]))
 }
 ```
 

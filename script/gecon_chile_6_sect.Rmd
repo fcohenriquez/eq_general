@@ -301,9 +301,20 @@ for (i in 1:6) {
     gamma_v[i] <- V_phys[i] / ( (K_vals[i]^bk[i]) * (L_vals[i]^bl[i]) * prod_term + pad_floor )
 }
 
+# --- Labor Market / Wage Curve Calibration ---
+u_base_val <- 0.079
+l_total_data_val <- sum(L_vals) + chile_sam["row", "Trabajo"]
+l_force_data_val <- l_total_data_val / (1 - u_base_val)
+phi_val <- 0.1
+# w = w_pot * (LD / L_force)^phi. At benchmark w=1, LD=l_total_data => 1 = w_pot * (1-u)^phi
+w_pot_calib_val <- (1 - u_base_val)^(-phi_val)
+
 par_flat <- unlist(list(
     omega = omega_val, k_total_data = sum(K_vals) + chile_sam["row", "Capital"], 
-    l_total_data = sum(L_vals) + chile_sam["row", "Trabajo"], 
+    l_total_data = l_total_data_val, 
+    l_force_data = l_force_data_val,
+    phi = phi_val,
+    w_pot_calib = w_pot_calib_val,
     par_k_h = Kh_val / (sum(K_vals) + chile_sam["row", "Capital"] + pad_floor),
     par_k_f = Kf_val / (sum(K_vals) + chile_sam["row", "Capital"] + pad_floor),
     par_k_g = Kg_val / (sum(K_vals) + chile_sam["row", "Capital"] + pad_floor),
@@ -371,6 +382,7 @@ var_list <- list(
     inv_adj = 1.0,
     VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, w = 1.0, exr = 1.0, Kh = Kh_val, Lh = Lh_val, Kf = Kf_val, Kg = Kg_val,
+    LD = l_total_data_val, u_rate = u_base_val,
     U = U_val, lambda__CONSUMER_1 = lambda_val
 )
 init_vars <- unlist(list(
