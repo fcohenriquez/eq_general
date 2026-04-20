@@ -270,14 +270,6 @@ block GOB
     };
 };
 
-block SAVINGS_CLOSURE
-{
-    identities
-    {
-        # 50/50 Closure Rule: External savings covers 50% of the fiscal shock
-        (SAVext[] - SAVext_base) = -0.5 * (SAVg[] - SAVg_base);
-    };
-};
 
 block EQUILIBRIUM
 {
@@ -306,7 +298,8 @@ block INVESTMENT
 {
     identities
     {
-        TOTAL_SAV[] = SAV[] + SAVf[] + SAVg[] + SAVext[];
-        inv_adj[] = (TOTAL_SAV[] - SUM<idx_v_p::P>(vexist<idx_v_p> * p<idx_v_p>[])) / (SUM<idx_i_p::P>(I_data<idx_i_p> * p<idx_i_p>[]));
+        inv_adj[] = 1.0;
+        TOTAL_SAV[] = SUM<idx_i_p_2::P>(I_data<idx_i_p_2> * p<idx_i_p_2>[] * inv_adj[]) + SUM<idx_v_p::P>(vexist<idx_v_p> * p<idx_v_p>[]);
+        SAVext[] = TOTAL_SAV[] - (SAV[] + SAVf[] + SAVg[]);
     };
 }

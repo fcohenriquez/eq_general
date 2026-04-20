@@ -7,7 +7,7 @@ output: html_document
 
 # Parametros
 ```{r}
-vars_to_compare <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "TOTAL_SAV", "TRGOV", "INC", "BTINC", "INGG", "w", "pk", "exr", 'inv_adj', "U", "u_rate", "LD")
+vars_to_compare <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG", "w", "pk", "exr", 'inv_adj', "U", "u_rate", "LD")
 
 print_macro_impact <- function(name, p_base_list, p_shock_list) {
     cat(sprintf("--- RESULTADOS DE LA SIMULACIÓN: %s ---\n", name))
