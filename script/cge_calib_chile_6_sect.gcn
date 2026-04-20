@@ -298,8 +298,22 @@ block INVESTMENT
 {
     identities
     {
-        inv_adj[] = 1.0;
-        TOTAL_SAV[] = SUM<idx_i_p_2::P>(I_data<idx_i_p_2> * p<idx_i_p_2>[] * inv_adj[]) + SUM<idx_v_p::P>(vexist<idx_v_p> * p<idx_v_p>[]);
-        SAVext[] = TOTAL_SAV[] - (SAV[] + SAVf[] + SAVg[]);
+        # Helper for current nominal cost of base investment quantities
+        NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * p<idx_nb>[]);
+
+        # Sectoral adjustment factors
+        inv_adj_g[] = 1.0;
+        
+        # Physical investment in each sector adjusted to match its nominal savings
+        inv_adj_h[] = SAV[] / (sh_i_h * NOM_I_BASE[]);
+        inv_adj_f[] = SAVf[] / (sh_i_f * NOM_I_BASE[]);
+        
+        # Weighted aggregate inv_adj for the PRODUCTS block
+        inv_adj[] = sh_i_h * inv_adj_h[] + sh_i_f * inv_adj_f[] + sh_i_g * inv_adj_g[];
+        
+        TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
+        
+        # SAVext clearing the residual (mostly Gov and Stocks)
+        SAVext[] = TOTAL_INVEST[] - (SAV[] + SAVf[] + SAVg[]);
     };
 }
