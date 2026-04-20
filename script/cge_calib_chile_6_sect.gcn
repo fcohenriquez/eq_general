@@ -305,8 +305,9 @@ block INVESTMENT
         inv_adj_g[] = 1.0;
         
         # Physical investment in each sector adjusted to match its nominal savings
-        inv_adj_h[] = SAV[] / (sh_i_h * NOM_I_BASE[]);
-        inv_adj_f[] = SAVf[] / (sh_i_f * NOM_I_BASE[]);
+        # Power function damping: η is the elasticity of investment to savings
+        inv_adj_h[] = (SAV[] / (sh_i_h * NOM_I_BASE[]))^damp_inv;
+        inv_adj_f[] = (SAVf[] / (sh_i_f * NOM_I_BASE[]))^damp_inv;
         
         # Weighted aggregate inv_adj for the PRODUCTS block
         inv_adj[] = sh_i_h * inv_adj_h[] + sh_i_f * inv_adj_f[] + sh_i_g * inv_adj_g[];

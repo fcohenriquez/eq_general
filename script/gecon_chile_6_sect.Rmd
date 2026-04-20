@@ -196,8 +196,8 @@ cat("--------------------------------\n")
 
 # 1. Free parameters
 # --- Armington/CET calibration from SAM base (all prices = 1) ---
-sigma_q_val <- 2.0    # Armington elasticity of substitution (imports vs domestic)
-sigma_t_val <- 2.0    # CET elasticity of transformation (exports vs domestic)
+sigma_q_val <- 2    # Armington elasticity of substitution (imports vs domestic) Original 2.0
+sigma_t_val <- 2    # CET elasticity of transformation (exports vs domestic) original 2.0
 rho_q_val <- (sigma_q_val - 1) / sigma_q_val   # Armington CES exponent
 rho_t_val <- (sigma_t_val + 1) / sigma_t_val   # CET exponent
 
@@ -336,6 +336,7 @@ par_flat <- unlist(list(
     fact_row_in_k_data = as.numeric(fact_row_in_k_data), 
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
     sh_i_h = sh_i_h_v, sh_i_f = sh_i_f_v, sh_i_g = sh_i_g_v,
+    damp_inv = 0.5,
     imptos_espec_data = sum(as.numeric(chile_sam["Imptos_Espec", colnames(chile_sam) != "Total"])),
     x_agri_min_data = X_matrix[1, 2],
     # Armington/CET parameters
