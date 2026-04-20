@@ -177,6 +177,7 @@ por_sav_h_val <- (INC_v - sum(D_v[pcon_idx]) - CS_h_v) / (INC_v + pad_floor)
 SAV_h_v <- INC_v * por_sav_h_val
 SAVf_v <- INGF_v - TREMP_v - INGF_v * por_pres_soc_f_val - FIRMTAX_v - INGF_v * por_tr_f_g_val
 SAVg_v <- INGG_v - (sum(G_m) + (INGG_v * por_trgov_val) + INGG_v * por_pres_soc_g_val)
+SAVext_v <- (sum(I_m) + sum(V_m)) - (SAV_h_v + SAVf_v + SAVg_v)
 
 # Diagnostic balance check
 cat("--- Diagnostic Balances in R ---\n")
@@ -328,6 +329,8 @@ par_flat <- unlist(list(
     pshdata = as.numeric(pshdata),
     fact_row_in_k_data = as.numeric(fact_row_in_k_data), 
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
+    SAVg_base = SAVg_v,
+    SAVext_base = SAVext_v,
     imptos_espec_data = sum(as.numeric(chile_sam["Imptos_Espec", colnames(chile_sam) != "Total"])),
     x_agri_min_data = X_matrix[1, 2],
     # Armington/CET parameters
@@ -377,8 +380,8 @@ var_list <- list(
     FIRMTAX = FIRMTAX_v, PITAX = PITAX_v,
     TREMP = TREMP_v, TRGOV = TRGOV_v, PSh = as.numeric(pshdata),
     INC = INC_v, BTINC = BTINC_v, SAV = SAV_h_v, CS = CS_h_v,
-    SAVf = SAVf_v, SAVg = SAVg_v,
-    TOTAL_SAV = SAV_h_v + SAVf_v + SAVg_v,
+    SAVf = SAVf_v, SAVg = SAVg_v, SAVext = SAVext_v,
+    TOTAL_SAV = SAV_h_v + SAVf_v + SAVg_v + SAVext_v,
     inv_adj = 1.0,
     VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, w = 1.0, exr = 1.0, Kh = Kh_val, Lh = Lh_val, Kf = Kf_val, Kg = Kg_val,
@@ -387,6 +390,7 @@ var_list <- list(
 )
 init_vars <- unlist(list(
     var_list,
+    SAVext = SAVext_v,
     get_flow_values(rep(0, 6), "pi", s_names),
     get_flow_values(p_base, "p", p_names),
     get_flow_values(rep(1, 6), "pd", p_names),
