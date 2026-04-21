@@ -87,7 +87,7 @@ calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_sh
 # 1. Definir el shock
 fit_base <- get_par_values(model)["fit"]
 fit_shock <- fit_base * (1 - 0.615 * (0.01 / 0.27))
-#fit_shock <- as.numeric(fit_base) + (-0.010*.615*1)
+
 
 # 2. Aplicar el shock usando set_free_par
 model_shock_fit <- set_free_par(model, free_par =list(fit = fit_shock))

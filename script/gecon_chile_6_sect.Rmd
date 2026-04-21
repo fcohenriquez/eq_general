@@ -85,10 +85,11 @@ t_esp_r <- if ("Imptos_Espec" %in% rownames(chile_sam)) as.numeric(chile_sam["Im
 
 net_rev <- revenue_vals * (1 - t_pro_r - t_esp_r)
 
-# Factor shares for Cobb-Douglas
-bk <- K_vals / (net_rev + pad_floor)
-bl <- L_vals / (net_rev + pad_floor)
-bx <- sweep(X_matrix, 2, net_rev + pad_floor, "/")
+# Factor shares for Leontief-CD nested production (crude at pz=1, refined later with p_base)
+X_sum_crude <- colSums(X_matrix)
+VA_nom_crude <- pmax(net_rev - X_sum_crude, pad_floor)
+bk <- K_vals / (VA_nom_crude + pad_floor)
+bl <- L_vals / (VA_nom_crude + pad_floor)
 
 # SA sectors: Act_Agri(1), Act_Manu(3), Act_EAG(4) use 5 products (no prod_const=5)
 # SB sectors: Act_const(5), Act_serv(6) use all 6 products
@@ -98,15 +99,6 @@ sb_idx <- c(5,6)    # Act_const, Act_serv
 sc_idx <- 2          # Act_Min
 p5_idx <- c(1,2,3,4,6)  # Pno5: Agri, Min, Manu, EAG, serv
 pmin_idx <- c(2,3,4,6)   # PMin: Min, Manu, EAG, serv
-
-# Zero out excluded entries
-bx[5, sa_idx] <- 0  # prod_const not used by SA
-bx[c(1,5), sc_idx] <- 0  # prod_Agri and prod_const not used by SC(Min)
-bx <- pmax(bx, 0)
-# Floor at 1e-10 for included entries
-for (j in sa_idx) bx[p5_idx, j] <- pmax(bx[p5_idx, j], 1e-10)
-for (j in sb_idx) bx[, j] <- pmax(bx[, j], 1e-10)
-for (j in sc_idx) bx[pmin_idx, j] <- pmax(bx[pmin_idx, j], 1e-10)
 
 # Note: gamma_v and alpha_v will be calibrated correctly later using p_base
 omega_val <- 0.5*0+1.5
@@ -284,28 +276,36 @@ alpha_v <- alpha_v_unsc / (sum(alpha_v_unsc) + pad_floor)
 U_val <- (sum(alpha_v * D_con_phys^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
 lambda_val <- U_val / (sum(D_con_phys * p_base[pcon_idx]) + pad_floor)
 
-# Calibration of firm cost shares with correct X_phys
+# Calibration with Leontief intermediates and CD in primary factors (K, L only)
 net_rev <- revenue_vals * (1.0 - t_pro_r - t_esp_r)
-bk <- K_vals * 1.0 / net_rev
-bl <- L_vals * 1.0 / net_rev
-bx <- sweep(X_phys, 1, p_base, "*")
-bx <- sweep(bx, 2, net_rev, "/")
 
-# Calculate producer activity price (before tax, since V_sector_vals is gross revenue)
+# Calculate producer activity price and physical output
 make_share <- t(make_matrix / V_sector_vals)
 pz_activity_base <- apply(make_share, 2, function(col) sum(col * pz_base))
 V_phys <- V_sector_vals / pz_activity_base
 
-# Gamma for CD: each group uses its own product set, and physical quantities X_phys
+# --- Leontief io coefficients: io_{i,s} = X_phys_{i,s} / V_phys_s ---
+io_matrix <- sweep(X_phys, 2, V_phys + pad_floor, "/")
+io_matrix[5, sa_idx] <- 0        # prod_const not used by SA
+io_matrix[5, sc_idx] <- 0        # prod_const not used by SC
+io_matrix <- pmax(io_matrix, 0)
+
+# VA_nom = net_revenue - intermediate input cost at base prices
+# Note: SUM_i(io_{i,s} * V_phys_s * p_base_i) = SUM_i(X_phys_{i,s} * p_base_i) = colSums(X_matrix)
+X_nom_by_sector <- colSums(sweep(X_phys, 1, p_base, "*"))
+VA_nom <- pmax(net_rev - X_nom_by_sector, pad_floor)
+
+# Recalibrate bk, bl as shares of VA_nom (bk + bl = 1 at benchmark)
+bk <- K_vals / (VA_nom + pad_floor)
+bl <- L_vals / (VA_nom + pad_floor)
+
+cat(sprintf("bk + bl check (should be ~1): %s\n",
+    paste(round(bk + bl, 4), collapse = ", ")))
+
+# Gamma for CD in primary factors only (no X in production function)
 gamma_v <- numeric(6)
 for (i in 1:6) {
-    p_set <- if (i %in% sa_idx) p5_idx else if (i %in% sb_idx) 1:6 else pmin_idx
-    prod_term <- 1.0
-    for (j in p_set) {
-        x_val <- max(X_phys[j, i], 1e-8)
-        prod_term <- prod_term * (x_val^bx[j, i])
-    }
-    gamma_v[i] <- V_phys[i] / ( (K_vals[i]^bk[i]) * (L_vals[i]^bl[i]) * prod_term + pad_floor )
+    gamma_v[i] <- V_phys[i] / ( (K_vals[i]^bk[i]) * (L_vals[i]^bl[i]) + pad_floor )
 }
 
 # --- Labor Market / Wage Curve Calibration ---
@@ -339,7 +339,10 @@ par_flat <- unlist(list(
     damp_inv = 0.5,
     SAVext_target = SAVext_v,
     imptos_espec_data = sum(as.numeric(chile_sam["Imptos_Espec", colnames(chile_sam) != "Total"])),
-    x_agri_min_data = X_matrix[1, 2],
+    # Leontief io coefficients (free parameters passed directly to the model)
+    get_flow_values(io_matrix[p5_idx, sa_idx, drop=FALSE], "io", p_names[p5_idx], s_names[sa_idx]),
+    get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
+    get_flow_values(io_matrix[p5_idx, sc_idx, drop=FALSE], "io", p_names[p5_idx], s_names[sc_idx]),
     # Armington/CET parameters
     sigma_q = sigma_q_val, sigma_t = sigma_t_val,
     get_flow_values(gamma_e_v[c(1, 2, 3, 6)], "gamma_e", p_names[c(1, 2, 3, 6)]),
@@ -374,10 +377,8 @@ pmin_names <- p_names[pmin_idx]  # PMin
 calib_par_flat <- unlist(list(
     get_flow_values(alpha_v, "alpha", p_names[pcon_idx]), 
     get_flow_values(gamma_v, "gamma", s_names),
-    get_flow_values(bk, "betak", s_names), get_flow_values(bl, "betal", s_names),
-    get_flow_values(bx[p5_idx, sa_idx, drop=FALSE], "betax", p5_names, sa_names),
-    get_flow_values(bx[, sb_idx, drop=FALSE], "betax", p_names, sb_names),
-    get_flow_values(bx[pmin_idx, sc_idx, drop=FALSE], "betax", pmin_names, sc_names)
+    get_flow_values(bk, "betak", s_names),
+    get_flow_values(bl, "betal", s_names)
 ))
 model <- initval_calibr_par(model, calib_par_flat)
 
@@ -436,7 +437,10 @@ init_vars <- unlist(list(
     # X matches intermediate nominal values, so X * p = X_matrix
     get_flow_values(X_matrix[p5_idx, sa_idx, drop=FALSE] / p_base[p5_idx], "X", p5_names, sa_names),
     get_flow_values(X_matrix[, sb_idx, drop=FALSE] / p_base, "X", p_names, sb_names),
-    get_flow_values(X_matrix[pmin_idx, sc_idx, drop=FALSE] / p_base[pmin_idx], "X", pmin_names, sc_names),
+    get_flow_values(X_matrix[p5_idx, sc_idx, drop=FALSE] / p_base[p5_idx], "X", p5_names, sc_names),
+    get_flow_values(VA_nom[sa_idx], "va_nom", s_names[sa_idx]),
+    get_flow_values(VA_nom[sb_idx], "va_nom", s_names[sb_idx]),
+    get_flow_values(VA_nom[sc_idx], "va_nom", s_names[sc_idx]),
     get_flow_values(IVA_v, "VAT_p", p_names),
     get_flow_values(Ar_v, "Arancel_p", p_names)
 ))

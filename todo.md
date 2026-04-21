@@ -11,7 +11,6 @@
 | [ ] | Mejorar presentación de los diagramas en el paper. |
 | [ ] | Agregar el Margen de comercio. |
 | [ ] | Dejar de gravar con IVA a los insumos.|
-| [ ] | Hacer que se modifique el gasto de gobierno ante variaciones de impuestos.|
 | [ ] | Discutir la base imponible de FIRMTAX (ahora es el capital). El problema de esto es que las utilidades de los sectores son por definición 0 en este modelo| 
 | [ ] | En el paper dejar explícito el valor de los parámetros utilizados.|
 | [✅] | Modificar Omega. |

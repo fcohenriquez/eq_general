@@ -50,18 +50,18 @@ block <sa::SA>SECTORS_A
 {
     controls
     {
-        V<sa>[], K<sa>[], L<sa>[], <idx_xa::Pno5> X<idx_xa, sa>[];
+        V<sa>[], K<sa>[], L<sa>[];
     };
 
     objective
     {
         pi<sa>[] = V<sa>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sa>)) * (1.0 - tps<sa> - tes<sa>) 
-                  - K<sa>[] * pk[] - L<sa>[] * w[] - SUM<idx_x_o::Pno5>(X<idx_x_o, sa>[] * p<idx_x_o>[]);
+                  - K<sa>[] * pk[] - L<sa>[] * w[] - SUM<idx_x_o::Pno5>(io<idx_x_o, sa> * V<sa>[] * p<idx_x_o>[]);
     };
 
     constraints
     {
-        V<sa>[] = gamma<sa> * (K<sa>[]^betak<sa>) * (L<sa>[]^betal<sa>) * PROD<idx_p_c::Pno5>(X<idx_p_c, sa>[]^betax<idx_p_c, sa>);
+        V<sa>[] = gamma<sa> * (K<sa>[]^betak<sa>) * (L<sa>[]^betal<sa>);
     };
 
     identities
@@ -69,14 +69,15 @@ block <sa::SA>SECTORS_A
         <idx_y::P> Yap<idx_y, sa>[] = V<sa>[] * make_share<idx_y, sa>;
         revenue<sa>[] = SUM<idx_rev::P>(Yap<idx_rev, sa>[] * pz<idx_rev>[]);
         net_revenue<sa>[] = revenue<sa>[] * (1.0 - tps<sa> - tes<sa>);
+        <idx_xa::Pno5> X<idx_xa, sa>[] = io<idx_xa, sa> * V<sa>[];
+        va_nom<sa>[] = net_revenue<sa>[] - SUM<idx_xv::Pno5>(io<idx_xv, sa> * V<sa>[] * p<idx_xv>[]);
     };
 
     calibration
     {
         V<sa>[] = vst<sa> -> gamma<sa>;
-        K<sa>[] * pk[] = net_revenue<sa>[] * betak<sa> -> betak<sa>;
-        L<sa>[] * w[] = net_revenue<sa>[] * betal<sa> -> betal<sa>;
-        <idx_calx::Pno5> X<idx_calx, sa>[] * p<idx_calx>[] = net_revenue<sa>[] * betax<idx_calx, sa> -> betax<idx_calx, sa>;
+        K<sa>[] * pk[] = va_nom<sa>[] * betak<sa> -> betak<sa>;
+        L<sa>[] * w[] = va_nom<sa>[] * betal<sa> -> betal<sa>;
     };
 };
 
@@ -85,18 +86,18 @@ block <sb::SB>SECTORS_B
 {
     controls
     {
-        V<sb>[], K<sb>[], L<sb>[], <idx_xb::P> X<idx_xb, sb>[];
+        V<sb>[], K<sb>[], L<sb>[];
     };
 
     objective
     {
         pi<sb>[] = V<sb>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sb>)) * (1.0 - tps<sb> - tes<sb>) 
-                  - K<sb>[] * pk[] - L<sb>[] * w[] - SUM<idx_x_o::P>(X<idx_x_o, sb>[] * p<idx_x_o>[]);
+                  - K<sb>[] * pk[] - L<sb>[] * w[] - SUM<idx_x_o::P>(io<idx_x_o, sb> * V<sb>[] * p<idx_x_o>[]);
     };
 
     constraints
     {
-        V<sb>[] = gamma<sb> * (K<sb>[]^betak<sb>) * (L<sb>[]^betal<sb>) * PROD<idx_p_c::P>(X<idx_p_c, sb>[]^betax<idx_p_c, sb>);
+        V<sb>[] = gamma<sb> * (K<sb>[]^betak<sb>) * (L<sb>[]^betal<sb>);
     };
 
     identities
@@ -104,34 +105,35 @@ block <sb::SB>SECTORS_B
         <idx_y::P> Yap<idx_y, sb>[] = V<sb>[] * make_share<idx_y, sb>;
         revenue<sb>[] = SUM<idx_rev::P>(Yap<idx_rev, sb>[] * pz<idx_rev>[]);
         net_revenue<sb>[] = revenue<sb>[] * (1.0 - tps<sb> - tes<sb>);
+        <idx_xb::P> X<idx_xb, sb>[] = io<idx_xb, sb> * V<sb>[];
+        va_nom<sb>[] = net_revenue<sb>[] - SUM<idx_xv::P>(io<idx_xv, sb> * V<sb>[] * p<idx_xv>[]);
     };
 
     calibration
     {
         V<sb>[] = vst<sb> -> gamma<sb>;
-        K<sb>[] * pk[] = net_revenue<sb>[] * betak<sb> -> betak<sb>;
-        L<sb>[] * w[] = net_revenue<sb>[] * betal<sb> -> betal<sb>;
-        <idx_calx::P> X<idx_calx, sb>[] * p<idx_calx>[] = net_revenue<sb>[] * betax<idx_calx, sb> -> betax<idx_calx, sb>;
+        K<sb>[] * pk[] = va_nom<sb>[] * betak<sb> -> betak<sb>;
+        L<sb>[] * w[] = va_nom<sb>[] * betal<sb> -> betal<sb>;
     };
 };
 
-# Group C: Act_Min uses 4 products (no prod_Agri, no prod_const)
+# Group C: Act_Min uses 5 products (Pno5: same as SA, no prod_const)
 block <sc::SC>SECTORS_C
 {
     controls
     {
-        V<sc>[], K<sc>[], L<sc>[], <idx_xc::PMin> X<idx_xc, sc>[];
+        V<sc>[], K<sc>[], L<sc>[];
     };
 
     objective
     {
         pi<sc>[] = V<sc>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sc>)) * (1.0 - tps<sc> - tes<sc>) 
-                  - K<sc>[] * pk[] - L<sc>[] * w[] - SUM<idx_x_o::PMin>(X<idx_x_o, sc>[] * p<idx_x_o>[]) - x_agri_min_data * p<'prod_Agri'>[];
+                  - K<sc>[] * pk[] - L<sc>[] * w[] - SUM<idx_x_o::Pno5>(io<idx_x_o, sc> * V<sc>[] * p<idx_x_o>[]);
     };
 
     constraints
     {
-        V<sc>[] = gamma<sc> * (K<sc>[]^betak<sc>) * (L<sc>[]^betal<sc>) * PROD<idx_p_c::PMin>(X<idx_p_c, sc>[]^betax<idx_p_c, sc>);
+        V<sc>[] = gamma<sc> * (K<sc>[]^betak<sc>) * (L<sc>[]^betal<sc>);
     };
 
     identities
@@ -139,14 +141,15 @@ block <sc::SC>SECTORS_C
         <idx_y::P> Yap<idx_y, sc>[] = V<sc>[] * make_share<idx_y, sc>;
         revenue<sc>[] = SUM<idx_rev::P>(Yap<idx_rev, sc>[] * pz<idx_rev>[]);
         net_revenue<sc>[] = revenue<sc>[] * (1.0 - tps<sc> - tes<sc>);
+        <idx_xc::Pno5> X<idx_xc, sc>[] = io<idx_xc, sc> * V<sc>[];
+        va_nom<sc>[] = net_revenue<sc>[] - SUM<idx_xv::Pno5>(io<idx_xv, sc> * V<sc>[] * p<idx_xv>[]);
     };
 
     calibration
     {
         V<sc>[] = vst<sc> -> gamma<sc>;
-        K<sc>[] * pk[] = net_revenue<sc>[] * betak<sc> -> betak<sc>;
-        L<sc>[] * w[] = net_revenue<sc>[] * betal<sc> -> betal<sc>;
-        <idx_calx::PMin> X<idx_calx, sc>[] * p<idx_calx>[] = net_revenue<sc>[] * betax<idx_calx, sc> -> betax<idx_calx, sc>;
+        K<sc>[] * pk[] = va_nom<sc>[] * betak<sc> -> betak<sc>;
+        L<sc>[] * w[] = va_nom<sc>[] * betal<sc> -> betal<sc>;
     };
 };
 
@@ -218,7 +221,7 @@ block PRODUCTS
     identities
     {
         # --- DOMESTIC ABSORPTION (DA = TD_Dom) ---
-        TD_Dom_Agri[] = D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]) + x_agri_min_data;
+        TD_Dom_Agri[] = D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]) + SUM<i_ac_a::SC>(X<'prod_Agri', i_ac_a>[]);
         <idx_mc4::PMin> TD_Dom_PMin<idx_mc4>[] = D<idx_mc4>[] + gg_market_data_p<idx_mc4> + (I_data<idx_mc4> * inv_adj[]) + vexist<idx_mc4> + SUM<i_aa4::SA>(X<idx_mc4, i_aa4>[]) + SUM<i_ab4::SB>(X<idx_mc4, i_ab4>[]) + SUM<i_ac4::SC>(X<idx_mc4, i_ac4>[]);
         TD_Dom_Const[] = D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_ab_c::SB>(X<'prod_const', i_ab_c>[]);
 
