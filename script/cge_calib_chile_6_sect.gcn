@@ -287,7 +287,7 @@ block EQUILIBRIUM
         # Capital Market Clearing (stays fixed)
         SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) + SUM<idx_kc::SC>(K<idx_kc>[]) = k_total_data;
         
-        exr[] = 1.0;
+        # exr[] = 1.0;  # Flexible Exchange Rate: exr is now endogenous
         Kh[] = k_total_data * par_k_h;
         Lh[] = LD[] * par_l_h;
         PSh[] = pshdata;
@@ -314,7 +314,10 @@ block INVESTMENT
         
         TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
         
-        # SAVext clearing the residual (mostly Gov and Stocks)
-        SAVext[] = TOTAL_INVEST[] - (SAV[] + SAVf[] + SAVg[]);
+        # Flexible Exchange Rate Closure: SAVext is fixed, exr adjusts
+        SAVext[] = SAVext_target;
+
+        # S-I Identity: This equation ensures macro-consistency and helps determine exr
+        SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
     };
 }

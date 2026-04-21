@@ -144,3 +144,30 @@ print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list)
 print(comp_vat)
 ```
 
+
+# SHOCK: 10% Incremento PIT (Impuesto a la Renta de Personas)
+```{r include=FALSE}
+# 1. Definir el shock (Aumento del 10% en la tasa de PIT)
+pit_base <- get_par_values(model)["pit"]
+pit_shock <- as.numeric(pit_base) * 1.10
+
+# 2. Aplicar el shock usando set_free_par
+model_shock_pit <- set_free_par(model, free_par = list(pit = pit_shock))
+
+# 3. Resolver el modelo para el nuevo estado estacionario
+model_shock_pit <- steady_state(model_shock_pit, calibration = FALSE, 
+                                options_list = list(xscalm="auto", max_iter = 10000, tol = 1e-5))
+
+res_shock_pit <- get_ss_values(model_shock_pit)
+pib_shock_pit_list <- calc_pib(model_shock_pit)
+```
+
+# ANALYSIS PIT
+```{r}
+# Comparación y visualización de impactos
+comp_pit <- calc_tax_impact(res_base, res_shock_pit, pib_base, pib_real_base, pib_shock_pit_list, vars_to_compare)
+
+print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list)
+print(comp_pit)
+```
+

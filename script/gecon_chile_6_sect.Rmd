@@ -337,6 +337,7 @@ par_flat <- unlist(list(
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
     sh_i_h = sh_i_h_v, sh_i_f = sh_i_f_v, sh_i_g = sh_i_g_v,
     damp_inv = 0.5,
+    SAVext_target = SAVext_v,
     imptos_espec_data = sum(as.numeric(chile_sam["Imptos_Espec", colnames(chile_sam) != "Total"])),
     x_agri_min_data = X_matrix[1, 2],
     # Armington/CET parameters
