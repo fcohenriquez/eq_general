@@ -39,7 +39,7 @@ flowchart TD
     K --> L["🟢 Mejora\ncompetitividad exportadora\n(X ↑)"]
     K --> M["🔴 Sustitución hacia\nimportaciones\n(Armington: M ↑)"]
 
-    L --> N["🟢 Mejora\nbalanza comercial"]
+    L --> N["🔴 Deterioro\nbalanza comercial\n(M ↑ > X ↑)"]
     M --> N
 
     A --> O["🔴 Caída directa\nrecaudación FIT (T_FIT ↓)"]
@@ -51,11 +51,10 @@ flowchart TD
         G -- "🟢" --> T_TAR["🟢 Aumento Aranceles\n(Si M ↑)"]
     end
 
-    T_IVA & T_PIT & T_TAR --> P["⚖️ Efecto Neto Ingresos Gob."]
-    P --> Q["⚖️ Presión sobre\ngasto público (G)"]
+    T_IVA & T_PIT & T_TAR & O --> P["⚖️ Efecto Neto Ingresos Gob."]
+        
+    I & E & N --> R["⚖️ Efecto neto\nsobre PIB"]
     
-    I --> R["⚖️ Efecto neto\nsobre PIB"]
-    Q --> R
 ```
 
 ### Resumen de Canales e Impacto Fiscal Cruzado
@@ -67,7 +66,9 @@ flowchart TD
 | **Recaudación FIT** | Caída directa de ingresos por menores tasas a empresas | 🔴 |
 | **Efecto Cruzado IVA** | El aumento del consumo privado expande la base imponible del IVA | 🟢 |
 | **Efecto Cruzado PIT** | La expansión económica eleva empleo y salarios, aumentando la recaudación PIT | 🟢 |
-| **Efecto neto Ingresos** | La pérdida en FIT puede ser compensada parcialmente por IVA y PIT | ⚖️ |
+| **Efecto Cruzado Aranceles** | El aumento de importaciones incrementa la recaudación por aranceles | 🟢 |
+| **Efecto neto Ingresos** | La pérdida en FIT puede ser compensada parcialmente por IVA, PIT y Aranceles | ⚖️ |
+| **Balanza Comercial** | Aumentan X y M, pero M en mayor magnitud por presión de demanda | 🔴 |
 
 ---
 
@@ -98,16 +99,9 @@ flowchart TD
         D -- "🔴" --> T_TAR["🔴 Caída Aranceles\n(Si M ↓)"]
     end
 
-    T_PIT & T_FIT & T_TAR --> F["⚖️ Efecto Neto Ingresos Gob."]
-    F --> G["🟢 Mayor capacidad\nde gasto público (G ↑)"]
-
-    G --> H
-    
-    A --> N["🔴 Encarece inputs\nintermedios con IVA"]
-    N --> O["🔴 Aumento de\ncostos de producción"]
-    O --> P["🔴 Reducción de\nmárgenes e inversión"]
-
-    D & G & I & P --> R["⚖️ Efecto neto\nsobre PIB"]
+    T_PIT & T_FIT & T_TAR & E --> F["⚖️ Efecto Neto Ingresos Gob."]
+        
+    D & I --> R["⚖️ Efecto neto\nsobre PIB"]
 ```
 
 ### Resumen de Canales e Impacto Fiscal Cruzado
@@ -115,11 +109,12 @@ flowchart TD
 | Canal | Mecanismo | Signo |
 |---|---|---|
 | **Precio Consumidor** | El IVA se traslada al precio final, contrayendo el consumo real | 🔴 |
+| **Actividad y Empleo** | La menor demanda reduce la producción sectorial, el empleo y salarios | 🔴 |
 | **Recaudación IVA** | Incremento directo en ingresos tributarios por mayor tasa | 🟢 |
 | **Efecto Cruzado PIT** | La contracción del consumo reduce la actividad y el empleo, bajando el PIT | 🔴 |
 | **Efecto Cruzado FIT** | Mayores costos y menor demanda reducen utilidades empresariales y su impuesto | 🔴 |
-| **Erosión Fiscal** | El alza de tasa de un impuesto "canibaliza" parcialmente las bases de otros | 🔴 |
-| **Gasto público** | El efecto neto positivo suele habilitar expansión de G | 🟢 |
+| **Efecto Cruzado Aranceles** | La caída en la demanda contrae importaciones, reduciendo aranceles | 🔴 |
+| **Efecto neto Ingresos** | Aumento del IVA es compensado a la baja por la erosión del resto de bases | 🟢/⚖️ |
 
 ---
 
@@ -142,19 +137,16 @@ flowchart TD
     D --> I["🔴 Reducción de\nproducción y empleo"]
     I --> J["🔴 Caída en salarios\n(Wage curve)"]
 
-    subgraph Recaudacion["⚖️ Retroalimentación Fiscal"]
+    subgraph Retroalimentacion["⚖️ Retroalimentación Macro y Fiscal"]
         E
         C -- "🔴" --> T_IVA["🔴 Caída recaudación IVA\n(Por menor consumo)"]
         I -- "🔴" --> T_FIT["🔴 Caída recaudación FIT\n(Por menor actividad)"]
-        B -- "🔴" --> T_SAV["🔴 Menor ahorro/inversión"]
+        B -- "🔴" --> T_SAV["🔴 Menor ahorro\ne inversión (I ↓)"]
     end
 
-    T_IVA & T_FIT --> F["⚖️ Efecto Neto Ingresos Gob."]
-    F --> G["🟢 Expansión de\ngasto público (G ↑)"]
-
-    G --> H["🟢 Compensación parcial\nde demanda"]
-
-    C & G & I --> R["⚖️ Efecto neto\nsobre PIB"]
+    T_IVA & T_FIT & E --> F["⚖️ Efecto Neto Ingresos Gob."]
+  
+    C & I & T_SAV--> R["⚖️ Efecto neto\nsobre PIB"]
 ```
 
 ### Resumen de Canales e Impacto Fiscal Cruzado
@@ -163,10 +155,28 @@ flowchart TD
 |---|---|---|
 | **Ingreso disponible** | La carga tributaria reduce directamente el ingreso post-impuesto | 🔴 |
 | **Consumo privado** | El canal principal de contracción de demanda agregada | 🔴 |
+| **Ahorro e Inversión** | Hogares ajustan ahorro a la baja, restringiendo financiamiento a inversión | 🔴 |
+| **Mercado laboral** | La menor demanda sectorial presiona empleo y salarios a la baja | 🔴 |
+| **Recaudación PIT** | Incremento directo en ingresos tributarios por mayor tasa | 🟢 |
 | **Efecto Cruzado IVA** | Al caer el consumo privado, cae la recaudación por IVA (Fuerte vínculo) | 🔴 |
 | **Efecto Cruzado FIT** | La menor actividad económica reduce las bases imponibles corporativas | 🔴 |
-| **Sostenibilidad G** | La recaudación PIT neta es menor al incremento directo por estas filtraciones | ⚖️ |
-| **Mercado laboral** | La menor demanda sectorial presiona empleo y salarios a la baja | 🔴 |
+| **Efecto neto Ingresos** | Recaudación PIT neta es menor al incremento directo por estas filtraciones | 🟢/⚖️ |
+
+---
+
+## Comparación de Efectos Macroeconómicos
+
+| Variable | ↓ FIT | ↑ IVA | ↑ PIT |
+|---|:---:|:---:|:---:|
+| **Consumo privado (C)** | 🟢 | 🔴 | 🔴 |
+| **Inversión privada (I)** | 🟢 | 🔴 | 🔴 |
+| **Exportaciones (X)** | 🟢 | ⚖️ | ⚖️ |
+| **Importaciones (M)** | 🟢🟢 | 🔴 | 🔴 |
+| **Balanza Comercial** | 🔴 | ⚖️ | ⚖️ |
+| **Empleo (L)** | 🟢 | 🔴 | 🔴 |
+| **Salario real (w/P)** | 🟢 | 🔴 | 🔴 |
+| **Recaudación total** | ⚖️ | 🟢 | 🟢 |
+| **PIB (Y)** | ⚖️ | ⚖️ | ⚖️ |
 
 ---
 
