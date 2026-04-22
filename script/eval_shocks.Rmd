@@ -53,6 +53,34 @@ print_macro_impact <- function(name, p_base_list, p_shock_list) {
     cat(sprintf("     Tasa Desempleo Base : %8.4f %%\n", p_base_list$u_rate * 100))
     cat(sprintf("     Tasa Desempleo Shock: %8.4f %%\n", p_shock_list$u_rate * 100))
     cat(sprintf("     Variación (p.p.)    : %8.4f pp\n\n", var_u_rate_pp))
+    
+    # --- Impacto Fiscal como % del PIB nominal base ---
+    pib_nom_base <- p_base_list$PIB
+    
+    tax_vars    <- c("Tax", "FIRMTAX", "PITAX", "VAT")
+    tax_labels  <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ")
+    
+    cat("  Recaudación Fiscal (% del PIB nominal base):\n")
+    cat(sprintf("     %-12s  %10s  %10s  %10s\n", "Variable", "Base (%PIB)", "Shock(%PIB)", "Δ (pp PIB)"))
+    cat(sprintf("     %s\n", strrep("-", 52)))
+    
+    for (i in seq_along(tax_vars)) {
+        v       <- tax_vars[i]
+        lbl     <- tax_labels[i]
+        base_v  <- p_base_list[[v]]
+        shock_v <- p_shock_list[[v]]
+        
+        if (!is.null(base_v) && !is.null(shock_v) && !is.na(base_v) && !is.na(shock_v)) {
+            pct_base  <- base_v  / pib_nom_base * 100
+            pct_shock <- shock_v / pib_nom_base * 100
+            delta_pp  <- pct_shock - pct_base
+            cat(sprintf("     %-12s  %10.4f  %10.4f  %+10.4f\n",
+                        lbl, pct_base, pct_shock, delta_pp))
+        } else {
+            cat(sprintf("     %-12s  %s\n", lbl, "(no disponible)"))
+        }
+    }
+    cat("\n")
 }
 
 calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {

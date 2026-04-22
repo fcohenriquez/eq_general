@@ -2,7 +2,6 @@
 
 | Hecho | Tarea |
 | :---: | :--- |
-| [ ] | Cambiar Funciones de Producción, agregando utilización Leontief de insumos. |
 | [ ] | Incrementar los productos y sectores de la economía |
 | [ ] | Revisar la SAM (entender mejor el sector externo  y en general el institucional) |
 | [ ] | Abrir los Impuestos, por ejemplo el impuesto a las empresas y simular el sismema de créditos. |
@@ -17,6 +16,7 @@
 | [✅] | Endogeneizar demanda de trabajo |
 | [✅] | Replantear el cierre del modelo, modificando el destino del ahorro del gobierno. |
 | [✅] | Revisar vaciado de mercado con IVA en unidades físicas.|
+| [✅] | Cambiar Funciones de Producción, agregando utilización Leontief de insumos. |
 
 
 
