@@ -112,9 +112,11 @@ flowchart TD
     subgraph Recaudacion
         C --> T_IVA["🔴 ↓ IVA"]
         F --> T_FIT["🔴 ↓ FIT"]
+        M--> T_TAR["🔴 ↓ aranceles"]
+
     end
 
-    T_IVA & T_FIT & D --> R1["⚖️ efecto fiscal"]
+    T_IVA & T_FIT & T_TAR & D --> R1["⚖️ efecto fiscal"]
 
     C & F & I --> R["⚖️ efecto sobre PIB"]
 ```

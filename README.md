@@ -1,20 +1,42 @@
 # eq_general
 
-Modelo de equilibrio general para evaluar impuestos
+Modelo de equilibrio general para evaluar impuestos en Chile.
 
+## Principales Características del Modelo
 
+El modelo es un sistema de Equilibrio General Computable (CGE) desarrollado con el framework **gEcon** en R, diseñado específicamente para el análisis de política fiscal y shocks tributarios.
 
-El modelo que se utiliza es gEcon montado en R. En este link está su documentación.
+### 1. Estructura Económica y Desagregación
+*   **Sectores y Productos:** El modelo cuenta con 6 sectores productivos y 6 tipos de productos (Agricultura, Minería, Manufactura, Electricidad/Agua/Gas, Construcción y Servicios), calibrados con datos de la economía chilena para el año 2022.
+*   **Producción:** Utiliza una estructura anidada. El Valor Agregado se genera mediante una función **Cobb-Douglas** (Capital y Trabajo), mientras que los insumos intermedios siguen una relación de coeficientes fijos (**Leontief**).
+*   **Comercio Exterior:** 
+    *   **Exportaciones:** Función **CET** (Constant Elasticity of Transformation) para la asignación de la producción entre mercado interno y externo.
+    *   **Importaciones:** Función de agregación **Armington** para combinar bienes domésticos e importados.
 
-https://gecon.r-forge.r-project.org/
+### 2. Mercado de Factores
+*   **Trabajo:** Incluye una **Curva de Salarios** que vincula el nivel salarial con la tasa de utilización del trabajo, permitiendo modelar el desempleo de forma endógena.
+*   **Capital:** El stock total de capital se asume fijo en el escenario base, distribuyéndose entre los sectores.
 
-En la actualidad hay un modelo con 6 sectores y 6 productos para el año 2022.
+### 3. Sistema Tributario
+El modelo detalla múltiples instrumentos fiscales para evaluar cambios en la recaudación y sus efectos de transmisión:
+*   **Impuesto a las Empresas (FIT):** Sobre las utilidades corporativas.
+*   **Impuesto a las Personas (PIT):** Sobre el ingreso de los hogares.
+*   **IVA:** Impuesto al valor agregado sobre el consumo y la absorción.
+*   **Aranceles:** Impuestos a las importaciones.
+*   **Impuestos Específicos y a la Producción.**
 
+### 4. Cierres Macroeconómicos (Closures)
+*   **Sector Externo:** Tipo de cambio flexible (endógeno) con ahorro externo fijo.
+*   **Inversión-Ahorro:** Cierre determinado por el ahorro (Savings-driven), donde la inversión privada responde a los cambios en el ahorro de hogares y empresas mediante una función con elasticidad de ajuste.
 
-En la actualidad se está desarrollando la estimacion en los archivos script/gecon_chile_6_sect.Rmd y script/cge_calib_chile_6_sect.gcn
+---
 
+El modelo utiliza **gEcon** montado en R. En este link está su documentación: https://gecon.r-forge.r-project.org/
 
-Además, el archivo script/calculo_pib.Rmd estima el PIB y variables de actividad a partir de la solución inicial.
+### Archivos Principales
+*   **`script/cge_calib_chile_6_sect.gcn`**: Definición del modelo en lenguaje gEcon.
+*   **`script/gecon_chile_6_sect.Rmd`**: Calibración y resolución del estado estacionario inicial.
+*   **`script/calculo_pib.Rmd`**: Estimación del PIB y variables de actividad a partir de la solución.
+*   **`script/eval_shocks.Rmd`**: Evaluación de medidas tributarias y simulaciones de política.
 
-Por último, el archivo script/eval_shocks.Rmd hace la evaluación de las distintas medidas tributarias (una vez que se corrieron gecon_chile_6_sect.Rmd y calculo_pib.Rmd)
 
