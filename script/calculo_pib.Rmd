@@ -48,7 +48,14 @@ calc_pib <- function(model_obj) {
                 PIB = C + G_val + I_val + V_val + X_val - M_val,
                 C_real=C_real, G_real=G_real, I_real=I_real, V_real=V_real, X_real=X_real, M_real=M_real,
                 PIB_real = C_real + G_real + I_real + V_real + X_real - M_real,
-                u_rate = ss_vals["u_rate"]))
+                u_rate = ss_vals["u_rate"],
+                Tax = ss_vals["Tax"],
+                FIRMTAX = ss_vals["FIRMTAX"],
+                PITAX = ss_vals["PITAX"],
+                VAT = ss_vals["VAT"],
+                TPROD = ss_vals["TPROD"],
+                TESP = ss_vals["TESP"],
+                TARANCEL = ss_vals["TARANCEL"]))
 }
 ```
 

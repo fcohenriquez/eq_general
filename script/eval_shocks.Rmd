@@ -57,8 +57,8 @@ print_macro_impact <- function(name, p_base_list, p_shock_list) {
     # --- Impacto Fiscal como % del PIB nominal base ---
     pib_nom_base <- p_base_list$PIB
     
-    tax_vars    <- c("Tax", "FIRMTAX", "PITAX", "VAT")
-    tax_labels  <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ")
+    tax_vars    <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL")
+    tax_labels  <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ", "Prod. Tax ", "Spec. Tax ", "Tariffs   ")
     
     cat("  Recaudación Fiscal (% del PIB nominal base):\n")
     cat(sprintf("     %-12s  %10s  %10s  %10s\n", "Variable", "Base (%PIB)", "Shock(%PIB)", "Δ (pp PIB)"))
@@ -200,3 +200,31 @@ print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list)
 print(comp_pit)
 ```
 
+# SHOCK COMBINADO: Disminución FIT e Incremento PIT
+```{r include=FALSE}
+# 1. Definir los shocks
+fit_base <- get_par_values(model)["fit"]
+fit_shock <- fit_base * (1 - 0.615 * (0.01 / 0.27)) # Misma magnitud que el shock individual
+
+pit_base <- get_par_values(model)["pit"]
+pit_shock <- as.numeric(pit_base) * 1.45 # Incremento del X% en la tasa
+
+# 2. Aplicar ambos shocks simultáneamente
+model_shock_comb <- set_free_par(model, free_par = list(fit = fit_shock, pit = pit_shock))
+
+# 3. Resolver el modelo
+model_shock_comb <- steady_state(model_shock_comb, calibration = FALSE, 
+                                 options_list = list(xscalm="auto", max_iter = 10000, tol = 1e-5))
+
+res_shock_comb <- get_ss_values(model_shock_comb)
+pib_shock_comb_list <- calc_pib(model_shock_comb)
+```
+
+# ANALISIS SHOCK COMBINADO (FIT + PIT)
+```{r}
+# Comparación y visualización de impactos
+comp_comb <- calc_tax_impact(res_base, res_shock_comb, pib_base, pib_real_base, pib_shock_comb_list, vars_to_compare)
+
+print_macro_impact("Mix: Reducción IDPC + Aumento PIT", pib_model_list, pib_shock_comb_list)
+print(comp_comb)
+```

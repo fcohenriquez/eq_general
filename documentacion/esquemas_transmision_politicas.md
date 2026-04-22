@@ -9,6 +9,7 @@
 > - ⚖️ Efecto ambiguo / depende de parámetros
 > - Las flechas sólidas (→) indican el canal de transmisión principal.
 > - Las flechas punteadas (⇢) indican efectos secundarios o de equilibrio general.
+> - **[EFECTO CRUZADO]**: Destaca el impacto de un cambio tributario sobre la base de otros impuestos.
 
 ---
 
@@ -41,26 +42,32 @@ flowchart TD
     L --> N["🟢 Mejora\nbalanza comercial"]
     M --> N
 
-    A --> O["🔴 Reducción de\nrecaudación fiscal\n(T_FIT ↓)"]
-    O --> P["🔴 Presión sobre\ngasto público\n(G ↓ o déficit ↑)"]
-    P --> Q["⚖️ Efecto contractivo\nsobre demanda agregada"]
+    A --> O["🔴 Caída directa\nrecaudación FIT (T_FIT ↓)"]
+    
+    subgraph Recaudacion["⚖️ Recaudación Fiscal Cruzada"]
+        O
+        I -- "🟢" --> T_IVA["🟢 Aumento recaudación IVA\n(Mayor base consumo)"]
+        G -- "🟢" --> T_PIT["🟢 Aumento recaudación PIT\n(Mayor base laboral)"]
+        G -- "🟢" --> T_TAR["🟢 Aumento Aranceles\n(Si M ↑)"]
+    end
 
+    T_IVA & T_PIT & T_TAR --> P["⚖️ Efecto Neto Ingresos Gob."]
+    P --> Q["⚖️ Presión sobre\ngasto público (G)"]
+    
     I --> R["⚖️ Efecto neto\nsobre PIB"]
-    G --> R
     Q --> R
 ```
 
-### Resumen de Canales
+### Resumen de Canales e Impacto Fiscal Cruzado
 
 | Canal | Mecanismo | Signo |
 |---|---|---|
 | **Inversión** | Mayor retorno neto al capital estimula la inversión privada | 🟢 |
 | **Consumo** | Mayores dividendos elevan el ingreso disponible de los hogares | 🟢 |
-| **Oferta sectorial** | Expansión productiva reduce costos y precios domésticos | 🟢 |
-| **Exportaciones** | Precios domésticos menores mejoran competitividad externa (CET) | 🟢 |
-| **Recaudación** | Caída directa de ingresos fiscales por menores tasas | 🔴 |
-| **Gasto público** | Restricción fiscal contrae la demanda del gobierno | 🔴 |
-| **Efecto neto PIB** | Depende de la magnitud del estímulo privado vs. contracción fiscal | ⚖️ |
+| **Recaudación FIT** | Caída directa de ingresos por menores tasas a empresas | 🔴 |
+| **Efecto Cruzado IVA** | El aumento del consumo privado expande la base imponible del IVA | 🟢 |
+| **Efecto Cruzado PIT** | La expansión económica eleva empleo y salarios, aumentando la recaudación PIT | 🟢 |
+| **Efecto neto Ingresos** | La pérdida en FIT puede ser compensada parcialmente por IVA y PIT | ⚖️ |
 
 ---
 
@@ -75,47 +82,44 @@ flowchart TD
     A["🔵 Aumento τ_IVA\n(Impuesto al Valor Agregado)"]
 
     A --> B["🔴 Aumento del\nprecio al consumidor\n(P_c ↑)"]
-    B --> C["🔴 Reducción del\npoder adquisitivo real\nde los hogares"]
+    B --> C["🔴 Reducción del\npoder adquisitivo real"]
     C --> D["🔴 Contracción del\nconsumo privado\n(C ↓)"]
 
-    A --> E["🟢 Aumento de la\nrecaudación fiscal\n(T_IVA ↑)"]
-    E --> F["🟢 Mayor capacidad\nde gasto público\n(G ↑)"]
-    F --> G["🟢 Expansión demanda\ndel gobierno\n(demanda sectorial ↑)"]
+    A --> E["🟢 Aumento directo\nrecaudación IVA (T_IVA ↑)"]
 
     D --> H["🔴 Reducción de\ndemanda doméstica"]
-    G --> H
-
     H --> I["🔴 Caída en\nproducción sectorial\n(Y_s ↓)"]
     I --> J["🔴 Menor empleo\ny salarios\n(L ↓, w ↓)"]
-    J --> K["🔴 Retroalimentación:\ningreso de hogares ↓"]
-    K --> D
 
-    H --> L["🔴 Presión sobre\nexportaciones\n(exceso de oferta → X ↑?)"]
-    L --> M["⚖️ Efecto sobre\nbalanza comercial\n(Mecanismo CET)"]
+    subgraph Recaudacion["⚖️ Erosión de otras bases fiscales"]
+        E
+        J -- "🔴" --> T_PIT["🔴 Caída recaudación PIT\n(Menor base laboral)"]
+        I -- "🔴" --> T_FIT["🔴 Caída recaudación FIT\n(Menor rentabilidad/Y)"]
+        D -- "🔴" --> T_TAR["🔴 Caída Aranceles\n(Si M ↓)"]
+    end
 
-    A --> N["🔴 Encarece inputs\nintermedios con IVA\n(costos intermedios ↑)"]
-    N --> O["🔴 Aumento de\ncostos de producción\n(MC ↑)"]
-    O --> P["🔴 Reducción de\nmárgenes y rentabilidad"]
-    P --> Q["🔴 Desincentivo\na la inversión\n(I ↓)"]
+    T_PIT & T_FIT & T_TAR --> F["⚖️ Efecto Neto Ingresos Gob."]
+    F --> G["🟢 Mayor capacidad\nde gasto público (G ↑)"]
 
-    D --> R["⚖️ Efecto neto\nsobre PIB"]
-    G --> R
-    I --> R
-    Q --> R
+    G --> H
+    
+    A --> N["🔴 Encarece inputs\nintermedios con IVA"]
+    N --> O["🔴 Aumento de\ncostos de producción"]
+    O --> P["🔴 Reducción de\nmárgenes e inversión"]
+
+    D & G & I & P --> R["⚖️ Efecto neto\nsobre PIB"]
 ```
 
-### Resumen de Canales
+### Resumen de Canales e Impacto Fiscal Cruzado
 
 | Canal | Mecanismo | Signo |
 |---|---|---|
-| **Precio al consumidor** | El IVA se traslada al precio final, contrayendo el consumo real | 🔴 |
-| **Recaudación** | Incremento directo en ingresos tributarios del gobierno | 🟢 |
-| **Gasto público** | Mayor recaudación habilita expansión del gasto de gobierno | 🟢 |
-| **Demanda doméstica** | La caída en consumo privado supera (parcialmente) el alza en G | 🔴 |
-| **Costos intermedios** | Sectores que no recuperan IVA enfrentan mayores costos | 🔴 |
-| **Inversión** | Menor rentabilidad y demanda reducen el incentivo a invertir | 🔴 |
-| **Exportaciones** | Exceso de oferta interna redirige producción al exterior (CET) | ⚖️ |
-| **Efecto neto PIB** | Generalmente contractivo; compensado parcialmente por G | ⚖️ |
+| **Precio Consumidor** | El IVA se traslada al precio final, contrayendo el consumo real | 🔴 |
+| **Recaudación IVA** | Incremento directo en ingresos tributarios por mayor tasa | 🟢 |
+| **Efecto Cruzado PIT** | La contracción del consumo reduce la actividad y el empleo, bajando el PIT | 🔴 |
+| **Efecto Cruzado FIT** | Mayores costos y menor demanda reducen utilidades empresariales y su impuesto | 🔴 |
+| **Erosión Fiscal** | El alza de tasa de un impuesto "canibaliza" parcialmente las bases de otros | 🔴 |
+| **Gasto público** | El efecto neto positivo suele habilitar expansión de G | 🟢 |
 
 ---
 
@@ -129,110 +133,62 @@ flowchart TD
 flowchart TD
     A["🔵 Aumento τ_PIT\n(Impuesto a las personas)"]
 
-    A --> B["🔴 Reducción del\ningreso disponible\nde los hogares\n(Yd ↓)"]
+    A --> B["🔴 Reducción del\ningreso disponible (Yd ↓)"]
     B --> C["🔴 Contracción del\nconsumo privado\n(C ↓)"]
-    C --> D["🔴 Caída en demanda\nagreg. de bienes\nde consumo"]
+    C --> D["🔴 Caída en demanda\nagregada"]
 
-    A --> E["🟢 Aumento de\nrecaudación fiscal\n(T_PIT ↑)"]
-    E --> F["🟢 Mayor espacio\nfiscal para el gobierno"]
-    F --> G["🟢 Aumento del\ngasto público\n(G ↑)"]
-    G --> H["🟢 Expansión de\ndemanda sectorial\n(sectores estratégicos)"]
+    A --> E["🟢 Aumento directo\nrecaudación PIT (T_PIT ↑)"]
 
-    D --> I["🔴 Reducción de\nproducción en sectores\nde consumo\n(Y_s ↓)"]
-    I --> J["🔴 Menor demanda\nde trabajo\n(L ↓)"]
-    J --> K["🔴 Presión a la\nbaja en salarios\n(w ↓ bajo curva salarial)"]
-    K --> L["🔴 Retroalimentación:\nmás caída en Yd"]
-    L --> C
+    D --> I["🔴 Reducción de\nproducción y empleo"]
+    I --> J["🔴 Caída en salarios\n(Wage curve)"]
 
-    B --> M["🔴 Reducción del\nahorro privado\n(S_priv ↓)"]
-    M --> N["🔴 Menor financiamiento\ndisponible para inversión\n(I ↓)"]
+    subgraph Recaudacion["⚖️ Retroalimentación Fiscal"]
+        E
+        C -- "🔴" --> T_IVA["🔴 Caída recaudación IVA\n(Por menor consumo)"]
+        I -- "🔴" --> T_FIT["🔴 Caída recaudación FIT\n(Por menor actividad)"]
+        B -- "🔴" --> T_SAV["🔴 Menor ahorro/inversión"]
+    end
 
-    H --> O["⚖️ Compensación\nparcial vía demanda pública"]
+    T_IVA & T_FIT --> F["⚖️ Efecto Neto Ingresos Gob."]
+    F --> G["🟢 Expansión de\ngasto público (G ↑)"]
 
-    A --> P["⚖️ Efecto sobre\noferta de trabajo\n(horas trabajadas)"]
-    P --> Q["⚖️ Depende de elasticidad\noferta laboral: efecto\nrenta vs. sustitución"]
+    G --> H["🟢 Compensación parcial\nde demanda"]
 
-    C --> R["⚖️ Efecto neto\nsobre PIB"]
-    G --> R
-    N --> R
-    I --> R
+    C & G & I --> R["⚖️ Efecto neto\nsobre PIB"]
 ```
 
-### Resumen de Canales
+### Resumen de Canales e Impacto Fiscal Cruzado
 
 | Canal | Mecanismo | Signo |
 |---|---|---|
 | **Ingreso disponible** | La carga tributaria reduce directamente el ingreso post-impuesto | 🔴 |
-| **Consumo privado** | Menor ingreso disponible contrae el consumo de los hogares | 🔴 |
-| **Ahorro privado** | Hogares ajustan ahorro a la baja para sostener el consumo | 🔴 |
-| **Inversión** | Menor ahorro privado restringe el financiamiento de la inversión | 🔴 |
-| **Mercado laboral** | Menor demanda sectorial presiona empleo y salarios a la baja | 🔴 |
-| **Recaudación** | Incremento directo en ingresos tributarios del gobierno | 🟢 |
-| **Gasto público** | Mayor recaudación habilita expansión del gasto de gobierno | 🟢 |
-| **Oferta laboral** | El efecto sobre horas trabajadas depende de la elasticidad laboral | ⚖️ |
-| **Efecto neto PIB** | Generalmente contractivo; compensado por mayor G | ⚖️ |
+| **Consumo privado** | El canal principal de contracción de demanda agregada | 🔴 |
+| **Efecto Cruzado IVA** | Al caer el consumo privado, cae la recaudación por IVA (Fuerte vínculo) | 🔴 |
+| **Efecto Cruzado FIT** | La menor actividad económica reduce las bases imponibles corporativas | 🔴 |
+| **Sostenibilidad G** | La recaudación PIT neta es menor al incremento directo por estas filtraciones | ⚖️ |
+| **Mercado laboral** | La menor demanda sectorial presiona empleo y salarios a la baja | 🔴 |
 
 ---
 
-## Comparación de los Tres Esquemas
+## Resumen de Interacciones de Recaudación Cruzada
 
-```mermaid
-flowchart LR
-    subgraph FIT["1️⃣ ↓ FIT (Impuesto Empresas)"]
-        F1["Shock: τ_FIT ↓"]
-        F2["Retorno K ↑ → I ↑"]
-        F3["Dividendos ↑ → C ↑"]
-        F4["Producción ↑ → P_d ↓ → X ↑"]
-        F5["Recaudación ↓ → G ↓"]
-        F1 --> F2 & F3 & F4 & F5
-    end
+La siguiente tabla resume cómo el shock en un impuesto impacta **indirectamente** las bases de los demás impuestos a través del equilibrio general.
 
-    subgraph IVA["2️⃣ ↑ IVA (Imp. Valor Agregado)"]
-        V1["Shock: τ_IVA ↑"]
-        V2["P_c ↑ → C ↓"]
-        V3["Costos intermedios ↑ → I ↓"]
-        V4["Recaudación ↑ → G ↑"]
-        V5["CET: X ↑ (exceso oferta)"]
-        V1 --> V2 & V3 & V4 & V5
-    end
-
-    subgraph PIT["3️⃣ ↑ PIT (Imp. Personas)"]
-        P1["Shock: τ_PIT ↑"]
-        P2["Yd ↓ → C ↓"]
-        P3["S_priv ↓ → I ↓"]
-        P4["Empleo ↓ → w ↓ → Yd ↓↓"]
-        P5["Recaudación ↑ → G ↑"]
-        P1 --> P2 & P3 & P4 & P5
-    end
-```
-
-### Tabla Comparativa de Efectos Macroeconómicos
-
-| Variable | ↓ FIT | ↑ IVA | ↑ PIT |
-|---|:---:|:---:|:---:|
-| **Consumo privado (C)** | 🟢 | 🔴 | 🔴 |
-| **Inversión privada (I)** | 🟢 | 🔴 | 🔴 |
-| **Gasto público (G)** | 🔴 | 🟢 | 🟢 |
-| **Exportaciones (X)** | 🟢 | ⚖️ | ⚖️ |
-| **Importaciones (M)** | ⚖️ | 🔴 | 🔴 |
-| **Empleo (L)** | 🟢 | 🔴 | 🔴 |
-| **Salario real (w/P)** | 🟢 | 🔴 | 🔴 |
-| **Precio doméstico (P_d)** | 🔴 | 🟢 | ⚖️ |
-| **Recaudación total (T)** | 🔴 | 🟢 | 🟢 |
-| **PIB (Y)** | ⚖️ | ⚖️ | ⚖️ |
-
-> **Nota:** Los efectos sobre el PIB son ambiguos en los tres casos, ya que el resultado neto depende de la magnitud relativa de los efectos expansivos y contractivos, así como de los parámetros de elasticidad del modelo (Armington, CET, curva salarial, elasticidad del consumo, etc.).
+| Shock | Efecto en Base FIT | Efecto en Base IVA | Efecto en Base PIT | Recaudación Total |
+|---|:---:|:---:|:---:|:---:|
+| **↓ FIT** | 🔴 (Tasa) | 🟢 (↑ Consumo) | 🟢 (↑ Empleo) | ⚖️ (Compensación) |
+| **↑ IVA** | 🔴 (↓ Márgenes) | 🟢 (Tasa) | 🔴 (↓ Empleo) | 🟢 (Erosión parcial) |
+| **↑ PIT** | 🔴 (↓ Actividad) | 🔴 (↓ Consumo) | 🟢 (Tasa) | 🟢 (Filtración IVA) |
 
 ---
 
 ## Notas Metodológicas del Modelo
 
-- **Mercado laboral:** Se asume una curva salarial (*wage curve*) donde el salario real responde positivamente al nivel de empleo: $\ln(w/P) = \beta_0 + \beta_L \ln(L)$. Esto genera desempleo endógeno y amplifica los efectos contractivos sobre el ingreso de los hogares.
-- **Comercio exterior:** Las exportaciones y la producción doméstica se asignan vía función CET (*Constant Elasticity of Transformation*); las importaciones compiten con bienes domésticos vía función Armington.
-- **Cierre macroeconómico:** Se asume tipo de cambio flexible con ahorro externo fijo, lo que endogeniza el tipo de cambio y permite ajustes en la balanza comercial.
-- **Inversión:** El cierre sectorial fija la inversión pública y amortigua la inversión privada vía una elasticidad de potencia, lo que modera los efectos de acelerador.
-- **Estructura productiva:** La función de producción sigue una estructura Leontief-anidada con insumos intermedios de proporciones fijas y factores primarios (capital y trabajo) con elasticidad de sustitución.
+- **Interdependencia Fiscal:** El modelo captura que los impuestos no son compartimentos estancos. Un cambio en la tasa de uno afecta la base de todos los demás.
+- **Mercado laboral:** La *wage curve* amplifica el efecto cruzado sobre el PIT, ya que el empleo y los salarios nominales caen juntos en escenarios contractivos.
+- **Cierre macroeconómico:** El gasto público (G) se ajusta endógenamente para equilibrar el presupuesto, lo que significa que los efectos cruzados determinan finalmente cuánto "espacio fiscal" real se genera.
+- **Estructura productiva:** La estructura Leontief asegura que las caídas en producción sectorial se traduzcan proporcionalmente en menor demanda de insumos intermedios y factores, impactando todas las bases impositivas.
 
 ---
 
-*Documento generado: Abril 2026 | Modelo CGE Chile 6 Sectores — gEcon/R*
+*Documento actualizado: Abril 2026 | Análisis de Recaudación Cruzada — Modelo CGE Chile*
