@@ -1,0 +1,335 @@
+
+options
+{
+    output LaTeX = TRUE;
+    output LaTeX landscape = TRUE;
+    output logfile = TRUE;
+};
+
+
+indexsets
+{
+  P = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const', 'prod_serv'};
+  Pcon = {'prod_Agri', 'prod_Manu', 'prod_elect_agua_gas', 'prod_serv'};
+  Pno5 = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_serv'};
+  PMin = {'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_serv'};
+  P_Exp = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_serv'};
+  P_NExp = {'prod_const'};
+  SA = { 'Act_Agri', 'Act_Manu', 'Act_elect_agua_gas' };
+  SB = { 'Act_const', 'Act_serv' };
+  SC = { 'Act_Min' };
+  S = { 'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_const', 'Act_serv' };
+};
+
+block CONSUMER
+{
+    controls
+    {
+        <idx_d::Pcon> D<idx_d>[];
+    };
+
+    objective
+    {
+        U[] = (SUM<idx_c::Pcon>(alpha<idx_c> * (D<idx_c>[]^((omega - 1.0)/omega))))^(omega/(omega - 1.0));
+    };
+
+    constraints
+    {
+        SUM<idx_i_1::Pcon>(p<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+    };
+    
+    identities
+    {
+        INC[] = BTINC[] - PITAX[];
+        BTINC[] = pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
+        SAV[] = INC[] * por_sav;
+        CS[] = INC[] * por_cont;
+        D<'prod_Min'>[] = dst_nc<'prod_Min'>;
+        D<'prod_const'>[] = dst_nc<'prod_const'>;
+    };
+
+    calibration
+    {
+        <idx_cal::Pcon> D<idx_cal>[] = dst<idx_cal> -> alpha<idx_cal>;
+    };
+};
+
+# Group A: 3 sectors using 5 products (no prod_const) - Agri, Manu, EAG
+block <sa::SA>SECTORS_A
+{
+    controls
+    {
+        V<sa>[], K<sa>[], L<sa>[];
+    };
+
+    objective
+    {
+        pi<sa>[] = V<sa>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sa>)) * (1.0 - tps<sa> - tes<sa>) 
+                  - K<sa>[] * pk[] - L<sa>[] * w[] - SUM<idx_x_o::Pno5>(io<idx_x_o, sa> * V<sa>[] * p<idx_x_o>[]);
+    };
+
+    constraints
+    {
+        V<sa>[] = gamma<sa> * (K<sa>[]^betak<sa>) * (L<sa>[]^betal<sa>);
+    };
+
+    identities
+    {
+        <idx_y::P> Yap<idx_y, sa>[] = V<sa>[] * make_share<idx_y, sa>;
+        revenue<sa>[] = SUM<idx_rev::P>(Yap<idx_rev, sa>[] * pz<idx_rev>[]);
+        net_revenue<sa>[] = revenue<sa>[] * (1.0 - tps<sa> - tes<sa>);
+        <idx_xa::Pno5> X<idx_xa, sa>[] = io<idx_xa, sa> * V<sa>[];
+        va_nom<sa>[] = net_revenue<sa>[] - SUM<idx_xv::Pno5>(io<idx_xv, sa> * V<sa>[] * p<idx_xv>[]);
+    };
+
+    calibration
+    {
+        V<sa>[] = vst<sa> -> gamma<sa>;
+        K<sa>[] * pk[] = va_nom<sa>[] * betak<sa> -> betak<sa>;
+        L<sa>[] * w[] = va_nom<sa>[] * betal<sa> -> betal<sa>;
+    };
+};
+
+# Group B: 2 sectors using ALL 6 products - const, serv
+block <sb::SB>SECTORS_B
+{
+    controls
+    {
+        V<sb>[], K<sb>[], L<sb>[];
+    };
+
+    objective
+    {
+        pi<sb>[] = V<sb>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sb>)) * (1.0 - tps<sb> - tes<sb>) 
+                  - K<sb>[] * pk[] - L<sb>[] * w[] - SUM<idx_x_o::P>(io<idx_x_o, sb> * V<sb>[] * p<idx_x_o>[]);
+    };
+
+    constraints
+    {
+        V<sb>[] = gamma<sb> * (K<sb>[]^betak<sb>) * (L<sb>[]^betal<sb>);
+    };
+
+    identities
+    {
+        <idx_y::P> Yap<idx_y, sb>[] = V<sb>[] * make_share<idx_y, sb>;
+        revenue<sb>[] = SUM<idx_rev::P>(Yap<idx_rev, sb>[] * pz<idx_rev>[]);
+        net_revenue<sb>[] = revenue<sb>[] * (1.0 - tps<sb> - tes<sb>);
+        <idx_xb::P> X<idx_xb, sb>[] = io<idx_xb, sb> * V<sb>[];
+        va_nom<sb>[] = net_revenue<sb>[] - SUM<idx_xv::P>(io<idx_xv, sb> * V<sb>[] * p<idx_xv>[]);
+    };
+
+    calibration
+    {
+        V<sb>[] = vst<sb> -> gamma<sb>;
+        K<sb>[] * pk[] = va_nom<sb>[] * betak<sb> -> betak<sb>;
+        L<sb>[] * w[] = va_nom<sb>[] * betal<sb> -> betal<sb>;
+    };
+};
+
+# Group C: Act_Min uses 5 products (Pno5: same as SA, no prod_const)
+block <sc::SC>SECTORS_C
+{
+    controls
+    {
+        V<sc>[], K<sc>[], L<sc>[];
+    };
+
+    objective
+    {
+        pi<sc>[] = V<sc>[] * (SUM<idx_pv::P>(pz<idx_pv>[] * make_share<idx_pv, sc>)) * (1.0 - tps<sc> - tes<sc>) 
+                  - K<sc>[] * pk[] - L<sc>[] * w[] - SUM<idx_x_o::Pno5>(io<idx_x_o, sc> * V<sc>[] * p<idx_x_o>[]);
+    };
+
+    constraints
+    {
+        V<sc>[] = gamma<sc> * (K<sc>[]^betak<sc>) * (L<sc>[]^betal<sc>);
+    };
+
+    identities
+    {
+        <idx_y::P> Yap<idx_y, sc>[] = V<sc>[] * make_share<idx_y, sc>;
+        revenue<sc>[] = SUM<idx_rev::P>(Yap<idx_rev, sc>[] * pz<idx_rev>[]);
+        net_revenue<sc>[] = revenue<sc>[] * (1.0 - tps<sc> - tes<sc>);
+        <idx_xc::Pno5> X<idx_xc, sc>[] = io<idx_xc, sc> * V<sc>[];
+        va_nom<sc>[] = net_revenue<sc>[] - SUM<idx_xv::Pno5>(io<idx_xv, sc> * V<sc>[] * p<idx_xv>[]);
+    };
+
+    calibration
+    {
+        V<sc>[] = vst<sc> -> gamma<sc>;
+        K<sc>[] * pk[] = va_nom<sc>[] * betak<sc> -> betak<sc>;
+        L<sc>[] * w[] = va_nom<sc>[] * betal<sc> -> betal<sc>;
+    };
+};
+
+# --- CET: Producer allocates output between domestic sales and exports ---
+block <idx_e::P_Exp>EXPORTER
+{
+    controls
+    {
+        Z<idx_e>[], DS<idx_e>[], EX<idx_e>[];
+    };
+
+    objective
+    {
+        PI_CET<idx_e>[] = pe<idx_e>[] * EX<idx_e>[] + pd<idx_e>[] * DS<idx_e>[] - pz<idx_e>[] * Z<idx_e>[];
+    };
+
+    constraints
+    {
+        Z<idx_e>[] = at<idx_e> * ( gamma_e<idx_e> * EX<idx_e>[] ^ ((sigma_t + 1.0) / sigma_t) + (1.0 - gamma_e<idx_e>) * DS<idx_e>[] ^ ((sigma_t + 1.0) / sigma_t) ) ^ (sigma_t / (sigma_t + 1.0));
+    };
+
+    identities
+    {
+        Z<idx_e>[] = SUM<i_sa::SA>(Yap<idx_e, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_e, i_sb>[]) + SUM<i_sc::SC>(Yap<idx_e, i_sc>[]);
+        pe<idx_e>[] = pworlde<idx_e> * exr[];
+    };
+};
+
+block <idx_ne::P_NExp>NON_EXPORTER
+{
+    identities
+    {
+        Z<idx_ne>[] = SUM<i_sa::SA>(Yap<idx_ne, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_ne, i_sb>[]) + SUM<i_sc::SC>(Yap<idx_ne, i_sc>[]);
+        DS<idx_ne>[] = Z<idx_ne>[];
+        EX<idx_ne>[] = 0.0;
+        pe<idx_ne>[] = pworlde<idx_ne> * exr[];
+        pz<idx_ne>[] = pd<idx_ne>[];
+        PI_CET<idx_ne>[] = 0.0;
+    };
+};
+
+# --- Armington: Zero-profit composite combines domestic goods + imports ---
+block <idx_a::P>IMPORTER
+{
+    controls
+    {
+        Q<idx_a>[], DD<idx_a>[], M<idx_a>[];
+    };
+
+    objective
+    {
+        PI_ARM<idx_a>[] = p<idx_a>[] * Q<idx_a>[] - pd<idx_a>[] * DD<idx_a>[] - pm<idx_a>[] * M<idx_a>[];
+    };
+
+    constraints
+    {
+        Q<idx_a>[] = aq<idx_a> * ( delta_m<idx_a> * M<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) + (1.0 - delta_m<idx_a>) * DD<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) ) ^ (sigma_q / (sigma_q - 1.0));
+    };
+
+    identities
+    {
+        DD<idx_a>[] = DS<idx_a>[];
+        pm<idx_a>[] = pworldm<idx_a> * exr[] * (1.0 + tar_rate<idx_a>);
+    };
+};
+
+block PRODUCTS
+{
+    identities
+    {
+        # --- DOMESTIC ABSORPTION (DA = TD_Dom) ---
+        TD_Dom_Agri[] = D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]) + SUM<i_ac_a::SC>(X<'prod_Agri', i_ac_a>[]);
+        <idx_mc4::PMin> TD_Dom_PMin<idx_mc4>[] = D<idx_mc4>[] + gg_market_data_p<idx_mc4> + (I_data<idx_mc4> * inv_adj[]) + vexist<idx_mc4> + SUM<i_aa4::SA>(X<idx_mc4, i_aa4>[]) + SUM<i_ab4::SB>(X<idx_mc4, i_ab4>[]) + SUM<i_ac4::SC>(X<idx_mc4, i_ac4>[]);
+        TD_Dom_Const[] = D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_ab_c::SB>(X<'prod_const', i_ab_c>[]);
+
+        # --- MARKET CLEARING: Q + tax_physical = DA ---
+        Q<'prod_Agri'>[] + (VAT_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (imptos_espec_p<'prod_Agri'> / p<'prod_Agri'>[]) = TD_Dom_Agri[];
+        <idx_mc4b::PMin> Q<idx_mc4b>[] + (VAT_p<idx_mc4b>[] / p<idx_mc4b>[]) + (imptos_espec_p<idx_mc4b> / p<idx_mc4b>[]) = TD_Dom_PMin<idx_mc4b>[];
+        Q<'prod_const'>[] + (VAT_p<'prod_const'>[] / p<'prod_const'>[]) + (imptos_espec_p<'prod_const'> / p<'prod_const'>[]) = TD_Dom_Const[];
+
+        # --- TAX REVENUE ---
+        VAT_p<'prod_Agri'>[] = vat<'prod_Agri'> * p<'prod_Agri'>[] * TD_Dom_Agri[];
+        <idx_mc4v::PMin> VAT_p<idx_mc4v>[] = vat<idx_mc4v> * p<idx_mc4v>[] * TD_Dom_PMin<idx_mc4v>[];
+        VAT_p<'prod_const'>[] = vat<'prod_const'> * p<'prod_const'>[] * TD_Dom_Const[];
+
+        # Tariff on CIF value of imports
+        <idx_ar::P> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
+    };
+};
+
+block FIRM
+{
+    identities
+    {
+        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
+        SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
+        TREMP[] = INGF[] * por_tremp;
+        Kf[] = k_total_data * par_k_f;
+        FIRMTAX[] = fit * (Kf[] * pk[]);
+    };
+};
+
+block GOB
+{
+    identities
+    {
+        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
+        TRGOV[] = trgov_data;
+        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * p<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
+        Kg[] = k_total_data * par_k_g;
+        VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
+        PITAX[] = pit * (pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
+        TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
+                  SUM<idx_sb::SB>(tps<idx_sb> * revenue<idx_sb>[]) +
+                  SUM<idx_sc::SC>(tps<idx_sc> * revenue<idx_sc>[]);
+        TESP[] = SUM<idx_sa::SA>(tes<idx_sa> * revenue<idx_sa>[]) +
+                 SUM<idx_sb::SB>(tes<idx_sb> * revenue<idx_sb>[]) +
+                 SUM<idx_sc::SC>(tes<idx_sc> * revenue<idx_sc>[]) + imptos_espec_data;
+        TARANCEL[] = SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
+        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[];
+    };
+};
+
+
+block EQUILIBRIUM
+{
+    identities 
+    {
+        # Total Labor Demand (LD)
+        LD[] = SUM<idx_ea::SA>(L<idx_ea>[]) + SUM<idx_eb::SB>(L<idx_eb>[]) + SUM<idx_ec::SC>(L<idx_ec>[]) + l_total_data * par_l_row;
+        
+        # Wage Curve: w = w_pot * (LD / L_force)^phi
+        w[] = w_pot_calib * (LD[] / l_force_data)^phi;
+        
+        # Unemployment rate identity
+        u_rate[] = (l_force_data - LD[]) / l_force_data;
+
+        # Capital Market Clearing (stays fixed)
+        SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) + SUM<idx_kc::SC>(K<idx_kc>[]) = k_total_data;
+        
+        # exr[] = 1.0;  # Flexible Exchange Rate: exr is now endogenous
+        Kh[] = k_total_data * par_k_h;
+        Lh[] = LD[] * par_l_h;
+        PSh[] = pshdata;
+    }
+}
+
+block INVESTMENT
+{
+    identities
+    {
+        # Helper for current nominal cost of base investment quantities
+        NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * p<idx_nb>[]);
+
+        # Sectoral adjustment factors
+        inv_adj_g[] = 1.0;
+        
+        # Physical investment in each sector adjusted to match its nominal savings
+        # Power function damping: η is the elasticity of investment to savings
+        inv_adj_h[] = (SAV[] / (sh_i_h * NOM_I_BASE[]))^damp_inv;
+        inv_adj_f[] = (SAVf[] / (sh_i_f * NOM_I_BASE[]))^damp_inv;
+        
+        # Weighted aggregate inv_adj for the PRODUCTS block
+        inv_adj[] = sh_i_h * inv_adj_h[] + sh_i_f * inv_adj_f[] + sh_i_g * inv_adj_g[];
+        
+        TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
+        
+        # Flexible Exchange Rate Closure: SAVext is fixed, exr adjusts
+        SAVext[] = SAVext_target;
+
+        # S-I Identity: This equation ensures macro-consistency and helps determine exr
+        SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
+    };
+}

@@ -1,7 +1,7 @@
-Generated on 2026-04-23 16:42:46 by gEcon ver. 1.2.3 (2025-04-13)
+Generated on 2026-04-23 16:47:41 by gEcon ver. 1.2.3 (2025-04-13)
 http://gecon.r-forge.r-project.org/
 
-Model name: cge_calib_chile_6_sect
+Model name: cge_calib_chile_6_sect_23
 
 Index sets (10):
     P = { 'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const', 'prod_serv' }

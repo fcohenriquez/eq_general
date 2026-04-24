@@ -10,6 +10,7 @@
 | [ ] | Agregar el Margen de comercio. |
 | [ ] | Dejar de gravar con IVA a los insumos.|
 | [ ] | Discutir la base imponible de FIRMTAX (ahora es el capital). El problema de esto es que las utilidades de los sectores son por definición 0 en este modelo| 
+| [ ] | Averiguar qué pasa con las contribuciones y con el impuesto adicional| 
 | [✅] | Modificar Omega. |
 | [✅] | Endogeneizar demanda de trabajo |
 | [✅] | Replantear el cierre del modelo, modificando el destino del ahorro del gobierno. |

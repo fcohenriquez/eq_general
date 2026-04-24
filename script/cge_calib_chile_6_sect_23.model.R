@@ -1,10 +1,10 @@
-# Generated on 2026-04-23 16:42:46 by gEcon ver. 1.2.3 (2025-04-13)
+# Generated on 2026-04-23 16:47:41 by gEcon ver. 1.2.3 (2025-04-13)
 # http://gecon.r-forge.r-project.org/
 
-# Model name: cge_calib_chile_6_sect
+# Model name: cge_calib_chile_6_sect_23
 
 # info
-info__ <- c("cge_calib_chile_6_sect", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/script/cge_calib_chile_6_sect.gcn", "2026-04-23 16:42:46", "false")
+info__ <- c("cge_calib_chile_6_sect_23", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/script/cge_calib_chile_6_sect_23.gcn", "2026-04-23 16:47:41", "false")
 
 # index sets
 index_sets__ <- list(P = c("prod_Agri", "prod_Min", "prod_Manu", "prod_elect_agua_gas", "prod_const", "prod_serv"),
