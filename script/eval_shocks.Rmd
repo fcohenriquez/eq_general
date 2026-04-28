@@ -142,8 +142,8 @@ print(comp_fit)
 
 # SHOCK: 1% Incremento IVA (Impuesto al Valor Agregado)
 ```{r include=FALSE}
-# 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto)
-p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub", "otros"))
+# 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto) OJO otros no tiene IVA
+p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
 vat_names <- paste0("vat__", p_names)
 vat_base <- get_par_values(model)[vat_names]
 vat_shock <- as.list(as.numeric(vat_base) * 1.01)

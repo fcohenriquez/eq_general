@@ -259,6 +259,8 @@ l_force_data_val <- l_total_data_val / (1 - u_base_val)
 phi_val <- 0.1
 w_pot_calib_val <- (1 - u_base_val)^(-phi_val)
 
+Z0_v <- pmax(Z_v / pz_base, 1e-6)
+
 par_flat <- unlist(list(
     omega = omega_val, k_total_data = sum(K_vals) + chile_sam["row", "Capital"], 
     l_total_data = l_total_data_val, 
@@ -286,6 +288,9 @@ par_flat <- unlist(list(
     get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
     get_flow_values(gamma_e_v[pexp_idx], "gamma_e", p_names[pexp_idx]),
     get_flow_values(at_v[pexp_idx], "at", p_names[pexp_idx]),
+    # Z0: valor fisico base de Z para escalar la restriccion CET (reduce residuo absoluto)
+    #get_flow_values(pmax(Z_v / pz_base, 1e-6)[pexp_idx], "Z0", p_names[pexp_idx]),
+    get_flow_values(Z0_v[pexp_idx], "Z0", p_names[pexp_idx]),
     # delta_m y aq: solo para Pdom_arm (11 productos con M_base > 0)
     # prod_adm_pub (indice 12) usa bloque PROD_ADM_PUB_ARM con M=0, sin Armington CES
     get_flow_values(delta_m_v[pdom_arm_idx], "delta_m", p_names[pdom_arm_idx]),
@@ -380,7 +385,8 @@ init_vars <- unlist(list(
     get_flow_values(VA_nom[sa_idx], "va_nom", s_names[sa_idx]),
     get_flow_values(VA_nom[sb_idx], "va_nom", s_names[sb_idx]),
     get_flow_values(IVA_v, "VAT_p", p_names),
-    get_flow_values(Ar_v, "Arancel_p", p_names)
+    get_flow_values(Ar_v, "Arancel_p", p_names),
+    get_flow_values(  -pz_base[pexp_idx] * Z0_v[pexp_idx],  "lambda__EXPORTER_1",  p_names[pexp_idx])
 ))
 model <- initval_var(model, init_vars)
 ```
