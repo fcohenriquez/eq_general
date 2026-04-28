@@ -1,0 +1,318 @@
+options
+{
+    output LaTeX = FALSE;
+    output LaTeX landscape = FALSE;
+    output logfile = FALSE;
+};
+
+indexsets
+{
+  P    = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+           'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+           'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
+
+  Pdom = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+           'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+           'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub'};
+
+  # Pdom_arm: productos con importaciones > 0 (excluye prod_adm_pub, cero estructural en M)
+  Pdom_arm = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+              'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+              'prod_serv_emp', 'prod_serv_pers'};
+
+  Pno_const = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+               'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
+               'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers',
+               'prod_adm_pub', 'prod_otros'};
+
+  Pcon  = {'prod_Agri', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
+            'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv', 'prod_serv_emp',
+            'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
+
+  P_Exp  = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+             'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
+             'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers'};
+
+  P_NExp = {'prod_const', 'prod_adm_pub'};
+
+  SA = {'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_com_hot_rest',
+        'Act_trans_comu_inf', 'Act_int_fin', 'Act_serv_emp',
+        'Act_serv_pers', 'Act_adm_pub'};
+
+  SB = {'Act_const', 'Act_inmo_viv'};
+
+  S  = {'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_const',
+         'Act_com_hot_rest', 'Act_trans_comu_inf', 'Act_int_fin', 'Act_inmo_viv',
+         'Act_serv_emp', 'Act_serv_pers', 'Act_adm_pub'};
+         
+  PMinP = {'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
+          'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+          'prod_serv_emp', 'prod_serv_pers'};
+};
+
+block CONSUMER
+{
+    controls
+    {
+        <idx_d::Pcon> D<idx_d>[];
+    };
+
+    objective
+    {
+        U[] = (SUM<idx_c::Pcon>(alpha<idx_c> * (D<idx_c>[]^((omega - 1.0)/omega))))^(omega/(omega - 1.0));
+    };
+
+    constraints
+    {
+        SUM<idx_i_1::Pcon>(p<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+    };
+    
+    identities
+    {
+        INC[] = BTINC[] - PITAX[];
+        BTINC[] = pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
+        SAV[] = INC[] * por_sav;
+        CS[] = INC[] * por_cont;
+        D<'prod_Min'>[] = dst_nc<'prod_Min'>;
+        D<'prod_const'>[] = dst_nc<'prod_const'>;
+    };
+
+    calibration
+    {
+        <idx_cal::Pcon> D<idx_cal>[] = dst<idx_cal> -> alpha<idx_cal>;
+    };
+};
+
+block <sa::SA> SECTORS_A {
+  controls { V<sa>[], K<sa>[], L<sa>[]; };
+  objective {
+    pi<sa>[] = V<sa>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sa>))*(1-tps<sa>-tes<sa>)
+              - K<sa>[]*pk[] - L<sa>[]*w[]
+              - SUM<p_no_c::Pno_const>(io<p_no_c,sa>*V<sa>[]*p<p_no_c>[]);
+  };
+  constraints { V<sa>[] = gamma<sa>*(K<sa>[]^betak<sa>)*(L<sa>[]^betal<sa>); };
+  identities {
+    <p_dom::Pdom> Yap<p_dom,sa>[] = V<sa>[]*make_share<p_dom,sa>;
+    revenue<sa>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sa>[]*pz<p_rev>[]);
+    net_revenue<sa>[] = revenue<sa>[]*(1-tps<sa>-tes<sa>);
+    <p_no_cx::Pno_const> X<p_no_cx,sa>[] = io<p_no_cx,sa>*V<sa>[];
+    va_nom<sa>[] = net_revenue<sa>[] - SUM<p_no_cv::Pno_const>(io<p_no_cv,sa>*V<sa>[]*p<p_no_cv>[]);
+  };
+  calibration {
+    V<sa>[] = vst<sa> -> gamma<sa>;
+    K<sa>[]*pk[] = va_nom<sa>[]*betak<sa> -> betak<sa>;
+    L<sa>[]*w[]  = va_nom<sa>[]*betal<sa> -> betal<sa>;
+  };
+};
+
+block <sb::SB> SECTORS_B {
+  controls { V<sb>[], K<sb>[], L<sb>[]; };
+  objective {
+    pi<sb>[] = V<sb>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sb>))*(1-tps<sb>-tes<sb>)
+              - K<sb>[]*pk[] - L<sb>[]*w[]
+              - SUM<p_full::P>(io<p_full,sb>*V<sb>[]*p<p_full>[]);
+  };
+  constraints { V<sb>[] = gamma<sb>*(K<sb>[]^betak<sb>)*(L<sb>[]^betal<sb>); };
+  identities {
+    <p_dom::Pdom> Yap<p_dom,sb>[] = V<sb>[]*make_share<p_dom,sb>;
+    revenue<sb>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sb>[]*pz<p_rev>[]);
+    net_revenue<sb>[] = revenue<sb>[]*(1-tps<sb>-tes<sb>);
+    <p_fullx::P> X<p_fullx,sb>[] = io<p_fullx,sb>*V<sb>[];
+    va_nom<sb>[] = net_revenue<sb>[] - SUM<p_fullv::P>(io<p_fullv,sb>*V<sb>[]*p<p_fullv>[]);
+  };
+  calibration {
+    V<sb>[] = vst<sb> -> gamma<sb>;
+    K<sb>[]*pk[] = va_nom<sb>[]*betak<sb> -> betak<sb>;
+    L<sb>[]*w[]  = va_nom<sb>[]*betal<sb> -> betal<sb>;
+  };
+};
+
+block <idx_e::P_Exp> EXPORTER
+{
+    controls
+    {
+        Z<idx_e>[], DS<idx_e>[], EX<idx_e>[];
+    };
+
+    objective
+    {
+        PI_CET<idx_e>[] = pe<idx_e>[] * EX<idx_e>[] + pd<idx_e>[] * DS<idx_e>[] - pz<idx_e>[] * Z<idx_e>[];
+    };
+
+    constraints
+    {
+        Z<idx_e>[] = at<idx_e> * ( gamma_e<idx_e> * EX<idx_e>[] ^ ((2.0 + 1.0) / 2.0) + (1.0 - gamma_e<idx_e>) * DS<idx_e>[] ^ ((2.0 + 1.0) / 2.0) ) ^ (2.0 / (2.0 + 1.0));
+    };
+
+    identities
+    {
+        Z<idx_e>[] = SUM<i_sa::SA>(Yap<idx_e, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_e, i_sb>[]);
+        pe<idx_e>[] = pworlde<idx_e> * exr[];
+    };
+};
+
+block <idx_ne::P_NExp> NON_EXPORTER
+{
+    identities
+    {
+        Z<idx_ne>[] = SUM<i_sa::SA>(Yap<idx_ne, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_ne, i_sb>[]);
+        DS<idx_ne>[] = Z<idx_ne>[];
+        EX<idx_ne>[] = 0.0;
+        pe<idx_ne>[] = pworlde<idx_ne> * exr[];
+        pz<idx_ne>[] = pd<idx_ne>[];
+        PI_CET<idx_ne>[] = 0.0;
+    };
+};
+
+block PROD_OTROS {
+  identities {
+    Z<'prod_otros'>[]    = 0.0;
+    DS<'prod_otros'>[]   = 0.0;
+    EX<'prod_otros'>[]   = ex_otros_data;
+    DD<'prod_otros'>[]   = 0.0;
+    PI_CET<'prod_otros'>[] = 0.0;
+    PI_ARM<'prod_otros'>[] = 0.0;
+    pe<'prod_otros'>[]   = pworlde<'prod_otros'> * exr[];
+    pm<'prod_otros'>[]   = pworldm<'prod_otros'> * exr[] * (1.0 + tar_rate<'prod_otros'>);
+    pz<'prod_otros'>[]   = pm<'prod_otros'>[];
+    pd<'prod_otros'>[]   = pm<'prod_otros'>[];
+    p<'prod_otros'>[]    = pm<'prod_otros'>[];
+    Q<'prod_otros'>[]    = M<'prod_otros'>[];
+    M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'>
+                          + (I_data<'prod_otros'> * inv_adj[]) + vexist<'prod_otros'>
+                          + SUM<i_aa_o::SA>(X<'prod_otros', i_aa_o>[]) + SUM<i_ab_o::SB>(X<'prod_otros', i_ab_o>[])
+                          + EX<'prod_otros'>[];
+    VAT_p<'prod_otros'>[]       = 0.0;
+    Arancel_p<'prod_otros'>[]   = tar_rate<'prod_otros'> * pworldm<'prod_otros'> * exr[] * M<'prod_otros'>[];
+    # imptos_espec_p is a parameter, no equation needed
+  };
+};
+
+block <idx_a::Pdom_arm> IMPORTER
+{
+    controls
+    {
+        Q<idx_a>[], DD<idx_a>[], M<idx_a>[];
+    };
+
+    objective
+    {
+        PI_ARM<idx_a>[] = p<idx_a>[] * Q<idx_a>[] - pd<idx_a>[] * DD<idx_a>[] - pm<idx_a>[] * M<idx_a>[];
+    };
+
+    constraints
+    {
+        Q<idx_a>[] = aq<idx_a> * ( delta_m<idx_a> * M<idx_a>[] ^ ((2.0 - 1.0) / 2.0) + (1.0 - delta_m<idx_a>) * DD<idx_a>[] ^ ((2.0 - 1.0) / 2.0) ) ^ (2.0 / (2.0 - 1.0));
+    };
+
+    identities
+    {
+        DD<idx_a>[] = DS<idx_a>[];
+        pm<idx_a>[] = pworldm<idx_a> * exr[] * (1.0 + tar_rate<idx_a>);
+    };
+};
+
+# Cero estructural: prod_adm_pub tiene M_base = 0 en la SAM.
+# Se excluye de IMPORTER (cuya FOC genera M^(-0.5) -> Inf).
+# Se reemplazan todos los controles y objetivo por identidades puras.
+block PROD_ADM_PUB_ARM
+{
+    identities
+    {
+        DD<'prod_adm_pub'>[]     = DS<'prod_adm_pub'>[];
+        M<'prod_adm_pub'>[]      = 0.0;
+        Q<'prod_adm_pub'>[]      = DD<'prod_adm_pub'>[];
+        PI_ARM<'prod_adm_pub'>[] = 0.0;
+        pm<'prod_adm_pub'>[]     = pworldm<'prod_adm_pub'> * exr[] * (1.0 + tar_rate<'prod_adm_pub'>);
+        p<'prod_adm_pub'>[]      = pd<'prod_adm_pub'>[];
+    };
+};
+
+block PRODUCTS
+{
+    identities
+    {
+        TD_Dom_Agri[] = D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]);
+        <idx_mc4::PMinP> TD_Dom_PMinP<idx_mc4>[] = D<idx_mc4>[] + gg_market_data_p<idx_mc4> + (I_data<idx_mc4> * inv_adj[]) + vexist<idx_mc4> + SUM<i_aa4::SA>(X<idx_mc4, i_aa4>[]) + SUM<i_ab4::SB>(X<idx_mc4, i_ab4>[]);
+        TD_Dom_Const[] = D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_ab_c::SB>(X<'prod_const', i_ab_c>[]);
+        TD_Dom_Adm_pub[] = D<'prod_adm_pub'>[] + gg_market_data_p<'prod_adm_pub'> + (I_data<'prod_adm_pub'> * inv_adj[]) + vexist<'prod_adm_pub'> + SUM<i_aa_d::SA>(X<'prod_adm_pub', i_aa_d>[]) + SUM<i_ab_d::SB>(X<'prod_adm_pub', i_ab_d>[]);
+
+        Q<'prod_Agri'>[] + (VAT_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (imptos_espec_p<'prod_Agri'> / p<'prod_Agri'>[]) = TD_Dom_Agri[];
+        <idx_mc4b::PMinP> Q<idx_mc4b>[] + (VAT_p<idx_mc4b>[] / p<idx_mc4b>[]) + (imptos_espec_p<idx_mc4b> / p<idx_mc4b>[]) = TD_Dom_PMinP<idx_mc4b>[];
+        Q<'prod_const'>[] + (VAT_p<'prod_const'>[] / p<'prod_const'>[]) + (imptos_espec_p<'prod_const'> / p<'prod_const'>[]) = TD_Dom_Const[];
+        Q<'prod_adm_pub'>[] + (VAT_p<'prod_adm_pub'>[] / p<'prod_adm_pub'>[]) + (imptos_espec_p<'prod_adm_pub'> / p<'prod_adm_pub'>[]) = TD_Dom_Adm_pub[];
+
+        VAT_p<'prod_Agri'>[] = vat<'prod_Agri'> * p<'prod_Agri'>[] * TD_Dom_Agri[];
+        <idx_mc4v::PMinP> VAT_p<idx_mc4v>[] = vat<idx_mc4v> * p<idx_mc4v>[] * TD_Dom_PMinP<idx_mc4v>[];
+        VAT_p<'prod_const'>[] = vat<'prod_const'> * p<'prod_const'>[] * TD_Dom_Const[];
+        VAT_p<'prod_adm_pub'>[] = vat<'prod_adm_pub'> * p<'prod_adm_pub'>[] * TD_Dom_Adm_pub[];
+
+        <idx_ar::Pdom> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
+    };
+};
+
+block FIRM
+{
+    identities
+    {
+        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
+        SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
+        TREMP[] = INGF[] * por_tremp;
+        Kf[] = k_total_data * par_k_f;
+        FIRMTAX[] = fit * (Kf[] * pk[]);
+    };
+};
+
+block GOB
+{
+    identities
+    {
+        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
+        TRGOV[] = trgov_data;
+        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * p<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
+        Kg[] = k_total_data * par_k_g;
+        VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
+        PITAX[] = pit * (pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
+        TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
+                  SUM<idx_sb::SB>(tps<idx_sb> * revenue<idx_sb>[]);
+        TESP[] = SUM<idx_sa2::SA>(tes<idx_sa2> * revenue<idx_sa2>[]) +
+                 SUM<idx_sb2::SB>(tes<idx_sb2> * revenue<idx_sb2>[]) + imptos_espec_data;
+        TARANCEL[] = SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
+        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[];
+    };
+};
+
+block EQUILIBRIUM
+{
+    identities 
+    {
+        LD[] = SUM<idx_ea::SA>(L<idx_ea>[]) + SUM<idx_eb::SB>(L<idx_eb>[]) + l_total_data * par_l_row;
+        w[] = w_pot_calib * (LD[] / l_force_data)^phi;
+        u_rate[] = (l_force_data - LD[]) / l_force_data;
+
+        SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
+        
+        Kh[] = k_total_data * par_k_h;
+        Lh[] = LD[] * par_l_h;
+        PSh[] = pshdata;
+    }
+}
+
+block INVESTMENT
+{
+    identities
+    {
+        NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * p<idx_nb>[]);
+
+        inv_adj_g[] = 1.0;
+        inv_adj_h[] = (SAV[] / (sh_i_h * NOM_I_BASE[]))^damp_inv;
+        inv_adj_f[] = (SAVf[] / (sh_i_f * NOM_I_BASE[]))^damp_inv;
+        inv_adj[] = sh_i_h * inv_adj_h[] + sh_i_f * inv_adj_f[] + sh_i_g * inv_adj_g[];
+        
+        TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
+        
+        SAVext[] = SAVext_target;
+
+        SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
+    };
+}

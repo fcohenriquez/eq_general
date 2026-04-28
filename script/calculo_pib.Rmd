@@ -12,7 +12,7 @@ output: html_document
 calc_pib <- function(model_obj) {
     ss_vals <- get_ss_values(model_obj)
     par_vals <- get_par_values(model_obj)
-    p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "serv"))
+    p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub", "otros"))
     p_eq <- ss_vals[paste0("p__", p_names)]
     
     # Components from Expenditure Approach: GDP = C + G + I + V + X - M
