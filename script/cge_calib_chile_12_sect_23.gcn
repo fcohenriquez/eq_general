@@ -1,9 +1,14 @@
+##################################
+
+
 
 indexsets
 {
   P    = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
            'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
            'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
+
+
 
   Pdom = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
            'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
@@ -43,6 +48,7 @@ indexsets
           'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
           'prod_serv_emp', 'prod_serv_pers'};
 };
+
 
 block CONSUMER
 {
@@ -135,8 +141,7 @@ block <idx_e::P_Exp> EXPORTER
 
     constraints
     {
-        #( Z<idx_e>[] - at<idx_e> * ( gamma_e<idx_e> * EX<idx_e>[] ^ 1.5 + (1.0 - gamma_e<idx_e>) * DS<idx_e>[] ^ 1.5 ) ^ 0.6666666667 ) / Z0<idx_e> = 0.0;
-        ( Z<idx_e>[] - at<idx_e> * ( gamma_e<idx_e> * EX<idx_e>[] ^ 1.5 + (1.0 - gamma_e<idx_e>) * DS<idx_e>[] ^ 1.5 ) ^ 0.6666666667 ) / Z0<idx_e> = 0.0;
+        ( Z<idx_e>[] - at<idx_e> * ( gamma_e<idx_e> * EX<idx_e>[] ^ ((sigma_t + 1) / sigma_t) + (1.0 - gamma_e<idx_e>) * DS<idx_e>[] ^ ((sigma_t + 1) / sigma_t) ) ^ (sigma_t / (sigma_t + 1)) ) / Z0<idx_e> = 0.0;
     };
 
     identities
@@ -197,7 +202,7 @@ block <idx_a::Pdom_arm> IMPORTER
 
     constraints
     {
-        Q<idx_a>[] = aq<idx_a> * ( delta_m<idx_a> * M<idx_a>[] ^ ((2.0 - 1.0) / 2.0) + (1.0 - delta_m<idx_a>) * DD<idx_a>[] ^ ((2.0 - 1.0) / 2.0) ) ^ (2.0 / (2.0 - 1.0));
+        Q<idx_a>[] = aq<idx_a> * ( delta_m<idx_a> * M<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) + (1.0 - delta_m<idx_a>) * DD<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) ) ^ (sigma_q / (sigma_q - 1.0));
     };
 
     identities

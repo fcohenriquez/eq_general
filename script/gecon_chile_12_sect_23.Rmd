@@ -7,17 +7,28 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(gEcon)
 library(pracma)
+library(yaml)
 rm(list = ls())
+
+# Load configuration
+cfg <- yaml::read_yaml("config_modelo_chile_12sect_2023.yml")
 ```
+
+
+
+
 
 ## 1. Procesamiento de la SAM 2023
 
 ```{r sam_load}
-chile_sam_raw <- read.csv("../data/sam_2023_12sect_sinmg.csv", check.names = FALSE, stringsAsFactors = FALSE)
+# Load SAM using path from config
+chile_sam_raw <- read.csv(cfg$archivos$sam, check.names = FALSE, stringsAsFactors = FALSE)
 
 # Clean names and data
-colnames(chile_sam_raw) <- trimws(colnames(chile_sam_raw))
-chile_sam_raw[, 1] <- trimws(chile_sam_raw[, 1])
+if (cfg$opciones_datos$limpiar_espacios_nombres) {
+    colnames(chile_sam_raw) <- trimws(colnames(chile_sam_raw))
+    chile_sam_raw[, 1] <- trimws(chile_sam_raw[, 1])
+}
 
 chile_sam <- chile_sam_raw
 for (i in 2:ncol(chile_sam)) {
@@ -25,11 +36,14 @@ for (i in 2:ncol(chile_sam)) {
 }
 rownames(chile_sam) <- chile_sam_raw[, 1]
 chile_sam <- chile_sam[, -1]
-chile_sam[is.na(chile_sam)] <- 0
 
-# Define names
-s_names <- paste0("Act_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
-p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub", "otros"))
+if (cfg$opciones_datos$reemplazar_na_por_cero) {
+    chile_sam[is.na(chile_sam)] <- 0
+}
+
+# Define names from config
+s_names <- sapply(cfg$sectores, function(x) x$id)
+p_names <- unlist(cfg$productos)
 
 # Verification
 missing_cols <- s_names[!s_names %in% colnames(chile_sam)]
@@ -41,55 +55,70 @@ X_matrix <- as.matrix(chile_sam[p_names, s_names])
 make_matrix <- as.matrix(chile_sam[s_names, p_names])
 
 # Zero out construction intermediate demand for SA sectors early, but save it to rebalance K
-sa_idx <- c(1, 2, 3, 4, 6, 7, 8, 10, 11, 12)
-dropped_x <- X_matrix["prod_const", sa_idx]
-X_matrix["prod_const", sa_idx] <- 0
+sa_names_config <- cfg$conjuntos_gcn$SA$incluir
+sa_idx <- which(s_names %in% sa_names_config)
+prod_const_name <- cfg$tratamiento_ceros_estructurales$producto_construccion
 
-pad_floor <- 1e-12
-V_sector_vals <- pmax(rowSums(make_matrix), 0.1)
+dropped_x <- X_matrix[prod_const_name, sa_names_config]
+X_matrix[prod_const_name, sa_names_config] <- 0
 
-# Extract SAM components
-D_m <- as.numeric(chile_sam[p_names, "Hogares"])
-G_m <- as.numeric(chile_sam[p_names, "Gobierno"])
-I_m <- as.numeric(chile_sam[p_names, "S-I"])
+pad_floor <- cfg$opciones_datos$piso_numerico
+V_sector_vals <- pmax(rowSums(make_matrix), cfg$opciones_datos$piso_actividad)
+
+# Extract SAM components using names from config
+cat_hogares <- cfg$cuentas_sam$instituciones$hogares
+cat_gobierno <- cfg$cuentas_sam$instituciones$gobierno
+cat_si <- cfg$cuentas_sam$ahorro_inversion$ahorro_inversion
+cat_varexis <- cfg$cuentas_sam$ahorro_inversion$variacion_existencias
+cat_row <- cfg$cuentas_sam$instituciones$resto_mundo
+
+D_m <- as.numeric(chile_sam[p_names, cat_hogares])
+G_m <- as.numeric(chile_sam[p_names, cat_gobierno])
+I_m <- as.numeric(chile_sam[p_names, cat_si])
 
 # Rebalance prod_const demand to maintain product row sum
-I_m[which(p_names == "prod_const")] <- I_m[which(p_names == "prod_const")] + sum(dropped_x)
+I_m[which(p_names == prod_const_name)] <- I_m[which(p_names == prod_const_name)] + sum(dropped_x)
 
-V_m <- as.numeric(chile_sam[p_names, "Var_Exis"])
-M_m <- as.numeric(chile_sam["row", p_names])
+V_m <- as.numeric(chile_sam[p_names, cat_varexis])
+M_m <- as.numeric(chile_sam[cat_row, p_names])
 names(M_m) <- p_names
-E_m <- as.numeric(chile_sam[p_names, "row"])
+E_m <- as.numeric(chile_sam[p_names, cat_row])
 names(E_m) <- p_names
 
 X_sum <- rowSums(X_matrix)
-IVA_m <- as.numeric(chile_sam["IVA", p_names])
-Ar_m <- as.numeric(chile_sam["Arancel", p_names])
+IVA_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
+Ar_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
 domestic_abs <- D_m + X_sum + G_m + I_m + V_m
 domestic_abs_safe <- pmax(domestic_abs, 1.0)
 vat_r <- IVA_m / domestic_abs_safe
-tar_r <- Ar_m / pmax(M_m, 1e-6)
+tar_r <- Ar_m / pmax(M_m, cfg$opciones_datos$piso_importaciones)
 
 D_v <- D_m
 
-L_vals <- as.numeric(chile_sam["Trabajo", s_names])
-K_vals <- as.numeric(chile_sam["Capital", s_names])
+cat_trabajo <- cfg$cuentas_sam$factores$trabajo
+cat_capital <- cfg$cuentas_sam$factores$capital
+
+L_vals <- as.numeric(chile_sam[cat_trabajo, s_names])
+K_vals <- as.numeric(chile_sam[cat_capital, s_names])
 
 # Rebalance K_vals to absorb the dropped construction intermediate demand
 K_vals[sa_idx] <- K_vals[sa_idx] + dropped_x
 
-L_vals <- pmax(L_vals, 0.1)
-K_vals <- pmax(K_vals, 0.1)
+L_vals <- pmax(L_vals, cfg$opciones_datos$piso_actividad)
+K_vals <- pmax(K_vals, cfg$opciones_datos$piso_actividad)
 
-Kh_val <- chile_sam["Hogares", "Capital"]
-Lh_val <- chile_sam["Hogares", "Trabajo"]
-Kf_val <- chile_sam["Empresas", "Capital"]
-Kg_val <- chile_sam["Gobierno", "Capital"]
+Kh_val <- chile_sam[cat_hogares, cat_capital]
+Lh_val <- chile_sam[cat_hogares, cat_trabajo]
+Kf_val <- chile_sam[cfg$cuentas_sam$instituciones$empresas, cat_capital]
+Kg_val <- chile_sam[cat_gobierno, cat_capital]
 
 revenue_vals <- as.numeric(colSums(t(make_matrix)))
 
-t_pro_r <- as.numeric(chile_sam["Imp_prod", s_names]) / (revenue_vals + pad_floor)
-t_esp_r <- if ("Imptos_Espec" %in% rownames(chile_sam)) as.numeric(chile_sam["Imptos_Espec", s_names]) / (revenue_vals + pad_floor) else rep(0, 12)
+cat_impprod <- cfg$cuentas_sam$impuestos$impuesto_produccion
+cat_impesp <- cfg$cuentas_sam$impuestos$impuestos_especificos
+
+t_pro_r <- as.numeric(chile_sam[cat_impprod, s_names]) / (revenue_vals + pad_floor)
+t_esp_r <- if (cat_impesp %in% rownames(chile_sam)) as.numeric(chile_sam[cat_impesp, s_names]) / (revenue_vals + pad_floor) else rep(0, length(s_names))
 
 net_rev <- revenue_vals * (1 - t_pro_r - t_esp_r)
 
@@ -98,20 +127,40 @@ VA_nom_crude <- pmax(net_rev - X_sum_crude, pad_floor)
 bk <- K_vals / (VA_nom_crude + pad_floor)
 bl <- L_vals / (VA_nom_crude + pad_floor)
 
-# Indices definition matching the GCN indexsets
-pdom_idx     <- 1:12
-# pdom_arm_idx: Pdom_arm en el GCN (sin prod_adm_pub, indice 12 = cero estructural en M)
-pdom_arm_idx <- 1:11
-pnoconst_idx <- c(1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13)
-pcon_idx     <- c(1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13)
-pnc_idx      <- c(2, 5)
-pexp_idx     <- c(1, 2, 3, 4, 6, 7, 8, 9, 10, 11)
-pnexp_idx    <- c(5, 12)
-sa_idx       <- c(1, 2, 3, 4, 6, 7, 8, 10, 11, 12)
-sb_idx       <- c(5, 9)
-pminp_idx    <- c(2, 3, 4, 6, 7, 8, 9, 10, 11)
+# Indices definition matching the GCN indexsets - Derived dynamically
+pdom_names_config <- cfg$conjuntos_gcn$Pdom$incluir
+pdom_idx     <- which(p_names %in% pdom_names_config)
 
-omega_val <- 1.5
+# pdom_arm_idx: Pdom_arm en el GCN (productos domesticos con importaciones positivas)
+pdom_arm_names_config <- setdiff(pdom_names_config, cfg$conjuntos_gcn$Pdom_arm$excluir_manual)
+pdom_arm_idx <- which(p_names %in% pdom_arm_names_config)
+
+pnoconst_names_config <- setdiff(p_names, cfg$conjuntos_gcn$Pno_const$excluir_manual)
+pnoconst_idx <- which(p_names %in% pnoconst_names_config)
+
+pcon_names_config <- setdiff(p_names, cfg$conjuntos_gcn$Pcon$excluir_manual)
+pcon_idx     <- which(p_names %in% pcon_names_config)
+
+pnc_names_config <- cfg$conjuntos_gcn$PNC$incluir
+pnc_idx      <- which(p_names %in% pnc_names_config)
+
+pexp_names_config <- setdiff(p_names, cfg$conjuntos_gcn$P_Exp$excluir_manual)
+# Also filter by actual exports if needed, but here we follow the manual exclusion
+pexp_idx     <- which(p_names %in% pexp_names_config)
+
+pnexp_names_config <- cfg$conjuntos_gcn$P_NExp$incluir
+pnexp_idx    <- which(p_names %in% pnexp_names_config)
+
+sa_names_config <- cfg$conjuntos_gcn$SA$incluir
+sa_idx       <- which(s_names %in% sa_names_config)
+
+sb_names_config <- cfg$conjuntos_gcn$SB$incluir
+sb_idx       <- which(s_names %in% sb_names_config)
+
+pminp_names_config <- cfg$conjuntos_gcn$PMinP$incluir
+pminp_idx    <- which(p_names %in% pminp_names_config)
+
+omega_val <- cfg$elasticidades$utilidad_hogares_omega
 
 get_flow_values <- function(vals, name, idx1 = NULL, idx2 = NULL) {
     res <- as.list(as.numeric(vals))
@@ -121,42 +170,43 @@ get_flow_values <- function(vals, name, idx1 = NULL, idx2 = NULL) {
 }
 ```
 
+
 ## 2. Creación del Modelo gEcon
 
 ```{r model_gen}
 model <- make_model("../script/cge_calib_chile_12_sect_23.gcn")
 
-pshdata <- chile_sam["Hogares", "Pres_soc"]
+pshdata <- chile_sam[cat_hogares, cfg$cuentas_sam$impuestos$prestaciones_sociales]
 fact_row_in_k_data <- 0
 fact_row_in_l_data <- 0
 
-INGG_v_sam <- sum(chile_sam["Gobierno", !names(chile_sam) %in% c("Total")])
-INGF_v_sam <- sum(chile_sam["Empresas", !names(chile_sam) %in% c("Total")])
-BTINC_v_sam <- sum(chile_sam["Hogares", !names(chile_sam) %in% c("Total")])
+INGG_v_sam <- sum(chile_sam[cat_gobierno, !names(chile_sam) %in% c("Total")])
+INGF_v_sam <- sum(chile_sam[cfg$cuentas_sam$instituciones$empresas, !names(chile_sam) %in% c("Total")])
+BTINC_v_sam <- sum(chile_sam[cat_hogares, !names(chile_sam) %in% c("Total")])
 
-fit_val <- as.numeric(chile_sam["Imp_dir", "Empresas"] / (Kf_val + pad_floor))
-pit_val <- as.numeric(chile_sam["Imp_dir", "Hogares"] / (BTINC_v_sam + pad_floor))
-INC_v_sam <- BTINC_v_sam - chile_sam["Imp_dir", "Hogares"]
-por_trgov_val <- chile_sam["Hogares", "Gobierno"] / (INGG_v_sam + pad_floor)
-por_tremp_val <- chile_sam["Hogares", "Empresas"] / (INGF_v_sam + pad_floor)
-por_tr_f_g_val <- chile_sam["Gobierno", "Empresas"] / (INGF_v_sam + pad_floor)
-por_cont_soc_f_val <- chile_sam["Empresas", "Cont_soc"] / (chile_sam["Cont_soc", "Hogares"] + pad_floor)
-por_cont_soc_g_val <- chile_sam["Gobierno", "Cont_soc"] / (chile_sam["Cont_soc", "Hogares"] + pad_floor)
-por_pres_soc_f_val <- chile_sam["Pres_soc", "Empresas"] / (INGF_v_sam + pad_floor)
-por_pres_soc_g_val <- chile_sam["Pres_soc", "Gobierno"] / (INGG_v_sam + pad_floor)
-por_cont_h_val <- chile_sam["Cont_soc", "Hogares"] / (INC_v_sam + pad_floor)
+fit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cfg$cuentas_sam$instituciones$empresas] / (Kf_val + pad_floor))
+pit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares] / (BTINC_v_sam + pad_floor))
+INC_v_sam <- BTINC_v_sam - chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares]
+por_trgov_val <- chile_sam[cat_hogares, cat_gobierno] / (INGG_v_sam + pad_floor)
+por_tremp_val <- chile_sam[cat_hogares, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
+por_tr_f_g_val <- chile_sam[cat_gobierno, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
+por_cont_soc_f_val <- chile_sam[cfg$cuentas_sam$instituciones$empresas, cfg$cuentas_sam$impuestos$contribuciones_sociales] / (chile_sam[cfg$cuentas_sam$impuestos$contribuciones_sociales, cat_hogares] + pad_floor)
+por_cont_soc_g_val <- chile_sam[cat_gobierno, cfg$cuentas_sam$impuestos$contribuciones_sociales] / (chile_sam[cfg$cuentas_sam$impuestos$contribuciones_sociales, cat_hogares] + pad_floor)
+por_pres_soc_f_val <- chile_sam[cfg$cuentas_sam$impuestos$prestaciones_sociales, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
+por_pres_soc_g_val <- chile_sam[cfg$cuentas_sam$impuestos$prestaciones_sociales, cat_gobierno] / (INGG_v_sam + pad_floor)
+por_cont_h_val <- chile_sam[cfg$cuentas_sam$impuestos$contribuciones_sociales, cat_hogares] / (INC_v_sam + pad_floor)
 
 INGF_v <- INGF_v_sam
 INGG_v <- INGG_v_sam
 BTINC_v <- BTINC_v_sam
-PITAX_v <- as.numeric(chile_sam["Imp_dir", "Hogares"])
-FIRMTAX_v <- as.numeric(chile_sam["Imp_dir", "Empresas"])
+PITAX_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares])
+FIRMTAX_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cfg$cuentas_sam$instituciones$empresas])
 TREMP_v <- INGF_v * por_tremp_val
 TRGOV_v <- INGG_v * por_trgov_val
-VAT_sum <- sum(as.numeric(chile_sam["IVA", p_names]))
-Arancel_sum <- sum(as.numeric(chile_sam["Arancel", p_names]))
-Activity_Tax_sum <- sum(as.numeric(chile_sam["Imp_prod", s_names]))
-Imptos_Espec_sum <- sum(as.numeric(chile_sam["Imptos_Espec", colnames(chile_sam) != "Total"]))
+VAT_sum <- sum(as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names]))
+Arancel_sum <- sum(as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names]))
+Activity_Tax_sum <- sum(as.numeric(chile_sam[cat_impprod, s_names]))
+Imptos_Espec_sum <- sum(as.numeric(chile_sam[cat_impesp, colnames(chile_sam) != "Total"]))
 Tax_v <- VAT_sum + PITAX_v + FIRMTAX_v + Activity_Tax_sum + Arancel_sum + Imptos_Espec_sum
 
 INC_v <- BTINC_v - PITAX_v
@@ -177,8 +227,8 @@ sh_i_h_v <- if(abs(sh_i_h_v) < 1e-6) 1e-6 else sh_i_h_v
 sh_i_f_v <- if(abs(sh_i_f_v) < 1e-6) 1e-6 else sh_i_f_v
 sh_i_g_v <- if(abs(sh_i_g_v) < 1e-6) 1e-6 else sh_i_g_v
 
-sigma_q_val <- 2
-sigma_t_val <- 2
+sigma_q_val <- cfg$elasticidades$armington_sigma_q
+sigma_t_val <- cfg$elasticidades$cet_sigma_t
 rho_q_val <- (sigma_q_val - 1) / sigma_q_val
 rho_t_val <- (sigma_t_val + 1) / sigma_t_val
 
@@ -204,9 +254,9 @@ delta_m_v <- pmax(pmin(delta_m_v, 1 - 1e-6), 1e-6)
 
 TD_Dom_initial <- as.numeric(D_m + G_m + I_m + V_m + rowSums(X_matrix))
 names(TD_Dom_initial) <- p_names
-ImpEsp_p_v <- as.numeric(chile_sam["Imptos_Espec", p_names])
-IVA_v <- as.numeric(chile_sam["IVA", p_names])
-Ar_v <- as.numeric(chile_sam["Arancel", p_names])
+ImpEsp_p_v <- as.numeric(chile_sam[cat_impesp, p_names])
+IVA_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
+Ar_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
 Q_v <- TD_Dom_initial - IVA_v - ImpEsp_p_v
 Q_v["prod_otros"] <- M_v["prod_otros"]
 
@@ -248,30 +298,32 @@ VA_nom <- pmax(net_rev - X_nom_by_sector, pad_floor)
 bk <- K_vals / (VA_nom + pad_floor)
 bl <- L_vals / (VA_nom + pad_floor)
 
-gamma_v <- numeric(12)
-for (i in 1:12) {
+gamma_v <- numeric(length(s_names))
+for (i in seq_along(s_names)) {
     gamma_v[i] <- V_phys[i] / ( (K_vals[i]^bk[i]) * (L_vals[i]^bl[i]) + pad_floor )
 }
 
-u_base_val <- 0.079
-l_total_data_val <- sum(L_vals) + chile_sam["row", "Trabajo"]
+u_base_val <- cfg$cierre_macro$tasa_desempleo_base
+l_total_data_val <- sum(L_vals) + chile_sam[cat_row, cat_trabajo]
 l_force_data_val <- l_total_data_val / (1 - u_base_val)
-phi_val <- 0.1
+phi_val <- cfg$elasticidades$wage_curve_phi
 w_pot_calib_val <- (1 - u_base_val)^(-phi_val)
 
 Z0_v <- pmax(Z_v / pz_base, 1e-6)
 
 par_flat <- unlist(list(
-    omega = omega_val, k_total_data = sum(K_vals) + chile_sam["row", "Capital"], 
+    omega = omega_val, 
+    sigma_q = sigma_q_val, sigma_t = sigma_t_val,
+    k_total_data = sum(K_vals) + chile_sam[cat_row, cat_capital], 
     l_total_data = l_total_data_val, 
     l_force_data = l_force_data_val,
     phi = phi_val,
     w_pot_calib = w_pot_calib_val,
-    par_k_h = Kh_val / (sum(K_vals) + chile_sam["row", "Capital"] + pad_floor),
-    par_k_f = Kf_val / (sum(K_vals) + chile_sam["row", "Capital"] + pad_floor),
-    par_k_g = Kg_val / (sum(K_vals) + chile_sam["row", "Capital"] + pad_floor),
-    par_l_h = Lh_val / (sum(L_vals) + chile_sam["row", "Trabajo"] + pad_floor),
-    par_l_row = chile_sam["row", "Trabajo"] / (sum(L_vals) + chile_sam["row", "Trabajo"] + pad_floor),
+    par_k_h = Kh_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
+    par_k_f = Kf_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
+    par_k_g = Kg_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
+    par_l_h = Lh_val / (sum(L_vals) + chile_sam[cat_row, cat_trabajo] + pad_floor),
+    par_l_row = chile_sam[cat_row, cat_trabajo] / (sum(L_vals) + chile_sam[cat_row, cat_trabajo] + pad_floor),
     por_cont = por_cont_h_val, por_sav = por_sav_h_val,
     trgov_data = TRGOV_v, por_tremp = por_tremp_val, por_tr_f_g = por_tr_f_g_val,
     por_cont_soc_f = por_cont_soc_f_val, por_cont_soc_g = por_cont_soc_g_val,
@@ -281,15 +333,14 @@ par_flat <- unlist(list(
     fact_row_in_k_data = as.numeric(fact_row_in_k_data), 
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
     sh_i_h = sh_i_h_v, sh_i_f = sh_i_f_v, sh_i_g = sh_i_g_v,
-    damp_inv = 0.5,
+    damp_inv = cfg$elasticidades$inversion_eta,
     SAVext_target = SAVext_v,
-    imptos_espec_data = sum(as.numeric(chile_sam["Imptos_Espec", colnames(chile_sam) != "Total"])),
+    imptos_espec_data = sum(as.numeric(chile_sam[cat_impesp, colnames(chile_sam) != "Total"])),
     get_flow_values(io_matrix[pnoconst_idx, sa_idx, drop=FALSE], "io", p_names[pnoconst_idx], s_names[sa_idx]),
     get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
     get_flow_values(gamma_e_v[pexp_idx], "gamma_e", p_names[pexp_idx]),
     get_flow_values(at_v[pexp_idx], "at", p_names[pexp_idx]),
     # Z0: valor fisico base de Z para escalar la restriccion CET (reduce residuo absoluto)
-    #get_flow_values(pmax(Z_v / pz_base, 1e-6)[pexp_idx], "Z0", p_names[pexp_idx]),
     get_flow_values(Z0_v[pexp_idx], "Z0", p_names[pexp_idx]),
     # delta_m y aq: solo para Pdom_arm (11 productos con M_base > 0)
     # prod_adm_pub (indice 12) usa bloque PROD_ADM_PUB_ARM con M=0, sin Armington CES
@@ -299,8 +350,8 @@ par_flat <- unlist(list(
     get_flow_values(c(1e-6, 1e-6), "dst_nc", p_names[pnc_idx]),
     get_flow_values(vat_r[pdom_idx], "vat", p_names[pdom_idx]), 
     get_flow_values(tar_r, "tar_rate", p_names), 
-    get_flow_values(rep(1, 13), "pworlde", p_names),
-    get_flow_values(rep(1, 13), "pworldm", p_names),
+    get_flow_values(rep(1, length(p_names)), "pworlde", p_names),
+    get_flow_values(rep(1, length(p_names)), "pworldm", p_names),
     get_flow_values(t_pro_r, "tps", s_names),
     get_flow_values(t_esp_r, "tes", s_names),
     get_flow_values(V_phys, "vst", s_names),
@@ -345,11 +396,11 @@ var_list <- list(
 
 init_vars <- unlist(list(
     var_list,
-    get_flow_values(rep(0, 12), "pi", s_names),
+    get_flow_values(rep(0, length(s_names)), "pi", s_names),
     get_flow_values(p_base, "p", p_names),
-    get_flow_values(rep(1, 13), "pd", p_names),
+    get_flow_values(rep(1, length(p_names)), "pd", p_names),
     get_flow_values(pz_base, "pz", p_names),
-    get_flow_values(rep(1, 13), "pe", p_names),
+    get_flow_values(rep(1, length(p_names)), "pe", p_names),
     get_flow_values(pm_base, "pm", p_names),
     get_flow_values(pmax(Z_v / pz_base, 1e-6), "Z", p_names),
     get_flow_values(pmax(DS_v, 1e-6), "DS", p_names),
@@ -366,14 +417,15 @@ init_vars <- unlist(list(
       DD_init["prod_adm_pub"] <- pmax(DS_v["prod_adm_pub"], 1e-6)
       DD_init["prod_otros"]   <- 0.0   # PROD_OTROS fija DD=0
       get_flow_values(DD_init, "DD", p_names) },
-    get_flow_values(rep(0, 13), "PI_CET", p_names),
-    get_flow_values(rep(0, 13), "PI_ARM", p_names),
-    TD_Dom_Agri = as.numeric((TD_Dom_initial / p_base)["prod_Agri"]),
-    TD_Dom_Const = as.numeric((TD_Dom_initial / p_base)["prod_const"]),
-    TD_Dom_Adm_pub = as.numeric((TD_Dom_initial / p_base)["prod_adm_pub"]),
-    get_flow_values(as.numeric((TD_Dom_initial / p_base)[pminp_names]), "TD_Dom_PMinP", pminp_names),
+    get_flow_values(rep(0, length(p_names)), "PI_CET", p_names),
+    get_flow_values(rep(0, length(p_names)), "PI_ARM", p_names),
+    TD_Dom_Agri = as.numeric((TD_Dom_initial / p_base)[p_names[1]]),
+    TD_Dom_Const = as.numeric((TD_Dom_initial / p_base)[prod_const_name]),
+    TD_Dom_Adm_pub = as.numeric((TD_Dom_initial / p_base)[p_names[length(p_names)-1]]), # prod_adm_pub is usually second to last
+    get_flow_values(as.numeric((TD_Dom_initial / p_base)[pminp_names_config]), "TD_Dom_PMinP", pminp_names_config),
     get_flow_values(pmax(D_con_phys, 1e-6), "D", p_names[pcon_idx]),
-    D__prod_Min = 1e-6, D__prod_const = 1e-6,
+    { d_nc_init <- setNames(rep(1e-6, length(pnc_idx)), paste0("D__", p_names[pnc_idx]))
+      as.list(d_nc_init) },
     get_flow_values(sweep(make_share[pdom_idx, ], 2, V_phys, "*"), "Yap", pdom_names, s_names),
     get_flow_values(V_phys, "V", s_names),
     get_flow_values(revenue_vals, "revenue", s_names),
@@ -404,16 +456,18 @@ cat("Norma residuos finales:", pracma::Norm(model@residual_vector), "\n")
 ```
 
 # Estadisticas de residuos
-```{r}
+```{r eval=FALSE, include=FALSE}
 get_residuals(model)
+#índices ordenados de mayor a menor magnitud
+top_indices <- order(abs(model@residual_vector), decreasing = TRUE)
 pracma::Norm(model@init_residual_vector)
 pracma::Norm(model@residual_vector)
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 cat("\n--- Ecuaciones con Mayores Residuos Finales ---\n")
 tryCatch({
-  eqs <- c(500, 506, 499, 503, 507)
+  eqs <- head(top_indices, 5)
   for (eq_idx in eqs) {
     res_val <- if (length(model@residual_vector) >= eq_idx) model@residual_vector[eq_idx] else NA
     cat("Eq.", eq_idx, "(Res =", res_val, "): ", model@equations[eq_idx], "\n")
@@ -422,6 +476,8 @@ tryCatch({
   cat("No se pudo extraer model@equations directamente.\n")
 })
 ```
+
+
 
 
 

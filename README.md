@@ -7,7 +7,7 @@ Modelo de equilibrio general para evaluar impuestos en Chile.
 El modelo es un sistema de Equilibrio General Computable (CGE) desarrollado con el framework **gEcon** en R, diseñado específicamente para el análisis de política fiscal y shocks tributarios.
 
 ### 1. Estructura Económica y Desagregación
-*   **Sectores y Productos:** El modelo cuenta con 6 sectores productivos y 6 tipos de productos (Agricultura, Minería, Manufactura, Electricidad/Agua/Gas, Construcción y Servicios), calibrados con datos de la economía chilena para el año 2022.
+*   **Sectores y Productos:** El modelo cuenta con 12 sectores productivos y 13 productos (incluyendo *Otros bienes y servicios*), calibrados para la economía chilena con datos de 2023. Los productos asociados a cada sector incluyen: Productos agropecuario-silvícola y pesca, Minerales, Productos manufacturados, Electricidad, gas, agua y gestión de desechos, Construcción, Servicios de comercio, hoteles y restaurantes, Servicios de transporte, comunicaciones e información, Servicios financieros, Inmobiliarios y de vivienda, Servicios empresariales, Servicios personales, Servicios de la administración pública, y Otros bienes y servicios.
 *   **Producción:** Utiliza una estructura anidada. El Valor Agregado se genera mediante una función **Cobb-Douglas** (Capital y Trabajo), mientras que los insumos intermedios siguen una relación de coeficientes fijos (**Leontief**).
 *   **Comercio Exterior:** 
     *   **Exportaciones:** Función **CET** (Constant Elasticity of Transformation) para la asignación de la producción entre mercado interno y externo.
@@ -34,8 +34,8 @@ El modelo detalla múltiples instrumentos fiscales para evaluar cambios en la re
 El modelo utiliza **gEcon** montado en R. En este link está su documentación: https://gecon.r-forge.r-project.org/
 
 ### Archivos Principales
-*   **`script/cge_calib_chile_6_sect.gcn`**: Definición del modelo en lenguaje gEcon.
-*   **`script/gecon_chile_6_sect.Rmd`**: Calibración y resolución del estado estacionario inicial.
+*   **`script/cge_calib_chile_12_sect_23.gcn`**: Definición del modelo en lenguaje gEcon.
+*   **`script/gecon_chile_12_sect_23.Rmd`**: Calibración y resolución del estado estacionario inicial.
 *   **`script/calculo_pib.Rmd`**: Estimación del PIB y variables de actividad a partir de la solución.
 *   **`script/eval_shocks.Rmd`**: Evaluación de medidas tributarias y simulaciones de política.
 

@@ -2,7 +2,6 @@
 
 | Hecho | Tarea |
 | :---: | :--- |
-| [ ] | Incrementar los productos y sectores de la economía |
 | [ ] | Revisar la SAM (entender mejor el sector externo  y en general el institucional) |
 | [ ] | Abrir los Impuestos, por ejemplo el impuesto a las empresas y simular el sismema de créditos. |
 | [ ] | Abrir los hogares, por ejemplo por quintiles de ingreso. |
@@ -18,6 +17,7 @@
 | [✅] | Cambiar Funciones de Producción, agregando utilización Leontief de insumos. |
 | [✅] | Mejorar presentación de los diagramas en el paper. |
 | [✅] | En el paper dejar explícito el valor de los parámetros utilizados.|
+| [✅] | Incrementar los productos y sectores de la economía |
 
 
 

@@ -1,0 +1,233 @@
+# Configuracion del modelo CGE Chile - 12 sectores - SAM 2023
+# Este archivo separa supuestos, nombres de cuentas y conjuntos del codigo R/.gcn.
+
+modelo:
+  nombre: "CGE Chile"
+  version: "12sect_2023"
+  anio_base: 2023
+  descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 12 actividades y 13 productos."
+
+archivos:
+  sam: "../data/sam_2023_12sect_sinmg.csv"
+  gcn_template: "cge_calib_chile_template.gcn"
+  gcn_output: "cge_calib_chile_12_sect_23_auto.gcn"
+  resultados_output: "resultados_cge_12sect_2023.csv"
+
+opciones_datos:
+  separador_csv: ","
+  decimal: "."
+  encoding: "UTF-8"
+  limpiar_espacios_nombres: true
+  reemplazar_na_por_cero: true
+  piso_numerico: 1.0e-12
+  piso_actividad: 0.1
+  piso_importaciones: 1.0e-6
+
+cuentas_sam:
+  factores:
+    trabajo: "Trabajo"
+    capital: "Capital"
+  instituciones:
+    hogares: "Hogares"
+    empresas: "Empresas"
+    gobierno: "Gobierno"
+    resto_mundo: "row"
+  ahorro_inversion:
+    ahorro_inversion: "S-I"
+    variacion_existencias: "Var_Exis"
+  impuestos:
+    contribuciones_sociales: "Cont_soc"
+    prestaciones_sociales: "Pres_soc"
+    impuesto_directo: "Imp_dir"
+    impuesto_produccion: "Imp_prod"
+    impuestos_especificos: "Imptos_Espec"
+    iva: "IVA"
+    arancel: "Arancel"
+
+sectores:
+  - id: "Act_Agri"
+    etiqueta: "Agropecuario, silvicola y pesca"
+    producto_principal: "prod_Agri"
+  - id: "Act_Min"
+    etiqueta: "Mineria"
+    producto_principal: "prod_Min"
+  - id: "Act_Manu"
+    etiqueta: "Manufactura"
+    producto_principal: "prod_Manu"
+  - id: "Act_elect_agua_gas"
+    etiqueta: "Electricidad, agua, gas y desechos"
+    producto_principal: "prod_elect_agua_gas"
+  - id: "Act_const"
+    etiqueta: "Construccion"
+    producto_principal: "prod_const"
+  - id: "Act_com_hot_rest"
+    etiqueta: "Comercio, hoteles y restaurantes"
+    producto_principal: "prod_com_hot_rest"
+  - id: "Act_trans_comu_inf"
+    etiqueta: "Transporte, comunicaciones e informacion"
+    producto_principal: "prod_trans_comu_inf"
+  - id: "Act_int_fin"
+    etiqueta: "Intermediacion financiera"
+    producto_principal: "prod_int_fin"
+  - id: "Act_inmo_viv"
+    etiqueta: "Servicios inmobiliarios y vivienda"
+    producto_principal: "prod_inmo_viv"
+  - id: "Act_serv_emp"
+    etiqueta: "Servicios empresariales"
+    producto_principal: "prod_serv_emp"
+  - id: "Act_serv_pers"
+    etiqueta: "Servicios personales"
+    producto_principal: "prod_serv_pers"
+  - id: "Act_adm_pub"
+    etiqueta: "Administracion publica"
+    producto_principal: "prod_adm_pub"
+
+productos:
+  - "prod_Agri"
+  - "prod_Min"
+  - "prod_Manu"
+  - "prod_elect_agua_gas"
+  - "prod_const"
+  - "prod_com_hot_rest"
+  - "prod_trans_comu_inf"
+  - "prod_int_fin"
+  - "prod_inmo_viv"
+  - "prod_serv_emp"
+  - "prod_serv_pers"
+  - "prod_adm_pub"
+  - "prod_otros"
+
+# Conjuntos usados actualmente por el .gcn.
+# En una segunda etapa, varios de estos pueden calcularse automaticamente desde la SAM.
+conjuntos_gcn:
+  P:
+    desde: "productos"
+  Pdom:
+    incluir:
+      - "prod_Agri"
+      - "prod_Min"
+      - "prod_Manu"
+      - "prod_elect_agua_gas"
+      - "prod_const"
+      - "prod_com_hot_rest"
+      - "prod_trans_comu_inf"
+      - "prod_int_fin"
+      - "prod_inmo_viv"
+      - "prod_serv_emp"
+      - "prod_serv_pers"
+      - "prod_adm_pub"
+  Pdom_arm:
+    regla: "productos_domesticos_con_importaciones_positivas"
+    excluir_manual:
+      - "prod_adm_pub"
+  Pno_const:
+    regla: "todos_los_productos_menos_construccion"
+    excluir_manual:
+      - "prod_const"
+  Pcon:
+    regla: "productos_con_consumo_hogares_positivo_o_consumo_residual_fijo"
+    excluir_manual:
+      - "prod_Min"
+      - "prod_const"
+  PNC:
+    descripcion: "Productos no consumidos directamente por hogares en la utilidad CES"
+    incluir:
+      - "prod_Min"
+      - "prod_const"
+  P_Exp:
+    regla: "productos_con_exportaciones_positivas"
+    excluir_manual:
+      - "prod_const"
+      - "prod_adm_pub"
+      - "prod_otros"
+  P_NExp:
+    regla: "productos_no_exportables_o_con_exportacion_cero_estructural"
+    incluir:
+      - "prod_const"
+      - "prod_adm_pub"
+  SA:
+    descripcion: "Sectores que excluyen construccion como insumo intermedio por cero estructural"
+    incluir:
+      - "Act_Agri"
+      - "Act_Min"
+      - "Act_Manu"
+      - "Act_elect_agua_gas"
+      - "Act_com_hot_rest"
+      - "Act_trans_comu_inf"
+      - "Act_int_fin"
+      - "Act_serv_emp"
+      - "Act_serv_pers"
+      - "Act_adm_pub"
+  SB:
+    descripcion: "Sectores que usan todos los productos como insumos intermedios"
+    incluir:
+      - "Act_const"
+      - "Act_inmo_viv"
+  PMinP:
+    descripcion: "Productos usados en bloque especial de absorcion domestica, excluye agro, construccion, adm. publica y otros"
+    incluir:
+      - "prod_Min"
+      - "prod_Manu"
+      - "prod_elect_agua_gas"
+      - "prod_com_hot_rest"
+      - "prod_trans_comu_inf"
+      - "prod_int_fin"
+      - "prod_inmo_viv"
+      - "prod_serv_emp"
+      - "prod_serv_pers"
+
+tratamiento_ceros_estructurales:
+  mover_demanda_intermedia_construccion_a_capital: true
+  producto_construccion: "prod_const"
+  sectores_afectados: "SA"
+  destino_rebalanceo: "Capital"
+  fijar_consumo_hogares_no_consumidos:
+    - "prod_Min"
+    - "prod_const"
+  fijar_no_exportables:
+    - "prod_const"
+    - "prod_adm_pub"
+  fijar_sin_armington_importado:
+    - "prod_adm_pub"
+
+elasticidades:
+  utilidad_hogares_omega: 1.5
+  armington_sigma_q: 2.0
+  cet_sigma_t: 1.5
+  inversion_eta: 0.5
+  wage_curve_phi: 0.1
+
+cierre_macro:
+  numerario: "p_prod_otros"
+  tipo_cambio: "endogeno"
+  ahorro_externo: "fijo"
+  inversion_publica: "fija"
+  inversion_privada: "endogena_amortiguada"
+  mercado_trabajo: "curva_salarial_con_desempleo"
+  mercado_capital: "pleno_uso_stock_capital"
+  tasa_desempleo_base: 0.087
+
+shocks_default:
+  iva:
+    descripcion: "Aumento de 1% en la carga efectiva de IVA por producto"
+    tipo: "multiplicativo"
+    factor: 1.01
+  pit:
+    descripcion: "Aumento de 10% en la carga efectiva de impuesto a personas"
+    tipo: "multiplicativo"
+    factor: 1.10
+  fit:
+    descripcion: "Disminucion de 1 punto en la tasa nominal de IDPC, ajustada por participacion del IDPC en FIRMTAX"
+    tipo: "formula"
+    tasa_nominal_base: 0.27
+    cambio_puntos_tasa: -0.01
+    participacion_idpc_en_firmtax: 0.615
+    formula_factor: "1 + cambio_puntos_tasa * participacion_idpc_en_firmtax / tasa_nominal_base"
+
+validaciones:
+  verificar_balance_sam: true
+  tolerancia_balance_sam: 1.0e-6
+  verificar_cuentas_requeridas: true
+  verificar_dimensiones_make_io: true
+  verificar_productos_y_sectores_en_sam: true
+  advertir_flujos_negativos: true
