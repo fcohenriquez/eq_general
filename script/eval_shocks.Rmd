@@ -6,7 +6,9 @@ output: html_document
 ---
 
 # Parametros
+
 ```{r}
+
 vars_to_compare <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG", "w", "pk", "exr", 'inv_adj', 'inv_adj_h', 'inv_adj_f', "U", "u_rate", "LD")
 
 print_macro_impact <- function(name, p_base_list, p_shock_list) {
@@ -109,8 +111,8 @@ calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_sh
 }
 ```
 
-
 # SHOCK: 1% Disminución FIT (Impuesto a las Empresas)
+
 ```{r include=FALSE}
 # 1. Definir el shock
 fit_base <- get_par_values(model)["fit"]
@@ -122,7 +124,7 @@ model_shock_fit <- set_free_par(model, free_par =list(fit = fit_shock))
 
 # 3. Resolver con Broyden
 model_shock_fit <- steady_state(model_shock_fit, calibration = F, 
-                      options_list = list(xscalm="auto",  max_iter = 10000, tol = 1e-5))
+                      options_list = list(xscalm="auto",  max_iter = 2, tol = 1e-5))
 
 res_shock_fit <- get_ss_values(model_shock_fit)
 pib_shock_list <- calc_pib(model_shock_fit)
@@ -131,6 +133,7 @@ pib_shock_fit_real <- pib_shock_list$PIB_real
 ```
 
 # ANALYSIS FIT
+
 ```{r}
 # Comparación
 
@@ -141,6 +144,7 @@ print(comp_fit)
 ```
 
 # SHOCK: 1% Incremento IVA (Impuesto al Valor Agregado)
+
 ```{r include=FALSE}
 # 1. Definir el shock (Aumento del 10% en todas las tasas de IVA por producto) OJO otros no tiene IVA
 p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
@@ -154,7 +158,7 @@ model_shock_vat <- set_free_par(model, free_par = vat_shock)
 
 # 3. Resolver con Broyden
 model_shock_vat <- steady_state(model_shock_vat, calibration = F, 
-                      options_list = list(xscalm="auto",  max_iter = 10000, tol = 1e-5))
+                      options_list = list(xscalm="auto",  max_iter = 2, tol = 1e-5))
 
 res_shock_vat <- get_ss_values(model_shock_vat)
 pib_shock_vat_list <- calc_pib(model_shock_vat)
@@ -163,6 +167,7 @@ pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 ```
 
 # ANALISIS IVA
+
 ```{r}
 # Comparación
 
@@ -173,8 +178,8 @@ print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list)
 print(comp_vat)
 ```
 
-
 # SHOCK: 10% Incremento PIT (Impuesto a la Renta de Personas)
+
 ```{r include=FALSE}
 # 1. Definir el shock (Aumento del 10% en la tasa de PIT)
 pit_base <- get_par_values(model)["pit"]
@@ -185,13 +190,14 @@ model_shock_pit <- set_free_par(model, free_par = list(pit = pit_shock))
 
 # 3. Resolver el modelo para el nuevo estado estacionario
 model_shock_pit <- steady_state(model_shock_pit, calibration = FALSE, 
-                                options_list = list(xscalm="auto", max_iter = 10000, tol = 1e-5))
+                                options_list = list(xscalm="auto", max_iter = 2, tol = 1e-5))
 
 res_shock_pit <- get_ss_values(model_shock_pit)
 pib_shock_pit_list <- calc_pib(model_shock_pit)
 ```
 
 # ANALYSIS PIT
+
 ```{r}
 # Comparación y visualización de impactos
 comp_pit <- calc_tax_impact(res_base, res_shock_pit, pib_base, pib_real_base, pib_shock_pit_list, vars_to_compare)
@@ -201,10 +207,11 @@ print(comp_pit)
 ```
 
 # SHOCK COMBINADO: Disminución FIT e Incremento PIT
+
 ```{r include=FALSE}
 # 1. Definir los shocks
 fit_base <- get_par_values(model)["fit"]
-fit_shock <- fit_base * (1 - 0.615 * (0.01 / 0.27)) # Misma magnitud que el shock individual
+fit_shock <- fit_base * (1 - 0.91 * (0.01 / 0.27)) # Misma magnitud que el shock individual
 
 pit_base <- get_par_values(model)["pit"]
 pit_shock <- as.numeric(pit_base) * 1.45 # Incremento del X% en la tasa
@@ -214,13 +221,14 @@ model_shock_comb <- set_free_par(model, free_par = list(fit = fit_shock, pit = p
 
 # 3. Resolver el modelo
 model_shock_comb <- steady_state(model_shock_comb, calibration = FALSE, 
-                                 options_list = list(xscalm="auto", max_iter = 10000, tol = 1e-5))
+                                 options_list = list(xscalm="auto", max_iter = 2, tol = 1e-5))
 
 res_shock_comb <- get_ss_values(model_shock_comb)
 pib_shock_comb_list <- calc_pib(model_shock_comb)
 ```
 
 # ANALISIS SHOCK COMBINADO (FIT + PIT)
+
 ```{r}
 # Comparación y visualización de impactos
 comp_comb <- calc_tax_impact(res_base, res_shock_comb, pib_base, pib_real_base, pib_shock_comb_list, vars_to_compare)
