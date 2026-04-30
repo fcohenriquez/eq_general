@@ -8,13 +8,13 @@ El modelo es un sistema de Equilibrio General Computable (CGE) desarrollado con 
 
 ### 1. Estructura Económica y Desagregación
 *   **Sectores y Productos:** El modelo cuenta con 12 sectores productivos y 13 productos (incluyendo *Otros bienes y servicios*), calibrados para la economía chilena con datos de 2023. Los productos asociados a cada sector incluyen: Productos agropecuario-silvícola y pesca, Minerales, Productos manufacturados, Electricidad, gas, agua y gestión de desechos, Construcción, Servicios de comercio, hoteles y restaurantes, Servicios de transporte, comunicaciones e información, Servicios financieros, Inmobiliarios y de vivienda, Servicios empresariales, Servicios personales, Servicios de la administración pública, y Otros bienes y servicios.
-*   **Producción:** Utiliza una estructura anidada. El Valor Agregado se genera mediante una función **Cobb-Douglas** (Capital y Trabajo), mientras que los insumos intermedios siguen una relación de coeficientes fijos (**Leontief**).
+*   **Producción:** Utiliza una estructura anidada. El Valor Agregado se genera mediante una función **Cobb-Douglas** que combina Capital y tres tipos de Trabajo (Trabajo_1, Trabajo_2, Trabajo_3), mientras que los insumos intermedios siguen una relación de coeficientes fijos (**Leontief**).
 *   **Comercio Exterior:** 
     *   **Exportaciones:** Función **CET** (Constant Elasticity of Transformation) para la asignación de la producción entre mercado interno y externo.
     *   **Importaciones:** Función de agregación **Armington** para combinar bienes domésticos e importados.
 
 ### 2. Mercado de Factores
-*   **Trabajo:** Incluye una **Curva de Salarios** que vincula el nivel salarial con la tasa de utilización del trabajo, permitiendo modelar el desempleo de forma endógena.
+*   **Trabajo:** Desagregado en tres tipos (Trabajo_1, Trabajo_2 y Trabajo_3). Cada categoría incluye una **Curva de Salarios** independiente que vincula el nivel salarial con su respectiva tasa de utilización, permitiendo modelar el desempleo por tipo de calificación de forma endógena.
 *   **Capital:** El stock total de capital se asume fijo en el escenario base, distribuyéndose entre los sectores.
 
 ### 3. Sistema Tributario

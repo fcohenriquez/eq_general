@@ -95,22 +95,26 @@ tar_r <- Ar_m / pmax(M_m, cfg$opciones_datos$piso_importaciones)
 
 D_v <- D_m
 
-cat_trabajo <- cfg$cuentas_sam$factores$trabajo
+cat_trabajo <- unlist(cfg$cuentas_sam$factores$trabajo)
 cat_capital <- cfg$cuentas_sam$factores$capital
 
-L_vals <- as.numeric(chile_sam[cat_trabajo, s_names])
 K_vals <- as.numeric(chile_sam[cat_capital, s_names])
 
 # Rebalance K_vals to absorb the dropped construction intermediate demand
 K_vals[sa_idx] <- K_vals[sa_idx] + dropped_x
-
-L_vals <- pmax(L_vals, cfg$opciones_datos$piso_actividad)
 K_vals <- pmax(K_vals, cfg$opciones_datos$piso_actividad)
 
+L_mat <- as.matrix(chile_sam[cat_trabajo, s_names])
+L_mat <- pmax(L_mat, cfg$opciones_datos$piso_actividad)
+rownames(L_mat) <- cat_trabajo
+colnames(L_mat) <- s_names
+
 Kh_val <- chile_sam[cat_hogares, cat_capital]
-Lh_val <- chile_sam[cat_hogares, cat_trabajo]
 Kf_val <- chile_sam[cfg$cuentas_sam$instituciones$empresas, cat_capital]
 Kg_val <- chile_sam[cat_gobierno, cat_capital]
+
+Lh_vals <- as.numeric(chile_sam[cat_hogares, cat_trabajo])
+names(Lh_vals) <- cat_trabajo
 
 revenue_vals <- as.numeric(colSums(t(make_matrix)))
 
@@ -125,7 +129,10 @@ net_rev <- revenue_vals * (1 - t_pro_r - t_esp_r)
 X_sum_crude <- colSums(X_matrix)
 VA_nom_crude <- pmax(net_rev - X_sum_crude, pad_floor)
 bk <- K_vals / (VA_nom_crude + pad_floor)
-bl <- L_vals / (VA_nom_crude + pad_floor)
+
+bl_mat <- sweep(L_mat, 2, VA_nom_crude + pad_floor, "/")
+
+
 
 # Indices definition matching the GCN indexsets - Derived dynamically
 pdom_names_config <- cfg$conjuntos_gcn$Pdom$incluir
@@ -296,34 +303,49 @@ X_nom_by_sector <- colSums(sweep(X_phys, 1, p_base, "*"))
 VA_nom <- pmax(net_rev - X_nom_by_sector, pad_floor)
 
 bk <- K_vals / (VA_nom + pad_floor)
-bl <- L_vals / (VA_nom + pad_floor)
+bl_mat <- sweep(L_mat, 2, VA_nom + pad_floor, "/")
 
 gamma_v <- numeric(length(s_names))
 for (i in seq_along(s_names)) {
-    gamma_v[i] <- V_phys[i] / ( (K_vals[i]^bk[i]) * (L_vals[i]^bl[i]) + pad_floor )
+    gamma_v[i] <- V_phys[i] / (
+      (K_vals[i]^bk[i]) *
+      prod(L_mat[, i]^bl_mat[, i]) +
+      pad_floor
+   )
 }
-
-u_base_val <- cfg$cierre_macro$tasa_desempleo_base
-l_total_data_val <- sum(L_vals) + chile_sam[cat_row, cat_trabajo]
-l_force_data_val <- l_total_data_val / (1 - u_base_val)
-phi_val <- cfg$elasticidades$wage_curve_phi
-w_pot_calib_val <- (1 - u_base_val)^(-phi_val)
 
 Z0_v <- pmax(Z_v / pz_base, 1e-6)
 
+u_base_val <- cfg$cierre_macro$tasa_desempleo_base
+phi_val <- cfg$elasticidades$wage_curve_phi
+
+L_totals <- rowSums(L_mat)
+L_row_vals <- as.numeric(chile_sam[cat_row, cat_trabajo])
+names(L_row_vals) <- cat_trabajo
+
+l_total_data_vals <- L_totals + L_row_vals
+l_force_data_vals <- l_total_data_vals / (1 - u_base_val)
+
+w_pot_calib_vals <- rep(
+  (1 - u_base_val)^(-phi_val),
+  length(cat_trabajo)
+)
+names(w_pot_calib_vals) <- cat_trabajo
+
 par_flat <- unlist(list(
+    get_flow_values(l_total_data_vals, "l_total_data", cat_trabajo),
+    get_flow_values(l_force_data_vals, "l_force_data", cat_trabajo),
+    get_flow_values(rep(phi_val, length(cat_trabajo)), "phi", cat_trabajo),
+    get_flow_values(w_pot_calib_vals, "w_pot_calib", cat_trabajo),
+    get_flow_values(Lh_vals / (l_total_data_vals + pad_floor), "par_l_h", cat_trabajo),
+    get_flow_values(L_row_vals / (l_total_data_vals + pad_floor), "par_l_row", cat_trabajo),
+    
     omega = omega_val, 
     sigma_q = sigma_q_val, sigma_t = sigma_t_val,
     k_total_data = sum(K_vals) + chile_sam[cat_row, cat_capital], 
-    l_total_data = l_total_data_val, 
-    l_force_data = l_force_data_val,
-    phi = phi_val,
-    w_pot_calib = w_pot_calib_val,
     par_k_h = Kh_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
     par_k_f = Kf_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
     par_k_g = Kg_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
-    par_l_h = Lh_val / (sum(L_vals) + chile_sam[cat_row, cat_trabajo] + pad_floor),
-    par_l_row = chile_sam[cat_row, cat_trabajo] / (sum(L_vals) + chile_sam[cat_row, cat_trabajo] + pad_floor),
     por_cont = por_cont_h_val, por_sav = por_sav_h_val,
     trgov_data = TRGOV_v, por_tremp = por_tremp_val, por_tr_f_g = por_tr_f_g_val,
     por_cont_soc_f = por_cont_soc_f_val, por_cont_soc_g = por_cont_soc_g_val,
@@ -375,7 +397,7 @@ calib_par_flat <- unlist(list(
     get_flow_values(alpha_v, "alpha", p_names[pcon_idx]), 
     get_flow_values(gamma_v, "gamma", s_names),
     get_flow_values(bk, "betak", s_names),
-    get_flow_values(bl, "betal", s_names)
+    get_flow_values(t(bl_mat), "betal", s_names, cat_trabajo)
 ))
 model <- initval_calibr_par(model, calib_par_flat)
 
@@ -389,13 +411,20 @@ var_list <- list(
     TOTAL_INVEST = Nominal_I_Total,
     inv_adj = 1.0, inv_adj_h = 1.0, inv_adj_f = 1.0, inv_adj_g = 1.0,
     VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
-    pk = 1.0, w = 1.0, exr = 1.0, Kh = Kh_val, Lh = Lh_val, Kf = Kf_val, Kg = Kg_val,
-    LD = l_total_data_val, u_rate = u_base_val,
+    pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
+
     U = U_val, lambda__CONSUMER_1 = lambda_val
 )
 
 init_vars <- unlist(list(
     var_list,
+    
+    get_flow_values(rep(1, length(cat_trabajo)), "w", cat_trabajo),
+    get_flow_values(Lh_vals, "Lh", cat_trabajo),
+    get_flow_values(l_total_data_vals, "LD", cat_trabajo),
+    get_flow_values(rep(u_base_val, length(cat_trabajo)), "u_rate", cat_trabajo),
+    get_flow_values(t(L_mat), "L", s_names, cat_trabajo),
+    
     get_flow_values(rep(0, length(s_names)), "pi", s_names),
     get_flow_values(p_base, "p", p_names),
     get_flow_values(rep(1, length(p_names)), "pd", p_names),
@@ -431,7 +460,6 @@ init_vars <- unlist(list(
     get_flow_values(revenue_vals, "revenue", s_names),
     get_flow_values(net_rev, "net_revenue", s_names),
     get_flow_values(K_vals, "K", s_names),
-    get_flow_values(L_vals, "L", s_names),
     get_flow_values(X_matrix[pnoconst_idx, sa_idx, drop=FALSE] / p_base[pnoconst_idx], "X", pnoconst_names, sa_names),
     get_flow_values(X_matrix[, sb_idx, drop=FALSE] / p_base, "X", p_names, sb_names),
     get_flow_values(VA_nom[sa_idx], "va_nom", s_names[sa_idx]),

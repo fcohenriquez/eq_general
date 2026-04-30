@@ -4,6 +4,8 @@
 
 indexsets
 {
+  LAB = {'Trabajo_1', 'Trabajo_2', 'Trabajo_3'};
+
   P    = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
            'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
            'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
@@ -70,7 +72,7 @@ block CONSUMER
     identities
     {
         INC[] = BTINC[] - PITAX[];
-        BTINC[] = pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
+        BTINC[] = pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
         SAV[] = INC[] * por_sav;
         CS[] = INC[] * por_cont;
         D<'prod_Min'>[] = dst_nc<'prod_Min'>;
@@ -84,13 +86,13 @@ block CONSUMER
 };
 
 block <sa::SA> SECTORS_A {
-  controls { V<sa>[], K<sa>[], L<sa>[]; };
+  controls { V<sa>[], K<sa>[],  <l::LAB> L<sa,l>[]; };
   objective {
     pi<sa>[] = V<sa>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sa>))*(1-tps<sa>-tes<sa>)
-              - K<sa>[]*pk[] - L<sa>[]*w[]
+              - K<sa>[]*pk[] - SUM<l::LAB>(L<sa,l>[] * w<l>[])
               - SUM<p_no_c::Pno_const>(io<p_no_c,sa>*V<sa>[]*p<p_no_c>[]);
   };
-  constraints { V<sa>[] = gamma<sa>*(K<sa>[]^betak<sa>)*(L<sa>[]^betal<sa>); };
+  constraints { V<sa>[] = gamma<sa>*(K<sa>[]^betak<sa>)*PROD<l::LAB>(L<sa,l>[]^betal<sa,l>); };
   identities {
     <p_dom::Pdom> Yap<p_dom,sa>[] = V<sa>[]*make_share<p_dom,sa>;
     revenue<sa>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sa>[]*pz<p_rev>[]);
@@ -101,18 +103,18 @@ block <sa::SA> SECTORS_A {
   calibration {
     V<sa>[] = vst<sa> -> gamma<sa>;
     K<sa>[]*pk[] = va_nom<sa>[]*betak<sa> -> betak<sa>;
-    L<sa>[]*w[]  = va_nom<sa>[]*betal<sa> -> betal<sa>;
+   <l::LAB> L<sa,l>[] * w<l>[] = va_nom<sa>[] * betal<sa,l> -> betal<sa,l>;
   };
 };
 
 block <sb::SB> SECTORS_B {
-  controls { V<sb>[], K<sb>[], L<sb>[]; };
+  controls { V<sb>[], K<sb>[],  <l::LAB> L<sb,l>[]; };
   objective {
     pi<sb>[] = V<sb>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sb>))*(1-tps<sb>-tes<sb>)
-              - K<sb>[]*pk[] - L<sb>[]*w[]
+              - K<sb>[]*pk[] - SUM<l::LAB>(L<sb,l>[] * w<l>[])
               - SUM<p_full::P>(io<p_full,sb>*V<sb>[]*p<p_full>[]);
   };
-  constraints { V<sb>[] = gamma<sb>*(K<sb>[]^betak<sb>)*(L<sb>[]^betal<sb>); };
+  constraints { V<sb>[] = gamma<sb>*(K<sb>[]^betak<sb>)*PROD<l::LAB>(L<sb,l>[]^betal<sb,l>); };
   identities {
     <p_dom::Pdom> Yap<p_dom,sb>[] = V<sb>[]*make_share<p_dom,sb>;
     revenue<sb>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sb>[]*pz<p_rev>[]);
@@ -123,7 +125,7 @@ block <sb::SB> SECTORS_B {
   calibration {
     V<sb>[] = vst<sb> -> gamma<sb>;
     K<sb>[]*pk[] = va_nom<sb>[]*betak<sb> -> betak<sb>;
-    L<sb>[]*w[]  = va_nom<sb>[]*betal<sb> -> betal<sb>;
+    <l::LAB> L<sb,l>[] * w<l>[] = va_nom<sb>[] * betal<sb,l> -> betal<sb,l>;
   };
 };
 
@@ -272,7 +274,7 @@ block GOB
         SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * p<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
         Kg[] = k_total_data * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
-        PITAX[] = pit * (pk[] * Kh[] + w[] * Lh[] + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
+        PITAX[] = pit * (pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
         TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
                   SUM<idx_sb::SB>(tps<idx_sb> * revenue<idx_sb>[]);
         TESP[] = SUM<idx_sa2::SA>(tes<idx_sa2> * revenue<idx_sa2>[]) +
@@ -286,14 +288,20 @@ block EQUILIBRIUM
 {
     identities 
     {
-        LD[] = SUM<idx_ea::SA>(L<idx_ea>[]) + SUM<idx_eb::SB>(L<idx_eb>[]) + l_total_data * par_l_row;
-        w[] = w_pot_calib * (LD[] / l_force_data)^phi;
-        u_rate[] = (l_force_data - LD[]) / l_force_data;
+       <l::LAB> LD<l>[] = SUM<idx_ea::SA>(L<idx_ea,l>[]) 
+                 + SUM<idx_eb::SB>(L<idx_eb,l>[])
+                 + l_total_data<l> * par_l_row<l>;
+
+       <l::LAB> w<l>[] = w_pot_calib<l> * (LD<l>[] / l_force_data<l>)^phi<l>;
+
+       <l::LAB> u_rate<l>[] = (l_force_data<l> - LD<l>[]) / l_force_data<l>;
+
+       <l::LAB> Lh<l>[] = LD<l>[] * par_l_h<l>;
 
         SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
         
         Kh[] = k_total_data * par_k_h;
-        Lh[] = LD[] * par_l_h;
+        
         PSh[] = pshdata;
     }
 }

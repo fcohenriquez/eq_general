@@ -8,7 +8,7 @@ modelo:
   descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 12 actividades y 13 productos."
 
 archivos:
-  sam: "../data/sam_2023_12sect_sinmg.csv"
+  sam: "../data/sam_2023_12sect_sinmg_trab.csv"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_12_sect_23_auto.gcn"
   resultados_output: "resultados_cge_12sect_2023.csv"
@@ -25,7 +25,10 @@ opciones_datos:
 
 cuentas_sam:
   factores:
-    trabajo: "Trabajo"
+    trabajo:
+      - "Trabajo_1"
+      - "Trabajo_2"
+      - "Trabajo_3"
     capital: "Capital"
   instituciones:
     hogares: "Hogares"
@@ -100,6 +103,11 @@ productos:
 # Conjuntos usados actualmente por el .gcn.
 # En una segunda etapa, varios de estos pueden calcularse automaticamente desde la SAM.
 conjuntos_gcn:
+  LAB:
+    incluir:
+        - Trabajo_1
+        - Trabajo_2
+        - Trabajo_3
   P:
     desde: "productos"
   Pdom:
