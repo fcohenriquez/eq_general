@@ -229,7 +229,8 @@ shocks_default:
     tipo: "formula"
     tasa_nominal_base: 0.27
     cambio_puntos_tasa: -0.01
-    participacion_idpc_en_firmtax: 0.615
+    participacion_idpc_en_firmtax: 0.916
+    fuente_chi: "IDPC devengado SII / Imp_dir empresas Banco Central, 2023"
     formula_factor: "1 + cambio_puntos_tasa * participacion_idpc_en_firmtax / tasa_nominal_base"
 
 validaciones:
