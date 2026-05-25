@@ -1,12 +1,11 @@
-## ----setup, include=FALSE-----------------------------------------------------
-knitr::opts_chunk$set(echo = TRUE)
 library(gEcon)
 library(pracma)
 library(yaml)
-rm(list = ls())
+build_and_calibrate <- function(cfg) {
+## ----setup, include=FALSE-----------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
 
 # Load configuration
-cfg <- yaml::read_yaml("config_modelo_chile_12sect_2023.yml")
 
 
 ## ----sam_load-----------------------------------------------------------------
@@ -487,3 +486,5 @@ cat("Norma residuos finales:", pracma::Norm(model@residual_vector), "\n")
 #   cat("No se pudo extraer model@equations directamente.\n")
 # })
 
+return(list(result=model))
+}

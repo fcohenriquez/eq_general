@@ -1,10 +1,10 @@
-# Generated on 2026-05-06 13:46:07 by gEcon ver. 1.2.3 (2025-04-13)
+# Generated on 2026-05-25 15:35:21 by gEcon ver. 1.2.3 (2025-04-13)
 # http://gecon.r-forge.r-project.org/
 
 # Model name: cge_calib_chile_12_sect_23
 
 # info
-info__ <- c("cge_calib_chile_12_sect_23", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/script/cge_calib_chile_12_sect_23.gcn", "2026-05-06 13:46:07", "false")
+info__ <- c("cge_calib_chile_12_sect_23", "D:/francisco.henriquez/Mis documentos/proyectos/equilibrio_general/eq_general/script/cge_calib_chile_12_sect_23.gcn", "2026-05-25 15:35:21", "false")
 
 # index sets
 index_sets__ <- list(LAB = c("Trabajo_1", "Trabajo_2", "Trabajo_3"),

@@ -1,0 +1,946 @@
+﻿diff --git a/sens_analysis.Rmd b/files/sens_analysis.Rmd
+index 9e20048..06f120a 100644
+--- a/sens_analysis.Rmd
++++ b/files/sens_analysis.Rmd
+@@ -1,362 +1,366 @@
+ ---
+-title: "An├ílisis de Sensibilidad - MEGC Chile 12 sectores"
+-author: "Generado"
+-output: html_document
++title: "An├ílisis de Sensibilidad - MEGC Chile 12 Sectores"
++author: "fh"
++date: "2026-05-06"
++output:
++  html_document:
++    toc: true
++    toc_float: true
++    code_folding: show
++    df_print: paged
+ ---
+ 
+ ```{r setup, include=FALSE}
+-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+-                      cache.lazy = FALSE)
++knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
++```
++
++# 0. Prop├│sito y referencias
++
++Este documento implementa un an├ílisis de sensibilidad multi-capa para el MEGC
++Chile 12-sectores calibrado a la SAM 2023. Sigue el protocolo recomendado por
++Harrison & Vinod (1992), Hertel et al. (2007) y Saltelli et al. (2008):
++
++- **Capa 1 ÔÇö OAT** (one-at-a-time): respuesta univariante por par├ímetro.
++- **Capa 2 ÔÇö Tornado**: ranking de impacto absoluto entre l├¡mites low/high.
++- **Capa 3 ÔÇö LHS** (Latin Hypercube Sampling, McKay et al. 1979): muestreo
++  conjunto sobre el espacio de elasticidades.
++- **Capa 4 ÔÇö PRCC y Sobol**: descomposici├│n de varianza global del PIB real ante
++  cada shock.
++
++Los rangos de elasticidades siguen: Reinert & Roland-Holst (1992) para ¤ë,
++Hertel et al. (2007) para ¤â_q (Armington), de Melo & Robinson (1989) y
++Lofgren et al. (2002) para ¤â_t (CET), Blanchflower & Oswald (2005) para ¤ò
++(curva salarial), y McKibbin & Wilcoxen (1999) para ╬À (amortiguaci├│n de
++inversi├│n).
++
++# 1. Setup
++
++```{r libs}
+ library(gEcon)
++library(pracma)
++library(yaml)
+ library(dplyr)
++library(tidyr)
+ library(tibble)
+ library(purrr)
+-library(lhs)
+-library(sensitivity)
+ library(ggplot2)
+-library(tidyr)
+-library(yaml)
+-# library(furrr) # Opcional para paralelizar
++library(lhs)            # randomLHS
++library(sensitivity)    # pcc, src, sobolSalt
++# library(furrr); plan(multisession, workers = 4)  # opcional para paralelizar
+ 
++# Carga la funcion build_and_calibrate() desarrollada aparte
+ source("build_and_calibrate.R")
+ 
++# Configuracion base
+ cfg <- yaml::read_yaml("config_modelo_chile_12sect_2023.yml")
++```
+ 
+-# Semilla global para reproducibilidad (McKay et al. 1979 ÔÇö el LHS es estocastico)
+-set.seed(20260506)
+-
+-# Dependencias auxiliares
+-vars_to_compare <- c(
+-    "Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
+-    paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)),
+-    "pk", "exr", "inv_adj", "inv_adj_h", "inv_adj_f", "U",
+-    paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo)),
+-    paste0("LD__", unlist(cfg$cuentas_sam$factores$trabajo))
+-)
++```{r calc_pib}
++# Reproduccion local de calc_pib() que toma cfg explicitamente
++# (la version en calculo_pib.Rmd dependia de cfg via globalenv)
++calc_pib <- function(model_obj, cfg) {
++  ss   <- get_ss_values(model_obj)
++  par  <- get_par_values(model_obj)
++  pn   <- unlist(cfg$productos)
++  ct   <- unlist(cfg$cuentas_sam$factores$trabajo)
++
++  p_eq <- ss[paste0("p__",  pn)]
++  pe_eq <- ss[paste0("pe__", pn)]
++  pwm  <- par[paste0("pworldm__", pn)]
++  exr  <- ss["exr"]
++  inv_adj_v <- if (length(ss["inv_adj"]) > 0 && !is.na(ss["inv_adj"]))
++                 ss["inv_adj"] else 1.0
++
++  C   <- sum(ss[paste0("D__",  pn)] * p_eq, na.rm = TRUE)
++  G_v <- sum(par[paste0("gg_market_data_p__", pn)] * p_eq, na.rm = TRUE)
++  I_v <- sum(par[paste0("I_data__", pn)] * p_eq, na.rm = TRUE) * inv_adj_v
++  V_v <- sum(par[paste0("vexist__", pn)] * p_eq, na.rm = TRUE)
++  E_v <- ss[paste0("EX__", pn)]
++  M_v <- ss[paste0("M__", pn)]
++  X_v <- sum(E_v * pe_eq, na.rm = TRUE)
++  M_t <- sum(M_v * pwm * exr, na.rm = TRUE)
++
++  pb <- rep(1, length(pn))
++  C_r <- sum(ss[paste0("D__", pn)] * pb, na.rm = TRUE)
++  G_r <- sum(par[paste0("gg_market_data_p__", pn)] * pb, na.rm = TRUE)
++  I_r <- sum(par[paste0("I_data__", pn)] * pb, na.rm = TRUE) * inv_adj_v
++  V_r <- sum(par[paste0("vexist__", pn)] * pb, na.rm = TRUE)
++  X_r <- sum(E_v * pb, na.rm = TRUE)
++  M_r <- sum(M_v * pwm * 1.0, na.rm = TRUE)
++
++  list(
++    PIB      = C   + G_v + I_v + V_v + X_v - M_t,
++    PIB_real = C_r + G_r + I_r + V_r + X_r - M_r,
++    C = C, G = G_v, I = I_v, V = V_v, X = X_v, M = M_t,
++    C_real = C_r, G_real = G_r, I_real = I_r, V_real = V_r,
++    X_real = X_r, M_real = M_r,
++    u_rate  = ss[paste0("u_rate__", ct)],
++    Tax     = as.numeric(ss["Tax"]),
++    FIRMTAX = as.numeric(ss["FIRMTAX"]),
++    PITAX   = as.numeric(ss["PITAX"]),
++    VAT     = as.numeric(ss["VAT"])
++  )
++}
++```
+ 
+-calc_pib <- function(model_obj) {
+-    ss_vals <- get_ss_values(model_obj)
+-    par_vals <- get_par_values(model_obj)
+-    p_names <- unlist(cfg$productos)
+-    p_eq <- ss_vals[paste0("p__", p_names)]
+-    
+-    C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
+-    inv_adj_val <- ss_vals["inv_adj"]
+-    if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
+-    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_eq, na.rm = TRUE)
+-    I_val <- sum(par_vals[paste0("I_data__", p_names)] * p_eq, na.rm = TRUE) * inv_adj_val
+-    V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
+-    pe_eq <- ss_vals[paste0("pe__", p_names)]
+-    E_vals <- ss_vals[paste0("EX__", p_names)]
+-    X_val <- sum(E_vals * pe_eq, na.rm = TRUE)
+-    pwm_eq <- par_vals[paste0("pworldm__", p_names)]
+-    exr_val <- ss_vals["exr"]
+-    M_vals <- ss_vals[paste0("M__", p_names)]
+-    M_val <- sum(M_vals * pwm_eq * exr_val, na.rm = TRUE)
+-    
+-    p_base <- rep(1.0, length(p_names))
+-    C_real <- sum(ss_vals[paste0("D__", p_names)] * p_base, na.rm = TRUE)
+-    G_real <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_base, na.rm = TRUE)
+-    I_real <- sum(par_vals[paste0("I_data__", p_names)] * p_base, na.rm = TRUE) * inv_adj_val
+-    V_real <- sum(par_vals[paste0("vexist__", p_names)] * p_base, na.rm = TRUE)
+-    X_real <- sum(E_vals * p_base, na.rm = TRUE)
+-    M_real <- sum(M_vals * pwm_eq * 1.0, na.rm = TRUE)  
+-    
+-    list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
+-         PIB = C + G_val + I_val + V_val + X_val - M_val,
+-         C_real=C_real, G_real=G_real, I_real=I_real, V_real=V_real, X_real=X_real, M_real=M_real,
+-         PIB_real = C_real + G_real + I_real + V_real + X_real - M_real,
+-         u_rate = ss_vals[paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo))],
+-         Tax = ss_vals["Tax"], FIRMTAX = ss_vals["FIRMTAX"], PITAX = ss_vals["PITAX"],
+-         VAT = ss_vals["VAT"], TPROD = ss_vals["TPROD"], TESP = ss_vals["TESP"],
+-         TARANCEL = ss_vals["TARANCEL"])
++```{r shock_helpers}
++# Helpers para cada shock tributario (replican eval_shocks.Rmd)
++shock_iva <- function(model, factor = 1.01) {
++  pn <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas",
++                          "const", "com_hot_rest", "trans_comu_inf",
++                          "int_fin", "inmo_viv", "serv_emp", "serv_pers",
++                          "adm_pub"))
++  vat_names <- paste0("vat__", pn)
++  vat_base  <- get_par_values(model)[vat_names]
++  vat_new   <- as.list(as.numeric(vat_base) * factor)
++  names(vat_new) <- vat_names
++  set_free_par(model, free_par = vat_new)
+ }
+ 
+-calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {
+-    price_vars <- c(paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)), "pk", "exr")
+-    comp <- data.frame(
+-        Variable = vars,
+-        Base = as.numeric(res_base[vars]),
+-        Shock = as.numeric(res_shock[vars]),
+-        stringsAsFactors = FALSE
+-    )
+-    comp$Cambio_Pct <- round((comp$Shock / comp$Base - 1) * 100, 4)
+-    comp$Impacto_PIB_Pct <- ifelse(
+-        comp$Variable %in% price_vars,
+-        NA,
+-        round((comp$Shock - comp$Base) / pib_real_base * 100, 4)
+-    )
+-    return(comp)
++shock_pit <- function(model, factor = 1.10) {
++  pit_base <- get_par_values(model)["pit"]
++  set_free_par(model, free_par = list(pit = as.numeric(pit_base) * factor))
+ }
+ 
+-# Funciones de shocks
+-vat_shock_fn <- function(m) {
+-    p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
+-    vat_names <- paste0("vat__", p_names)
+-    vat_base <- get_par_values(m)[vat_names]
+-    vat_shock <- as.list(as.numeric(vat_base) * 1.01)
+-    names(vat_shock) <- vat_names
+-    set_free_par(m, free_par = vat_shock)
++shock_fit <- function(model, cambio_pp = -0.01,
++                      tasa_nominal = 0.27, share_idpc = 0.615) {
++  fit_base  <- get_par_values(model)["fit"]
++  fit_new   <- as.numeric(fit_base) *
++               (1 + cambio_pp * share_idpc / tasa_nominal)
++  set_free_par(model, free_par = list(fit = fit_new))
+ }
+ 
++shock_funs <- list(iva = shock_iva, pit = shock_pit, fit = shock_fit)
+ ```
+ 
+-## Configuraci├│n y Funciones de Sensibilidad
+-
+-```{r config}
+-# Rangos low/high de elasticidades.
+-# - sigma_q low = 1.05 (NO 1.0): la f├│rmula CES degenera en sigma=1 porque
+-#   rho = (sigma-1)/sigma = 0 y el exponente 1/rho diverge. Markusen (2002).
+-# - omega low = 0.5 pero EXCLUYE 1.0 en la grilla porque el exponente
+-#   omega/(omega-1) tambien diverge en 1. La grilla OAT lo evita explicitamente.
+-# - Resto de rangos: ver eq_general_202604.pdf y plan inicial.
+-param_ranges <- list(
+-  omega   = c(0.5,  2.5),
+-  sigma_q = c(1.05, 4.0),
+-  sigma_t = c(0.5,  3.0),
+-  phi     = c(0.05, 0.15),
+-  eta     = c(0.2,  1.0)
+-)
+-param_base <- list(omega = 1.5, sigma_q = 2.0, sigma_t = 1.5,
+-                   phi = 0.1,   eta = 0.5)
+-
+-shocks <- list(
+-  iva = vat_shock_fn,
+-  pit = function(m) set_free_par(m, free_par = list(pit = as.numeric(get_par_values(m)["pit"])*1.10)),
+-  fit = function(m) set_free_par(m, free_par = list(fit = as.numeric(get_par_values(m)["fit"])*(1 - 0.916*0.01/0.27)))
+-)
+-
+-recalibrar <- function(par_set) {
+-  cfg2 <- cfg
+-  cfg2$elasticidades$utilidad_hogares_omega <- par_set$omega
+-  cfg2$elasticidades$armington_sigma_q      <- par_set$sigma_q
+-  cfg2$elasticidades$cet_sigma_t            <- par_set$sigma_t
+-  cfg2$elasticidades$wage_curve_phi         <- par_set$phi
+-  cfg2$elasticidades$inversion_eta          <- par_set$eta
+-  build_and_calibrate(cfg2)
++```{r solve_shock}
++# Resuelve el modelo bajo un shock con manejo robusto de errores
++resolver_shock <- function(model_calibrated, shock_name) {
++  m_shocked <- shock_funs[[shock_name]](model_calibrated)
++  out <- tryCatch(
++    steady_state(m_shocked, calibration = FALSE,
++                 options_list = list(xscalm = "auto",
++                                     max_iter = 10000,
++                                     tol = 1e-5)),
++    error = function(e) NULL
++  )
++  out
+ }
++```
+ 
+-# Plantilla de tibble fallido (todos los shocks, todas las variables como NA)
+-tibble_fallo <- function(par_set, motivo, norm_end = NA_real_,
+-                         pib_real_base = NA_real_) {
+-  vars <- c(vars_to_compare, "PIB_real")
+-  expand_grid(shock = names(shocks), Variable = vars) %>%
+-    mutate(!!!par_set,
+-           Cambio_Pct       = NA_real_,
+-           Impacto_PIB_Pct  = NA_real_,
+-           pib_real_base    = pib_real_base,
+-           pib_real_shock   = NA_real_,
+-           var_pib_real_pct = NA_real_,
+-           delta_u_pp       = NA_real_,
+-           delta_tax_pp_pib = NA_real_,
+-           norm_calibracion = norm_end,
+-           convergio        = FALSE,
+-           motivo           = motivo) %>%
+-    relocate(shock, !!!names(par_set))
+-}
+-
+-# correr_punto: una calibracion -> los 3 shocks. Filtra por convergencia REAL
+-# (no solo por error capturado) usando el flag converged que devuelve la version
+-# modificada de build_and_calibrate.
+-correr_punto <- function(par_set) {
+-  cal <- safely(recalibrar)(par_set)
+-
+-  if (is.null(cal$result)) {
+-    return(tibble_fallo(par_set, "error_calibracion"))
+-  }
+-  if (isTRUE(cal$result$error) || !isTRUE(cal$result$converged)) {
+-    return(tibble_fallo(par_set, "no_converge_calibracion",
+-                        norm_end = cal$result$norm_end))
++```{r correr_punto}
++# Funcion central: dada una combinacion de elasticidades, calibra y aplica los
++# shocks. Devuelve un tibble largo (un row por (param_set, shock, variable)).
++correr_punto <- function(par_set, cfg_template = cfg,
++                          shocks = c("iva", "pit", "fit"),
++                          replica_id = NA_integer_) {
++
++  cfg_i <- cfg_template
++  cfg_i$elasticidades$utilidad_hogares_omega <- par_set$omega
++  cfg_i$elasticidades$armington_sigma_q      <- par_set$sigma_q
++  cfg_i$elasticidades$cet_sigma_t            <- par_set$sigma_t
++  cfg_i$elasticidades$wage_curve_phi         <- par_set$phi
++  cfg_i$elasticidades$inversion_eta          <- par_set$eta
++
++  res_cal <- tryCatch(build_and_calibrate(cfg_i),
++                      error = function(e) NULL)
++
++  if (is.null(res_cal) || !res_cal$converged) {
++    return(tibble(
++      replica = replica_id, !!!par_set,
++      shock = shocks, calibracion_ok = FALSE, shock_ok = NA,
++      pib_real_base = NA_real_, pib_real_shock = NA_real_,
++      var_pib_real_pct = NA_real_, var_c_real_pct = NA_real_,
++      var_i_real_pct = NA_real_, var_x_real_pct = NA_real_,
++      var_m_real_pct = NA_real_,
++      delta_tax_pp_pib = NA_real_, delta_u_pp = NA_real_,
++      norm_calibracion = if (!is.null(res_cal)) res_cal$norm_final else NA_real_
++    ))
+   }
+ 
+-  m_base <- cal$result$result
+-  res_b  <- get_ss_values(m_base)
+-  pib_b  <- calc_pib(m_base)
+-
+-  # Aplicar cada shock SOBRE LA MISMA calibracion (evita recalibrar 3x)
+-  map_dfr(names(shocks), function(sh) {
+-    m_s_attempt <- safely(function() {
+-      m_shocked <- shocks[[sh]](m_base)
+-      steady_state(m_shocked, calibration = FALSE,
+-                   options_list = list(xscalm = "auto",
+-                                       max_iter = 10000,
+-                                       tol      = 1e-5))
+-    })()
+-
+-    if (is.null(m_s_attempt$result)) {
+-      vars <- c(vars_to_compare, "PIB_real")
+-      return(tibble(shock = sh, !!!par_set, Variable = vars,
+-                    Cambio_Pct       = NA_real_,
+-                    Impacto_PIB_Pct  = NA_real_,
+-                    pib_real_base    = pib_b$PIB_real,
+-                    pib_real_shock   = NA_real_,
+-                    var_pib_real_pct = NA_real_,
+-                    delta_u_pp       = NA_real_,
+-                    delta_tax_pp_pib = NA_real_,
+-                    norm_calibracion = cal$result$norm_end,
+-                    convergio        = FALSE,
+-                    motivo           = "error_shock"))
++  pib_b <- calc_pib(res_cal$model, cfg_i)
++
++  map_dfr(shocks, function(sh) {
++    m_s <- resolver_shock(res_cal$model, sh)
++    if (is.null(m_s)) {
++      return(tibble(
++        replica = replica_id, !!!par_set, shock = sh,
++        calibracion_ok = TRUE, shock_ok = FALSE,
++        pib_real_base = pib_b$PIB_real, pib_real_shock = NA_real_,
++        var_pib_real_pct = NA_real_, var_c_real_pct = NA_real_,
++        var_i_real_pct = NA_real_, var_x_real_pct = NA_real_,
++        var_m_real_pct = NA_real_,
++        delta_tax_pp_pib = NA_real_, delta_u_pp = NA_real_,
++        norm_calibracion = res_cal$norm_final
++      ))
+     }
+-
+-    m_s   <- m_s_attempt$result
+-    res_s <- get_ss_values(m_s)
+-    pib_s <- calc_pib(m_s)
+-
+-    comp <- calc_tax_impact(res_b, res_s, pib_b$PIB, pib_b$PIB_real,
+-                            pib_s, vars_to_compare)
+-    var_pib_real <- (pib_s$PIB_real / pib_b$PIB_real - 1) * 100
+-    comp <- bind_rows(comp,
+-                      data.frame(Variable = "PIB_real",
+-                                 Base = pib_b$PIB_real,
+-                                 Shock = pib_s$PIB_real,
+-                                 Cambio_Pct = var_pib_real,
+-                                 Impacto_PIB_Pct = NA,
+-                                 stringsAsFactors = FALSE))
+-
+-    delta_u_pp <- mean(as.numeric(pib_s$u_rate - pib_b$u_rate)) * 100
+-    delta_tax_pp_pib <- (as.numeric(pib_s$Tax) -
+-                         as.numeric(pib_b$Tax)) / pib_b$PIB * 100
+-
+-    tibble(shock = sh, !!!par_set,
+-           Variable        = comp$Variable,
+-           Cambio_Pct      = comp$Cambio_Pct,
+-           Impacto_PIB_Pct = comp$Impacto_PIB_Pct,
+-           pib_real_base   = pib_b$PIB_real,
+-           pib_real_shock  = pib_s$PIB_real,
+-           var_pib_real_pct = var_pib_real,
+-           delta_u_pp       = delta_u_pp,
+-           delta_tax_pp_pib = delta_tax_pp_pib,
+-           norm_calibracion = cal$result$norm_end,
+-           convergio        = TRUE,
+-           motivo           = "ok")
++    pib_s <- calc_pib(m_s, cfg_i)
++    tibble(
++      replica = replica_id, !!!par_set, shock = sh,
++      calibracion_ok = TRUE, shock_ok = TRUE,
++      pib_real_base   = pib_b$PIB_real,
++      pib_real_shock  = pib_s$PIB_real,
++      var_pib_real_pct = (pib_s$PIB_real / pib_b$PIB_real - 1) * 100,
++      var_c_real_pct  = (pib_s$C_real   / pib_b$C_real   - 1) * 100,
++      var_i_real_pct  = (pib_s$I_real   / pib_b$I_real   - 1) * 100,
++      var_x_real_pct  = (pib_s$X_real   / pib_b$X_real   - 1) * 100,
++      var_m_real_pct  = (pib_s$M_real   / pib_b$M_real   - 1) * 100,
++      delta_tax_pp_pib = (pib_s$Tax / pib_b$PIB - pib_b$Tax / pib_b$PIB) * 100,
++      delta_u_pp       = mean(pib_s$u_rate - pib_b$u_rate) * 100,
++      norm_calibracion = res_cal$norm_final
++    )
+   })
+ }
++```
+ 
+-# Compatibilidad: correr() del API anterior, ahora envuelve correr_punto y
+-# filtra por shock_name. Permite que codigo antiguo siga funcionando.
+-correr <- function(par_set, shock_name) {
+-  correr_punto(par_set) %>% filter(shock == shock_name)
+-}
++# 2. Validaci├│n: calibraci├│n base
++
++Antes de barrer, se confirma que `build_and_calibrate(cfg)` con el `cfg` actual
++reproduce el estado base reportado en el documento t├®cnico (PIB real Ôëê 263.065,
++desempleo 7.9%).
++
++```{r baseline}
++res_base <- build_and_calibrate(cfg, verbose = TRUE)
++stopifnot(res_base$converged)
++pib_check <- calc_pib(res_base$model, cfg)
++tibble(variable = c("PIB nominal", "PIB real", "Desempleo medio"),
++       valor = c(pib_check$PIB, pib_check$PIB_real,
++                 mean(pib_check$u_rate) * 100))
+ ```
+ 
+-## Validaci├│n: reproducir tablas 14, 16, 18 del documento t├®cnico
+-
+-Antes de barrer, se verifica que `build_and_calibrate(cfg)` con el `cfg`
+-actual reproduce los ╬ö%PIB real reportados en `eq_general_202604.pdf`:
+-ÔêÆ0.0670% (IVA), ÔêÆ0.2690% (PIT) y +0.1356% (FIT). Diferencias mayores a
+-0.005 pp indican que la traduccion del Rmd a funcion introdujo un bug.
+-
+-```{r baseline_validation}
+-res_baseline <- correr_punto(param_base)
+-val <- res_baseline %>%
+-  filter(Variable == "PIB_real") %>%
+-  select(shock, var_pib_real_pct, convergio) %>%
+-  mutate(esperado = case_when(shock == "iva" ~ -0.0670,
+-                              shock == "pit" ~ -0.2690,
+-                              shock == "fit" ~  0.1356),
+-         dif_pp   = var_pib_real_pct - esperado)
+-val
+-
+-# La validaci├│n se considera OK si todas las diferencias estan bajo 0.01 pp
+-stopifnot(all(abs(val$dif_pp) < 0.01, na.rm = TRUE))
++```{r baseline_shocks}
++# Shocks aplicados al estado base: deberian replicar las tablas 14, 16 y 18
++# del documento eq_general_202604.pdf
++par_base <- list(
++  omega   = cfg$elasticidades$utilidad_hogares_omega,
++  sigma_q = cfg$elasticidades$armington_sigma_q,
++  sigma_t = cfg$elasticidades$cet_sigma_t,
++  phi     = cfg$elasticidades$wage_curve_phi,
++  eta     = cfg$elasticidades$inversion_eta
++)
++chk_base <- correr_punto(par_base, replica_id = 0L)
++chk_base |>
++  select(shock, var_pib_real_pct, var_c_real_pct, var_i_real_pct,
++         delta_u_pp, delta_tax_pp_pib)
+ ```
+ 
+-## Capa 1: One-at-a-Time (OAT)
++# 3. Espacio param├®trico
+ 
+-```{r oat_run, cache=TRUE}
+-# Generar la grilla OAT.
+-# - Forzar inclusion del valor base en la grilla (para que el grafico
+-#   tornado tenga punto de anclaje correcto).
+-# - omega: excluir 1.0 que produce singularidad en omega/(omega-1).
+-# - sigma_q: low ya = 1.05 (ver param_ranges), no incluye 1.0.
+-construir_grilla_param <- function(p) {
+-  rng  <- param_ranges[[p]]
+-  vals <- seq(rng[1], rng[2], length.out = 4)
+-  vals <- sort(unique(c(vals, param_base[[p]])))   # incluir base
+-  if (p == "omega") vals <- vals[abs(vals - 1.0) > 0.02]   # evitar omega=1
+-  vals
+-}
++```{r param_space}
++# Rangos low/high segun literatura (ver seccion 0)
++param_ranges <- list(
++  omega   = c(0.5,  2.5),   # CES consumo
++  sigma_q = c(1.0,  4.0),   # Armington
++  sigma_t = c(0.5,  3.0),   # CET
++  phi     = c(0.05, 0.15),  # curva salarial
++  eta     = c(0.2,  1.0)    # amort. inversion
++)
++param_base <- c(omega = 1.5, sigma_q = 2.0, sigma_t = 1.5,
++                phi = 0.1,   eta = 0.5)
++stopifnot(all.equal(unname(param_base[names(par_base)]), unname(unlist(par_base))))
++```
+ 
+-grilla_oat <- map_dfr(names(param_ranges), function(p) {
+-  vals <- construir_grilla_param(p)
+-  tibble(parametro_var = p, valor_var = vals)
+-})
++# 4. Capa 1 ÔÇö Sensibilidad univariante (OAT)
+ 
+-# Construir set de parametros para cada fila
+-grilla_oat$par_set <- pmap(grilla_oat, function(parametro_var, valor_var) {
+-  ps <- param_base
+-  ps[[parametro_var]] <- valor_var
+-  ps
+-})
++Cada par├ímetro se var├¡a sobre una grilla de 7 puntos manteniendo los dem├ís en
++su valor base. Se aplican los 3 shocks por punto (5 ├ù 7 ├ù 3 = 105 simulaciones).
+ 
+-cat("OAT total puntos a calibrar:", nrow(grilla_oat),
+-    "(x 3 shocks =", nrow(grilla_oat) * 3, "evaluaciones)\n")
++```{r oat_grid}
++n_pts <- 7
++oat_grid <- map_dfr(names(param_ranges), function(p) {
++  vals <- seq(param_ranges[[p]][1], param_ranges[[p]][2], length.out = n_pts)
++  tibble(parametro = p, valor = vals) |>
++    rowwise() |>
++    mutate(par_set = list(modifyList(as.list(param_base),
++                                      setNames(list(valor), p)))) |>
++    ungroup()
++})
++nrow(oat_grid)
++```
+ 
++```{r oat_run, cache=TRUE}
+ t0 <- Sys.time()
+-resultados_oat <- map2_dfr(
+-  grilla_oat$par_set, seq_len(nrow(grilla_oat)),
+-  ~ correr_punto(.x) %>%
+-      mutate(parametro_var = grilla_oat$parametro_var[.y],
+-             valor_var     = grilla_oat$valor_var[.y])
++oat_results <- map2_dfr(
++  oat_grid$par_set, seq_len(nrow(oat_grid)),
++  ~ correr_punto(.x, replica_id = .y) |>
++      mutate(parametro_var = oat_grid$parametro[.y],
++             valor_var     = oat_grid$valor[.y])
+ )
+-cat("OAT terminado en",
+-    round(difftime(Sys.time(), t0, units = "mins"), 1), "min.\n")
+-cat("Tasa de convergencia:",
+-    round(mean(resultados_oat$convergio) * 100, 1), "%\n")
++cat("OAT completado en", round(difftime(Sys.time(), t0, units = "mins"), 1),
++    "minutos.\n")
++saveRDS(oat_results, "oat_results.rds")
++```
+ 
+-write.csv(resultados_oat, "../output/resultados_sensibilidad_oat.csv", row.names = FALSE)
++```{r oat_summary}
++oat_results |>
++  filter(shock_ok) |>
++  group_by(parametro_var, shock) |>
++  summarise(min_pib = min(var_pib_real_pct, na.rm = TRUE),
++            base_pib = var_pib_real_pct[which.min(abs(valor_var -
++                                  param_base[parametro_var[1]]))],
++            max_pib  = max(var_pib_real_pct, na.rm = TRUE),
++            rango_pp = max_pib - min_pib, .groups = "drop")
+ ```
+ 
+ ```{r oat_plot, fig.width=10, fig.height=8}
+-resultados_oat %>%
+-  filter(convergio, Variable == "PIB_real") %>%
+-  ggplot(aes(valor_var, Cambio_Pct, color = shock)) +
++oat_results |>
++  filter(shock_ok) |>
++  ggplot(aes(valor_var, var_pib_real_pct, color = shock)) +
+   geom_line(linewidth = 0.8) + geom_point(size = 1.5) +
+   facet_wrap(~ parametro_var, scales = "free_x", ncol = 3) +
+-  labs(title = "Capa 1 - OAT: ╬ö%PIB real por shock",
+-       x = "valor del parametro (resto en base)",
+-       y = "╬ö% PIB real", color = "Shock") +
++  labs(title = "Capa 1 - OAT: respuesta del PIB real al shock",
++       x = "valor del parametro (los demas en base)",
++       y = "Cambio % en PIB real",
++       color = "Shock") +
+   theme_minimal(base_size = 11) +
+   theme(legend.position = "bottom")
+ ```
+ 
+-## Capa 2: Tornado
++# 5. Capa 2 ÔÇö Tornado
++
++Para cada shock, se reporta el rango lowÔÇôhigh de ╬ö%PIB real al variar cada
++elasticidad entre sus extremos. El par├ímetro con barra m├ís larga es el que m├ís
++amplifica la incertidumbre del resultado.
+ 
+ ```{r tornado_data}
+-# Reusa OAT ÔÇö sin evaluaciones nuevas.
+-tornado <- resultados_oat %>%
+-  filter(convergio, Variable == "PIB_real") %>%
+-  group_by(shock, parametro_var) %>%
+-  summarise(low      = Cambio_Pct[which.min(valor_var)],
+-            high     = Cambio_Pct[which.max(valor_var)],
+-            base_val = Cambio_Pct[which.min(abs(valor_var -
+-                              as.numeric(param_base[parametro_var[1]])))],
+-            .groups  = "drop") %>%
++tornado <- oat_results |>
++  filter(shock_ok) |>
++  group_by(shock, parametro_var) |>
++  summarise(low  = var_pib_real_pct[which.min(valor_var)],
++            high = var_pib_real_pct[which.max(valor_var)],
++            base = var_pib_real_pct[which.min(abs(valor_var -
++                          param_base[parametro_var[1]]))],
++            .groups = "drop") |>
+   mutate(amplitud = abs(high - low))
+ tornado
+ ```
+ 
+ ```{r tornado_plot, fig.width=10, fig.height=6}
+-tornado %>%
+-  group_by(shock) %>%
+-  arrange(amplitud) %>%
+-  mutate(parametro_var = factor(parametro_var,
+-                                levels = unique(parametro_var))) %>%
+-  ungroup() %>%
++tornado |>
++  group_by(shock) |>
++  arrange(amplitud) |>
++  mutate(parametro_var = factor(parametro_var, levels = unique(parametro_var))) |>
++  ungroup() |>
+   ggplot(aes(y = parametro_var)) +
+   geom_segment(aes(x = low, xend = high, yend = parametro_var),
+                linewidth = 5, color = "steelblue", alpha = 0.7) +
+-  geom_point(aes(x = base_val), color = "darkred", size = 2.5) +
++  geom_point(aes(x = base), color = "darkred", size = 2.5) +
+   facet_wrap(~ shock, scales = "free_x") +
+-  labs(title = "Capa 2 - Tornado: rango low-high de ╬ö%PIB real",
++  labs(title = "Capa 2 - Tornado: rango low-high del ╬ö%PIB real",
+        subtitle = "Punto rojo = valor base",
+-       x = "╬ö% PIB real", y = NULL) +
++       x = "Cambio % en PIB real", y = NULL) +
+   theme_minimal(base_size = 11)
+ ```
+ 
+-## Capa 3: Latin Hypercube Sampling (LHS)
++# 6. Capa 3 ÔÇö Latin Hypercube Sampling (LHS)
+ 
+-```{r lhs_run, cache=TRUE}
++Se generan N = 128 puntos en el hipercubo [0,1]^5 con `lhs::randomLHS` y se
++escalan a los rangos de la literatura. Cada punto se eval├║a bajo los 3 shocks
++(384 simulaciones totales). N puede aumentarse a 256 o 512 si se dispone de
++c├│mputo paralelo.
++
++```{r lhs_design}
++set.seed(20260506)
+ N <- 128
+ H <- randomLHS(N, length(param_ranges))
+ colnames(H) <- names(param_ranges)
+@@ -364,113 +368,214 @@ muestras <- as_tibble(
+   sweep(sweep(H, 2, sapply(param_ranges, diff), `*`),
+         2, sapply(param_ranges, `[`, 1), `+`)
+ )
++summary(muestras)
++```
+ 
+-cat("LHS: N =", N, "puntos x 3 shocks =", N*3, "evaluaciones\n")
+-
++```{r lhs_run, cache=TRUE}
+ t0 <- Sys.time()
+-muestras_list <- purrr::transpose(muestras)
+-resultados_lhs <- map2_dfr(
+-  muestras_list, seq_along(muestras_list),
+-  ~ correr_punto(.x) %>% mutate(replica = .y)
++# Para paralelizar: cambiar map2_dfr() -> furrr::future_map2_dfr()
++lhs_results <- map2_dfr(
++  asplit(muestras, 1), seq_len(N),
++  ~ correr_punto(as.list(.x), replica_id = .y)
+ )
+-cat("LHS terminado en",
+-    round(difftime(Sys.time(), t0, units = "mins"), 1), "min.\n")
+-cat("Tasa convergencia (cal x shock):",
+-    round(mean(resultados_lhs$convergio) * 100, 1), "%\n")
+-
+-write.csv(resultados_lhs, "resultados_sensibilidad_lhs.csv", row.names = FALSE)
++cat("LHS completado en", round(difftime(Sys.time(), t0, units = "mins"), 1),
++    "minutos.\n")
++cat("Tasa de exito calibracion:",
++    round(mean(lhs_results$calibracion_ok) * 100, 1), "%\n")
++cat("Tasa de exito shock (condicional):",
++    round(mean(lhs_results$shock_ok[lhs_results$calibracion_ok],
++               na.rm = TRUE) * 100, 1), "%\n")
++saveRDS(lhs_results, "lhs_results.rds")
+ ```
+ 
+-```{r lhs_density, fig.width=10, fig.height=4}
+-resultados_lhs %>%
+-  filter(convergio, Variable == "PIB_real") %>%
+-  ggplot(aes(Cambio_Pct, fill = shock)) +
++## 6.1 Distribuci├│n emp├¡rica de variables clave
++
++```{r lhs_dens, fig.width=10, fig.height=6}
++lhs_long <- lhs_results |>
++  filter(shock_ok) |>
++  select(shock, var_pib_real_pct, var_c_real_pct, var_i_real_pct,
++         delta_u_pp, delta_tax_pp_pib) |>
++  pivot_longer(-shock, names_to = "variable", values_to = "valor")
++
++ggplot(lhs_long, aes(valor, fill = shock)) +
+   geom_density(alpha = 0.5) +
++  facet_wrap(~ variable, scales = "free", ncol = 3) +
+   geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+-  facet_wrap(~ shock, scales = "free", ncol = 3) +
+-  labs(title = "Capa 3 - LHS: distribucion de ╬ö%PIB real",
+-       x = "╬ö% PIB real", y = "densidad") +
+-  theme_minimal(base_size = 11) + theme(legend.position = "none")
++  labs(title = "Capa 3 - LHS: distribucion empirica de impactos",
++       x = NULL, y = "densidad", fill = "Shock") +
++  theme_minimal(base_size = 11) +
++  theme(legend.position = "bottom")
+ ```
+ 
++## 6.2 Cuantiles por shock
++
+ ```{r lhs_quantiles}
+-resultados_lhs %>%
+-  filter(convergio, Variable == "PIB_real") %>%
+-  group_by(shock) %>%
+-  summarise(p10 = quantile(Cambio_Pct, 0.10, na.rm = TRUE),
+-            p50 = quantile(Cambio_Pct, 0.50, na.rm = TRUE),
+-            p90 = quantile(Cambio_Pct, 0.90, na.rm = TRUE),
+-            sd  = sd(Cambio_Pct, na.rm = TRUE),
+-            n   = sum(!is.na(Cambio_Pct)),
+-            .groups = "drop")
++lhs_results |>
++  filter(shock_ok) |>
++  group_by(shock) |>
++  summarise(across(c(var_pib_real_pct, var_c_real_pct, var_i_real_pct,
++                     delta_u_pp, delta_tax_pp_pib),
++                   list(p10  = ~ quantile(.x, 0.10, na.rm = TRUE),
++                        p50  = ~ quantile(.x, 0.50, na.rm = TRUE),
++                        p90  = ~ quantile(.x, 0.90, na.rm = TRUE)),
++                   .names = "{.col}__{.fn}"),
++            .groups = "drop") |>
++  pivot_longer(-shock, names_to = c("variable", "cuantil"),
++               names_sep = "__", values_to = "valor") |>
++  pivot_wider(names_from = cuantil, values_from = valor)
+ ```
+ 
+-## Capa 4: PRCC (Partial Rank Correlation Coefficients)
++# 7. Capa 4 ÔÇö Sensibilidad global (PRCC y Sobol)
+ 
+-PRCC es la metrica preferida para sensibilidad global cuando la respuesta es
+-no lineal pero monotonica en cada parametro (Marino et al. 2008). Reusa la
+-muestra LHS sin evaluaciones adicionales. Si el OAT muestra no monotonia,
+-considerar Sobol en su lugar.
++## 7.1 PRCC (Partial Rank Correlation Coefficients)
++
++PRCC es la m├®trica preferida cuando el modelo es no lineal pero monot├│nico en
++cada par├ímetro (Marino et al. 2008): mide la asociaci├│n entre cada par├ímetro
++y la salida tras controlar por los otros, sobre rangos. Reusa la muestra LHS
++sin evaluaciones adicionales.
+ 
+ ```{r prcc, fig.width=10, fig.height=6}
+-prcc_por_shock <- function(sh) {
+-  d <- resultados_lhs %>%
+-    filter(shock == sh, convergio, Variable == "PIB_real") %>%
+-    select(all_of(names(param_ranges)), Cambio_Pct) %>%
++prcc_por_shock <- function(sh, var = "var_pib_real_pct") {
++  d <- lhs_results |>
++    filter(shock == sh, shock_ok) |>
++    select(all_of(c(names(param_ranges), var))) |>
+     drop_na()
+-  if (nrow(d) < 30) return(NULL)   # demasiado pocos puntos para PRCC
+   pcc_obj <- pcc(X = d[, names(param_ranges)],
+-                 y = d$Cambio_Pct, rank = TRUE, nboot = 200)
+-  as_tibble(pcc_obj$PRCC, rownames = "parametro") %>%
+-    mutate(shock = sh)
++                 y = d[[var]], rank = TRUE, nboot = 200)
++  as_tibble(pcc_obj$PRCC, rownames = "parametro") |>
++    mutate(shock = sh, variable = var)
+ }
+ 
+-prcc_pib <- map_dfr(names(shocks), prcc_por_shock)
++prcc_pib <- map_dfr(c("iva", "pit", "fit"), prcc_por_shock)
+ prcc_pib
+ 
+-if (nrow(prcc_pib) > 0) {
+-  ggplot(prcc_pib,
+-         aes(reorder(parametro, abs(original)), original, fill = shock)) +
+-    geom_col(position = "dodge") +
+-    geom_errorbar(aes(ymin = `min. c.i.`, ymax = `max. c.i.`),
+-                  position = position_dodge(0.9), width = 0.25) +
+-    coord_flip() +
+-    labs(title = "Capa 4 - PRCC: importancia parcial sobre ╬ö%PIB real",
+-         subtitle = "Barras: PRCC original; lineas: IC bootstrap 95%",
+-         x = NULL, y = "PRCC", fill = "Shock") +
+-    theme_minimal(base_size = 11) + theme(legend.position = "bottom")
+-}
++prcc_pib |>
++  ggplot(aes(reorder(parametro, abs(original)),
++             original, fill = shock)) +
++  geom_col(position = "dodge") +
++  geom_errorbar(aes(ymin = `min. c.i.`, ymax = `max. c.i.`),
++                position = position_dodge(0.9), width = 0.25) +
++  coord_flip() +
++  labs(title = "Capa 4 - PRCC: importancia parcial sobre ╬ö%PIB real",
++       subtitle = "Barras: PRCC original; lineas: IC bootstrap 95%",
++       x = NULL, y = "PRCC", fill = "Shock") +
++  theme_minimal(base_size = 11) +
++  theme(legend.position = "bottom")
+ ```
+ 
+-## Capa 4 (opcional): Sobol via esquema Saltelli
++## 7.2 Sobol (opcional, costoso)
+ 
+-Costoso: requiere N┬À(k+2) evaluaciones extra. Se deja `eval=FALSE` por
+-defecto; activar solo si se dispone de c├│mputo paralelo.
++Los ├¡ndices de Sobol descomponen la varianza de la salida seg├║n contribuciones
++de primer orden y total de cada par├ímetro (Saltelli et al. 2010). Requiere
++N┬À(k+2) evaluaciones con esquema Saltelli; con N = 64 son 64┬À7 = 448 corridas
++por shock. Habilitar solo si se dispone de c├│mputo paralelo.
+ 
+-```{r sobol_iva, eval=FALSE}
++```{r sobol, eval=FALSE}
++set.seed(2026)
+ N_sob <- 64
+ H1 <- randomLHS(N_sob, length(param_ranges))
+ H2 <- randomLHS(N_sob, length(param_ranges))
+-escalar <- function(H) {
++to_scale <- function(H) {
+   d <- sweep(sweep(H, 2, sapply(param_ranges, diff), `*`),
+              2, sapply(param_ranges, `[`, 1), `+`)
+   colnames(d) <- names(param_ranges); as.data.frame(d)
+ }
+-X1 <- escalar(H1); X2 <- escalar(H2)
++X1 <- to_scale(H1); X2 <- to_scale(H2)
++
+ sob <- sobolSalt(model = NULL, X1 = X1, X2 = X2, scheme = "A", nboot = 100)
+ 
+-# Evaluar el modelo en todos los puntos del esquema
+-sob_pts <- as_tibble(sob$X)
+-names(sob_pts) <- names(param_ranges)
++# Evalua el modelo en todos los puntos generados por Saltelli
++sob_pts <- as_tibble(sob$X) |> setNames(names(param_ranges))
+ sob_runs <- map2_dfr(
+-  purrr::transpose(sob_pts), seq_len(nrow(sob_pts)),
+-  ~ correr_punto(.x) %>%
+-      filter(shock == "iva", Variable == "PIB_real") %>%
+-      mutate(replica = .y)
++  asplit(sob_pts, 1), seq_len(nrow(sob_pts)),
++  ~ correr_punto(as.list(.x), shocks = "iva", replica_id = .y)
+ )
+-y_pib <- sob_runs$Cambio_Pct
++y_pib <- sob_runs$var_pib_real_pct
+ tell(sob, y_pib)
+ print(sob); plot(sob)
+ saveRDS(sob, "sobol_iva.rds")
+ ```
+ 
++# 8. S├¡ntesis y export
++
++```{r summary_table}
++# Tabla maestra: para cada shock y variable, p10/p50/p90 + parametro mas influyente
++sintesis <- lhs_results |>
++  filter(shock_ok) |>
++  pivot_longer(c(var_pib_real_pct, var_c_real_pct, var_i_real_pct,
++                 var_x_real_pct, var_m_real_pct,
++                 delta_u_pp, delta_tax_pp_pib),
++               names_to = "variable", values_to = "valor") |>
++  group_by(shock, variable) |>
++  summarise(p10 = quantile(valor, 0.10, na.rm = TRUE),
++            p50 = quantile(valor, 0.50, na.rm = TRUE),
++            p90 = quantile(valor, 0.90, na.rm = TRUE),
++            sd  = sd(valor, na.rm = TRUE),
++            n   = sum(!is.na(valor)),
++            .groups = "drop")
++sintesis
++
++write.csv(sintesis,        "sens_sintesis.csv",      row.names = FALSE)
++write.csv(prcc_pib,        "sens_prcc_pib.csv",      row.names = FALSE)
++write.csv(tornado,         "sens_tornado.csv",       row.names = FALSE)
++write.csv(oat_results,     "sens_oat_full.csv",      row.names = FALSE)
++write.csv(lhs_results,     "sens_lhs_full.csv",      row.names = FALSE)
++```
++
++# 9. Lectura de resultados
++
++Las conclusiones operativas que se buscan en este pipeline son:
++
++1. **┬┐El signo del shock es robusto?** Si la distribuci├│n LHS de
++   `var_pib_real_pct` no cruza cero para un shock, la conclusi├│n cualitativa
++   es robusta a la incertidumbre param├®trica. Si la cruza, el signo depende
++   de elasticidades.
++2. **┬┐Qu├® par├ímetro deber├¡as priorizar para mejorar la calibraci├│n?** El que
++   tenga mayor PRCC absoluto en el shock relevante. Tipicamente ser├ín ¤â_q
++   y ¤ò; ¤ë y ╬À suelen contribuir poco.
++3. **┬┐El intervalo p10ÔÇôp90 es informativo?** Si supera ┬▒50% del valor central,
++   el modelo no entrega una predicci├│n puntual cre├¡ble y el reporte debe
++   citar el rango, no la media.
++
++# Referencias
++
++Blanchflower, D. G., & Oswald, A. J. (2005). The wage curve reloaded.
++NBER WP 11338.
++
++Harrison, G. W., & Vinod, H. D. (1992). The sensitivity analysis of applied
++general equilibrium models. *Review of Economics and Statistics*, 74(2),
++357ÔÇô362.
++
++Hertel, T., Hummels, D., Ivanic, M., & Keeney, R. (2007). How confident can
++we be of CGE-based assessments of free trade agreements? *Economic Modelling*,
++24(4), 611ÔÇô635.
++
++Lofgren, H., Harris, R. L., & Robinson, S. (2002). *A Standard CGE Model in
++GAMS*. IFPRI.
++
++Marino, S., Hogue, I. B., Ray, C. J., & Kirschner, D. E. (2008). A
++methodology for performing global uncertainty and sensitivity analysis in
++systems biology. *Journal of Theoretical Biology*, 254(1), 178ÔÇô196.
++
++McKay, M. D., Beckman, R. J., & Conover, W. J. (1979). A comparison of three
++methods for selecting values of input variables in the analysis of output
++from a computer code. *Technometrics*, 21(2), 239ÔÇô245.
++
++McKibbin, W. J., & Wilcoxen, P. J. (1999). The theoretical and empirical
++structure of the G-Cubed model. *Economic Modelling*, 16(1), 123ÔÇô148.
++
++de Melo, J., & Robinson, S. (1989). Product differentiation and the
++treatment of foreign trade in CGE models of small economies. *Journal of
++International Economics*, 27, 47ÔÇô67.
++
++Reinert, K. A., & Roland-Holst, D. W. (1992). Armington elasticities for
++United States manufacturing sectors. *Journal of Policy Modeling*, 14(5),
++631ÔÇô639.
++
++Saltelli, A., Ratto, M., Andres, T., Campolongo, F., Cariboni, J., Gatelli,
++D., Saisana, M., & Tarantola, S. (2008). *Global Sensitivity Analysis:
++The Primer*. Wiley.
++
++Saltelli, A., Annoni, P., Azzini, I., Campolongo, F., Ratto, M., &
++Tarantola, S. (2010). Variance-based sensitivity analysis of model output.
++*Computer Physics Communications*, 181, 259ÔÇô270.
