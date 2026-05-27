@@ -213,7 +213,10 @@ cierre_macro:
   inversion_privada: "endogena_amortiguada"
   mercado_trabajo: "curva_salarial_con_desempleo"
   mercado_capital: "pleno_uso_stock_capital"
-  tasa_desempleo_base: 0.087
+  tasa_desempleo_base:
+    Trabajo_1: 0.076
+    Trabajo_2: 0.099
+    Trabajo_3: 0.078
 
 shocks_default:
   iva:

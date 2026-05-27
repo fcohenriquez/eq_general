@@ -196,7 +196,12 @@ build_and_calibrate <- function(
   sigma_t_val <- cfg$elasticidades$cet_sigma_t
   phi_val     <- cfg$elasticidades$wage_curve_phi
   damp_inv    <- cfg$elasticidades$inversion_eta
-  u_base_val  <- cfg$cierre_macro$tasa_desempleo_base
+  u_base_val  <- unlist(cfg$cierre_macro$tasa_desempleo_base)
+  if (length(u_base_val) == 1) {
+    u_base_val <- setNames(rep(u_base_val, length(cat_trabajo)), cat_trabajo)
+  } else {
+    u_base_val <- u_base_val[cat_trabajo]
+  }
 
   rho_q_val <- (sigma_q_val - 1) / sigma_q_val
   rho_t_val <- (sigma_t_val + 1) / sigma_t_val
@@ -273,7 +278,7 @@ build_and_calibrate <- function(
   names(L_row_vals) <- cat_trabajo
   l_total_data_vals <- L_totals + L_row_vals
   l_force_data_vals <- l_total_data_vals / (1 - u_base_val)
-  w_pot_calib_vals  <- rep((1 - u_base_val)^(-phi_val), length(cat_trabajo))
+  w_pot_calib_vals  <- (1 - u_base_val)^(-phi_val)
   names(w_pot_calib_vals) <- cat_trabajo
 
   # Identidades fiscales y de ingreso
@@ -467,8 +472,7 @@ build_and_calibrate <- function(
     get_flow_values(rep(1, length(cat_trabajo)), "w", cat_trabajo),
     get_flow_values(Lh_vals, "Lh", cat_trabajo),
     get_flow_values(l_total_data_vals, "LD", cat_trabajo),
-    get_flow_values(rep(u_base_val, length(cat_trabajo)),
-                    "u_rate", cat_trabajo),
+    get_flow_values(u_base_val, "u_rate", cat_trabajo),
     get_flow_values(t(L_mat), "L", s_names, cat_trabajo),
     get_flow_values(rep(0, length(s_names)), "pi", s_names),
     get_flow_values(p_base, "p", p_names),

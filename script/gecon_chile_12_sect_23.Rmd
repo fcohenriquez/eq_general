@@ -316,7 +316,12 @@ for (i in seq_along(s_names)) {
 
 Z0_v <- pmax(Z_v / pz_base, 1e-6)
 
-u_base_val <- cfg$cierre_macro$tasa_desempleo_base
+u_base_val <- unlist(cfg$cierre_macro$tasa_desempleo_base)
+if (length(u_base_val) == 1) {
+    u_base_val <- setNames(rep(u_base_val, length(cat_trabajo)), cat_trabajo)
+} else {
+    u_base_val <- u_base_val[cat_trabajo]
+}
 phi_val <- cfg$elasticidades$wage_curve_phi
 
 L_totals <- rowSums(L_mat)
@@ -326,11 +331,9 @@ names(L_row_vals) <- cat_trabajo
 l_total_data_vals <- L_totals + L_row_vals
 l_force_data_vals <- l_total_data_vals / (1 - u_base_val)
 
-w_pot_calib_vals <- rep(
-  (1 - u_base_val)^(-phi_val),
-  length(cat_trabajo)
-)
+w_pot_calib_vals <- (1 - u_base_val)^(-phi_val)
 names(w_pot_calib_vals) <- cat_trabajo
+
 
 par_flat <- unlist(list(
     get_flow_values(l_total_data_vals, "l_total_data", cat_trabajo),
@@ -422,7 +425,7 @@ init_vars <- unlist(list(
     get_flow_values(rep(1, length(cat_trabajo)), "w", cat_trabajo),
     get_flow_values(Lh_vals, "Lh", cat_trabajo),
     get_flow_values(l_total_data_vals, "LD", cat_trabajo),
-    get_flow_values(rep(u_base_val, length(cat_trabajo)), "u_rate", cat_trabajo),
+    get_flow_values(u_base_val, "u_rate", cat_trabajo),
     get_flow_values(t(L_mat), "L", s_names, cat_trabajo),
     
     get_flow_values(rep(0, length(s_names)), "pi", s_names),
