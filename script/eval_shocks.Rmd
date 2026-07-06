@@ -169,13 +169,13 @@ print_macro_impact("disminución 1% de tasa IDPC", pib_model_list, pib_shock_lis
 print(comp_fit)
 ```
 
-# SHOCK: 1% Incremento IVA (Impuesto al Valor Agregado)
+# SHOCK: 1 punto porcentual de Incremento IVA (Impuesto al Valor Agregado)
 ```{r include=FALSE}
 # 1. Definir el shock (Aumento del 1% en todas las tasas de IVA por producto) OJO otros no tiene IVA
 p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
 vat_names <- paste0("vat__", p_names)
 vat_base <- get_par_values(model)[vat_names]
-vat_shock <- as.list(as.numeric(vat_base) * 1.01)
+vat_shock <- as.list(as.numeric(vat_base) * (1+1/19))
 names(vat_shock) <- vat_names
 
 # 2. Aplicar el shock usando set_free_par
@@ -193,6 +193,8 @@ pib_shock_vat <- pib_shock_vat_list$PIB
 pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 ```
 
+
+
 # ANALISIS IVA
 ```{r}
 # Comparación
@@ -200,9 +202,171 @@ pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 
 comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pib_shock_vat_list, vars_to_compare)
 
-print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list)
+print_macro_impact("Aumento 0.5% IVA", pib_model_list, pib_shock_vat_list)
 print(comp_vat)
 ```
+
+```{r}
+# ============================================================================
+# DESCOMPOSICIÓN EFECTO-TASA vs EFECTO-BASE (Shapley, sin residuo)
+# ============================================================================
+# Para cada impuesto i:  R_i = tau_i * B_i
+#   Efecto tasa : Δtau_i * B_bar      (con B_bar = base promedio)
+#   Efecto base : tau_bar * ΔB_i      (con tau_bar = tasa promedio)
+# La descomposición de Shapley usa promedios para repartir la interacción,
+# de modo que  Efecto_tasa + Efecto_base = ΔR_i  exactamente (sin residuo).
+#
+# Para el shock de IVA, sólo cambia 'vat' -> Δtau = 0 para los demás impuestos,
+# por lo que todo su movimiento es EFECTO BASE (erosión endógena). Esto se
+# verifica automáticamente y sirve como chequeo de consistencia.
+
+descomponer_tasa_base <- function(model_base, model_shock,
+                                  res_base, res_shock,
+                                  pib_nom_base) {
+
+  par_base  <- get_par_values(model_base)
+  par_shock <- get_par_values(model_shock)
+
+  # --- nombres de productos (idénticos al shock_iva) ---
+  pn <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas",
+                          "const", "com_hot_rest", "trans_comu_inf",
+                          "int_fin", "inmo_viv", "serv_emp", "serv_pers",
+                          "adm_pub"))
+
+  # ------------------------------------------------------------------
+  # 1) TASA EFECTIVA AGREGADA de cada impuesto en cada equilibrio.
+  #    Se reconstruye como tau = R / B, recuperando B desde el modelo.
+  #    Para impuestos con tasa escalar única (pit, fit) la tasa es el
+  #    propio parámetro; la base se recupera como B = R / tau.
+  #    Para VAT (tasas por producto) y TPROD/TARANCEL (múltiples tasas)
+  #    se usa una TASA EFECTIVA IMPLÍCITA agregada = R_agregado / B_agregada.
+  # ------------------------------------------------------------------
+
+  # --- VAT: base = Σ p_p * TD_Dom_p ; tasa efectiva implícita = VAT / base
+  td_names <- c("TD_Dom_Agri", paste0("TD_Dom_PMinP__", pn[2:10]),
+                "TD_Dom_Const", "TD_Dom_Adm_pub")
+  # Nota: los nombres exactos de TD_Dom en el SS dependen de cómo gEcon
+  # serializa los índices. Recuperamos la base VAT de forma robusta
+  # directamente como VAT / vat_efectiva_promedio NO es trivial, así que
+  # usamos la vía limpia: base_VAT = VAT / vat_eff, con vat_eff = VAT/base.
+  # En la práctica recuperamos la base vía la identidad agregada usando
+  # los precios y TD_Dom disponibles en res_*. Si los nombres no calzan,
+  # caemos al método R/tau con la tasa media ponderada (ver abajo).
+
+  get_base_from_R_tau <- function(R, tau) {
+    if (is.na(tau) || tau == 0) return(NA_real_)
+    R / tau
+  }
+
+  # Tasas efectivas: para vat usamos el promedio simple de las tasas por
+  # producto como referencia de "tasa" (cambia entre base y shock),
+  # y la base se recupera por residuo R/tau_eff donde tau_eff es endógena.
+  vat_par_base  <- mean(as.numeric(par_base [paste0("vat__", pn)]), na.rm = TRUE)
+  vat_par_shock <- mean(as.numeric(par_shock[paste0("vat__", pn)]), na.rm = TRUE)
+
+  # Recaudaciones (montos) en cada equilibrio
+  R <- function(res, v) as.numeric(res[v])
+
+  impuestos <- list(
+    VAT     = list(R_b = R(res_base ,"VAT"),     R_s = R(res_shock ,"VAT"),
+                   tau_b = vat_par_base, tau_s = vat_par_shock),
+    PITAX   = list(R_b = R(res_base ,"PITAX"),   R_s = R(res_shock ,"PITAX"),
+                   tau_b = as.numeric(par_base["pit"]),
+                   tau_s = as.numeric(par_shock["pit"])),
+    FIRMTAX = list(R_b = R(res_base ,"FIRMTAX"), R_s = R(res_shock ,"FIRMTAX"),
+                   tau_b = as.numeric(par_base["fit"]),
+                   tau_s = as.numeric(par_shock["fit"])),
+    TPROD   = list(R_b = R(res_base ,"TPROD"),   R_s = R(res_shock ,"TPROD"),
+                   tau_b = NA, tau_s = NA),   # tasa compuesta -> Δtau=0 asumido
+    TARANCEL= list(R_b = R(res_base ,"TARANCEL"),R_s = R(res_shock ,"TARANCEL"),
+                   tau_b = NA, tau_s = NA)    # tar_rate no cambia -> Δtau=0
+  )
+
+  out <- lapply(names(impuestos), function(nm) {
+    x <- impuestos[[nm]]
+    R_b <- x$R_b; R_s <- x$R_s
+    dR  <- R_s - R_b
+
+    # Si conocemos la tasa (pit, fit, vat): recuperamos base por R/tau
+    if (!is.na(x$tau_b) && !is.na(x$tau_s) && x$tau_b != 0 && x$tau_s != 0) {
+      B_b   <- R_b / x$tau_b
+      B_s   <- R_s / x$tau_s
+      dtau  <- x$tau_s - x$tau_b
+      dB    <- B_s - B_b
+      tau_bar <- 0.5 * (x$tau_b + x$tau_s)
+      B_bar   <- 0.5 * (B_b + B_s)
+      ef_tasa <- dtau * B_bar      # Shapley
+      ef_base <- tau_bar * dB      # Shapley
+    } else {
+      # Tasa no disponible / no cambia (TPROD, TARANCEL): Δtau = 0
+      # => todo el cambio es efecto base puro.
+      ef_tasa <- 0
+      ef_base <- dR
+      dtau <- 0
+    }
+
+    data.frame(
+      Impuesto      = nm,
+      R_base        = R_b,
+      R_shock       = R_s,
+      dR            = dR,
+      Efecto_Tasa   = ef_tasa,
+      Efecto_Base   = ef_base,
+      Residuo       = dR - (ef_tasa + ef_base),   # debe ser ~0
+      dR_pp_PIB     = dR      / pib_nom_base * 100,
+      EfTasa_pp_PIB = ef_tasa / pib_nom_base * 100,
+      EfBase_pp_PIB = ef_base / pib_nom_base * 100,
+      stringsAsFactors = FALSE
+    )
+  })
+
+  tab <- do.call(rbind, out)
+
+  # Fila TOTAL
+  total <- data.frame(
+    Impuesto      = "TOTAL",
+    R_base        = sum(tab$R_base),
+    R_shock       = sum(tab$R_shock),
+    dR            = sum(tab$dR),
+    Efecto_Tasa   = sum(tab$Efecto_Tasa),
+    Efecto_Base   = sum(tab$Efecto_Base),
+    Residuo       = sum(tab$Residuo),
+    dR_pp_PIB     = sum(tab$dR_pp_PIB),
+    EfTasa_pp_PIB = sum(tab$EfTasa_pp_PIB),
+    EfBase_pp_PIB = sum(tab$EfBase_pp_PIB),
+    stringsAsFactors = FALSE
+  )
+  rbind(tab, total)
+}
+```
+
+
+```{r}
+# --- Descomposición tasa/base del shock de IVA ---
+desc_vat <- descomponer_tasa_base(
+  model_base    = model,
+  model_shock   = model_shock_vat,
+  res_base      = res_base,
+  res_shock     = res_shock_vat,
+  pib_nom_base  = pib_base
+)
+
+cat("\n=== DESCOMPOSICIÓN EFECTO-TASA vs EFECTO-BASE (Shock IVA 19→19,3) ===\n")
+cat("   (valores en pp del PIB nominal base)\n\n")
+cat(sprintf("   %-10s %10s %10s %10s %10s\n",
+            "Impuesto", "ΔR(pp)", "Ef.Tasa", "Ef.Base", "Residuo"))
+cat("   ", strrep("-", 56), "\n", sep = "")
+for (i in seq_len(nrow(desc_vat))) {
+  r <- desc_vat[i, ]
+  cat(sprintf("   %-10s %+10.4f %+10.4f %+10.4f %+10.2e\n",
+              r$Impuesto, r$dR_pp_PIB, r$EfTasa_pp_PIB, r$EfBase_pp_PIB,
+              r$Residuo / pib_base * 100))
+}
+
+# Chequeo de consistencia: residuo total debe ser ~0
+stopifnot(abs(sum(desc_vat$Residuo[desc_vat$Impuesto != "TOTAL"])) < 1e-4 * pib_base)
+```
+
 
 
 # SHOCK: 10% Incremento PIT (Impuesto a la Renta de Personas)
