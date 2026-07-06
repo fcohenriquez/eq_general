@@ -15,7 +15,109 @@ vars_to_compare <- c(
     paste0("LD__", unlist(cfg$cuentas_sam$factores$trabajo))
 )
 
-print_macro_impact <- function(name, p_base_list, p_shock_list) {
+decomp3 <- function(tau_b, tau_s, P_b, P_s, Q_b, Q_s) {
+    # valores agregados (suma sobre productos si son vectores)
+    R_b <- sum(tau_b * P_b * Q_b, na.rm = TRUE)
+    R_s <- sum(tau_s * P_s * Q_s, na.rm = TRUE)
+    dR  <- R_s - R_b
+
+    # promedios (barras) para Shapley
+    tau_bar <- 0.5 * (tau_b + tau_s)
+    P_bar   <- 0.5 * (P_b   + P_s)
+    Q_bar   <- 0.5 * (Q_b   + Q_s)
+    dtau    <- tau_s - tau_b
+    dP      <- P_s   - P_b
+    dQ      <- Q_s   - Q_b
+
+    ef_tasa     <- sum(dtau  * P_bar * Q_bar, na.rm = TRUE)
+    ef_cantidad <- sum(tau_bar * P_bar * dQ,  na.rm = TRUE)
+    ef_precio   <- sum(tau_bar * Q_bar * dP,  na.rm = TRUE)
+
+    res <- dR - (ef_tasa + ef_cantidad + ef_precio)  # residuo de orden superior
+    list(R_b = R_b, R_s = R_s, dR = dR,
+         ef_tasa = ef_tasa, ef_cantidad = ef_cantidad,
+         ef_precio = ef_precio, residuo = res)
+}
+
+build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
+    par_b <- get_par_values(model_base)
+    par_s <- get_par_values(model_shock)
+    gv <- function(res, nms) { v <- as.numeric(res[nms]); v }
+
+    pn <- paste0("prod_", c("Agri","Min","Manu","elect_agua_gas","const",
+                            "com_hot_rest","trans_comu_inf","int_fin",
+                            "inmo_viv","serv_emp","serv_pers","adm_pub"))
+    sn <- gsub("prod_", "Act_", pn)
+    ct <- unlist(cfg$cuentas_sam$factores$trabajo)
+
+    # ---------------- VAT ----------------
+    VATp_b <- gv(res_base , paste0("VAT_p__", pn))
+    VATp_s <- gv(res_shock, paste0("VAT_p__", pn))
+    p_b    <- gv(res_base , paste0("p__", pn))
+    p_s    <- gv(res_shock, paste0("p__", pn))
+    vat_b  <- as.numeric(par_b[paste0("vat__", pn)])
+    vat_s  <- as.numeric(par_s[paste0("vat__", pn)])
+    TD_b   <- VATp_b / (vat_b * p_b)
+    TD_s   <- VATp_s / (vat_s * p_s)
+    D_VAT  <- decomp3(vat_b, vat_s, p_b, p_s, TD_b, TD_s)
+
+    # ---------------- FIRMTAX ----------------
+    fit_b <- as.numeric(par_b["fit"]); fit_s <- as.numeric(par_s["fit"])
+    pk_b  <- as.numeric(gv(res_base ,"pk")); pk_s <- as.numeric(gv(res_shock,"pk"))
+    Kf_b  <- as.numeric(gv(res_base ,"Kf")); Kf_s <- as.numeric(gv(res_shock,"Kf"))
+    D_FIRM <- decomp3(fit_b, fit_s, pk_b, pk_s, Kf_b, Kf_s)
+
+    # ---------------- PITAX ----------------
+    pit_b <- as.numeric(par_b["pit"]); pit_s <- as.numeric(par_s["pit"])
+    Kh_b  <- as.numeric(gv(res_base ,"Kh")); Kh_s <- as.numeric(gv(res_shock,"Kh"))
+    w_b   <- gv(res_base , paste0("w__", ct)); w_s <- gv(res_shock, paste0("w__", ct))
+    Lh_b  <- gv(res_base , paste0("Lh__", ct)); Lh_s <- gv(res_shock, paste0("Lh__", ct))
+    tr_b <- as.numeric(gv(res_base ,"TRGOV")) + as.numeric(gv(res_base ,"TREMP")) +
+            as.numeric(gv(res_base ,"PSh")) +
+            as.numeric(par_b["fact_row_in_k_data"]) + as.numeric(par_b["fact_row_in_l_data"])
+    tr_s <- as.numeric(gv(res_shock,"TRGOV")) + as.numeric(gv(res_shock,"TREMP")) +
+            as.numeric(gv(res_shock,"PSh")) +
+            as.numeric(par_s["fact_row_in_k_data"]) + as.numeric(par_s["fact_row_in_l_data"])
+
+    cap  <- decomp3(pit_b, pit_s, pk_b, pk_s, Kh_b, Kh_s)
+    lab  <- decomp3(pit_b, pit_s, w_b,  w_s,  Lh_b, Lh_s)
+    trf  <- decomp3(pit_b, pit_s, rep(1,1), rep(1,1), tr_b, tr_s)
+    D_PIT <- list(
+        R_b = cap$R_b + lab$R_b + trf$R_b,
+        R_s = cap$R_s + lab$R_s + trf$R_s,
+        dR  = cap$dR  + lab$dR  + trf$dR,
+        ef_tasa     = cap$ef_tasa     + lab$ef_tasa     + trf$ef_tasa,
+        ef_cantidad = cap$ef_cantidad + lab$ef_cantidad + trf$ef_cantidad,
+        ef_precio   = cap$ef_precio   + lab$ef_precio   + trf$ef_precio,
+        residuo     = cap$residuo + lab$residuo + trf$residuo
+    )
+
+    # ---------------- TPROD ----------------
+    tps   <- as.numeric(par_b[paste0("tps__", sn)])
+    rev_b <- gv(res_base , paste0("revenue__", sn))
+    rev_s <- gv(res_shock, paste0("revenue__", sn))
+    pz_b <- gv(res_base , paste0("pz__", pn))
+    pz_s <- gv(res_shock, paste0("pz__", pn))
+    pzdef_b <- rep(mean(pz_b, na.rm=TRUE), length(sn))
+    pzdef_s <- rep(mean(pz_s, na.rm=TRUE), length(sn))
+    Qrev_b  <- rev_b / pzdef_b
+    Qrev_s  <- rev_s / pzdef_s
+    D_TPROD <- decomp3(tps, tps, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
+
+    # ---------------- TARANCEL ----------------
+    tar    <- as.numeric(par_b[paste0("tar_rate__", pn)])
+    pwm    <- as.numeric(par_b[paste0("pworldm__", pn)])
+    exr_b  <- as.numeric(gv(res_base ,"exr")); exr_s <- as.numeric(gv(res_shock,"exr"))
+    M_b    <- gv(res_base , paste0("M__", pn))
+    M_s    <- gv(res_shock, paste0("M__", pn))
+    QM_b   <- pwm * M_b
+    QM_s   <- pwm * M_s
+    D_TAR  <- decomp3(tar, tar, rep(exr_b,length(pn)), rep(exr_s,length(pn)), QM_b, QM_s)
+
+    list(VAT=D_VAT, FIRMTAX=D_FIRM, PITAX=D_PIT, TPROD=D_TPROD, TARANCEL=D_TAR)
+}
+
+print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NULL, model_shock = NULL) {
     cat(sprintf("--- RESULTADOS DE LA SIMULACIÓN: %s ---\n", name))
 
     var_pib_nom <- (p_shock_list$PIB / p_base_list$PIB - 1) * 100
@@ -79,7 +181,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list) {
     tax_vars <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL")
     tax_labels <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ", "Prod. Tax ", "Spec. Tax ", "Tariffs   ")
 
-    cat("  Recaudación Fiscal (% del PIB nominal base):\n")
+    cat("\n  Recaudación Fiscal (% del PIB nominal base):\n")
     cat(sprintf("     %-12s  %10s  %10s  %10s\n", "Variable", "Base (%PIB)", "Shock(%PIB)", "Δ (pp PIB)"))
     cat(sprintf("     %s\n", strrep("-", 52)))
 
@@ -102,6 +204,46 @@ print_macro_impact <- function(name, p_base_list, p_shock_list) {
         }
     }
     cat("\n")
+
+    if (!is.null(model_base) && !is.null(model_shock)) {
+        res_base <- get_ss_values(model_base)
+        res_shock <- get_ss_values(model_shock)
+        RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
+
+        nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TARANCEL")
+
+        cat("  Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):\n")
+        cat(sprintf("     %-9s %9s %9s %9s %9s %9s %9s\n",
+                    "Impuesto", "ΔR(pp)", "Ef.Tasa", "Ef.Cant", "Ef.Total", "Ef.Prec", "Resid"))
+        cat("     ", strrep("-", 72), "\n", sep = "")
+
+        tot <- c(dR = 0, t = 0, q = 0, tot = 0, p = 0, r = 0)
+        for (nm in nombres) {
+            d <- RD[[nm]]
+            ef_tot_val <- d$ef_tasa + d$ef_cantidad
+            cat(sprintf("     %-9s %+9.4f %+9.4f %+9.4f %+9.4f %+9.4f %+9.1e\n",
+                        nm,
+                        d$dR          / pib_nom_base * 100,
+                        d$ef_tasa     / pib_nom_base * 100,
+                        d$ef_cantidad / pib_nom_base * 100,
+                        ef_tot_val    / pib_nom_base * 100,
+                        d$ef_precio   / pib_nom_base * 100,
+                        d$residuo     / pib_nom_base * 100))
+            tot["dR"]  <- tot["dR"]  + d$dR
+            tot["t"]   <- tot["t"]   + d$ef_tasa
+            tot["q"]   <- tot["q"]   + d$ef_cantidad
+            tot["tot"] <- tot["tot"] + ef_tot_val
+            tot["p"]   <- tot["p"]   + d$ef_precio
+            tot["r"]   <- tot["r"]   + d$residuo
+        }
+        cat("     ", strrep("-", 72), "\n", sep = "")
+        cat(sprintf("     %-9s %+9.4f %+9.4f %+9.4f %+9.4f %+9.4f %+9.1e\n",
+                    "TOTAL",
+                    tot["dR"]/pib_nom_base*100, tot["t"]/pib_nom_base*100,
+                    tot["q"]/pib_nom_base*100, tot["tot"]/pib_nom_base*100,
+                    tot["p"]/pib_nom_base*100, tot["r"]/pib_nom_base*100))
+        cat("\n")
+    }
 }
 
 calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {
@@ -165,7 +307,7 @@ pib_shock_fit_real <- pib_shock_list$PIB_real
 
 comp_fit <- calc_tax_impact(res_base, res_shock_fit, pib_base, pib_real_base, pib_shock_list, vars_to_compare)
 
-print_macro_impact("disminución 1% de tasa IDPC", pib_model_list, pib_shock_list)
+print_macro_impact("disminución 1% de tasa IDPC", pib_model_list, pib_shock_list, model, model_shock_fit)
 print(comp_fit)
 ```
 
@@ -202,170 +344,10 @@ pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 
 comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pib_shock_vat_list, vars_to_compare)
 
-print_macro_impact("Aumento 0.5% IVA", pib_model_list, pib_shock_vat_list)
+print_macro_impact("Aumento 0.5% IVA", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
 print(comp_vat)
 ```
 
-```{r}
-# ============================================================================
-# DESCOMPOSICIÓN EFECTO-TASA vs EFECTO-BASE (Shapley, sin residuo)
-# ============================================================================
-# Para cada impuesto i:  R_i = tau_i * B_i
-#   Efecto tasa : Δtau_i * B_bar      (con B_bar = base promedio)
-#   Efecto base : tau_bar * ΔB_i      (con tau_bar = tasa promedio)
-# La descomposición de Shapley usa promedios para repartir la interacción,
-# de modo que  Efecto_tasa + Efecto_base = ΔR_i  exactamente (sin residuo).
-#
-# Para el shock de IVA, sólo cambia 'vat' -> Δtau = 0 para los demás impuestos,
-# por lo que todo su movimiento es EFECTO BASE (erosión endógena). Esto se
-# verifica automáticamente y sirve como chequeo de consistencia.
-
-descomponer_tasa_base <- function(model_base, model_shock,
-                                  res_base, res_shock,
-                                  pib_nom_base) {
-
-  par_base  <- get_par_values(model_base)
-  par_shock <- get_par_values(model_shock)
-
-  # --- nombres de productos (idénticos al shock_iva) ---
-  pn <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas",
-                          "const", "com_hot_rest", "trans_comu_inf",
-                          "int_fin", "inmo_viv", "serv_emp", "serv_pers",
-                          "adm_pub"))
-
-  # ------------------------------------------------------------------
-  # 1) TASA EFECTIVA AGREGADA de cada impuesto en cada equilibrio.
-  #    Se reconstruye como tau = R / B, recuperando B desde el modelo.
-  #    Para impuestos con tasa escalar única (pit, fit) la tasa es el
-  #    propio parámetro; la base se recupera como B = R / tau.
-  #    Para VAT (tasas por producto) y TPROD/TARANCEL (múltiples tasas)
-  #    se usa una TASA EFECTIVA IMPLÍCITA agregada = R_agregado / B_agregada.
-  # ------------------------------------------------------------------
-
-  # --- VAT: base = Σ p_p * TD_Dom_p ; tasa efectiva implícita = VAT / base
-  td_names <- c("TD_Dom_Agri", paste0("TD_Dom_PMinP__", pn[2:10]),
-                "TD_Dom_Const", "TD_Dom_Adm_pub")
-  # Nota: los nombres exactos de TD_Dom en el SS dependen de cómo gEcon
-  # serializa los índices. Recuperamos la base VAT de forma robusta
-  # directamente como VAT / vat_efectiva_promedio NO es trivial, así que
-  # usamos la vía limpia: base_VAT = VAT / vat_eff, con vat_eff = VAT/base.
-  # En la práctica recuperamos la base vía la identidad agregada usando
-  # los precios y TD_Dom disponibles en res_*. Si los nombres no calzan,
-  # caemos al método R/tau con la tasa media ponderada (ver abajo).
-
-  get_base_from_R_tau <- function(R, tau) {
-    if (is.na(tau) || tau == 0) return(NA_real_)
-    R / tau
-  }
-
-  # Tasas efectivas: para vat usamos el promedio simple de las tasas por
-  # producto como referencia de "tasa" (cambia entre base y shock),
-  # y la base se recupera por residuo R/tau_eff donde tau_eff es endógena.
-  vat_par_base  <- mean(as.numeric(par_base [paste0("vat__", pn)]), na.rm = TRUE)
-  vat_par_shock <- mean(as.numeric(par_shock[paste0("vat__", pn)]), na.rm = TRUE)
-
-  # Recaudaciones (montos) en cada equilibrio
-  R <- function(res, v) as.numeric(res[v])
-
-  impuestos <- list(
-    VAT     = list(R_b = R(res_base ,"VAT"),     R_s = R(res_shock ,"VAT"),
-                   tau_b = vat_par_base, tau_s = vat_par_shock),
-    PITAX   = list(R_b = R(res_base ,"PITAX"),   R_s = R(res_shock ,"PITAX"),
-                   tau_b = as.numeric(par_base["pit"]),
-                   tau_s = as.numeric(par_shock["pit"])),
-    FIRMTAX = list(R_b = R(res_base ,"FIRMTAX"), R_s = R(res_shock ,"FIRMTAX"),
-                   tau_b = as.numeric(par_base["fit"]),
-                   tau_s = as.numeric(par_shock["fit"])),
-    TPROD   = list(R_b = R(res_base ,"TPROD"),   R_s = R(res_shock ,"TPROD"),
-                   tau_b = NA, tau_s = NA),   # tasa compuesta -> Δtau=0 asumido
-    TARANCEL= list(R_b = R(res_base ,"TARANCEL"),R_s = R(res_shock ,"TARANCEL"),
-                   tau_b = NA, tau_s = NA)    # tar_rate no cambia -> Δtau=0
-  )
-
-  out <- lapply(names(impuestos), function(nm) {
-    x <- impuestos[[nm]]
-    R_b <- x$R_b; R_s <- x$R_s
-    dR  <- R_s - R_b
-
-    # Si conocemos la tasa (pit, fit, vat): recuperamos base por R/tau
-    if (!is.na(x$tau_b) && !is.na(x$tau_s) && x$tau_b != 0 && x$tau_s != 0) {
-      B_b   <- R_b / x$tau_b
-      B_s   <- R_s / x$tau_s
-      dtau  <- x$tau_s - x$tau_b
-      dB    <- B_s - B_b
-      tau_bar <- 0.5 * (x$tau_b + x$tau_s)
-      B_bar   <- 0.5 * (B_b + B_s)
-      ef_tasa <- dtau * B_bar      # Shapley
-      ef_base <- tau_bar * dB      # Shapley
-    } else {
-      # Tasa no disponible / no cambia (TPROD, TARANCEL): Δtau = 0
-      # => todo el cambio es efecto base puro.
-      ef_tasa <- 0
-      ef_base <- dR
-      dtau <- 0
-    }
-
-    data.frame(
-      Impuesto      = nm,
-      R_base        = R_b,
-      R_shock       = R_s,
-      dR            = dR,
-      Efecto_Tasa   = ef_tasa,
-      Efecto_Base   = ef_base,
-      Residuo       = dR - (ef_tasa + ef_base),   # debe ser ~0
-      dR_pp_PIB     = dR      / pib_nom_base * 100,
-      EfTasa_pp_PIB = ef_tasa / pib_nom_base * 100,
-      EfBase_pp_PIB = ef_base / pib_nom_base * 100,
-      stringsAsFactors = FALSE
-    )
-  })
-
-  tab <- do.call(rbind, out)
-
-  # Fila TOTAL
-  total <- data.frame(
-    Impuesto      = "TOTAL",
-    R_base        = sum(tab$R_base),
-    R_shock       = sum(tab$R_shock),
-    dR            = sum(tab$dR),
-    Efecto_Tasa   = sum(tab$Efecto_Tasa),
-    Efecto_Base   = sum(tab$Efecto_Base),
-    Residuo       = sum(tab$Residuo),
-    dR_pp_PIB     = sum(tab$dR_pp_PIB),
-    EfTasa_pp_PIB = sum(tab$EfTasa_pp_PIB),
-    EfBase_pp_PIB = sum(tab$EfBase_pp_PIB),
-    stringsAsFactors = FALSE
-  )
-  rbind(tab, total)
-}
-```
-
-
-```{r}
-# --- Descomposición tasa/base del shock de IVA ---
-desc_vat <- descomponer_tasa_base(
-  model_base    = model,
-  model_shock   = model_shock_vat,
-  res_base      = res_base,
-  res_shock     = res_shock_vat,
-  pib_nom_base  = pib_base
-)
-
-cat("\n=== DESCOMPOSICIÓN EFECTO-TASA vs EFECTO-BASE (Shock IVA 19→19,3) ===\n")
-cat("   (valores en pp del PIB nominal base)\n\n")
-cat(sprintf("   %-10s %10s %10s %10s %10s\n",
-            "Impuesto", "ΔR(pp)", "Ef.Tasa", "Ef.Base", "Residuo"))
-cat("   ", strrep("-", 56), "\n", sep = "")
-for (i in seq_len(nrow(desc_vat))) {
-  r <- desc_vat[i, ]
-  cat(sprintf("   %-10s %+10.4f %+10.4f %+10.4f %+10.2e\n",
-              r$Impuesto, r$dR_pp_PIB, r$EfTasa_pp_PIB, r$EfBase_pp_PIB,
-              r$Residuo / pib_base * 100))
-}
-
-# Chequeo de consistencia: residuo total debe ser ~0
-stopifnot(abs(sum(desc_vat$Residuo[desc_vat$Impuesto != "TOTAL"])) < 1e-4 * pib_base)
-```
 
 
 
@@ -393,7 +375,7 @@ pib_shock_pit_list <- calc_pib(model_shock_pit)
 # Comparación y visualización de impactos
 comp_pit <- calc_tax_impact(res_base, res_shock_pit, pib_base, pib_real_base, pib_shock_pit_list, vars_to_compare)
 
-print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list)
+print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list, model, model_shock_pit)
 print(comp_pit)
 ```
 
@@ -404,7 +386,7 @@ fit_base <- get_par_values(model)["fit"]
 fit_shock <- fit_base * (1 - 0.615 * (0.01 / 0.27)) # Misma magnitud que el shock individual
 
 pit_base <- get_par_values(model)["pit"]
-pit_shock <- as.numeric(pit_base) * 1.45 # Incremento del X% en la tasa
+pit_shock <- as.numeric(pit_base) * 1.07 # Incremento del X% en la tasa
 
 # 2. Aplicar ambos shocks simultáneamente
 model_shock_comb <- set_free_par(model, free_par = list(fit = fit_shock, pit = pit_shock))
@@ -424,6 +406,6 @@ pib_shock_comb_list <- calc_pib(model_shock_comb)
 # Comparación y visualización de impactos
 comp_comb <- calc_tax_impact(res_base, res_shock_comb, pib_base, pib_real_base, pib_shock_comb_list, vars_to_compare)
 
-print_macro_impact("Mix: Reducción IDPC + Aumento PIT", pib_model_list, pib_shock_comb_list)
+print_macro_impact("Mix: Reducción IDPC + Aumento PIT", pib_model_list, pib_shock_comb_list, model, model_shock_comb)
 print(comp_comb)
 ```
