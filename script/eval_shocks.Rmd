@@ -40,23 +40,23 @@ decomp3 <- function(tau_b, tau_s, P_b, P_s, Q_b, Q_s) {
 }
 
 build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
-    par_b <- get_par_values(model_base)
-    par_s <- get_par_values(model_shock)
+    par_b <- get_par_values(model_base, silent = TRUE)
+    par_s <- get_par_values(model_shock, silent = TRUE)
     gv <- function(res, nms) { v <- as.numeric(res[nms]); v }
 
-    pn <- paste0("prod_", c("Agri","Min","Manu","elect_agua_gas","const",
-                            "com_hot_rest","trans_comu_inf","int_fin",
-                            "inmo_viv","serv_emp","serv_pers","adm_pub"))
+    pn <- unlist(cfg$productos)
     sn <- gsub("prod_", "Act_", pn)
     ct <- unlist(cfg$cuentas_sam$factores$trabajo)
 
     # ---------------- VAT ----------------
-    VATp_b <- gv(res_base , paste0("VAT_p__", pn))
-    VATp_s <- gv(res_shock, paste0("VAT_p__", pn))
-    p_b    <- gv(res_base , paste0("p__", pn))
-    p_s    <- gv(res_shock, paste0("p__", pn))
-    vat_b  <- as.numeric(par_b[paste0("vat__", pn)])
-    vat_s  <- as.numeric(par_s[paste0("vat__", pn)])
+    # Filter products that have 'vat__<prod>' parameter defined in the model
+    pn_vat <- pn[paste0("vat__", pn) %in% names(par_b)]
+    VATp_b <- gv(res_base , paste0("VAT_p__", pn_vat))
+    VATp_s <- gv(res_shock, paste0("VAT_p__", pn_vat))
+    p_b    <- gv(res_base , paste0("p__", pn_vat))
+    p_s    <- gv(res_shock, paste0("p__", pn_vat))
+    vat_b  <- as.numeric(par_b[paste0("vat__", pn_vat)])
+    vat_s  <- as.numeric(par_s[paste0("vat__", pn_vat)])
     TD_b   <- VATp_b / (vat_b * p_b)
     TD_s   <- VATp_s / (vat_s * p_s)
     D_VAT  <- decomp3(vat_b, vat_s, p_b, p_s, TD_b, TD_s)
@@ -93,28 +93,52 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     )
 
     # ---------------- TPROD ----------------
-    tps   <- as.numeric(par_b[paste0("tps__", sn)])
-    rev_b <- gv(res_base , paste0("revenue__", sn))
-    rev_s <- gv(res_shock, paste0("revenue__", sn))
+    # Filter sectors that have 'tps__Act_<sector>' parameter defined in the model
+    sn_tprod <- sn[paste0("tps__", sn) %in% names(par_b)]
+    tps   <- as.numeric(par_b[paste0("tps__", sn_tprod)])
+    rev_b <- gv(res_base , paste0("revenue__", sn_tprod))
+    rev_s <- gv(res_shock, paste0("revenue__", sn_tprod))
     pz_b <- gv(res_base , paste0("pz__", pn))
     pz_s <- gv(res_shock, paste0("pz__", pn))
-    pzdef_b <- rep(mean(pz_b, na.rm=TRUE), length(sn))
-    pzdef_s <- rep(mean(pz_s, na.rm=TRUE), length(sn))
+    pzdef_b <- rep(mean(pz_b, na.rm=TRUE), length(sn_tprod))
+    pzdef_s <- rep(mean(pz_s, na.rm=TRUE), length(sn_tprod))
     Qrev_b  <- rev_b / pzdef_b
     Qrev_s  <- rev_s / pzdef_s
     D_TPROD <- decomp3(tps, tps, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
 
+    # ---------------- TESP ----------------
+    # Filter sectors that have 'tes__Act_<sector>' parameter defined in the model
+    sn_tesp <- sn[paste0("tes__", sn) %in% names(par_b)]
+    tes_b   <- as.numeric(par_b[paste0("tes__", sn_tesp)])
+    tes_s   <- as.numeric(par_s[paste0("tes__", sn_tesp)])
+    rev_b <- gv(res_base , paste0("revenue__", sn_tesp))
+    rev_s <- gv(res_shock, paste0("revenue__", sn_tesp))
+    pz_b <- gv(res_base , paste0("pz__", pn))
+    pz_s <- gv(res_shock, paste0("pz__", pn))
+    pzdef_b <- rep(mean(pz_b, na.rm=TRUE), length(sn_tesp))
+    pzdef_s <- rep(mean(pz_s, na.rm=TRUE), length(sn_tesp))
+    Qrev_b  <- rev_b / pzdef_b
+    Qrev_s  <- rev_s / pzdef_s
+    D_TESP <- decomp3(tes_b, tes_s, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
+
+    ied_b <- if ("imptos_espec_data" %in% names(par_b)) as.numeric(par_b["imptos_espec_data"]) else 0
+    ied_s <- if ("imptos_espec_data" %in% names(par_s)) as.numeric(par_s["imptos_espec_data"]) else 0
+    D_TESP$R_b <- D_TESP$R_b + ied_b
+    D_TESP$R_s <- D_TESP$R_s + ied_s
+
     # ---------------- TARANCEL ----------------
-    tar    <- as.numeric(par_b[paste0("tar_rate__", pn)])
-    pwm    <- as.numeric(par_b[paste0("pworldm__", pn)])
+    # Filter products that have 'tar_rate__prod_<prod>' parameter defined in the model
+    pn_tar <- pn[paste0("tar_rate__", pn) %in% names(par_b)]
+    tar    <- as.numeric(par_b[paste0("tar_rate__", pn_tar)])
+    pwm    <- as.numeric(par_b[paste0("pworldm__", pn_tar)])
     exr_b  <- as.numeric(gv(res_base ,"exr")); exr_s <- as.numeric(gv(res_shock,"exr"))
-    M_b    <- gv(res_base , paste0("M__", pn))
-    M_s    <- gv(res_shock, paste0("M__", pn))
+    M_b    <- gv(res_base , paste0("M__", pn_tar))
+    M_s    <- gv(res_shock, paste0("M__", pn_tar))
     QM_b   <- pwm * M_b
     QM_s   <- pwm * M_s
-    D_TAR  <- decomp3(tar, tar, rep(exr_b,length(pn)), rep(exr_s,length(pn)), QM_b, QM_s)
+    D_TAR  <- decomp3(tar, tar, rep(exr_b,length(pn_tar)), rep(exr_s,length(pn_tar)), QM_b, QM_s)
 
-    list(VAT=D_VAT, FIRMTAX=D_FIRM, PITAX=D_PIT, TPROD=D_TPROD, TARANCEL=D_TAR)
+    list(VAT=D_VAT, FIRMTAX=D_FIRM, PITAX=D_PIT, TPROD=D_TPROD, TESP=D_TESP, TARANCEL=D_TAR)
 }
 
 print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NULL, model_shock = NULL) {
@@ -206,11 +230,11 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     cat("\n")
 
     if (!is.null(model_base) && !is.null(model_shock)) {
-        res_base <- get_ss_values(model_base)
-        res_shock <- get_ss_values(model_shock)
+        res_base <- get_ss_values(model_base, silent = TRUE)
+        res_shock <- get_ss_values(model_shock, silent = TRUE)
         RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
 
-        nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TARANCEL")
+        nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL")
 
         cat("  Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):\n")
         cat(sprintf("     %-9s %9s %9s %9s %9s %9s %9s\n",
@@ -276,7 +300,7 @@ calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_sh
 # SHOCK: 1% Disminución FIT (Impuesto a las Empresas)
 ```{r include=FALSE}
 # 1. Definir el shock
-fit_base <- get_par_values(model)["fit"]
+fit_base <- get_par_values(model, silent = TRUE)["fit"]
 
 chi <- cfg$shocks_default$fit$participacion_idpc_en_firmtax
 dtau <- cfg$shocks_default$fit$cambio_puntos_tasa
@@ -295,7 +319,7 @@ model_shock_fit <- steady_state(model_shock_fit,
     options_list = list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
 )
 
-res_shock_fit <- get_ss_values(model_shock_fit)
+res_shock_fit <- get_ss_values(model_shock_fit, silent = TRUE)
 pib_shock_list <- calc_pib(model_shock_fit)
 pib_shock_fit <- pib_shock_list$PIB
 pib_shock_fit_real <- pib_shock_list$PIB_real
@@ -316,7 +340,7 @@ print(comp_fit)
 # 1. Definir el shock (Aumento del 1% en todas las tasas de IVA por producto) OJO otros no tiene IVA
 p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
 vat_names <- paste0("vat__", p_names)
-vat_base <- get_par_values(model)[vat_names]
+vat_base <- get_par_values(model, silent = TRUE)[vat_names]
 vat_shock <- as.list(as.numeric(vat_base) * (1+1/19))
 names(vat_shock) <- vat_names
 
@@ -329,7 +353,7 @@ model_shock_vat <- steady_state(model_shock_vat,
     options_list = list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
 )
 
-res_shock_vat <- get_ss_values(model_shock_vat)
+res_shock_vat <- get_ss_values(model_shock_vat, silent = TRUE)
 pib_shock_vat_list <- calc_pib(model_shock_vat)
 pib_shock_vat <- pib_shock_vat_list$PIB
 pib_shock_vat_real <- pib_shock_vat_list$PIB_real
@@ -344,7 +368,7 @@ pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 
 comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pib_shock_vat_list, vars_to_compare)
 
-print_macro_impact("Aumento 0.5% IVA", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
+print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
 print(comp_vat)
 ```
 
@@ -354,7 +378,7 @@ print(comp_vat)
 # SHOCK: 10% Incremento PIT (Impuesto a la Renta de Personas)
 ```{r include=FALSE}
 # 1. Definir el shock (Aumento del 10% en la tasa de PIT)
-pit_base <- get_par_values(model)["pit"]
+pit_base <- get_par_values(model, silent = TRUE)["pit"]
 pit_shock <- as.numeric(pit_base) * 1.10
 
 # 2. Aplicar el shock usando set_free_par
@@ -366,7 +390,7 @@ model_shock_pit <- steady_state(model_shock_pit,
     options_list = list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
 )
 
-res_shock_pit <- get_ss_values(model_shock_pit)
+res_shock_pit <- get_ss_values(model_shock_pit, silent = TRUE)
 pib_shock_pit_list <- calc_pib(model_shock_pit)
 ```
 
@@ -382,10 +406,10 @@ print(comp_pit)
 # SHOCK COMBINADO: Disminución FIT e Incremento PIT
 ```{r include=FALSE}
 # 1. Definir los shocks
-fit_base <- get_par_values(model)["fit"]
+fit_base <- get_par_values(model, silent = TRUE)["fit"]
 fit_shock <- fit_base * (1 - 0.615 * (0.01 / 0.27)) # Misma magnitud que el shock individual
 
-pit_base <- get_par_values(model)["pit"]
+pit_base <- get_par_values(model, silent = TRUE)["pit"]
 pit_shock <- as.numeric(pit_base) * 1.07 # Incremento del X% en la tasa
 
 # 2. Aplicar ambos shocks simultáneamente
@@ -397,7 +421,7 @@ model_shock_comb <- steady_state(model_shock_comb,
     options_list = list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
 )
 
-res_shock_comb <- get_ss_values(model_shock_comb)
+res_shock_comb <- get_ss_values(model_shock_comb, silent = TRUE)
 pib_shock_comb_list <- calc_pib(model_shock_comb)
 ```
 

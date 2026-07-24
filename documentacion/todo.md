@@ -10,6 +10,7 @@
 | [ ] | Discutir la base imponible de FIRMTAX (ahora es el capital). El problema de esto es que las utilidades de los sectores son por definición 0 en este modelo| 
 | [ ] | Averiguar qué pasa con las contribuciones y con el impuesto adicional| 
 | [ ] | Sensibilizar los parámetros de oferta agregada (Omega, Utilización, etc..). | 
+| [ ] | Revisar el modelamiento del sector externo. Se podrá modelar que una aprte del capital sea extranjero y reaccione ante las políticas? | 
 | [✅] | Modificar Omega. |
 | [✅] | Endogeneizar demanda de trabajo |
 | [✅] | Replantear el cierre del modelo, modificando el destino del ahorro del gobierno. |
