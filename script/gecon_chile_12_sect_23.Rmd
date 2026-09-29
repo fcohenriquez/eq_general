@@ -324,6 +324,15 @@ if (length(u_base_val) == 1) {
 }
 phi_val <- cfg$elasticidades$wage_curve_phi
 
+psi_val <- cfg$elasticidades$capital_curve_psi
+
+eps_val <- cfg$elasticidades$participacion_epsilon
+
+k_total_data_val <- sum(K_vals) + chile_sam[cat_row, cat_capital]
+stopifnot(abs(chile_sam[cat_row, cat_capital]) < 1e-9)   # ver nota sobre fuga a row
+# u_k_base = 1 y pk_base = 1  =>  pk_pot = pk_base / u_k_base^psi = 1
+pk_pot_calib_val <- 1.0
+
 L_totals <- rowSums(L_mat)
 L_row_vals <- as.numeric(chile_sam[cat_row, cat_trabajo])
 names(L_row_vals) <- cat_trabajo
@@ -339,16 +348,23 @@ par_flat <- unlist(list(
     get_flow_values(l_total_data_vals, "l_total_data", cat_trabajo),
     get_flow_values(l_force_data_vals, "l_force_data", cat_trabajo),
     get_flow_values(rep(phi_val, length(cat_trabajo)), "phi", cat_trabajo),
+    get_flow_values(rep(eps_val, length(cat_trabajo)), "epsilon", cat_trabajo),
     get_flow_values(w_pot_calib_vals, "w_pot_calib", cat_trabajo),
     get_flow_values(Lh_vals / (l_total_data_vals + pad_floor), "par_l_h", cat_trabajo),
     get_flow_values(L_row_vals / (l_total_data_vals + pad_floor), "par_l_row", cat_trabajo),
     
     omega = omega_val, 
     sigma_q = sigma_q_val, sigma_t = sigma_t_val,
-    k_total_data = sum(K_vals) + chile_sam[cat_row, cat_capital], 
-    par_k_h = Kh_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
-    par_k_f = Kf_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
-    par_k_g = Kg_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
+    #k_total_data = sum(K_vals) + chile_sam[cat_row, cat_capital], 
+    #par_k_h = Kh_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
+    #par_k_f = Kf_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
+    #par_k_g = Kg_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
+    k_total_data = k_total_data_val,
+    par_k_h = Kh_val / (k_total_data_val + pad_floor),
+    par_k_f = Kf_val / (k_total_data_val + pad_floor),
+    par_k_g = Kg_val / (k_total_data_val + pad_floor),
+    psi = psi_val, pk_pot_calib = pk_pot_calib_val,    
+    
     por_cont = por_cont_h_val, por_sav = por_sav_h_val,
     trgov_data = TRGOV_v, por_tremp = por_tremp_val, por_tr_f_g = por_tr_f_g_val,
     por_cont_soc_f = por_cont_soc_f_val, por_cont_soc_g = por_cont_soc_g_val,
@@ -415,7 +431,7 @@ var_list <- list(
     inv_adj = 1.0, inv_adj_h = 1.0, inv_adj_f = 1.0, inv_adj_g = 1.0,
     VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
-
+    KD = k_total_data_val, u_k = 1.0,
     U = U_val, lambda__CONSUMER_1 = lambda_val
 )
 
@@ -425,6 +441,7 @@ init_vars <- unlist(list(
     get_flow_values(rep(1, length(cat_trabajo)), "w", cat_trabajo),
     get_flow_values(Lh_vals, "Lh", cat_trabajo),
     get_flow_values(l_total_data_vals, "LD", cat_trabajo),
+    get_flow_values(l_force_data_vals, "LFORCE", cat_trabajo),
     get_flow_values(u_base_val, "u_rate", cat_trabajo),
     get_flow_values(t(L_mat), "L", s_names, cat_trabajo),
     

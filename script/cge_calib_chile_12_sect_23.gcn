@@ -260,7 +260,8 @@ block FIRM
         INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
         SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
         TREMP[] = INGF[] * por_tremp;
-        Kf[] = k_total_data * par_k_f;
+        #Kf[] = k_total_data * par_k_f;
+        Kf[] = KD[] * par_k_f;
         FIRMTAX[] = fit * (Kf[] * pk[]);
     };
 };
@@ -272,7 +273,8 @@ block GOB
         INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
         TRGOV[] = trgov_data;
         SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * p<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
-        Kg[] = k_total_data * par_k_g;
+        #Kg[] = k_total_data * par_k_g;
+        Kg[] = KD[] * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
         PITAX[] = pit * (pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
         TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
@@ -292,15 +294,29 @@ block EQUILIBRIUM
                  + SUM<idx_eb::SB>(L<idx_eb,l>[])
                  + l_total_data<l> * par_l_row<l>;
 
-       <l::LAB> w<l>[] = w_pot_calib<l> * (LD<l>[] / l_force_data<l>)^phi<l>;
+       #<l::LAB> w<l>[] = w_pot_calib<l> * (LD<l>[] / l_force_data<l>)^phi<l>;
 
-       <l::LAB> u_rate<l>[] = (l_force_data<l> - LD<l>[]) / l_force_data<l>;
+       <l::LAB> LFORCE<l>[] = l_force_data<l> * (LD<l>[] / l_total_data<l>)^epsilon<l>;
+
+       <l::LAB> w<l>[] = w_pot_calib<l> * (LD<l>[] / LFORCE<l>[])^phi<l>;
+
+       #<l::LAB> u_rate<l>[] = (l_force_data<l> - LD<l>[]) / l_force_data<l>;
+       
+       <l::LAB> u_rate<l>[] = (LFORCE<l>[] - LD<l>[]) / LFORCE<l>[];
 
        <l::LAB> Lh<l>[] = LD<l>[] * par_l_h<l>;
 
-        SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
+        #SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
         
-        Kh[] = k_total_data * par_k_h;
+        #Kh[] = k_total_data * par_k_h;
+        
+        KD[]  = SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]);
+
+        u_k[] = KD[] / k_total_data;
+
+        pk[]  = pk_pot_calib * (u_k[])^psi;
+
+        Kh[]  = KD[] * par_k_h;
         
         PSh[] = pshdata;
     }

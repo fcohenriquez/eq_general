@@ -29,9 +29,12 @@ decomp3 <- function(tau_b, tau_s, P_b, P_s, Q_b, Q_s) {
     dP      <- P_s   - P_b
     dQ      <- Q_s   - Q_b
 
-    ef_tasa     <- sum(dtau  * P_bar * Q_bar, na.rm = TRUE)
-    ef_cantidad <- sum(tau_bar * P_bar * dQ,  na.rm = TRUE)
-    ef_precio   <- sum(tau_bar * Q_bar * dP,  na.rm = TRUE)
+    #ef_tasa     <- sum(dtau  * P_bar * Q_bar, na.rm = TRUE)
+    #ef_cantidad <- sum(tau_bar * P_bar * dQ,  na.rm = TRUE)
+    #ef_precio   <- sum(tau_bar * Q_bar * dP,  na.rm = TRUE)
+    ef_tasa     <- sum(dtau * (P_bar * Q_bar + dP * dQ / 12),       na.rm = TRUE)
+    ef_precio   <- sum(dP   * (tau_bar * Q_bar + dtau * dQ / 12),   na.rm = TRUE)
+    ef_cantidad <- sum(dQ   * (tau_bar * P_bar + dtau * dP / 12),   na.rm = TRUE)
 
     res <- dR - (ef_tasa + ef_cantidad + ef_precio)  # residuo de orden superior
     list(R_b = R_b, R_s = R_s, dR = dR,
@@ -143,7 +146,17 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
 
 print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NULL, model_shock = NULL) {
     cat(sprintf("--- RESULTADOS DE LA SIMULACIÓN: %s ---\n", name))
-
+    res_base <- NULL; res_shock <- NULL
+    if (!is.null(model_base) && !is.null(model_shock)) {
+        res_base  <- get_ss_values(model_base,  silent = TRUE)
+        res_shock <- get_ss_values(model_shock, silent = TRUE)
+    }
+    gv <- function(res, v) {
+        if (is.null(res)) return(NA_real_)
+        idx <- which(names(res) == v)
+        if (length(idx) == 0) NA_real_ else as.numeric(res[idx[1]])
+    }
+    
     var_pib_nom <- (p_shock_list$PIB / p_base_list$PIB - 1) * 100
     var_pib_real <- (p_shock_list$PIB_real / p_base_list$PIB_real - 1) * 100
 
@@ -199,6 +212,81 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
         cat(sprintf("     Variación (p.p.)              : %8.4f pp\n", var_pp))
     }
 
+        # --- Mercado de Capital: utilización y capacidad ociosa ---
+    KD_b <- gv(res_base, "KD");  KD_s <- gv(res_shock, "KD")
+    uk_b <- gv(res_base, "u_k"); uk_s <- gv(res_shock, "u_k")
+    pk_b <- gv(res_base, "pk");  pk_s <- gv(res_shock, "pk")
+
+    if (!is.na(KD_b) && !is.na(uk_b)) {
+        cat("\n  Mercado de Capital:\n")
+        cat(sprintf("     Utilización (u_k)  Base : %8.4f %%\n", uk_b * 100))
+        cat(sprintf("     Utilización (u_k)  Shock: %8.4f %%\n", uk_s * 100))
+        cat(sprintf("     Variación (p.p.)         : %8.4f pp\n", (uk_s - uk_b) * 100))
+        cat(sprintf("     Capacidad ociosa   Base : %8.4f %%   Shock: %8.4f %%\n",
+                    (1 - uk_b) * 100, (1 - uk_s) * 100))
+        cat(sprintf("     Capital utilizado (KD)   : %8.4f %%\n", (KD_s / KD_b - 1) * 100))
+        cat(sprintf("     Retorno capital (pk)     : %8.4f %%\n", (pk_s / pk_b - 1) * 100))
+        cat(sprintf("     psi implícito            : %8.4f   (declarado: %.4f)\n",
+                    log(pk_s / pk_b) / log(KD_s / KD_b),
+                    cfg$elasticidades$capital_curve_psi))
+    }
+
+    # --- Diagnóstico Okun: contraste con evidencia empírica ---
+    #LD_b <- sapply(cat_trabajo, function(l) gv(res_base,  paste0("LD__", l)))
+    #LD_s <- sapply(cat_trabajo, function(l) gv(res_shock, paste0("LD__", l)))
+    ct   <- sub("^u_rate__", "", cat_trabajo)
+    LD_b <- sapply(ct, function(l) gv(res_base,  paste0("LD__", l)))
+    LD_s <- sapply(ct, function(l) gv(res_shock, paste0("LD__", l)))
+    if (!any(is.na(LD_b)) && abs(var_pib_real) > 1e-8) {
+        #LF_b <- LD_b / (1 - u_base[cat_trabajo])
+        #LF_s <- LD_s / (1 - u_shock[cat_trabajo])
+        LF_b <- LD_b / (1 - as.numeric(u_base[cat_trabajo]))
+        LF_s <- LD_s / (1 - as.numeric(u_shock[cat_trabajo]))
+        u_agg_b <- 1 - sum(LD_b) / sum(LF_b)
+        u_agg_s <- 1 - sum(LD_s) / sum(LF_s)
+
+        okun   <- -(u_agg_s - u_agg_b) * 100 / var_pib_real
+        eta_L  <- (sum(LD_s) / sum(LD_b) - 1) * 100 / var_pib_real
+        eta_LF <- (sum(LF_s) / sum(LF_b) - 1) * 100 / var_pib_real
+
+        cat("\n  Diagnóstico Okun (agregado, ponderado por fuerza de trabajo):\n")
+        cat(sprintf("     u agregado Base : %8.4f %%   Shock: %8.4f %%\n",
+                    u_agg_b * 100, u_agg_s * 100))
+        cat(sprintf("     Elast. empleo-producto  (eta_L)  : %8.4f\n", eta_L))
+        cat(sprintf("     Elast. fuerza trabajo   (eta_LF) : %8.4f\n", eta_LF))
+        cat(sprintf("     Coef. Okun implícito             : %8.4f   [ref. 0.28-0.37]\n", okun))
+        cat(sprintf("     Identidad (1-u)(eta_L - eta_LF)  : %8.4f\n",
+                    (1 - u_agg_b) * (eta_L - eta_LF)))
+    }
+    
+     # --- VA real a costo de factores vs PIB real (gasto) ---
+    if (!is.null(res_base) && !is.null(res_shock)) {
+        vn  <- grep("^V__Act_", names(res_base), value = TRUE)
+        van <- sub("^V__", "va_nom__", vn)
+        if (length(vn) == 0 || !all(van %in% names(res_base))) {
+            cat("\n  [VA real] faltan V__Act_* o va_nom__Act_*; revisa names(res_base)\n")
+        } else {
+            V_b  <- res_base[vn];  V_s <- res_shock[vn]
+            va_b <- res_base[van]                    # VA a precios base
+            VA_b <- sum(va_b)
+            VA_s <- sum(va_b / V_b * V_s)            # VA real: coef. VA/producto fijo
+            var_va <- (VA_s / VA_b - 1) * 100
+            var_go <- (sum(V_s) / sum(V_b) - 1) * 100
+
+            PIB_b   <- p_base_list$PIB_real
+            var_ind <- ((var_pib_real/100) * PIB_b - (var_va/100) * VA_b) / (PIB_b - VA_b) * 100
+            okun_va <- if (abs(var_va) > 1e-8) -(u_agg_s - u_agg_b) * 100 / var_va else NA
+
+            cat("\n  VA real (costo de factores) vs PIB real (gasto):\n")
+            cat(sprintf("     Suma VA base (control ~ K+L = 249319.5) : %12.2f\n", VA_b))
+            cat(sprintf("     Cambio producto bruto real (V)          : %8.4f %%\n", var_go))
+            cat(sprintf("     Cambio VA real                          : %8.4f %%\n", var_va))
+            cat(sprintf("     Cambio PIB real                         : %8.4f %%\n", var_pib_real))
+            cat(sprintf("     Impl. base real imptos. indirectos      : %8.4f %%\n", var_ind))
+            cat(sprintf("     Okun contra VA real                     : %8.4f\n", okun_va))
+        }
+    }
+    
     # --- Impacto Fiscal como % del PIB nominal base ---
     pib_nom_base <- p_base_list$PIB
 
@@ -229,11 +317,12 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     }
     cat("\n")
 
-    if (!is.null(model_base) && !is.null(model_shock)) {
-        res_base <- get_ss_values(model_base, silent = TRUE)
-        res_shock <- get_ss_values(model_shock, silent = TRUE)
+#    if (!is.null(model_base) && !is.null(model_shock)) {
+#        res_base <- get_ss_values(model_base, silent = TRUE)
+#        res_shock <- get_ss_values(model_shock, silent = TRUE)
+#        RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
+      if (!is.null(res_base) && !is.null(res_shock)) {
         RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
-
         nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL")
 
         cat("  Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):\n")
@@ -371,6 +460,7 @@ comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pi
 print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
 print(comp_vat)
 ```
+
 
 
 
