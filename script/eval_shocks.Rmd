@@ -42,6 +42,12 @@ decomp3 <- function(tau_b, tau_s, P_b, P_s, Q_b, Q_s) {
          ef_precio = ef_precio, residuo = res)
 }
 
+sum_decomp <- function(...) {
+    ds <- list(...)
+    campos <- c("R_b", "R_s", "dR", "ef_tasa", "ef_cantidad", "ef_precio", "residuo")
+    setNames(lapply(campos, function(k) sum(sapply(ds, `[[`, k))), campos)
+}
+
 build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     par_b <- get_par_values(model_base, silent = TRUE)
     par_s <- get_par_values(model_shock, silent = TRUE)
@@ -51,18 +57,19 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     sn <- gsub("prod_", "Act_", pn)
     ct <- unlist(cfg$cuentas_sam$factores$trabajo)
 
-    # ---------------- VAT ----------------
-    # Filter products that have 'vat__<prod>' parameter defined in the model
-    pn_vat <- pn[paste0("vat__", pn) %in% names(par_b)]
-    VATp_b <- gv(res_base , paste0("VAT_p__", pn_vat))
-    VATp_s <- gv(res_shock, paste0("VAT_p__", pn_vat))
-    p_b    <- gv(res_base , paste0("p__", pn_vat))
-    p_s    <- gv(res_shock, paste0("p__", pn_vat))
-    vat_b  <- as.numeric(par_b[paste0("vat__", pn_vat)])
-    vat_s  <- as.numeric(par_s[paste0("vat__", pn_vat)])
-    TD_b   <- VATp_b / (vat_b * p_b)
-    TD_s   <- VATp_s / (vat_s * p_s)
-    D_VAT  <- decomp3(vat_b, vat_s, p_b, p_s, TD_b, TD_s)
+    # ---------------- VAT (Etapa 1: cuna de precio) ----------------
+    # R = t_iva * p * FD  +  t_iva_int * p * XI
+    # tau: tasa sin impuesto; P: precio basico p; Q: base fisica (FD o XI)
+    pn_vat <- pn[paste0("t_iva__", pn) %in% names(par_b)]
+    p_b   <- gv(res_base , paste0("p__",  pn_vat)); p_s  <- gv(res_shock, paste0("p__",  pn_vat))
+    FD_b  <- gv(res_base , paste0("FD__", pn_vat)); FD_s <- gv(res_shock, paste0("FD__", pn_vat))
+    XI_b  <- gv(res_base , paste0("XI__", pn_vat)); XI_s <- gv(res_shock, paste0("XI__", pn_vat))
+    t_b   <- as.numeric(par_b[paste0("t_iva__", pn_vat)])
+    t_s   <- as.numeric(par_s[paste0("t_iva__", pn_vat)])
+    ti_b  <- as.numeric(par_b[paste0("t_iva_int__", pn_vat)])
+    ti_s  <- as.numeric(par_s[paste0("t_iva_int__", pn_vat)])
+    D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b, p_s, FD_b, FD_s),
+                        decomp3(ti_b, ti_s, p_b, p_s, XI_b, XI_s))
 
     # ---------------- FIRMTAX ----------------
     fit_b <- as.numeric(par_b["fit"]); fit_s <- as.numeric(par_s["fit"])
@@ -409,7 +416,7 @@ model_shock_fit <- steady_state(model_shock_fit,
 )
 
 res_shock_fit <- get_ss_values(model_shock_fit, silent = TRUE)
-pib_shock_list <- calc_pib(model_shock_fit)
+pib_shock_list <- calc_pib(model_shock_fit, model_ref = model)
 pib_shock_fit <- pib_shock_list$PIB
 pib_shock_fit_real <- pib_shock_list$PIB_real
 ```
@@ -426,12 +433,14 @@ print(comp_fit)
 
 # SHOCK: 1 punto porcentual de Incremento IVA (Impuesto al Valor Agregado)
 ```{r include=FALSE}
-# 1. Definir el shock (Aumento del 1% en todas las tasas de IVA por producto) OJO otros no tiene IVA
-p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
-vat_names <- paste0("vat__", p_names)
-vat_base <- get_par_values(model, silent = TRUE)[vat_names]
-vat_shock <- as.list(as.numeric(vat_base) * (1+1/19))
-names(vat_shock) <- vat_names
+# 1. Definir el shock: tasa legal 19% -> 20%.
+# Las tasas efectivas SIN impuesto (t_iva, t_iva_int) se escalan por 20/19,
+# lo que supone eficiencia de recaudacion constante. prod_otros no tiene IVA.
+fac_iva  <- cfg$shocks_default$iva$factor
+par_all  <- get_par_values(model, silent = TRUE)
+iva_pars <- grep("^t_iva(_int)?__", names(par_all), value = TRUE)
+vat_shock <- as.list(as.numeric(par_all[iva_pars]) * fac_iva)
+names(vat_shock) <- iva_pars
 
 # 2. Aplicar el shock usando set_free_par
 model_shock_vat <- set_free_par(model, free_par = vat_shock)
@@ -443,7 +452,7 @@ model_shock_vat <- steady_state(model_shock_vat,
 )
 
 res_shock_vat <- get_ss_values(model_shock_vat, silent = TRUE)
-pib_shock_vat_list <- calc_pib(model_shock_vat)
+pib_shock_vat_list <- calc_pib(model_shock_vat, model_ref = model)
 pib_shock_vat <- pib_shock_vat_list$PIB
 pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 ```
@@ -457,8 +466,21 @@ pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 
 comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pib_shock_vat_list, vars_to_compare)
 
-print_macro_impact("Aumento 1% IVA", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
+print_macro_impact("Aumento IVA 19% -> 20%", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
 print(comp_vat)
+
+# Traspaso a precios de comprador: dln(pq) / dln(1 + t_iva), por producto
+pn_iva <- sub("^t_iva__", "", grep("^t_iva__", names(par_all), value = TRUE))
+par_sv <- get_par_values(model_shock_vat, silent = TRUE)
+traspaso <- data.frame(
+    producto = pn_iva,
+    t_base   = as.numeric(par_all[paste0("t_iva__", pn_iva)]),
+    dln_pq   = log(res_shock_vat[paste0("pq__", pn_iva)] / res_base[paste0("pq__", pn_iva)]),
+    dln_p    = log(res_shock_vat[paste0("p__",  pn_iva)] / res_base[paste0("p__",  pn_iva)]),
+    dln_1mt  = log((1 + par_sv[paste0("t_iva__", pn_iva)]) / (1 + par_all[paste0("t_iva__", pn_iva)]))
+)
+traspaso$traspaso <- ifelse(abs(traspaso$dln_1mt) > 1e-10, traspaso$dln_pq / traspaso$dln_1mt, NA)
+print(traspaso, digits = 4, row.names = FALSE)
 ```
 
 
@@ -481,7 +503,7 @@ model_shock_pit <- steady_state(model_shock_pit,
 )
 
 res_shock_pit <- get_ss_values(model_shock_pit, silent = TRUE)
-pib_shock_pit_list <- calc_pib(model_shock_pit)
+pib_shock_pit_list <- calc_pib(model_shock_pit, model_ref = model)
 ```
 
 # ANALYSIS PIT
@@ -512,7 +534,7 @@ model_shock_comb <- steady_state(model_shock_comb,
 )
 
 res_shock_comb <- get_ss_values(model_shock_comb, silent = TRUE)
-pib_shock_comb_list <- calc_pib(model_shock_comb)
+pib_shock_comb_list <- calc_pib(model_shock_comb, model_ref = model)
 ```
 
 # ANALISIS SHOCK COMBINADO (FIT + PIT)

@@ -224,11 +224,18 @@ cierre_macro:
     Trabajo_2: 0.099
     Trabajo_3: 0.078
 
+# Especificacion del IVA (Etapa 1): cuna de precio sobre la demanda final,
+# uso intermedio desgravado. El IVA que exceda la tasa tope sobre la demanda
+# final de un producto se asigna como residuo transitorio a su uso intermedio.
+iva:
+  especificacion: "cuna_precio_demanda_final"
+  tasa_max_demanda_final: 0.19
+
 shocks_default:
   iva:
-    descripcion: "Aumento de 1% en la carga efectiva de IVA por producto"
+    descripcion: "Alza de la tasa legal de IVA de 19% a 20% (tasas efectivas sin impuesto x 20/19)"
     tipo: "multiplicativo"
-    factor: 1.01
+    factor: 1.0526315789473684
   pit:
     descripcion: "Aumento de 10% en la carga efectiva de impuesto a personas"
     tipo: "multiplicativo"

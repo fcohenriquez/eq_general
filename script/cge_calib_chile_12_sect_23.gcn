@@ -49,6 +49,11 @@ indexsets
   PMinP = {'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
           'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
           'prod_serv_emp', 'prod_serv_pers'};
+
+  # PdomNoC: productos domesticos salvo construccion (usados como insumo por SA y SB)
+  PdomNoC = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+             'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
+             'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub'};
 };
 
 
@@ -66,7 +71,7 @@ block CONSUMER
 
     constraints
     {
-        SUM<idx_i_1::Pcon>(p<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
     };
     
     identities
@@ -90,7 +95,7 @@ block <sa::SA> SECTORS_A {
   objective {
     pi<sa>[] = V<sa>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sa>))*(1-tps<sa>-tes<sa>)
               - K<sa>[]*pk[] - SUM<l::LAB>(L<sa,l>[] * w<l>[])
-              - SUM<p_no_c::Pno_const>(io<p_no_c,sa>*V<sa>[]*p<p_no_c>[]);
+              - SUM<p_no_c::Pno_const>(io<p_no_c,sa>*V<sa>[]*pint<p_no_c>[]);
   };
   constraints { V<sa>[] = gamma<sa>*(K<sa>[]^betak<sa>)*PROD<l::LAB>(L<sa,l>[]^betal<sa,l>); };
   identities {
@@ -98,7 +103,7 @@ block <sa::SA> SECTORS_A {
     revenue<sa>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sa>[]*pz<p_rev>[]);
     net_revenue<sa>[] = revenue<sa>[]*(1-tps<sa>-tes<sa>);
     <p_no_cx::Pno_const> X<p_no_cx,sa>[] = io<p_no_cx,sa>*V<sa>[];
-    va_nom<sa>[] = net_revenue<sa>[] - SUM<p_no_cv::Pno_const>(io<p_no_cv,sa>*V<sa>[]*p<p_no_cv>[]);
+    va_nom<sa>[] = net_revenue<sa>[] - SUM<p_no_cv::Pno_const>(io<p_no_cv,sa>*V<sa>[]*pint<p_no_cv>[]);
   };
   calibration {
     V<sa>[] = vst<sa> -> gamma<sa>;
@@ -112,7 +117,7 @@ block <sb::SB> SECTORS_B {
   objective {
     pi<sb>[] = V<sb>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sb>))*(1-tps<sb>-tes<sb>)
               - K<sb>[]*pk[] - SUM<l::LAB>(L<sb,l>[] * w<l>[])
-              - SUM<p_full::P>(io<p_full,sb>*V<sb>[]*p<p_full>[]);
+              - SUM<p_full::P>(io<p_full,sb>*V<sb>[]*pint<p_full>[]);
   };
   constraints { V<sb>[] = gamma<sb>*(K<sb>[]^betak<sb>)*PROD<l::LAB>(L<sb,l>[]^betal<sb,l>); };
   identities {
@@ -120,7 +125,7 @@ block <sb::SB> SECTORS_B {
     revenue<sb>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sb>[]*pz<p_rev>[]);
     net_revenue<sb>[] = revenue<sb>[]*(1-tps<sb>-tes<sb>);
     <p_fullx::P> X<p_fullx,sb>[] = io<p_fullx,sb>*V<sb>[];
-    va_nom<sb>[] = net_revenue<sb>[] - SUM<p_fullv::P>(io<p_fullv,sb>*V<sb>[]*p<p_fullv>[]);
+    va_nom<sb>[] = net_revenue<sb>[] - SUM<p_fullv::P>(io<p_fullv,sb>*V<sb>[]*pint<p_fullv>[]);
   };
   calibration {
     V<sb>[] = vst<sb> -> gamma<sb>;
@@ -179,6 +184,8 @@ block PROD_OTROS {
     pz<'prod_otros'>[]   = pm<'prod_otros'>[];
     pd<'prod_otros'>[]   = pm<'prod_otros'>[];
     p<'prod_otros'>[]    = pm<'prod_otros'>[];
+    pq<'prod_otros'>[]   = p<'prod_otros'>[];     # sin IVA
+    pint<'prod_otros'>[] = p<'prod_otros'>[];
     Q<'prod_otros'>[]    = M<'prod_otros'>[];
     M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'>
                           + (I_data<'prod_otros'> * inv_adj[]) + vexist<'prod_otros'>
@@ -234,20 +241,24 @@ block PRODUCTS
 {
     identities
     {
-        TD_Dom_Agri[] = D<'prod_Agri'>[] + gg_market_data_p<'prod_Agri'> + (I_data<'prod_Agri'> * inv_adj[]) + vexist<'prod_Agri'> + SUM<i_aa_a::SA>(X<'prod_Agri', i_aa_a>[]) + SUM<i_ab_a::SB>(X<'prod_Agri', i_ab_a>[]);
-        <idx_mc4::PMinP> TD_Dom_PMinP<idx_mc4>[] = D<idx_mc4>[] + gg_market_data_p<idx_mc4> + (I_data<idx_mc4> * inv_adj[]) + vexist<idx_mc4> + SUM<i_aa4::SA>(X<idx_mc4, i_aa4>[]) + SUM<i_ab4::SB>(X<idx_mc4, i_ab4>[]);
-        TD_Dom_Const[] = D<'prod_const'>[] + gg_market_data_p<'prod_const'> + (I_data<'prod_const'> * inv_adj[]) + vexist<'prod_const'> + SUM<i_ab_c::SB>(X<'prod_const', i_ab_c>[]);
-        TD_Dom_Adm_pub[] = D<'prod_adm_pub'>[] + gg_market_data_p<'prod_adm_pub'> + (I_data<'prod_adm_pub'> * inv_adj[]) + vexist<'prod_adm_pub'> + SUM<i_aa_d::SA>(X<'prod_adm_pub', i_aa_d>[]) + SUM<i_ab_d::SB>(X<'prod_adm_pub', i_ab_d>[]);
+        # --- IVA como cuna de precio (Etapa 1) ---
+        # pq  : precio de comprador de la demanda final (hogares, gobierno, inversion)
+        # pint: precio de los insumos intermedios; t_iva_int = 0 salvo residuo de calibracion
+        <pq_i::Pdom> pq<pq_i>[]   = p<pq_i>[] * (1 + t_iva<pq_i>);
+        <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>);
 
-        Q<'prod_Agri'>[] + (VAT_p<'prod_Agri'>[] / p<'prod_Agri'>[]) + (imptos_espec_p<'prod_Agri'> / p<'prod_Agri'>[]) = TD_Dom_Agri[];
-        <idx_mc4b::PMinP> Q<idx_mc4b>[] + (VAT_p<idx_mc4b>[] / p<idx_mc4b>[]) + (imptos_espec_p<idx_mc4b> / p<idx_mc4b>[]) = TD_Dom_PMinP<idx_mc4b>[];
-        Q<'prod_const'>[] + (VAT_p<'prod_const'>[] / p<'prod_const'>[]) + (imptos_espec_p<'prod_const'> / p<'prod_const'>[]) = TD_Dom_Const[];
-        Q<'prod_adm_pub'>[] + (VAT_p<'prod_adm_pub'>[] / p<'prod_adm_pub'>[]) + (imptos_espec_p<'prod_adm_pub'> / p<'prod_adm_pub'>[]) = TD_Dom_Adm_pub[];
+        # Demanda final gravada e intermedia, en unidades fisicas (precio basico base)
+        <fd_i::Pdom> FD<fd_i>[] = D<fd_i>[] + gg_market_data_p<fd_i> + (I_data<fd_i> * inv_adj[]);
+        <xi_i::PdomNoC> XI<xi_i>[] = SUM<i_aa_x::SA>(X<xi_i, i_aa_x>[]) + SUM<i_ab_x::SB>(X<xi_i, i_ab_x>[]);
+        XI<'prod_const'>[] = SUM<i_ab_xc::SB>(X<'prod_const', i_ab_xc>[]);
 
-        VAT_p<'prod_Agri'>[] = vat<'prod_Agri'> * p<'prod_Agri'>[] * TD_Dom_Agri[];
-        <idx_mc4v::PMinP> VAT_p<idx_mc4v>[] = vat<idx_mc4v> * p<idx_mc4v>[] * TD_Dom_PMinP<idx_mc4v>[];
-        VAT_p<'prod_const'>[] = vat<'prod_const'> * p<'prod_const'>[] * TD_Dom_Const[];
-        VAT_p<'prod_adm_pub'>[] = vat<'prod_adm_pub'> * p<'prod_adm_pub'>[] * TD_Dom_Adm_pub[];
+        <td_i::Pdom> TD_Dom<td_i>[] = FD<td_i>[] + vexist<td_i> + XI<td_i>[];
+
+        # Vaciado fisico: el IVA ya no absorbe cantidades (TESP se mantiene como antes)
+        <qc_i::Pdom> Q<qc_i>[] + (imptos_espec_p<qc_i> / p<qc_i>[]) = TD_Dom<qc_i>[];
+
+        # Recaudacion: base valorada a precio basico
+        <vt_i::Pdom> VAT_p<vt_i>[] = p<vt_i>[] * (t_iva<vt_i> * FD<vt_i>[] + t_iva_int<vt_i> * XI<vt_i>[]);
 
         <idx_ar::Pdom> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
     };
@@ -272,7 +283,7 @@ block GOB
     {
         INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
         TRGOV[] = trgov_data;
-        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * p<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
+        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
         #Kg[] = k_total_data * par_k_g;
         Kg[] = KD[] * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
@@ -326,7 +337,7 @@ block INVESTMENT
 {
     identities
     {
-        NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * p<idx_nb>[]);
+        NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * pq<idx_nb>[]);
 
         inv_adj_g[] = 1.0;
         inv_adj_h[] = (SAV[] / (sh_i_h * NOM_I_BASE[]))^damp_inv;

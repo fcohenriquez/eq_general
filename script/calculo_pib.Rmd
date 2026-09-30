@@ -9,42 +9,54 @@ output: html_document
 
 ```{r}
 #Función para calcular el PIB
-calc_pib <- function(model_obj) {
-    ss_vals <- get_ss_values(model_obj)
-    par_vals <- get_par_values(model_obj)
-    p_names<-unlist(cfg$productos)
-    p_eq <- ss_vals[paste0("p__", p_names)]
-    
-    # Components from Expenditure Approach: GDP = C + G + I + V + X - M
-    # 1. Consumption (D * p)
-    C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
-    # 2. Government (fixed quantities * composite price)
+calc_pib <- function(model_obj, model_ref = NULL) {
+    # model_ref: modelo base cuyos precios se usan para valorar el PIB real
+    # (Laspeyres). Si es NULL se usan los precios del propio modelo, lo que solo
+    # es correcto para el escenario base.
+    ss_vals  <- get_ss_values(model_obj, silent = TRUE)
+    par_vals <- get_par_values(model_obj, silent = TRUE)
+    ss_ref   <- if (is.null(model_ref)) ss_vals else get_ss_values(model_ref, silent = TRUE)
+
+    p_names <- unlist(cfg$productos)
+    p_eq  <- ss_vals[paste0("p__",  p_names)]
+    pq_eq <- ss_vals[paste0("pq__", p_names)]   # precio de comprador (incluye IVA)
+
+    # Componentes del gasto a precios de mercado: GDP = C + G + I + V + X - M
     inv_adj_val <- ss_vals["inv_adj"]
     if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
-    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_eq, na.rm = TRUE)
-    I_val <- sum(par_vals[paste0("I_data__", p_names)] * p_eq, na.rm = TRUE) * inv_adj_val
-    # 3. Inventory Changes
-    V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
-    # 4. Exports (now endogenous variables E, valued at export price pe)
-    pe_eq <- ss_vals[paste0("pe__", p_names)]
+    D_q <- ss_vals[paste0("D__", p_names)]
+    G_q <- par_vals[paste0("gg_market_data_p__", p_names)]
+    I_q <- par_vals[paste0("I_data__", p_names)]
+    V_q <- par_vals[paste0("vexist__", p_names)]
+
+    C     <- sum(D_q * pq_eq, na.rm = TRUE)
+    G_val <- sum(G_q * pq_eq, na.rm = TRUE)
+    I_val <- sum(I_q * pq_eq, na.rm = TRUE) * inv_adj_val
+    V_val <- sum(V_q * p_eq,  na.rm = TRUE)          # existencias sin IVA
+
+    pe_eq  <- ss_vals[paste0("pe__", p_names)]
     E_vals <- ss_vals[paste0("EX__", p_names)]
-    X_val <- sum(E_vals * pe_eq, na.rm = TRUE)
-    # 5. Imports (valued at CIF price = pworldm * exr, NOT pm which includes tariffs)
-    pwm_eq <- par_vals[paste0("pworldm__", p_names)]
+    X_val  <- sum(E_vals * pe_eq, na.rm = TRUE)
+
+    # Importaciones a precio CIF (pworldm * exr), sin aranceles
+    pwm_eq  <- par_vals[paste0("pworldm__", p_names)]
     exr_val <- ss_vals["exr"]
-    M_vals <- ss_vals[paste0("M__", p_names)]
-    M_val <- sum(M_vals * pwm_eq * exr_val, na.rm = TRUE)
-    
-    # Real GDP components (Laspeyres at base prices)
-    p_base <- rep(1.0, length(p_names))
-    C_real <- sum(ss_vals[paste0("D__", p_names)] * p_base, na.rm = TRUE)
-    G_real <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_base, na.rm = TRUE)
-    I_real <- sum(par_vals[paste0("I_data__", p_names)] * p_base, na.rm = TRUE) * inv_adj_val
-    V_real <- sum(par_vals[paste0("vexist__", p_names)] * p_base, na.rm = TRUE)
-    X_real <- sum(E_vals * p_base, na.rm = TRUE)
-    M_real <- sum(M_vals * pwm_eq * 1.0, na.rm = TRUE)  # base exr = 1
-    
-    return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
+    M_vals  <- ss_vals[paste0("M__", p_names)]
+    M_val   <- sum(M_vals * pwm_eq * exr_val, na.rm = TRUE)
+
+    # PIB real: cantidades del escenario valoradas a precios del modelo de referencia
+    pq_ref  <- ss_ref[paste0("pq__", p_names)]
+    p_ref   <- ss_ref[paste0("p__",  p_names)]
+    pe_ref  <- ss_ref[paste0("pe__", p_names)]
+    exr_ref <- ss_ref["exr"]
+    C_real <- sum(D_q * pq_ref, na.rm = TRUE)
+    G_real <- sum(G_q * pq_ref, na.rm = TRUE)
+    I_real <- sum(I_q * pq_ref, na.rm = TRUE) * inv_adj_val
+    V_real <- sum(V_q * p_ref,  na.rm = TRUE)
+    X_real <- sum(E_vals * pe_ref, na.rm = TRUE)
+    M_real <- sum(M_vals * pwm_eq * exr_ref, na.rm = TRUE)
+
+    return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val,
                 PIB = C + G_val + I_val + V_val + X_val - M_val,
                 C_real=C_real, G_real=G_real, I_real=I_real, V_real=V_real, X_real=X_real, M_real=M_real,
                 PIB_real = C_real + G_real + I_real + V_real + X_real - M_real,

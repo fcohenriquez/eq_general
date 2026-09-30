@@ -88,9 +88,40 @@ names(E_m) <- p_names
 X_sum <- rowSums(X_matrix)
 IVA_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
 Ar_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
-domestic_abs <- D_m + X_sum + G_m + I_m + V_m
-domestic_abs_safe <- pmax(domestic_abs, 1.0)
-vat_r <- IVA_m / domestic_abs_safe
+
+# --- IVA como cuna de precio (Etapa 1) --------------------------------------
+# Toda la fila IVA de la SAM se asigna a la demanda final gravada (hogares,
+# gobierno, inversion). La tasa se expresa SIN impuesto: pq = p * (1 + t_iva).
+# Si la tasa implicita supera el tope (tasa legal), el exceso se asigna como
+# residuo transitorio al uso intermedio del producto (t_iva_int). En la Etapa 2
+# ese residuo se reemplazara por IVA no recuperable por sector (F29).
+t_cap <- if (!is.null(cfg$iva$tasa_max_demanda_final)) cfg$iva$tasa_max_demanda_final else 0.19
+FD_m    <- D_m + G_m + I_m                       # demanda final gravada, precios de comprador
+FD_pos  <- pmax(FD_m, 0)
+IVA_fd  <- pmin(IVA_m, FD_pos * t_cap / (1 + t_cap))
+IVA_int <- IVA_m - IVA_fd
+t_iva_r     <- ifelse(FD_pos - IVA_fd > 1e-9, IVA_fd / (FD_pos - IVA_fd), 0)
+t_iva_int_r <- ifelse(X_sum - IVA_int > 1e-9, IVA_int / (X_sum - IVA_int), 0)
+names(t_iva_r) <- names(t_iva_int_r) <- names(IVA_fd) <- names(IVA_int) <- p_names
+if (any(IVA_int > 1e-6 & X_sum - IVA_int <= 1e-9)) {
+    stop("IVA residual sin base intermedia suficiente en: ",
+         paste(p_names[IVA_int > 1e-6 & X_sum - IVA_int <= 1e-9], collapse = ", "))
+}
+t_iva_r["prod_otros"] <- 0; t_iva_int_r["prod_otros"] <- 0
+
+diag_iva <- data.frame(
+    producto   = p_names,
+    IVA        = round(IVA_m, 1),
+    DF_gravada = round(FD_m, 1),
+    t_iva      = round(t_iva_r, 4),
+    IVA_resid_intermedio = round(IVA_int, 1),
+    t_iva_int  = round(t_iva_int_r, 4)
+)
+cat("\nDiagnostico calibracion IVA (Etapa 1, tope =", t_cap, "):\n")
+print(diag_iva, row.names = FALSE)
+cat(sprintf("Participacion del IVA asignada a demanda final: %.2f%%\n",
+            100 * sum(IVA_fd) / sum(IVA_m)))
+# ---------------------------------------------------------------------------
 tar_r <- Ar_m / pmax(M_m, cfg$opciones_datos$piso_importaciones)
 
 D_v <- D_m
@@ -259,12 +290,13 @@ arm_ratio <- pm_base * (M_v / pmax(DS_v, 1e-6))^(1/sigma_q_val)
 delta_m_v <- arm_ratio / (1 + arm_ratio)
 delta_m_v <- pmax(pmin(delta_m_v, 1 - 1e-6), 1e-6)
 
-TD_Dom_initial <- as.numeric(D_m + G_m + I_m + V_m + rowSums(X_matrix))
+# Absorcion domestica valorada SIN IVA (el IVA ahora es cuna de precio)
+TD_Dom_initial <- as.numeric((D_m + G_m + I_m - IVA_fd) + V_m + (rowSums(X_matrix) - IVA_int))
 names(TD_Dom_initial) <- p_names
 ImpEsp_p_v <- as.numeric(chile_sam[cat_impesp, p_names])
 IVA_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
 Ar_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
-Q_v <- TD_Dom_initial - IVA_v - ImpEsp_p_v
+Q_v <- TD_Dom_initial - ImpEsp_p_v   # mismo valor que antes: TD_comprador - IVA - TESP
 Q_v["prod_otros"] <- M_v["prod_otros"]
 
 p_base  <- (DS_v + pm_base * M_v) / pmax(Q_v, 1e-6)
@@ -275,20 +307,24 @@ pz_base["prod_otros"]  <- pm_base["prod_otros"]
 # prod_adm_pub: sin importaciones -> precio compuesto = precio domestico (p = pd = pz)
 p_base["prod_adm_pub"] <- DS_v["prod_adm_pub"] / pmax(Q_v["prod_adm_pub"], 1e-6)
 
+# Precios de comprador (demanda final) e insumo intermedio en el ano base
+pq_base   <- p_base * (1 + t_iva_r)
+pint_base <- p_base * (1 + t_iva_int_r)
+
 at_v <- (Z_v / pz_base) / (gamma_e_v * E_v^rho_t_val + (1 - gamma_e_v) * DS_v^rho_t_val)^(1/rho_t_val)
 aq_v <- (Q_v / p_base) / (delta_m_v * M_v^rho_q_val + (1 - delta_m_v) * DS_v^rho_q_val)^(1/rho_q_val)
 
 por_sav_h_val <- as.numeric((INC_v - sum(D_v[pcon_idx] / p_base[pcon_idx] * p_base[pcon_idx]) - CS_h_v) / (INC_v + pad_floor))
 SAV_h_v <- INC_v * por_sav_h_val
 
-X_phys <- sweep(X_matrix, 1, p_base, "/")
-D_phys <- D_v / p_base
+X_phys <- sweep(X_matrix, 1, pint_base, "/")
+D_phys <- D_v / pq_base
 
 D_con_phys <- D_phys[pcon_idx]
-alpha_v_unsc <- (D_con_phys)^(1/omega_val)
+alpha_v_unsc <- pq_base[pcon_idx] * (D_con_phys)^(1/omega_val)   # FOC CES con precio de comprador
 alpha_v <- alpha_v_unsc / (sum(alpha_v_unsc) + pad_floor)
 U_val <- (sum(alpha_v * D_con_phys^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
-lambda_val <- U_val / (sum(D_con_phys * p_base[pcon_idx]) + pad_floor)
+lambda_val <- U_val / (sum(D_con_phys * pq_base[pcon_idx]) + pad_floor)
 
 net_rev <- revenue_vals * (1.0 - t_pro_r - t_esp_r)
 
@@ -299,7 +335,7 @@ V_phys <- V_sector_vals / pz_activity_base
 io_matrix <- sweep(X_phys, 2, V_phys + pad_floor, "/")
 io_matrix <- pmax(io_matrix, 0)
 
-X_nom_by_sector <- colSums(sweep(X_phys, 1, p_base, "*"))
+X_nom_by_sector <- colSums(sweep(X_phys, 1, pint_base, "*"))   # = colSums(X_matrix)
 VA_nom <- pmax(net_rev - X_nom_by_sector, pad_floor)
 
 bk <- K_vals / (VA_nom + pad_floor)
@@ -389,15 +425,16 @@ par_flat <- unlist(list(
     get_flow_values(aq_v[pdom_arm_idx], "aq", p_names[pdom_arm_idx]),
     get_flow_values(D_con_phys, "dst", p_names[pcon_idx]),
     get_flow_values(c(1e-6, 1e-6), "dst_nc", p_names[pnc_idx]),
-    get_flow_values(vat_r[pdom_idx], "vat", p_names[pdom_idx]), 
+    get_flow_values(t_iva_r[pdom_idx], "t_iva", p_names[pdom_idx]),
+    get_flow_values(t_iva_int_r[pdom_idx], "t_iva_int", p_names[pdom_idx]),
     get_flow_values(tar_r, "tar_rate", p_names), 
     get_flow_values(rep(1, length(p_names)), "pworlde", p_names),
     get_flow_values(rep(1, length(p_names)), "pworldm", p_names),
     get_flow_values(t_pro_r, "tps", s_names),
     get_flow_values(t_esp_r, "tes", s_names),
     get_flow_values(V_phys, "vst", s_names),
-    get_flow_values(G_m / p_base, "gg_market_data_p", p_names),
-    get_flow_values(I_m / p_base, "I_data", p_names),
+    get_flow_values(G_m / pq_base, "gg_market_data_p", p_names),
+    get_flow_values(I_m / pq_base, "I_data", p_names),
     get_flow_values(V_m / p_base, "vexist", p_names),
     get_flow_values(ImpEsp_p_v[pdom_idx], "imptos_espec_p", p_names[pdom_idx]),
     get_flow_values(make_share[pdom_idx, ], "make_share", p_names[pdom_idx], s_names),
@@ -468,10 +505,11 @@ init_vars <- unlist(list(
       get_flow_values(DD_init, "DD", p_names) },
     get_flow_values(rep(0, length(p_names)), "PI_CET", p_names),
     get_flow_values(rep(0, length(p_names)), "PI_ARM", p_names),
-    TD_Dom_Agri = as.numeric((TD_Dom_initial / p_base)[p_names[1]]),
-    TD_Dom_Const = as.numeric((TD_Dom_initial / p_base)[prod_const_name]),
-    TD_Dom_Adm_pub = as.numeric((TD_Dom_initial / p_base)[p_names[length(p_names)-1]]), # prod_adm_pub is usually second to last
-    get_flow_values(as.numeric((TD_Dom_initial / p_base)[pminp_names_config]), "TD_Dom_PMinP", pminp_names_config),
+    get_flow_values(as.numeric((TD_Dom_initial / p_base)[pdom_idx]), "TD_Dom", pdom_names),
+    get_flow_values(as.numeric(((D_m + G_m + I_m) / pq_base)[pdom_idx]), "FD", pdom_names),
+    get_flow_values(as.numeric((rowSums(X_matrix) / pint_base)[pdom_idx]), "XI", pdom_names),
+    get_flow_values(pq_base, "pq", p_names),
+    get_flow_values(pint_base, "pint", p_names),
     get_flow_values(pmax(D_con_phys, 1e-6), "D", p_names[pcon_idx]),
     { d_nc_init <- setNames(rep(1e-6, length(pnc_idx)), paste0("D__", p_names[pnc_idx]))
       as.list(d_nc_init) },
@@ -480,8 +518,8 @@ init_vars <- unlist(list(
     get_flow_values(revenue_vals, "revenue", s_names),
     get_flow_values(net_rev, "net_revenue", s_names),
     get_flow_values(K_vals, "K", s_names),
-    get_flow_values(X_matrix[pnoconst_idx, sa_idx, drop=FALSE] / p_base[pnoconst_idx], "X", pnoconst_names, sa_names),
-    get_flow_values(X_matrix[, sb_idx, drop=FALSE] / p_base, "X", p_names, sb_names),
+    get_flow_values(X_matrix[pnoconst_idx, sa_idx, drop=FALSE] / pint_base[pnoconst_idx], "X", pnoconst_names, sa_names),
+    get_flow_values(X_matrix[, sb_idx, drop=FALSE] / pint_base, "X", p_names, sb_names),
     get_flow_values(VA_nom[sa_idx], "va_nom", s_names[sa_idx]),
     get_flow_values(VA_nom[sb_idx], "va_nom", s_names[sb_idx]),
     get_flow_values(IVA_v, "VAT_p", p_names),
@@ -499,6 +537,17 @@ model <- steady_state(model, calibration = TRUE, options_list = eq_options)
 
 cat("Norma residuos iniciales:", pracma::Norm(model@init_residual_vector), "\n")
 cat("Norma residuos finales:", pracma::Norm(model@residual_vector), "\n")
+
+# --- Validacion Etapa 1 del IVA: el equilibrio base debe replicar la SAM ---
+ss_chk <- get_ss_values(model, silent = TRUE)
+chk_iva <- c(
+    VAT_modelo_menos_SAM = as.numeric(ss_chk["VAT"]) - VAT_sum,
+    C_nominal_menos_SAM  = sum(ss_chk[paste0("D__", p_names[pcon_idx])] *
+                               ss_chk[paste0("pq__", p_names[pcon_idx])]) - sum(D_m[pcon_idx]),
+    max_abs_pq_menos_base = max(abs(ss_chk[paste0("pq__", p_names)] - pq_base))
+)
+print(round(chk_iva, 8))
+if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con IVA en precios no replica la SAM; revisar chk_iva.")
 
 
 ```
