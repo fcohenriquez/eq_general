@@ -15,15 +15,15 @@ El modelo es un sistema de Equilibrio General Computable (CGE) desarrollado con 
 
 ### 2. Mercado de Factores
 *   **Trabajo:** Desagregado en tres tipos (Trabajo_1, Trabajo_2 y Trabajo_3). Cada categoría incluye una **Curva de Salarios** independiente que vincula el nivel salarial con su respectiva tasa de utilización, permitiendo modelar el desempleo por tipo de calificación de forma endógena.
-*   **Capital:** El stock total de capital se asume fijo en el escenario base, distribuyéndose entre los sectores.
+*   **Capital:** El stock total de capital instalado (`KTOT`) es fijo, pero su **utilización es endógena**: la demanda de capital `KD` (suma de la demanda sectorial) determina una tasa de uso `u_k = KD / KTOT`, y el precio de arriendo del capital sigue una curva creciente `pk = pk_pot_calib · u_k^ψ` (ψ = `capital_curve_psi`). Esto habilita **capacidad ociosa endógena**: `Kf`, `Kg` y `Kh` (capital remunerado a empresas, gobierno y hogares) escalan proporcionalmente con `KD` en lugar de ser paramétricos, por lo que shocks tributarios (p. ej. FIRMTAX) ahora tienen un efecto cantidad no nulo además del efecto precio.
 
 ### 3. Sistema Tributario
 El modelo detalla múltiples instrumentos fiscales para evaluar cambios en la recaudación y sus efectos de transmisión:
 *   **Impuesto a las Empresas (FIT):** Sobre las utilidades corporativas.
 *   **Impuesto a las Personas (PIT):** Sobre el ingreso de los hogares.
-*   **IVA:** Impuesto al valor agregado sobre el consumo y la absorción.
-*   **Aranceles:** Impuestos a las importaciones.
-*   **Impuestos Específicos y a la Producción.**
+*   **IVA:** Impuesto al valor agregado sobre el consumo.
+*   **Impuestos Específicos** Sobre la demanda final de determinados bienes.
+*   **Impuestos a la Producción (TPROD):** Gravamen ad-valorem sobre el ingreso bruto de los sectores productivos.
 
 ### 4. Cierres Macroeconómicos (Closures)
 *   **Sector Externo:** Tipo de cambio flexible (endógeno) con ahorro externo fijo.
@@ -38,5 +38,9 @@ El modelo utiliza **gEcon** montado en R. En este link está su documentación: 
 *   **`script/gecon_chile_12_sect_23.Rmd`**: Calibración y resolución del estado estacionario inicial.
 *   **`script/calculo_pib.Rmd`**: Estimación del PIB y variables de actividad a partir de la solución.
 *   **`script/eval_shocks.Rmd`**: Evaluación de medidas tributarias y simulaciones de política.
+
+### Estado actual y trabajo en curso
+*   La reforma del IVA (cuña de precio, intermedios desgravados) y de los impuestos específicos (por unidad física, sólo demanda final) ya está implementada y la calibración base replica exactamente la SAM 2023.
+*   Pendiente (extensión futura): desagregación de hogares por quintil de ingreso (CASEN 2022, EPF/INE, tasas efectivas de IIRPF de SII) para evaluar incidencia distributiva.
 
 
