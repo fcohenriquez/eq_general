@@ -219,6 +219,10 @@ cierre_macro:
   mercado_trabajo: "curva_salarial_con_participacion_endogena"
   #mercado_capital: "pleno_uso_stock_capital"
   mercado_capital: "curva_utilizacion_endogena"
+  # Utilizacion base del capital = KD_base / KTOT (KTOT = capacidad instalada).
+  # 0.82: uso de capacidad instalada agregado, IMCE ICARE-UAI, dic-2023 (82,0%).
+  # Con 1.0 se recupera la calibracion anterior (pleno uso en la base).
+  utilizacion_capital_base: 0.82
   tasa_desempleo_base:
     Trabajo_1: 0.076
     Trabajo_2: 0.099

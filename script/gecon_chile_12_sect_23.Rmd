@@ -387,10 +387,19 @@ psi_val <- cfg$elasticidades$capital_curve_psi
 
 eps_val <- cfg$elasticidades$participacion_epsilon
 
-k_total_data_val <- sum(K_vals) + chile_sam[cat_row, cat_capital]
+# Capital efectivamente utilizado en la base (SAM) y capacidad instalada.
+# La SAM registra capital utilizado: KD_base = k_used_data_val. La capacidad
+# instalada es KTOT = KD_base / u_k_base, con u_k_base tomado del YAML (IMCE).
+k_used_data_val <- sum(K_vals) + chile_sam[cat_row, cat_capital]
 stopifnot(abs(chile_sam[cat_row, cat_capital]) < 1e-9)   # ver nota sobre fuga a row
-# u_k_base = 1 y pk_base = 1  =>  pk_pot = pk_base / u_k_base^psi = 1
-pk_pot_calib_val <- 1.0
+uk_base_val <- cfg$cierre_macro$utilizacion_capital_base
+if (is.null(uk_base_val)) uk_base_val <- 1.0
+stopifnot(is.numeric(uk_base_val), length(uk_base_val) == 1,
+          uk_base_val > 0, uk_base_val <= 1)
+k_total_data_val <- k_used_data_val / uk_base_val
+# pk_base = 1  =>  pk_pot = pk_base / u_k_base^psi = u_k_base^(-psi)
+# (depende de psi: si psi cambia, pk_pot_calib debe recalcularse)
+pk_pot_calib_val <- uk_base_val^(-psi_val)
 
 L_totals <- rowSums(L_mat)
 L_row_vals <- as.numeric(chile_sam[cat_row, cat_trabajo])
@@ -419,9 +428,10 @@ par_flat <- unlist(list(
     #par_k_f = Kf_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
     #par_k_g = Kg_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
     k_total_data = k_total_data_val,
-    par_k_h = Kh_val / (k_total_data_val + pad_floor),
-    par_k_f = Kf_val / (k_total_data_val + pad_floor),
-    par_k_g = Kg_val / (k_total_data_val + pad_floor),
+    # participaciones sobre el capital UTILIZADO (Kx = KD * par_k_x suman KD)
+    par_k_h = Kh_val / (k_used_data_val + pad_floor),
+    par_k_f = Kf_val / (k_used_data_val + pad_floor),
+    par_k_g = Kg_val / (k_used_data_val + pad_floor),
     psi = psi_val, pk_pot_calib = pk_pot_calib_val,    
     
     por_cont = por_cont_h_val, por_sav = por_sav_h_val,
@@ -490,7 +500,7 @@ var_list <- list(
     inv_adj = 1.0, inv_adj_h = 1.0, inv_adj_f = 1.0, inv_adj_g = 1.0,
     VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
-    KD = k_total_data_val, u_k = 1.0,
+    KD = k_used_data_val, u_k = uk_base_val,
     U = U_val, lambda__CONSUMER_1 = lambda_val
 )
 
