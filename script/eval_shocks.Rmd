@@ -68,7 +68,10 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     t_s   <- as.numeric(par_s[paste0("t_iva__", pn_vat)])
     ti_b  <- as.numeric(par_b[paste0("t_iva_int__", pn_vat)])
     ti_s  <- as.numeric(par_s[paste0("t_iva_int__", pn_vat)])
-    D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b, p_s, FD_b, FD_s),
+    # La base de la demanda final es el precio con especifico (p + tau_e); la intermedia, p.
+    tv_b  <- as.numeric(par_b[paste0("tau_e__", pn_vat)])
+    tv_s  <- as.numeric(par_s[paste0("tau_e__", pn_vat)])
+    D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b + tv_b, p_s + tv_s, FD_b, FD_s),
                         decomp3(ti_b, ti_s, p_b, p_s, XI_b, XI_s))
 
     # ---------------- FIRMTAX ----------------
@@ -116,8 +119,17 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     Qrev_s  <- rev_s / pzdef_s
     D_TPROD <- decomp3(tps, tps, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
 
-    # ---------------- TESP ----------------
-    # Filter sectors that have 'tes__Act_<sector>' parameter defined in the model
+    # ---------------- TESP (Etapa 5: impuesto por unidad fisica sobre demanda final) ----------------
+    # Parte por producto: R = tau_e * FD. tau_e es un monto nominal por unidad fisica,
+    # asi que no hay efecto precio (P = 1) y la recaudacion sigue a los volumenes.
+    pn_esp <- pn[paste0("tau_e__", pn) %in% names(par_b)]
+    tau_b  <- as.numeric(par_b[paste0("tau_e__", pn_esp)])
+    tau_s  <- as.numeric(par_s[paste0("tau_e__", pn_esp)])
+    FDe_b  <- gv(res_base , paste0("FD__", pn_esp))
+    FDe_s  <- gv(res_shock, paste0("FD__", pn_esp))
+    D_TESP_p <- decomp3(tau_b, tau_s, rep(1, length(pn_esp)), rep(1, length(pn_esp)), FDe_b, FDe_s)
+
+    # Parte sectorial (tes__Act_*): es cero en la SAM 2023; se mantiene por completitud
     sn_tesp <- sn[paste0("tes__", sn) %in% names(par_b)]
     tes_b   <- as.numeric(par_b[paste0("tes__", sn_tesp)])
     tes_s   <- as.numeric(par_s[paste0("tes__", sn_tesp)])
@@ -129,12 +141,9 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     pzdef_s <- rep(mean(pz_s, na.rm=TRUE), length(sn_tesp))
     Qrev_b  <- rev_b / pzdef_b
     Qrev_s  <- rev_s / pzdef_s
-    D_TESP <- decomp3(tes_b, tes_s, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
+    D_TESP_s <- decomp3(tes_b, tes_s, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
 
-    ied_b <- if ("imptos_espec_data" %in% names(par_b)) as.numeric(par_b["imptos_espec_data"]) else 0
-    ied_s <- if ("imptos_espec_data" %in% names(par_s)) as.numeric(par_s["imptos_espec_data"]) else 0
-    D_TESP$R_b <- D_TESP$R_b + ied_b
-    D_TESP$R_s <- D_TESP$R_s + ied_s
+    D_TESP <- sum_decomp(D_TESP_p, D_TESP_s)
 
     # ---------------- TARANCEL ----------------
     # Filter products that have 'tar_rate__prod_<prod>' parameter defined in the model
@@ -513,6 +522,48 @@ comp_pit <- calc_tax_impact(res_base, res_shock_pit, pib_base, pib_real_base, pi
 
 print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list, model, model_shock_pit)
 print(comp_pit)
+```
+
+# SHOCK: Incremento de impuestos específicos (por unidad física, solo demanda final)
+```{r include=FALSE}
+# 1. Definir el shock: tau_e sube en el factor configurado (por defecto +10%).
+# Los productos con tau_e = 0 permanecen en cero.
+fac_esp   <- cfg$shocks_default$tesp$factor
+par_all_e <- get_par_values(model, silent = TRUE)
+esp_pars  <- grep("^tau_e__", names(par_all_e), value = TRUE)
+tesp_shock <- as.list(as.numeric(par_all_e[esp_pars]) * fac_esp)
+names(tesp_shock) <- esp_pars
+
+# 2. Aplicar el shock y resolver
+model_shock_tesp <- set_free_par(model, free_par = tesp_shock)
+model_shock_tesp <- steady_state(model_shock_tesp,
+    calibration = FALSE,
+    options_list = list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
+)
+
+res_shock_tesp <- get_ss_values(model_shock_tesp, silent = TRUE)
+pib_shock_tesp_list <- calc_pib(model_shock_tesp, model_ref = model)
+```
+
+# ANALISIS IMPUESTOS ESPECIFICOS
+```{r}
+comp_tesp <- calc_tax_impact(res_base, res_shock_tesp, pib_base, pib_real_base, pib_shock_tesp_list, vars_to_compare)
+
+print_macro_impact("Aumento impuestos específicos", pib_model_list, pib_shock_tesp_list, model, model_shock_tesp)
+print(comp_tesp)
+
+# Traspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva)), por producto con tau_e > 0
+pn_e   <- sub("^tau_e__", "", esp_pars[as.numeric(par_all_e[esp_pars]) > 0])
+par_st <- get_par_values(model_shock_tesp, silent = TRUE)
+dtau   <- as.numeric(par_st[paste0("tau_e__", pn_e)]) - as.numeric(par_all_e[paste0("tau_e__", pn_e)])
+tr_esp <- data.frame(
+    producto = pn_e,
+    dpq      = as.numeric(res_shock_tesp[paste0("pq__", pn_e)] - res_base[paste0("pq__", pn_e)]),
+    dp       = as.numeric(res_shock_tesp[paste0("p__",  pn_e)] - res_base[paste0("p__",  pn_e)]),
+    dtau_iva = dtau * (1 + as.numeric(par_all_e[paste0("t_iva__", pn_e)]))
+)
+tr_esp$traspaso <- tr_esp$dpq / tr_esp$dtau_iva
+print(tr_esp, digits = 4, row.names = FALSE)
 ```
 
 # SHOCK COMBINADO: Disminución FIT e Incremento PIT

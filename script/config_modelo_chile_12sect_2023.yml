@@ -231,7 +231,17 @@ iva:
   especificacion: "cuna_precio_demanda_final"
   tasa_max_demanda_final: 0.19
 
+# Especificacion de impuestos especificos (Etapa 5): impuesto por unidad fisica que pagan
+# solo hogares, gobierno e inversion. Consumo intermedio, existencias y exportaciones no
+# lo pagan (supuesto). El IVA se calcula sobre el precio con especifico.
+tesp:
+  especificacion: "unitario_demanda_final"
+
 shocks_default:
+  tesp:
+    descripcion: "Aumento de 10% en el impuesto especifico por unidad fisica (tau_e)"
+    tipo: "multiplicativo"
+    factor: 1.10
   iva:
     descripcion: "Alza de la tasa legal de IVA de 19% a 20% (tasas efectivas sin impuesto x 20/19)"
     tipo: "multiplicativo"

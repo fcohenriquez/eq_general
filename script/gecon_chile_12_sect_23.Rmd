@@ -296,7 +296,7 @@ names(TD_Dom_initial) <- p_names
 ImpEsp_p_v <- as.numeric(chile_sam[cat_impesp, p_names])
 IVA_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
 Ar_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
-Q_v <- TD_Dom_initial - ImpEsp_p_v   # mismo valor que antes: TD_comprador - IVA - TESP
+Q_v <- TD_Dom_initial - ImpEsp_p_v   # oferta a precio basico: TD_comprador - IVA - TESP
 Q_v["prod_otros"] <- M_v["prod_otros"]
 
 p_base  <- (DS_v + pm_base * M_v) / pmax(Q_v, 1e-6)
@@ -307,8 +307,31 @@ pz_base["prod_otros"]  <- pm_base["prod_otros"]
 # prod_adm_pub: sin importaciones -> precio compuesto = precio domestico (p = pd = pz)
 p_base["prod_adm_pub"] <- DS_v["prod_adm_pub"] / pmax(Q_v["prod_adm_pub"], 1e-6)
 
+# --- Impuestos especificos como impuesto por unidad fisica (Etapa 5) ----------
+# Supuesto: el consumo intermedio, las existencias y las exportaciones no pagan
+# especificos; todo el especifico de la SAM recae sobre la demanda final (hogares,
+# gobierno, inversion) del producto, con un monto tau_e por unidad fisica:
+#     pq = (p + tau_e) * (1 + t_iva)        [IVA sobre el precio con especifico]
+# Como FD_fisica = FD_neto / (p + tau_e) y TESP = tau_e * FD_fisica, resulta
+#     tau_e = p_base * TESP / (FD_neto - TESP),   FD_neto = FD_comprador - IVA_fd
+FD_neto <- FD_m - IVA_fd
+den_e   <- FD_neto - ImpEsp_p_v
+if (any(ImpEsp_p_v > 0 & den_e <= 1e-9)) {
+    stop("El impuesto especifico excede la demanda final neta de IVA en: ",
+         paste(p_names[ImpEsp_p_v > 0 & den_e <= 1e-9], collapse = ", "))
+}
+tau_e_v <- ifelse(ImpEsp_p_v > 0, p_base * ImpEsp_p_v / pmax(den_e, 1e-9), 0)
+names(tau_e_v) <- p_names
+tau_e_v["prod_otros"] <- 0
+
+cat("\nDiagnostico impuestos especificos (por unidad fisica, solo demanda final):\n")
+print(data.frame(producto = p_names, TESP = round(ImpEsp_p_v, 1),
+                 DF_neta_IVA = round(FD_neto, 1), tau_e = round(tau_e_v, 5),
+                 equiv_advalorem = round(ifelse(ImpEsp_p_v > 0, ImpEsp_p_v / pmax(den_e, 1e-9), 0), 4))[ImpEsp_p_v > 0, ],
+      row.names = FALSE)
+
 # Precios de comprador (demanda final) e insumo intermedio en el ano base
-pq_base   <- p_base * (1 + t_iva_r)
+pq_base   <- (p_base + tau_e_v) * (1 + t_iva_r)
 pint_base <- p_base * (1 + t_iva_int_r)
 
 at_v <- (Z_v / pz_base) / (gamma_e_v * E_v^rho_t_val + (1 - gamma_e_v) * DS_v^rho_t_val)^(1/rho_t_val)
@@ -412,7 +435,6 @@ par_flat <- unlist(list(
     sh_i_h = sh_i_h_v, sh_i_f = sh_i_f_v, sh_i_g = sh_i_g_v,
     damp_inv = cfg$elasticidades$inversion_eta,
     SAVext_target = SAVext_v,
-    imptos_espec_data = sum(as.numeric(chile_sam[cat_impesp, colnames(chile_sam) != "Total"])),
     get_flow_values(io_matrix[pnoconst_idx, sa_idx, drop=FALSE], "io", p_names[pnoconst_idx], s_names[sa_idx]),
     get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
     get_flow_values(gamma_e_v[pexp_idx], "gamma_e", p_names[pexp_idx]),
@@ -436,7 +458,7 @@ par_flat <- unlist(list(
     get_flow_values(G_m / pq_base, "gg_market_data_p", p_names),
     get_flow_values(I_m / pq_base, "I_data", p_names),
     get_flow_values(V_m / p_base, "vexist", p_names),
-    get_flow_values(ImpEsp_p_v[pdom_idx], "imptos_espec_p", p_names[pdom_idx]),
+    get_flow_values(tau_e_v[pdom_idx], "tau_e", p_names[pdom_idx]),
     get_flow_values(make_share[pdom_idx, ], "make_share", p_names[pdom_idx], s_names),
     ex_otros_data = as.numeric(E_m["prod_otros"])
 ))
@@ -505,7 +527,8 @@ init_vars <- unlist(list(
       get_flow_values(DD_init, "DD", p_names) },
     get_flow_values(rep(0, length(p_names)), "PI_CET", p_names),
     get_flow_values(rep(0, length(p_names)), "PI_ARM", p_names),
-    get_flow_values(as.numeric((TD_Dom_initial / p_base)[pdom_idx]), "TD_Dom", pdom_names),
+    # TD_Dom es fisico y ya no incluye la cuna del especifico: TD_Dom = Q (= Q_v / p_base)
+    get_flow_values(as.numeric(((TD_Dom_initial - ImpEsp_p_v) / p_base)[pdom_idx]), "TD_Dom", pdom_names),
     get_flow_values(as.numeric(((D_m + G_m + I_m) / pq_base)[pdom_idx]), "FD", pdom_names),
     get_flow_values(as.numeric((rowSums(X_matrix) / pint_base)[pdom_idx]), "XI", pdom_names),
     get_flow_values(pq_base, "pq", p_names),
@@ -523,6 +546,7 @@ init_vars <- unlist(list(
     get_flow_values(VA_nom[sa_idx], "va_nom", s_names[sa_idx]),
     get_flow_values(VA_nom[sb_idx], "va_nom", s_names[sb_idx]),
     get_flow_values(IVA_v, "VAT_p", p_names),
+    get_flow_values(ImpEsp_p_v[pdom_idx], "TESP_p", pdom_names),
     get_flow_values(Ar_v, "Arancel_p", p_names),
     get_flow_values(  -pz_base[pexp_idx] * Z0_v[pexp_idx],  "lambda__EXPORTER_1",  p_names[pexp_idx])
 ))
@@ -542,6 +566,7 @@ cat("Norma residuos finales:", pracma::Norm(model@residual_vector), "\n")
 ss_chk <- get_ss_values(model, silent = TRUE)
 chk_iva <- c(
     VAT_modelo_menos_SAM = as.numeric(ss_chk["VAT"]) - VAT_sum,
+    TESP_modelo_menos_SAM = as.numeric(ss_chk["TESP"]) - Imptos_Espec_sum,
     C_nominal_menos_SAM  = sum(ss_chk[paste0("D__", p_names[pcon_idx])] *
                                ss_chk[paste0("pq__", p_names[pcon_idx])]) - sum(D_m[pcon_idx]),
     max_abs_pq_menos_base = max(abs(ss_chk[paste0("pq__", p_names)] - pq_base))
