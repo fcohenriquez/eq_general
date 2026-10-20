@@ -351,7 +351,15 @@ block INVESTMENT
         inv_adj_g[] = 1.0;
         inv_adj_h[] = (SAV[] / (sh_i_h * NOM_I_BASE[]))^damp_inv;
         inv_adj_f[] = (SAVf[] / (sh_i_f * NOM_I_BASE[]))^damp_inv;
-        inv_adj[] = sh_i_h * inv_adj_h[] + sh_i_f * inv_adj_f[] + sh_i_g * inv_adj_g[];
+
+        # theta_g: fraccion del ahorro publico adicional (respecto de la base) que
+        # financia inversion. theta_g = 0 reproduce el cierre original (el ahorro
+        # publico no financia inversion); theta_g = 1 corresponde al cierre neoclasico.
+        # En la base SAVg = savg_base, el termino es nulo y la SAM se replica.
+        # Entra en inv_adj (no en TOTAL_INVEST) para que la demanda fisica de bienes
+        # de inversion (I_data * inv_adj) sea consistente con el gasto nominal.
+        inv_adj[] = sh_i_h * inv_adj_h[] + sh_i_f * inv_adj_f[] + sh_i_g * inv_adj_g[]
+                  + theta_g * (SAVg[] - savg_base) / NOM_I_BASE[];
         
         TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
         

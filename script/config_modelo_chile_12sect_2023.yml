@@ -215,6 +215,10 @@ cierre_macro:
   ahorro_externo: "fijo"
   inversion_publica: "fija"
   inversion_privada: "endogena_amortiguada"
+  # Fraccion del ahorro publico adicional (respecto de la base) que financia inversion.
+  # 0 = cierre original (el ahorro publico no financia inversion); 1 = cierre neoclasico.
+  # No altera el equilibrio base (SAVg = savg_base), por lo que se varia sin recalibrar.
+  theta_g: 0.0
   #mercado_trabajo: "curva_salarial_con_desempleo"
   mercado_trabajo: "curva_salarial_con_participacion_endogena"
   #mercado_capital: "pleno_uso_stock_capital"
@@ -227,6 +231,11 @@ cierre_macro:
     Trabajo_1: 0.076
     Trabajo_2: 0.099
     Trabajo_3: 0.078
+
+# Sensibilidad de los choques al cierre ahorro-inversion (eval_shocks.Rmd).
+# Con theta_g = 0 se reproducen los resultados de los choques individuales.
+sensibilidad_cierre:
+  barrido_theta_g: [0.0, 0.5, 1.0]
 
 # Especificacion del IVA (Etapa 1): cuna de precio sobre la demanda final,
 # uso intermedio desgravado. El IVA que exceda la tasa tope sobre la demanda

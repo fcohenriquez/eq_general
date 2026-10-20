@@ -28,6 +28,18 @@ reportar <- function(titulo, expr) {
     invisible(out)
 }
 
+# Las tablas se imprimen como texto con cat(): print() de data.frames dentro de
+# capture.output no llega al .txt en esta corrida (solo aparecen las lineas de cat).
+# Si la tabla viene vacia lo dice explicitamente, en vez de no imprimir nada.
+imprimir_tabla <- function(df, digits = 4) {
+    if (is.null(df) || NROW(df) == 0) {
+        cat("(tabla vacia)\n")
+        return(invisible(df))
+    }
+    cat(knitr::kable(as.data.frame(df), format = "simple", digits = digits, row.names = FALSE), sep = "\n")
+    invisible(df)
+}
+
 fmt_lista <- function(x) {
     if (is.null(x)) return("(no definido)")
     if (is.null(names(x))) return(paste(unlist(x), collapse = ", "))
@@ -46,6 +58,7 @@ txt_escribir(c(
     sprintf("  numerario                : %s", fmt_lista(cm$numerario)),
     sprintf("  tipo_cambio              : %s", fmt_lista(cm$tipo_cambio)),
     sprintf("  ahorro_externo           : %s", fmt_lista(cm$ahorro_externo)),
+    sprintf("  theta_g (ahorro pub->inv): %s", fmt_lista(cm$theta_g)),
     sprintf("  mercado_trabajo          : %s", fmt_lista(cm$mercado_trabajo)),
     sprintf("  mercado_capital          : %s", fmt_lista(cm$mercado_capital)),
     sprintf("  utilizacion_capital_base : %s", fmt_lista(cm$utilizacion_capital_base)),
@@ -498,7 +511,7 @@ reportar("SHOCK 1: Disminucion de 1 punto en la tasa IDPC (FIRMTAX)", {
     cat(sprintf("Parametro fit: base %.6f -> shock %.6f  (chi = %.3f, dtau = %+.3f, tau0 = %.3f)\n\n",
                 as.numeric(fit_base), as.numeric(fit_shock), chi, dtau, tau0))
     print_macro_impact("disminución 1% de tasa IDPC", pib_model_list, pib_shock_list, model, model_shock_fit)
-    print(comp_fit)
+    imprimir_tabla(comp_fit)
 })
 ```
 
@@ -552,9 +565,9 @@ traspaso$traspaso <- ifelse(abs(traspaso$dln_1mt) > 1e-10, traspaso$dln_pq / tra
 reportar("SHOCK 2: Aumento de la tasa legal de IVA 19% -> 20%", {
     cat(sprintf("Factor sobre t_iva y t_iva_int: %.6f  (%d parametros)\n\n", fac_iva, length(iva_pars)))
     print_macro_impact("Aumento IVA 19% -> 20%", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
-    print(comp_vat)
+    imprimir_tabla(comp_vat)
     cat("\nTraspaso a precios de comprador: dln(pq) / dln(1 + t_iva)\n")
-    print(traspaso, digits = 4, row.names = FALSE)
+    imprimir_tabla(traspaso)
 })
 ```
 
@@ -589,7 +602,7 @@ comp_pit <- calc_tax_impact(res_base, res_shock_pit, pib_base, pib_real_base, pi
 reportar("SHOCK 3: Aumento de 10% en la carga efectiva de PIT", {
     cat(sprintf("Parametro pit: base %.6f -> shock %.6f\n\n", as.numeric(pit_base), pit_shock))
     print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list, model, model_shock_pit)
-    print(comp_pit)
+    imprimir_tabla(comp_pit)
 })
 ```
 
@@ -633,9 +646,9 @@ tr_esp$traspaso <- tr_esp$dpq / tr_esp$dtau_iva
 reportar("SHOCK 4: Aumento de impuestos especificos (por unidad fisica, demanda final)", {
     cat(sprintf("Factor sobre tau_e: %.6f  (%d productos con tau_e > 0)\n\n", fac_esp, length(pn_e)))
     print_macro_impact("Aumento impuestos específicos", pib_model_list, pib_shock_tesp_list, model, model_shock_tesp)
-    print(comp_tesp)
+    imprimir_tabla(comp_tesp)
     cat("\nTraspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva))\n")
-    print(tr_esp, digits = 4, row.names = FALSE)
+    imprimir_tabla(tr_esp)
 })
 ```
 
@@ -670,7 +683,70 @@ reportar("SHOCK 5: Combinado - reduccion IDPC + aumento PIT", {
     cat(sprintf("Parametro fit: base %.6f -> shock %.6f\n", as.numeric(fit_base), as.numeric(fit_shock)))
     cat(sprintf("Parametro pit: base %.6f -> shock %.6f\n\n", as.numeric(pit_base), pit_shock))
     print_macro_impact("Mix: Reducción IDPC + Aumento PIT", pib_model_list, pib_shock_comb_list, model, model_shock_comb)
-    print(comp_comb)
+    imprimir_tabla(comp_comb)
+})
+```
+
+# SENSIBILIDAD: cierre ahorro-inversion (theta_g)
+```{r include=FALSE}
+# theta_g = fraccion del ahorro publico adicional que financia inversion (bloque INVESTMENT).
+# No altera la base, por lo que se varia sin recalibrar. savg_base se ancla al SAVg del
+# equilibrio base resuelto para que el termino sea exactamente nulo en la base.
+thetas  <- unlist(cfg$sensibilidad_cierre$barrido_theta_g %||% c(0, 0.5, 1))
+savg_b  <- as.numeric(res_base["SAVg"])
+opts_th <- list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
+
+# Choques individuales reconstruidos desde el YAML: fit_shock, pit_shock y dtau se
+# sobrescriben en los chunks de especificos y del choque combinado.
+par_b_th <- get_par_values(model, silent = TRUE)
+cfg_fit  <- cfg$shocks_default$fit
+choques_th <- list(
+    IDPC = list(fit = as.numeric(par_b_th["fit"]) *
+                    (1 + cfg_fit$cambio_puntos_tasa * cfg_fit$participacion_idpc_en_firmtax /
+                         cfg_fit$tasa_nominal_base)),
+    IVA  = vat_shock,
+    PIT  = list(pit = as.numeric(par_b_th["pit"]) * cfg$shocks_default$pit$factor),
+    TESP = tesp_shock
+)
+
+eval_theta <- function(th, nombre, par_shock) {
+    fila_na <- data.frame(choque = nombre, theta_g = th, dPIB_real = NA, dI_real = NA,
+                          dTax_pp = NA, dSAVg_pp = NA, dSAV_pp = NA, dSAVf_pp = NA, dY_dR = NA)
+    tryCatch({
+        m <- set_free_par(model, free_par = c(par_shock, list(theta_g = th, savg_base = savg_b)))
+        m <- steady_state(m, calibration = FALSE, options_list = opts_th)
+        v <- get_ss_values(m, silent = TRUE)
+        p <- calc_pib(m, model_ref = model)
+        pp <- function(x) x / pib_model_list$PIB * 100
+        dY <- (p$PIB_real / pib_model_list$PIB_real - 1) * 100
+        dR <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
+        data.frame(choque = nombre, theta_g = th,
+                   dPIB_real = dY,
+                   dI_real   = (p$I_real / pib_model_list$I_real - 1) * 100,
+                   dTax_pp   = dR,
+                   dSAVg_pp  = pp(as.numeric(v["SAVg"]) - as.numeric(res_base["SAVg"])),
+                   dSAV_pp   = pp(as.numeric(v["SAV"])  - as.numeric(res_base["SAV"])),
+                   dSAVf_pp  = pp(as.numeric(v["SAVf"]) - as.numeric(res_base["SAVf"])),
+                   dY_dR     = if (abs(dR) > 1e-10) dY / dR else NA)
+    }, error = function(e) {
+        message(sprintf("theta_g = %.2f, choque %s: sin solucion (%s)", th, nombre, conditionMessage(e)))
+        fila_na
+    })
+}
+
+barrido_theta <- do.call(rbind, lapply(thetas, function(th)
+    do.call(rbind, Map(function(nm, ps) eval_theta(th, nm, ps), names(choques_th), choques_th))))
+barrido_theta <- barrido_theta[order(barrido_theta$choque, barrido_theta$theta_g), ]
+```
+
+# ANALISIS SENSIBILIDAD theta_g
+```{r}
+reportar("SENSIBILIDAD: cierre ahorro-inversion (theta_g)", {
+    cat("theta_g = fraccion del ahorro publico adicional que financia inversion.\n")
+    cat("theta_g = 0 reproduce los choques individuales reportados arriba.\n")
+    cat("dPIB_real, dI_real en %; dTax, dSAVg, dSAV, dSAVf en pp del PIB nominal base;\n")
+    cat("dY_dR = dPIB_real / dTax (multiplicador sobre recaudacion neta).\n\n")
+    imprimir_tabla(barrido_theta)
 })
 ```
 

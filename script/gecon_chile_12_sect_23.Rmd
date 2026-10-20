@@ -265,6 +265,11 @@ sh_i_h_v <- if(abs(sh_i_h_v) < 1e-6) 1e-6 else sh_i_h_v
 sh_i_f_v <- if(abs(sh_i_f_v) < 1e-6) 1e-6 else sh_i_f_v
 sh_i_g_v <- if(abs(sh_i_g_v) < 1e-6) 1e-6 else sh_i_g_v
 
+# theta_g: fraccion del ahorro publico adicional que financia inversion (bloque INVESTMENT).
+# 0 = cierre original. savg_base ancla el termino al ahorro publico de la base.
+theta_g_val <- if (!is.null(cfg$cierre_macro$theta_g)) cfg$cierre_macro$theta_g else 0.0
+stopifnot(is.numeric(theta_g_val), length(theta_g_val) == 1, theta_g_val >= 0, theta_g_val <= 1)
+
 sigma_q_val <- cfg$elasticidades$armington_sigma_q
 sigma_t_val <- cfg$elasticidades$cet_sigma_t
 rho_q_val <- (sigma_q_val - 1) / sigma_q_val
@@ -444,6 +449,8 @@ par_flat <- unlist(list(
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
     sh_i_h = sh_i_h_v, sh_i_f = sh_i_f_v, sh_i_g = sh_i_g_v,
     damp_inv = cfg$elasticidades$inversion_eta,
+    # Cierre ahorro-inversion: theta_g (0 = cierre original) y ancla del ahorro publico base
+    theta_g = theta_g_val, savg_base = SAVg_v,
     SAVext_target = SAVext_v,
     get_flow_values(io_matrix[pnoconst_idx, sa_idx, drop=FALSE], "io", p_names[pnoconst_idx], s_names[sa_idx]),
     get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
@@ -583,6 +590,12 @@ chk_iva <- c(
 )
 print(round(chk_iva, 8))
 if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con IVA en precios no replica la SAM; revisar chk_iva.")
+
+# --- Validacion del ancla de theta_g: SAVg del equilibrio base vs SAM ---
+# Si difieren, con theta_g > 0 el termino del bloque INVESTMENT no es exactamente nulo en la base.
+chk_savg <- as.numeric(ss_chk["SAVg"]) - SAVg_v
+cat(sprintf("theta_g = %.3f | SAVg modelo - SAM (ancla savg_base): %.8f\n", theta_g_val, chk_savg))
+if (theta_g_val > 0 && abs(chk_savg) > 1e-4) warning("SAVg base no coincide con savg_base; revisar el ancla de theta_g.")
 
 
 ```
