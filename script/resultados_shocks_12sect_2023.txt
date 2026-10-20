@@ -1,23 +1,24 @@
 MEGC-Chile - Resultados de la evaluacion de shocks
-Generado            : 2026-10-20 10:49:59 -03
+Generado            : 2026-10-20 11:58:00 -03
 Modelo              : CGE Chile (12sect_2023), anio base 2023
 
 Cierre macroeconomico:
-  numerario                : p_prod_otros
-  tipo_cambio              : endogeno
-  ahorro_externo           : fijo
-  theta_g (ahorro pub->inv): 0
+  numerario                : IPC
+  tipo_cambio              : endogeno (real)
+  ahorro_externo           : fijo en moneda extranjera
+  valor_numerario          : 1
+  inversion                : determinada_por_ahorro
   mercado_trabajo          : curva_salarial_con_participacion_endogena
   mercado_capital          : curva_utilizacion_endogena
   utilizacion_capital_base : 0.82
   tasa_desempleo_base      : Trabajo_1=0.076, Trabajo_2=0.099, Trabajo_3=0.078
 
 Elasticidades:
-  omega / sigma_q / sigma_t / eta_inv : 1.5 / 2 / 1.5 / 0.5
+  omega / sigma_q / sigma_t : 1.5 / 2 / 1.5
   wage_curve_eta           : (no definido)
   informalidad             : (no definido)
-  wage_curve_phi           : 2
-  capital_curve_psi        : 0.2
+  wage_curve_phi           : 3.4483
+  capital_curve_psi        : 1.5
   participacion_epsilon    : 0.42
 
 ==========================================================================================
@@ -27,81 +28,115 @@ Parametro fit: base 0.130466 -> shock 0.126040  (chi = 0.916, dtau = -0.010, tau
 
 --- RESULTADOS DE LA SIMULACIÓN: disminución 1% de tasa IDPC ---
 PIB Nominal Base:     282097.80 
-PIB Nominal Shock:    282808.52 
-Cambio PIB Nominal:   0.251941 %
+PIB Nominal Shock:    282492.58 
+Cambio PIB Nominal:   0.139946 %
 PIB Real Base:        282097.80 
-PIB Real Shock:       282586.79 
-Cambio PIB Real (%):  0.173341 %
+PIB Real Shock:       282480.97 
+Cambio PIB Real (%):  0.135828 %
   ├─ Cambios en Componentes Reales:
-     ├─ Consumo (C_real)   :   0.1369 %  (nominal:   0.2129 %)
-     ├─ Inversión (I_real) :   0.4116 %  (nominal:   0.4858 %)
+     ├─ Consumo (C_real)   :   0.0885 %  (nominal:   0.0885 %)
+     ├─ Inversión (I_real) :   0.3373 %  (nominal:   0.3327 %)
      ├─ Gobierno (G_real)  :   0.0000 %
-     ├─ Export (X_real)    :   0.2034 %  (nominal:   0.2635 %)
-     └─ Import (M_real)    :   0.2425 %  (nominal:   0.3027 %)
+     ├─ Export (X_real)    :   0.2028 %  (nominal:   0.1779 %)
+     └─ Import (M_real)    :   0.2087 %  (nominal:   0.1838 %)
 
   Niveles Comercio Exterior:
-     Export Base:   86815.42   Shock:   87044.20   Δ:     228.78
-     Import Base:   84351.36   Shock:   84606.66   Δ:     255.30
-     Bal.Com Base:    2464.05   Shock:    2437.54   Δ:     -26.51
+     Export Base:   86815.42   Shock:   86969.85   Δ:     154.43
+     Import Base:   84351.36   Shock:   84506.40   Δ:     155.04
+     Bal.Com Base:    2464.05   Shock:    2463.44   Δ:      -0.61
 
   Mercado Laboral:
      Tasa Desempleo (u_rate__Trabajo_1) Base :   7.6000 %
-     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.5304 %
-     Variación (p.p.)              :  -0.0696 pp
+     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.5717 %
+     Variación (p.p.)              :  -0.0283 pp
      Tasa Desempleo (u_rate__Trabajo_2) Base :   9.9000 %
-     Tasa Desempleo (u_rate__Trabajo_2) Shock:   9.8413 %
-     Variación (p.p.)              :  -0.0587 pp
+     Tasa Desempleo (u_rate__Trabajo_2) Shock:   9.8796 %
+     Variación (p.p.)              :  -0.0204 pp
      Tasa Desempleo (u_rate__Trabajo_3) Base :   7.8000 %
-     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.7467 %
-     Variación (p.p.)              :  -0.0533 pp
+     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.7812 %
+     Variación (p.p.)              :  -0.0188 pp
 
   Mercado de Capital:
      Utilización (u_k)  Base :  82.0000 %
-     Utilización (u_k)  Shock:  82.1846 %
-     Variación (p.p.)         :   0.1846 pp
-     Capacidad ociosa   Base :  18.0000 %   Shock:  17.8154 %
-     Capital utilizado (KD)   :   0.2252 %
-     Retorno capital (pk)     :   0.0450 %
-     psi implícito            :   0.2000   (declarado: 0.2000)
+     Utilización (u_k)  Shock:  82.1772 %
+     Variación (p.p.)         :   0.1772 pp
+     Capacidad ociosa   Base :  18.0000 %   Shock:  17.8228 %
+     Capital utilizado (KD)   :   0.2162 %
+     Retorno capital (pk)     :  -0.0535 %
+     Retorno neto capital     :   0.3244 %
+     psi implícito (neto)     :   1.5000   (declarado: 1.5000)
 
   Diagnóstico Okun (agregado, ponderado por fuerza de trabajo):
-     u agregado Base :   8.3359 %   Shock:   8.2804 %
-     Elast. empleo-producto  (eta_L)  :   0.6021
-     Elast. fuerza trabajo   (eta_LF) :   0.2529
-     Coef. Okun implícito             :   0.3200   [ref. 0.28-0.37]
-     Identidad (1-u)(eta_L - eta_LF)  :   0.3201
+     u agregado Base :   8.3359 %   Shock:   8.3162 %
+     Elast. empleo-producto  (eta_L)  :   0.2730
+     Elast. fuerza trabajo   (eta_LF) :   0.1147
+     Coef. Okun implícito             :   0.1451   [ref. 0.28-0.37]
+     Identidad (1-u)(eta_L - eta_LF)  :   0.1451
 
   VA real (costo de factores) vs PIB real (gasto):
      Suma VA base (control ~ K+L = 249319.5) :    249320.66
-     Cambio producto bruto real (V)          :   0.1902 %
-     Cambio VA real                          :   0.1696 %
-     Cambio PIB real                         :   0.1733 %
-     Impl. base real imptos. indirectos      :   0.2016 %
-     Okun contra VA real                     :   0.3270
+     Cambio producto bruto real (V)          :   0.1548 %
+     Cambio VA real                          :   0.1338 %
+     Cambio PIB real                         :   0.1358 %
+     Impl. base real imptos. indirectos      :   0.1510 %
+     Okun contra VA real                     :   0.1473
 
   Recaudación Fiscal (% del PIB nominal base):
      Variable      Base (%PIB)  Shock(%PIB)  Δ (pp PIB)
      ----------------------------------------------------
-     Tax Total        18.1916     18.0776     -0.1140
-     FirmTax           4.7622      4.6131     -0.1491
-     PITax             1.8103      1.8141     +0.0039
-     VAT               8.6254      8.6495     +0.0242
-     Prod. Tax         1.4745      1.4778     +0.0033
-     Spec. Tax         0.9727      0.9748     +0.0021
-     Tariffs           0.5465      0.5482     +0.0017
+     Tax Total        18.1916     18.0562     -0.1354
+     FirmTax           4.7622      4.6082     -0.1541
+     PITax             1.8103      1.8119     +0.0016
+     VAT               8.6254      8.6383     +0.0129
+     Prod. Tax         1.4745      1.4760     +0.0015
+     Spec. Tax         0.9727      0.9743     +0.0016
+     Tariffs           0.5465      0.5475     +0.0010
 
   Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):
      Impuesto    ΔR(pp)   Ef.Tasa   Ef.Cant  Ef.Total   Ef.Prec     Resid
      ------------------------------------------------------------------------
-     VAT         +0.0242   +0.0000   +0.0177   +0.0177   +0.0065  +5.4e-16
-     FIRMTAX     -0.1491   -0.1618   +0.0105   -0.1512   +0.0021  -5.4e-16
-     PITAX       +0.0039   +0.0000   +0.0025   +0.0025   +0.0014  +7.2e-17
-     TPROD       +0.0033   +0.0000   +0.0021   +0.0021   +0.0012  +6.2e-17
-     TESP        +0.0021   +0.0000   +0.0021   +0.0021   +0.0000  -8.4e-17
-     TARANCEL    +0.0017   +0.0000   +0.0014   +0.0014   +0.0003  -3.5e-17
+     VAT         +0.0129   +0.0000   +0.0130   +0.0130   -0.0001  +7.3e-16
+     FIRMTAX     -0.1541   -0.1617   +0.0101   -0.1516   -0.0025  -3.2e-16
+     PITAX       +0.0016   +0.0000   +0.0010   +0.0010   +0.0006  +9.6e-17
+     TPROD       +0.0015   +0.0000   +0.0014   +0.0014   +0.0001  +9.5e-17
+     TESP        +0.0016   +0.0000   +0.0016   +0.0016   +0.0000  -7.4e-17
+     TARANCEL    +0.0010   +0.0000   +0.0012   +0.0012   -0.0001  +7.9e-18
      ------------------------------------------------------------------------
-     TOTAL       -0.1140   -0.1618   +0.0363   -0.1255   +0.0115  +7.9e-18
+     TOTAL       -0.1354   -0.1617   +0.0283   -0.1334   -0.0020  +5.3e-16
 
+Variable                   Base         Shock   Cambio_Pct   Impacto_PIB_Pct
+------------------  -----------  ------------  -----------  ----------------
+Tax                   51318.074    50936.1525      -0.7442           -0.1354
+FIRMTAX               13434.199    12999.5296      -3.2355           -0.1541
+PITAX                  5106.735     5111.2537       0.0885            0.0016
+VAT                   24331.999    24368.4925       0.1500            0.0129
+TPROD                  4159.657     4163.9017       0.1020            0.0015
+TESP                   2743.912     2748.5279       0.1682            0.0016
+TARANCEL               1541.571     1544.4471       0.1866            0.0010
+SAV                    9242.779     9250.9566       0.0885            0.0029
+SAVf                  52780.840    53316.7024       1.0153            0.1900
+SAVg                   6262.407     5947.2907      -5.0319           -0.1117
+TOTAL_SAV                    NA            NA           NA                NA
+SAVext                -2462.902    -2462.2903      -0.0249            0.0002
+TRGOV                  2292.646     2292.6457       0.0000            0.0000
+INC                  195455.653   195628.5899       0.0885            0.0613
+BTINC                200562.388   200739.8436       0.0885            0.0629
+INGG                  62759.358    62395.1818      -0.5803           -0.1291
+w__Trabajo_1              1.000        1.0011       0.1057                NA
+w__Trabajo_2              1.000        1.0008       0.0782                NA
+w__Trabajo_3              1.000        1.0007       0.0705                NA
+pk                        1.000        0.9995      -0.0535                NA
+exr                       1.000        0.9998      -0.0249                NA
+CPI                       1.000        1.0000       0.0000            0.0000
+PSh                   20407.941    20358.3368      -0.2431           -0.0176
+inv_adj                   1.000        1.0034       0.3373            0.0000
+U                     21763.537    21782.7955       0.0885            0.0068
+u_rate__Trabajo_1         0.076        0.0757      -0.3726            0.0000
+u_rate__Trabajo_2         0.099        0.0988      -0.2064            0.0000
+u_rate__Trabajo_3         0.078        0.0778      -0.2415            0.0000
+LD__Trabajo_1          5657.362     5660.3519       0.0528            0.0011
+LD__Trabajo_2         29269.877    29281.3250       0.0391            0.0041
+LD__Trabajo_3         79674.326    79702.3890       0.0352            0.0099
 
 ==========================================================================================
 SHOCK 2: Aumento de la tasa legal de IVA 19% -> 20%
@@ -110,83 +145,131 @@ Factor sobre t_iva y t_iva_int: 1.052632  (24 parametros)
 
 --- RESULTADOS DE LA SIMULACIÓN: Aumento IVA 19% -> 20% ---
 PIB Nominal Base:     282097.80 
-PIB Nominal Shock:    279515.35 
-Cambio PIB Nominal:   -0.915446 %
+PIB Nominal Shock:    280884.41 
+Cambio PIB Nominal:   -0.430131 %
 PIB Real Base:        282097.80 
-PIB Real Shock:       279430.61 
-Cambio PIB Real (%):  -0.945482 %
+PIB Real Shock:       281120.07 
+Cambio PIB Real (%):  -0.346590 %
   ├─ Cambios en Componentes Reales:
-     ├─ Consumo (C_real)   :  -1.2603 %  (nominal:  -1.1367 %)
-     ├─ Inversión (I_real) :  -0.6549 %  (nominal:  -0.5657 %)
+     ├─ Consumo (C_real)   :  -0.7299 %  (nominal:  -0.7312 %)
+     ├─ Inversión (I_real) :   0.3890 %  (nominal:   0.3372 %)
      ├─ Gobierno (G_real)  :   0.0000 %
-     ├─ Export (X_real)    :  -1.3389 %  (nominal:  -1.6619 %)
-     └─ Import (M_real)    :  -1.2997 %  (nominal:  -1.6228 %)
+     ├─ Export (X_real)    :  -0.4766 %  (nominal:  -0.9994 %)
+     └─ Import (M_real)    :  -0.4905 %  (nominal:  -1.0132 %)
 
   Niveles Comercio Exterior:
-     Export Base:   86815.42   Shock:   85372.66   Δ:   -1442.75
-     Import Base:   84351.36   Shock:   82982.49   Δ:   -1368.88
-     Bal.Com Base:    2464.05   Shock:    2390.18   Δ:     -73.88
+     Export Base:   86815.42   Shock:   85947.78   Δ:    -867.63
+     Import Base:   84351.36   Shock:   83496.68   Δ:    -854.69
+     Bal.Com Base:    2464.05   Shock:    2451.11   Δ:     -12.95
 
   Mercado Laboral:
      Tasa Desempleo (u_rate__Trabajo_1) Base :   7.6000 %
-     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.9313 %
-     Variación (p.p.)              :   0.3313 pp
+     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.7471 %
+     Variación (p.p.)              :   0.1471 pp
      Tasa Desempleo (u_rate__Trabajo_2) Base :   9.9000 %
-     Tasa Desempleo (u_rate__Trabajo_2) Shock:  10.2145 %
-     Variación (p.p.)              :   0.3145 pp
+     Tasa Desempleo (u_rate__Trabajo_2) Shock:  10.0565 %
+     Variación (p.p.)              :   0.1565 pp
      Tasa Desempleo (u_rate__Trabajo_3) Base :   7.8000 %
-     Tasa Desempleo (u_rate__Trabajo_3) Shock:   8.0879 %
-     Variación (p.p.)              :   0.2879 pp
+     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.9446 %
+     Variación (p.p.)              :   0.1446 pp
 
   Mercado de Capital:
      Utilización (u_k)  Base :  82.0000 %
-     Utilización (u_k)  Shock:  81.0076 %
-     Variación (p.p.)         :  -0.9924 pp
-     Capacidad ociosa   Base :  18.0000 %   Shock:  18.9924 %
-     Capital utilizado (KD)   :  -1.2102 %
-     Retorno capital (pk)     :  -0.2432 %
-     psi implícito            :   0.2000   (declarado: 0.2000)
+     Utilización (u_k)  Shock:  81.7102 %
+     Variación (p.p.)         :  -0.2898 pp
+     Capacidad ociosa   Base :  18.0000 %   Shock:  18.2898 %
+     Capital utilizado (KD)   :  -0.3534 %
+     Retorno capital (pk)     :  -0.5296 %
+     Retorno neto capital     :  -0.5296 %
+     psi implícito (neto)     :   1.5000   (declarado: 1.5000)
 
   Diagnóstico Okun (agregado, ponderado por fuerza de trabajo):
-     u agregado Base :   8.3359 %   Shock:   8.6327 %
-     Elast. empleo-producto  (eta_L)  :   0.5900
-     Elast. fuerza trabajo   (eta_LF) :   0.2483
-     Coef. Okun implícito             :   0.3139   [ref. 0.28-0.37]
-     Identidad (1-u)(eta_L - eta_LF)  :   0.3132
+     u agregado Base :   8.3359 %   Shock:   8.4837 %
+     Elast. empleo-producto  (eta_L)  :   0.8019
+     Elast. fuerza trabajo   (eta_LF) :   0.3372
+     Coef. Okun implícito             :   0.4264   [ref. 0.28-0.37]
+     Identidad (1-u)(eta_L - eta_LF)  :   0.4259
 
   VA real (costo de factores) vs PIB real (gasto):
      Suma VA base (control ~ K+L = 249319.5) :    249320.66
-     Cambio producto bruto real (V)          :  -0.9993 %
-     Cambio VA real                          :  -0.9105 %
-     Cambio PIB real                         :  -0.9455 %
-     Impl. base real imptos. indirectos      :  -1.2116 %
-     Okun contra VA real                     :   0.3260
+     Cambio producto bruto real (V)          :  -0.3429 %
+     Cambio VA real                          :  -0.3187 %
+     Cambio PIB real                         :  -0.3466 %
+     Impl. base real imptos. indirectos      :  -0.5587 %
+     Okun contra VA real                     :   0.4637
 
   Recaudación Fiscal (% del PIB nominal base):
      Variable      Base (%PIB)  Shock(%PIB)  Δ (pp PIB)
      ----------------------------------------------------
-     Tax Total        18.1916     18.3671     +0.1755
-     FirmTax           4.7622      4.6932     -0.0691
-     PITax             1.8103      1.7897     -0.0206
-     VAT               8.6254      8.9320     +0.3067
-     Prod. Tax         1.4745      1.4560     -0.0185
-     Spec. Tax         0.9727      0.9588     -0.0139
-     Tariffs           0.5465      0.5373     -0.0091
+     Tax Total        18.1916     18.4648     +0.2733
+     FirmTax           4.7622      4.7203     -0.0420
+     PITax             1.8103      1.7970     -0.0132
+     VAT               8.6254      8.9792     +0.3538
+     Prod. Tax         1.4745      1.4620     -0.0126
+     Spec. Tax         0.9727      0.9657     -0.0070
+     Tariffs           0.5465      0.5407     -0.0057
 
   Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):
      Impuesto    ΔR(pp)   Ef.Tasa   Ef.Cant  Ef.Total   Ef.Prec     Resid
      ------------------------------------------------------------------------
-     VAT         +0.3067   +0.4503   -0.1088   +0.3414   -0.0348  +3.1e-16
-     FIRMTAX     -0.0691   +0.0000   -0.0576   -0.0576   -0.0115  -3.7e-16
-     PITAX       -0.0206   +0.0000   -0.0133   -0.0133   -0.0073  -5.7e-18
-     TPROD       -0.0185   +0.0000   -0.0123   -0.0123   -0.0063  -1.2e-16
-     TESP        -0.0139   +0.0000   -0.0139   -0.0139   +0.0000  +5.0e-18
-     TARANCEL    -0.0091   +0.0000   -0.0073   -0.0073   -0.0018  +1.4e-16
+     VAT         +0.3538   +0.4515   -0.0514   +0.4000   -0.0462  +5.7e-16
+     FIRMTAX     -0.0420   +0.0000   -0.0168   -0.0168   -0.0252  -6.0e-16
+     PITAX       -0.0132   +0.0000   -0.0061   -0.0061   -0.0071  +1.6e-16
+     TPROD       -0.0126   +0.0000   -0.0047   -0.0047   -0.0079  +2.6e-16
+     TESP        -0.0070   +0.0000   -0.0070   -0.0070   +0.0000  -7.8e-17
+     TARANCEL    -0.0057   +0.0000   -0.0029   -0.0029   -0.0029  +5.5e-17
      ------------------------------------------------------------------------
-     TOTAL       +0.1755   +0.4503   -0.2132   +0.2371   -0.0616  -5.0e-17
+     TOTAL       +0.2733   +0.4515   -0.0889   +0.3626   -0.0893  +3.6e-16
 
+Variable                   Base         Shock   Cambio_Pct   Impacto_PIB_Pct
+------------------  -----------  ------------  -----------  ----------------
+Tax                   51318.074    52088.9341       1.5021            0.2733
+FIRMTAX               13434.199    13315.8222      -0.8812           -0.0420
+PITAX                  5106.735     5069.3962      -0.7312           -0.0132
+VAT                   24331.999    25330.0066       4.1016            0.3538
+TPROD                  4159.657     4124.1384      -0.8539           -0.0126
+TESP                   2743.912     2724.1750      -0.7193           -0.0070
+TARANCEL               1541.571     1525.3957      -1.0492           -0.0057
+SAV                    9242.779     9175.1979      -0.7312           -0.0240
+SAVf                  52780.840    52328.8124      -0.8564           -0.1602
+SAVg                   6262.407     7016.9156      12.0482            0.2675
+TOTAL_SAV                    NA            NA           NA                NA
+SAVext                -2462.902    -2449.9650      -0.5253            0.0046
+TRGOV                  2292.646     2292.6457       0.0000            0.0000
+INC                  195455.653   194026.5318      -0.7312           -0.5066
+BTINC                200562.388   199095.9280      -0.7312           -0.5198
+INGG                  62759.358    63431.1321       1.0704            0.2381
+w__Trabajo_1              1.000        0.9945      -0.5480                NA
+w__Trabajo_2              1.000        0.9940      -0.5977                NA
+w__Trabajo_3              1.000        0.9946      -0.5399                NA
+pk                        1.000        0.9947      -0.5296                NA
+exr                       1.000        0.9947      -0.5253                NA
+CPI                       1.000        1.0000       0.0000            0.0000
+PSh                   20407.941    20445.0409       0.1818            0.0132
+inv_adj                   1.000        1.0039       0.3890            0.0000
+U                     21763.537    21604.5431      -0.7306           -0.0564
+u_rate__Trabajo_1         0.076        0.0775       1.9360            0.0000
+u_rate__Trabajo_2         0.099        0.1006       1.5809            0.0000
+u_rate__Trabajo_3         0.078        0.0794       1.8544            0.0000
+LD__Trabajo_1          5657.362     5641.8390      -0.2744           -0.0055
+LD__Trabajo_2         29269.877    29182.2714      -0.2993           -0.0311
+LD__Trabajo_3         79674.326    79458.9447      -0.2703           -0.0763
 
 Traspaso a precios de comprador: dln(pq) / dln(1 + t_iva)
+producto               t_base    dln_pq     dln_p   dln_1mt   traspaso
+--------------------  -------  --------  --------  --------  ---------
+prod_Agri              0.1327    0.0008   -0.0054    0.0061     0.1281
+prod_Min               0.0000   -0.0052   -0.0052    0.0000         NA
+prod_Manu              0.1648    0.0023   -0.0053    0.0074     0.3132
+prod_elect_agua_gas    0.1900    0.0032   -0.0052    0.0084     0.3843
+prod_const             0.0410   -0.0033   -0.0054    0.0021    -1.6039
+prod_com_hot_rest      0.1689    0.0016   -0.0060    0.0076     0.2099
+prod_trans_comu_inf    0.0813   -0.0014   -0.0054    0.0040    -0.3599
+prod_int_fin           0.0898   -0.0011   -0.0054    0.0043    -0.2426
+prod_inmo_viv          0.0176   -0.0044   -0.0053    0.0009    -4.8286
+prod_serv_emp          0.1733    0.0024   -0.0054    0.0077     0.3049
+prod_serv_pers         0.0168   -0.0045   -0.0054    0.0009    -5.2415
+prod_adm_pub           0.0000   -0.0054   -0.0054    0.0000         NA
 
 ==========================================================================================
 SHOCK 3: Aumento de 10% en la carga efectiva de PIT
@@ -195,81 +278,115 @@ Parametro pit: base 0.025462 -> shock 0.028008
 
 --- RESULTADOS DE LA SIMULACIÓN: Aumento 10% PIT ---
 PIB Nominal Base:     282097.80 
-PIB Nominal Shock:    280195.92 
-Cambio PIB Nominal:   -0.674191 %
+PIB Nominal Shock:    281855.91 
+Cambio PIB Nominal:   -0.085747 %
 PIB Real Base:        282097.80 
-PIB Real Shock:       280787.82 
-Cambio PIB Real (%):  -0.464371 %
+PIB Real Shock:       281851.30 
+Cambio PIB Real (%):  -0.087381 %
   ├─ Cambios en Componentes Reales:
-     ├─ Consumo (C_real)   :  -0.6335 %  (nominal:  -0.8359 %)
-     ├─ Inversión (I_real) :  -0.2541 %  (nominal:  -0.4497 %)
+     ├─ Consumo (C_real)   :  -0.3058 %  (nominal:  -0.3058 %)
+     ├─ Inversión (I_real) :   0.4001 %  (nominal:   0.3988 %)
      ├─ Gobierno (G_real)  :   0.0000 %
-     ├─ Export (X_real)    :  -0.6146 %  (nominal:  -0.7846 %)
-     └─ Import (M_real)    :  -0.5683 %  (nominal:  -0.7384 %)
+     ├─ Export (X_real)    :  -0.0502 %  (nominal:  -0.0611 %)
+     └─ Import (M_real)    :  -0.0516 %  (nominal:  -0.0626 %)
 
   Niveles Comercio Exterior:
-     Export Base:   86815.42   Shock:   86134.25   Δ:    -681.17
-     Import Base:   84351.36   Shock:   83728.48   Δ:    -622.89
-     Bal.Com Base:    2464.05   Shock:    2405.77   Δ:     -58.28
+     Export Base:   86815.42   Shock:   86762.34   Δ:     -53.08
+     Import Base:   84351.36   Shock:   84298.56   Δ:     -52.81
+     Bal.Com Base:    2464.05   Shock:    2463.78   Δ:      -0.27
 
   Mercado Laboral:
      Tasa Desempleo (u_rate__Trabajo_1) Base :   7.6000 %
-     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.7577 %
-     Variación (p.p.)              :   0.1577 pp
+     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.6519 %
+     Variación (p.p.)              :   0.0519 pp
      Tasa Desempleo (u_rate__Trabajo_2) Base :   9.9000 %
-     Tasa Desempleo (u_rate__Trabajo_2) Shock:  10.0492 %
-     Variación (p.p.)              :   0.1492 pp
+     Tasa Desempleo (u_rate__Trabajo_2) Shock:   9.9600 %
+     Variación (p.p.)              :   0.0600 pp
      Tasa Desempleo (u_rate__Trabajo_3) Base :   7.8000 %
-     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.9479 %
-     Variación (p.p.)              :   0.1479 pp
+     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.8631 %
+     Variación (p.p.)              :   0.0631 pp
 
   Mercado de Capital:
      Utilización (u_k)  Base :  82.0000 %
-     Utilización (u_k)  Shock:  81.5033 %
-     Variación (p.p.)         :  -0.4967 pp
-     Capacidad ociosa   Base :  18.0000 %   Shock:  18.4967 %
-     Capital utilizado (KD)   :  -0.6057 %
-     Retorno capital (pk)     :  -0.1214 %
-     psi implícito            :   0.2000   (declarado: 0.2000)
+     Utilización (u_k)  Shock:  81.9549 %
+     Variación (p.p.)         :  -0.0451 pp
+     Capacidad ociosa   Base :  18.0000 %   Shock:  18.0451 %
+     Capital utilizado (KD)   :  -0.0550 %
+     Retorno capital (pk)     :  -0.0210 %
+     Retorno neto capital     :  -0.0824 %
+     psi implícito (neto)     :   1.5000   (declarado: 1.5000)
 
   Diagnóstico Okun (agregado, ponderado por fuerza de trabajo):
-     u agregado Base :   8.3359 %   Shock:   8.4846 %
-     Elast. empleo-producto  (eta_L)  :   0.6022
-     Elast. fuerza trabajo   (eta_LF) :   0.2531
-     Coef. Okun implícito             :   0.3203   [ref. 0.28-0.37]
-     Identidad (1-u)(eta_L - eta_LF)  :   0.3199
+     u agregado Base :   8.3359 %   Shock:   8.3976 %
+     Elast. empleo-producto  (eta_L)  :   1.3293
+     Elast. fuerza trabajo   (eta_LF) :   0.5585
+     Coef. Okun implícito             :   0.7069   [ref. 0.28-0.37]
+     Identidad (1-u)(eta_L - eta_LF)  :   0.7066
 
   VA real (costo de factores) vs PIB real (gasto):
      Suma VA base (control ~ K+L = 249319.5) :    249320.66
-     Cambio producto bruto real (V)          :  -0.4818 %
-     Cambio VA real                          :  -0.4559 %
-     Cambio PIB real                         :  -0.4644 %
-     Impl. base real imptos. indirectos      :  -0.5290 %
-     Okun contra VA real                     :   0.3263
+     Cambio producto bruto real (V)          :  -0.0662 %
+     Cambio VA real                          :  -0.0831 %
+     Cambio PIB real                         :  -0.0874 %
+     Impl. base real imptos. indirectos      :  -0.1200 %
+     Okun contra VA real                     :   0.7434
 
   Recaudación Fiscal (% del PIB nominal base):
      Variable      Base (%PIB)  Shock(%PIB)  Δ (pp PIB)
      ----------------------------------------------------
-     Tax Total        18.1916     18.2442     +0.0527
-     FirmTax           4.7622      4.7277     -0.0346
-     PITax             1.8103      1.9798     +0.1696
-     VAT               8.6254      8.5633     -0.0621
-     Prod. Tax         1.4745      1.4640     -0.0105
-     Spec. Tax         0.9727      0.9671     -0.0056
-     Tariffs           0.5465      0.5424     -0.0041
+     Tax Total        18.1916     18.3540     +0.1624
+     FirmTax           4.7622      4.7586     -0.0036
+     PITax             1.8103      1.9904     +0.1801
+     VAT               8.6254      8.6155     -0.0099
+     Prod. Tax         1.4745      1.4719     -0.0027
+     Spec. Tax         0.9727      0.9714     -0.0012
+     Tariffs           0.5465      0.5461     -0.0004
 
   Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):
      Impuesto    ΔR(pp)   Ef.Tasa   Ef.Cant  Ef.Total   Ef.Prec     Resid
      ------------------------------------------------------------------------
-     VAT         -0.0621   +0.0000   -0.0448   -0.0448   -0.0173  +1.1e-15
-     FIRMTAX     -0.0346   +0.0000   -0.0288   -0.0288   -0.0058  -2.7e-16
-     PITAX       +0.1696   +0.1805   -0.0071   +0.1734   -0.0039  -9.1e-17
-     TPROD       -0.0105   +0.0000   -0.0074   -0.0074   -0.0032  +1.3e-16
-     TESP        -0.0056   +0.0000   -0.0056   -0.0056   +0.0000  -1.3e-16
-     TARANCEL    -0.0041   +0.0000   -0.0031   -0.0031   -0.0009  +1.8e-17
+     VAT         -0.0099   +0.0000   -0.0098   -0.0098   -0.0000  +3.4e-16
+     FIRMTAX     -0.0036   +0.0000   -0.0026   -0.0026   -0.0010  -3.9e-16
+     PITAX       +0.1801   +0.1810   -0.0011   +0.1799   +0.0003  +1.3e-16
+     TPROD       -0.0027   +0.0000   -0.0027   -0.0027   +0.0000  +1.8e-16
+     TESP        -0.0012   +0.0000   -0.0012   -0.0012   +0.0000  -1.1e-16
+     TARANCEL    -0.0004   +0.0000   -0.0003   -0.0003   -0.0001  +4.0e-17
      ------------------------------------------------------------------------
-     TOTAL       +0.0527   +0.1805   -0.0968   +0.0837   -0.0310  +7.5e-16
+     TOTAL       +0.1624   +0.1810   -0.0178   +0.1632   -0.0008  +1.9e-16
 
+Variable                   Base         Shock   Cambio_Pct   Impacto_PIB_Pct
+------------------  -----------  ------------  -----------  ----------------
+Tax                   51318.074    51776.2213       0.8928            0.1624
+FIRMTAX               13434.199    13423.9916      -0.0760           -0.0036
+PITAX                  5106.735     5614.8986       9.9508            0.1801
+VAT                   24331.999    24304.2079      -0.1142           -0.0099
+TPROD                  4159.657     4152.1111      -0.1814           -0.0027
+TESP                   2743.912     2740.4312      -0.1269           -0.0012
+TARANCEL               1541.571     1540.5809      -0.0642           -0.0004
+SAV                    9242.779     9214.5103      -0.3058           -0.0100
+SAVf                  52780.840    52720.7278      -0.1139           -0.0213
+SAVg                   6262.407     6625.1701       5.7927            0.1286
+TOTAL_SAV                    NA            NA           NA                NA
+SAVext                -2462.902    -2462.6318      -0.0110            0.0001
+TRGOV                  2292.646     2292.6457       0.0000            0.0000
+INC                  195455.653   194857.8651      -0.3058           -0.2119
+BTINC                200562.388   200472.7637      -0.0447           -0.0318
+INGG                  62759.358    63206.1615       0.7119            0.1584
+w__Trabajo_1              1.000        1.0007       0.0680                NA
+w__Trabajo_2              1.000        1.0003       0.0320                NA
+w__Trabajo_3              1.000        1.0003       0.0254                NA
+pk                        1.000        0.9998      -0.0210                NA
+exr                       1.000        0.9999      -0.0110                NA
+CPI                       1.000        1.0000       0.0000            0.0000
+PSh                   20407.941    20476.4319       0.3356            0.0243
+inv_adj                   1.000        1.0040       0.4001            0.0000
+U                     21763.537    21696.9751      -0.3058           -0.0236
+u_rate__Trabajo_1         0.076        0.0765       0.6826            0.0000
+u_rate__Trabajo_2         0.099        0.0996       0.6058            0.0000
+u_rate__Trabajo_3         0.078        0.0786       0.8096            0.0000
+LD__Trabajo_1          5657.362     5651.8872      -0.0968           -0.0019
+LD__Trabajo_2         29269.877    29236.2936      -0.1147           -0.0119
+LD__Trabajo_3         79674.326    79580.2690      -0.1181           -0.0333
 
 ==========================================================================================
 SHOCK 4: Aumento de impuestos especificos (por unidad fisica, demanda final)
@@ -278,83 +395,120 @@ Factor sobre tau_e: 1.100000  (1 productos con tau_e > 0)
 
 --- RESULTADOS DE LA SIMULACIÓN: Aumento impuestos específicos ---
 PIB Nominal Base:     282097.80 
-PIB Nominal Shock:    281512.75 
-Cambio PIB Nominal:   -0.207390 %
+PIB Nominal Shock:    281748.55 
+Cambio PIB Nominal:   -0.123803 %
 PIB Real Base:        282097.80 
-PIB Real Shock:       281452.10 
-Cambio PIB Real (%):  -0.228891 %
+PIB Real Shock:       281826.87 
+Cambio PIB Real (%):  -0.096041 %
   ├─ Cambios en Componentes Reales:
-     ├─ Consumo (C_real)   :  -0.3037 %  (nominal:  -0.2517 %)
-     ├─ Inversión (I_real) :  -0.1615 %  (nominal:  -0.1362 %)
+     ├─ Consumo (C_real)   :  -0.1864 %  (nominal:  -0.1867 %)
+     ├─ Inversión (I_real) :   0.0684 %  (nominal:   0.0370 %)
      ├─ Gobierno (G_real)  :   0.0000 %
-     ├─ Export (X_real)    :  -0.4262 %  (nominal:  -0.5006 %)
-     └─ Import (M_real)    :  -0.4193 %  (nominal:  -0.4936 %)
+     ├─ Export (X_real)    :  -0.2273 %  (nominal:  -0.3739 %)
+     └─ Import (M_real)    :  -0.2339 %  (nominal:  -0.3805 %)
 
   Niveles Comercio Exterior:
-     Export Base:   86815.42   Shock:   86380.83   Δ:    -434.59
-     Import Base:   84351.36   Shock:   83935.00   Δ:    -416.36
-     Bal.Com Base:    2464.05   Shock:    2445.82   Δ:     -18.23
+     Export Base:   86815.42   Shock:   86490.85   Δ:    -324.57
+     Import Base:   84351.36   Shock:   84030.41   Δ:    -320.95
+     Bal.Com Base:    2464.05   Shock:    2460.43   Δ:      -3.62
 
   Mercado Laboral:
      Tasa Desempleo (u_rate__Trabajo_1) Base :   7.6000 %
-     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.6747 %
-     Variación (p.p.)              :   0.0747 pp
+     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.6381 %
+     Variación (p.p.)              :   0.0381 pp
      Tasa Desempleo (u_rate__Trabajo_2) Base :   9.9000 %
-     Tasa Desempleo (u_rate__Trabajo_2) Shock:   9.9630 %
-     Variación (p.p.)              :   0.0630 pp
+     Tasa Desempleo (u_rate__Trabajo_2) Shock:   9.9348 %
+     Variación (p.p.)              :   0.0348 pp
      Tasa Desempleo (u_rate__Trabajo_3) Base :   7.8000 %
-     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.8576 %
-     Variación (p.p.)              :   0.0576 pp
+     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.8321 %
+     Variación (p.p.)              :   0.0321 pp
 
   Mercado de Capital:
      Utilización (u_k)  Base :  82.0000 %
-     Utilización (u_k)  Shock:  81.7499 %
-     Variación (p.p.)         :  -0.2501 pp
-     Capacidad ociosa   Base :  18.0000 %   Shock:  18.2501 %
-     Capital utilizado (KD)   :  -0.3050 %
-     Retorno capital (pk)     :  -0.0611 %
-     psi implícito            :   0.2000   (declarado: 0.2000)
+     Utilización (u_k)  Shock:  81.9140 %
+     Variación (p.p.)         :  -0.0860 pp
+     Capacidad ociosa   Base :  18.0000 %   Shock:  18.0860 %
+     Capital utilizado (KD)   :  -0.1049 %
+     Retorno capital (pk)     :  -0.1573 %
+     Retorno neto capital     :  -0.1573 %
+     psi implícito (neto)     :   1.5000   (declarado: 1.5000)
 
   Diagnóstico Okun (agregado, ponderado por fuerza de trabajo):
-     u agregado Base :   8.3359 %   Shock:   8.3957 %
-     Elast. empleo-producto  (eta_L)  :   0.4918
-     Elast. fuerza trabajo   (eta_LF) :   0.2067
-     Coef. Okun implícito             :   0.2614   [ref. 0.28-0.37]
-     Identidad (1-u)(eta_L - eta_LF)  :   0.2613
+     u agregado Base :   8.3359 %   Shock:   8.3689 %
+     Elast. empleo-producto  (eta_L)  :   0.6476
+     Elast. fuerza trabajo   (eta_LF) :   0.2722
+     Coef. Okun implícito             :   0.3442   [ref. 0.28-0.37]
+     Identidad (1-u)(eta_L - eta_LF)  :   0.3442
 
   VA real (costo de factores) vs PIB real (gasto):
      Suma VA base (control ~ K+L = 249319.5) :    249320.66
-     Cambio producto bruto real (V)          :  -0.2628 %
-     Cambio VA real                          :  -0.2166 %
-     Cambio PIB real                         :  -0.2289 %
-     Impl. base real imptos. indirectos      :  -0.3227 %
-     Okun contra VA real                     :   0.2763
+     Cambio producto bruto real (V)          :  -0.1160 %
+     Cambio VA real                          :  -0.0853 %
+     Cambio PIB real                         :  -0.0960 %
+     Impl. base real imptos. indirectos      :  -0.1779 %
+     Okun contra VA real                     :   0.3877
 
   Recaudación Fiscal (% del PIB nominal base):
      Variable      Base (%PIB)  Shock(%PIB)  Δ (pp PIB)
      ----------------------------------------------------
-     Tax Total        18.1916     18.2357     +0.0441
-     FirmTax           4.7622      4.7448     -0.0174
-     PITax             1.8103      1.8057     -0.0046
-     VAT               8.6254      8.6061     -0.0193
-     Prod. Tax         1.4745      1.4707     -0.0039
-     Spec. Tax         0.9727      1.0648     +0.0921
-     Tariffs           0.5465      0.5436     -0.0029
+     Tax Total        18.1916     18.2528     +0.0612
+     FirmTax           4.7622      4.7498     -0.0125
+     PITax             1.8103      1.8069     -0.0034
+     VAT               8.6254      8.6139     -0.0115
+     Prod. Tax         1.4745      1.4716     -0.0029
+     Spec. Tax         0.9727      1.0665     +0.0938
+     Tariffs           0.5465      0.5442     -0.0022
 
   Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):
      Impuesto    ΔR(pp)   Ef.Tasa   Ef.Cant  Ef.Total   Ef.Prec     Resid
      ------------------------------------------------------------------------
-     VAT         -0.0193   +0.0000   -0.0277   -0.0277   +0.0084  +1.3e-15
-     FIRMTAX     -0.0174   +0.0000   -0.0145   -0.0145   -0.0029  -5.0e-17
-     PITAX       -0.0046   +0.0000   -0.0030   -0.0030   -0.0015  +1.8e-17
-     TPROD       -0.0039   +0.0000   -0.0025   -0.0025   -0.0014  -5.0e-17
-     TESP        +0.0921   +0.0970   -0.0049   +0.0921   +0.0000  -8.1e-17
-     TARANCEL    -0.0029   +0.0000   -0.0025   -0.0025   -0.0004  +8.5e-17
+     VAT         -0.0115   +0.0000   -0.0153   -0.0153   +0.0038  -1.6e-16
+     FIRMTAX     -0.0125   +0.0000   -0.0050   -0.0050   -0.0075  -8.3e-16
+     PITAX       -0.0034   +0.0000   -0.0017   -0.0017   -0.0017  +7.3e-17
+     TPROD       -0.0029   +0.0000   -0.0008   -0.0008   -0.0021  -3.7e-17
+     TESP        +0.0938   +0.0971   -0.0033   +0.0938   +0.0000  -1.2e-16
+     TARANCEL    -0.0022   +0.0000   -0.0014   -0.0014   -0.0008  -6.9e-18
      ------------------------------------------------------------------------
-     TOTAL       +0.0441   +0.0970   -0.0552   +0.0419   +0.0022  +1.3e-15
+     TOTAL       +0.0612   +0.0971   -0.0276   +0.0695   -0.0083  -1.1e-15
 
+Variable                   Base         Shock   Cambio_Pct   Impacto_PIB_Pct
+------------------  -----------  ------------  -----------  ----------------
+Tax                   51318.074    51490.8375       0.3367            0.0612
+FIRMTAX               13434.199    13398.9930      -0.2621           -0.0125
+PITAX                  5106.735     5097.1986      -0.1867           -0.0034
+VAT                   24331.999    24299.5179      -0.1335           -0.0115
+TPROD                  4159.657     4151.3738      -0.1991           -0.0029
+TESP                   2743.912     3008.5138       9.6432            0.0938
+TARANCEL               1541.571     1535.2404      -0.4106           -0.0022
+SAV                    9242.779     9225.5180      -0.1867           -0.0061
+SAVf                  52780.840    52649.0773      -0.2496           -0.0467
+SAVg                   6262.407     6437.7808       2.8004            0.0622
+TOTAL_SAV                    NA            NA           NA                NA
+SAVext                -2462.902    -2459.2846      -0.1469            0.0013
+TRGOV                  2292.646     2292.6457       0.0000            0.0000
+INC                  195455.653   195090.6427      -0.1867           -0.1294
+BTINC                200562.388   200187.8412      -0.1867           -0.1328
+INGG                  62759.358    62903.0070       0.2289            0.0509
+w__Trabajo_1              1.000        0.9986      -0.1422                NA
+w__Trabajo_2              1.000        0.9987      -0.1330                NA
+w__Trabajo_3              1.000        0.9988      -0.1199                NA
+pk                        1.000        0.9984      -0.1573                NA
+exr                       1.000        0.9985      -0.1469                NA
+CPI                       1.000        1.0000       0.0000            0.0000
+PSh                   20407.941    20409.4953       0.0076            0.0006
+inv_adj                   1.000        1.0007       0.0684            0.0000
+U                     21763.537    21722.9344      -0.1866           -0.0144
+u_rate__Trabajo_1         0.076        0.0764       0.5015            0.0000
+u_rate__Trabajo_2         0.099        0.0993       0.3513            0.0000
+u_rate__Trabajo_3         0.078        0.0783       0.4112            0.0000
+LD__Trabajo_1          5657.362     5653.3391      -0.0711           -0.0014
+LD__Trabajo_2         29269.877    29250.3989      -0.0665           -0.0069
+LD__Trabajo_3         79674.326    79626.5484      -0.0600           -0.0169
 
 Traspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva))
+producto        dpq        dp   dtau_iva   traspaso
+----------  -------  --------  ---------  ---------
+prod_Manu    0.0021   -0.0015     0.0039     0.5509
 
 ==========================================================================================
 SHOCK 5: Combinado - reduccion IDPC + aumento PIT
@@ -364,90 +518,190 @@ Parametro pit: base 0.025462 -> shock 0.027244
 
 --- RESULTADOS DE LA SIMULACIÓN: Mix: Reducción IDPC + Aumento PIT ---
 PIB Nominal Base:     282097.80 
-PIB Nominal Shock:    281240.59 
-Cambio PIB Nominal:   -0.303871 %
+PIB Nominal Shock:    282193.63 
+Cambio PIB Nominal:   0.033969 %
 PIB Real Base:        282097.80 
-PIB Real Shock:       281507.74 
-Cambio PIB Real (%):  -0.209168 %
+PIB Real Shock:       282182.60 
+Cambio PIB Real (%):  0.030060 %
   ├─ Cambios en Componentes Reales:
-     ├─ Consumo (C_real)   :  -0.3523 %  (nominal:  -0.4437 %)
-     ├─ Inversión (I_real) :   0.0981 %  (nominal:   0.0103 %)
+     ├─ Consumo (C_real)   :  -0.1547 %  (nominal:  -0.1547 %)
+     ├─ Inversión (I_real) :   0.5068 %  (nominal:   0.5028 %)
      ├─ Gobierno (G_real)  :   0.0000 %
-     ├─ Export (X_real)    :  -0.2941 %  (nominal:  -0.3733 %)
-     └─ Import (M_real)    :  -0.2358 %  (nominal:  -0.3151 %)
+     ├─ Export (X_real)    :   0.1011 %  (nominal:   0.0767 %)
+     └─ Import (M_real)    :   0.1040 %  (nominal:   0.0796 %)
 
   Niveles Comercio Exterior:
-     Export Base:   86815.42   Shock:   86491.31   Δ:    -324.11
-     Import Base:   84351.36   Shock:   84085.58   Δ:    -265.78
-     Bal.Com Base:    2464.05   Shock:    2405.73   Δ:     -58.33
+     Export Base:   86815.42   Shock:   86881.96   Δ:      66.54
+     Import Base:   84351.36   Shock:   84418.51   Δ:      67.14
+     Bal.Com Base:    2464.05   Shock:    2463.45   Δ:      -0.60
 
   Mercado Laboral:
      Tasa Desempleo (u_rate__Trabajo_1) Base :   7.6000 %
-     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.6637 %
-     Variación (p.p.)              :   0.0637 pp
+     Tasa Desempleo (u_rate__Trabajo_1) Shock:   7.6173 %
+     Variación (p.p.)              :   0.0173 pp
      Tasa Desempleo (u_rate__Trabajo_2) Base :   9.9000 %
-     Tasa Desempleo (u_rate__Trabajo_2) Shock:   9.9651 %
-     Variación (p.p.)              :   0.0651 pp
+     Tasa Desempleo (u_rate__Trabajo_2) Shock:   9.9282 %
+     Variación (p.p.)              :   0.0282 pp
      Tasa Desempleo (u_rate__Trabajo_3) Base :   7.8000 %
-     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.8678 %
-     Variación (p.p.)              :   0.0678 pp
+     Tasa Desempleo (u_rate__Trabajo_3) Shock:   7.8315 %
+     Variación (p.p.)              :   0.0315 pp
 
   Mercado de Capital:
      Utilización (u_k)  Base :  82.0000 %
-     Utilización (u_k)  Shock:  81.7756 %
-     Variación (p.p.)         :  -0.2244 pp
-     Capacidad ociosa   Base :  18.0000 %   Shock:  18.2244 %
-     Capital utilizado (KD)   :  -0.2736 %
-     Retorno capital (pk)     :  -0.0548 %
-     psi implícito            :   0.2000   (declarado: 0.2000)
+     Utilización (u_k)  Shock:  82.0875 %
+     Variación (p.p.)         :   0.0875 pp
+     Capacidad ociosa   Base :  18.0000 %   Shock:  17.9125 %
+     Capital utilizado (KD)   :   0.1067 %
+     Retorno capital (pk)     :  -0.0507 %
+     Retorno neto capital     :   0.1601 %
+     psi implícito (neto)     :   1.5000   (declarado: 1.5000)
 
   Diagnóstico Okun (agregado, ponderado por fuerza de trabajo):
-     u agregado Base :   8.3359 %   Shock:   8.4028 %
-     Elast. empleo-producto  (eta_L)  :   0.6016
-     Elast. fuerza trabajo   (eta_LF) :   0.2527
-     Coef. Okun implícito             :   0.3199   [ref. 0.28-0.37]
-     Identidad (1-u)(eta_L - eta_LF)  :   0.3198
+     u agregado Base :   8.3359 %   Shock:   8.3659 %
+     Elast. empleo-producto  (eta_L)  :  -1.8757
+     Elast. fuerza trabajo   (eta_LF) :  -0.7878
+     Coef. Okun implícito             :  -0.9975   [ref. 0.28-0.37]
+     Identidad (1-u)(eta_L - eta_LF)  :  -0.9973
 
   VA real (costo de factores) vs PIB real (gasto):
      Suma VA base (control ~ K+L = 249319.5) :    249320.66
-     Cambio producto bruto real (V)          :  -0.2101 %
-     Cambio VA real                          :  -0.2057 %
-     Cambio PIB real                         :  -0.2092 %
-     Impl. base real imptos. indirectos      :  -0.2357 %
-     Okun contra VA real                     :   0.3253
+     Cambio producto bruto real (V)          :   0.0576 %
+     Cambio VA real                          :   0.0317 %
+     Cambio PIB real                         :   0.0301 %
+     Impl. base real imptos. indirectos      :   0.0174 %
+     Okun contra VA real                     :  -0.9453
 
   Recaudación Fiscal (% del PIB nominal base):
      Variable      Base (%PIB)  Shock(%PIB)  Δ (pp PIB)
      ----------------------------------------------------
-     Tax Total        18.1916     18.1527     -0.0389
-     FirmTax           4.7622      4.6385     -0.1237
-     PITax             1.8103      1.9319     +0.1217
-     VAT               8.6254      8.5980     -0.0274
-     Prod. Tax         1.4745      1.4694     -0.0052
-     Spec. Tax         0.9727      0.9702     -0.0025
-     Tariffs           0.5465      0.5447     -0.0017
+     Tax Total        18.1916     18.2146     +0.0230
+     FirmTax           4.7622      4.6564     -0.1059
+     PITax             1.8103      1.9375     +0.1273
+     VAT               8.6254      8.6272     +0.0018
+     Prod. Tax         1.4745      1.4737     -0.0009
+     Spec. Tax         0.9727      0.9729     +0.0002
+     Tariffs           0.5465      0.5469     +0.0004
 
   Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):
      Impuesto    ΔR(pp)   Ef.Tasa   Ef.Cant  Ef.Total   Ef.Prec     Resid
      ------------------------------------------------------------------------
-     VAT         -0.0274   +0.0000   -0.0196   -0.0196   -0.0078  +6.6e-16
-     FIRMTAX     -0.1237   -0.1083   -0.0129   -0.1212   -0.0026  -5.4e-16
-     PITAX       +0.1217   +0.1266   -0.0032   +0.1234   -0.0017  -2.8e-17
-     TPROD       -0.0052   +0.0000   -0.0037   -0.0037   -0.0014  +9.3e-17
-     TESP        -0.0025   +0.0000   -0.0025   -0.0025   +0.0000  -1.3e-16
-     TARANCEL    -0.0017   +0.0000   -0.0013   -0.0013   -0.0004  +7.4e-17
+     VAT         +0.0018   +0.0000   +0.0019   +0.0019   -0.0001  +1.2e-15
+     FIRMTAX     -0.1059   -0.1085   +0.0050   -0.1035   -0.0024  -7.3e-16
+     PITAX       +0.1273   +0.1267   -0.0001   +0.1267   +0.0006  +1.0e-16
+     TPROD       -0.0009   +0.0000   -0.0009   -0.0009   +0.0001  +2.9e-16
+     TESP        +0.0002   +0.0000   +0.0002   +0.0002   +0.0000  -8.8e-17
+     TARANCEL    +0.0004   +0.0000   +0.0006   +0.0006   -0.0001  -1.7e-18
      ------------------------------------------------------------------------
-     TOTAL       -0.0389   +0.0183   -0.0432   -0.0249   -0.0139  +1.3e-16
+     TOTAL       +0.0230   +0.0182   +0.0067   +0.0249   -0.0019  +7.6e-16
 
+Variable                   Base         Shock   Cambio_Pct   Impacto_PIB_Pct
+------------------  -----------  ------------  -----------  ----------------
+Tax                   51318.074    51382.9582       0.1264            0.0230
+FIRMTAX               13434.199    13135.5479      -2.2231           -0.1059
+PITAX                  5106.735     5465.7481       7.0302            0.1273
+VAT                   24331.999    24337.0533       0.0208            0.0018
+TPROD                  4159.657     4157.2247      -0.0585           -0.0009
+TESP                   2743.912     2744.5748       0.0241            0.0002
+TARANCEL               1541.571     1542.8094       0.0804            0.0004
+SAV                    9242.779     9228.4769      -0.1547           -0.0051
+SAVf                  52780.840    53098.2201       0.6013            0.1125
+SAVg                   6262.407     6305.2616       0.6843            0.0152
+TOTAL_SAV                    NA            NA           NA                NA
+SAVext                -2462.902    -2462.3017      -0.0244            0.0002
+TRGOV                  2292.646     2292.6457       0.0000            0.0000
+INC                  195455.653   195153.2149      -0.1547           -0.1072
+BTINC                200562.388   200618.9631       0.0282            0.0201
+INGG                  62759.358    62828.2179       0.1097            0.0244
+w__Trabajo_1              1.000        1.0012       0.1186                NA
+w__Trabajo_2              1.000        1.0008       0.0750                NA
+w__Trabajo_3              1.000        1.0007       0.0651                NA
+pk                        1.000        0.9995      -0.0507                NA
+exr                       1.000        0.9998      -0.0244                NA
+CPI                       1.000        1.0000       0.0000            0.0000
+PSh                   20407.941    20422.6883       0.0723            0.0052
+inv_adj                   1.000        1.0051       0.5068            0.0000
+U                     21763.537    21729.8633      -0.1547           -0.0119
+u_rate__Trabajo_1         0.076        0.0762       0.2273            0.0000
+u_rate__Trabajo_2         0.099        0.0993       0.2852            0.0000
+u_rate__Trabajo_3         0.078        0.0783       0.4043            0.0000
+LD__Trabajo_1          5657.362     5655.5384      -0.0322           -0.0006
+LD__Trabajo_2         29269.877    29254.0632      -0.0540           -0.0056
+LD__Trabajo_3         79674.326    79627.3451      -0.0590           -0.0167
 
 ==========================================================================================
-SENSIBILIDAD: cierre ahorro-inversion (theta_g)
+PRUEBAS DE CONSISTENCIA DEL CIERRE
 ==========================================================================================
-theta_g = fraccion del ahorro publico adicional que financia inversion.
-theta_g = 0 reproduce los choques individuales reportados arriba.
-dPIB_real, dI_real en %; dTax, dSAVg, dSAV, dSAVf en pp del PIB nominal base;
-dY_dR = dPIB_real / dTax (multiplicador sobre recaudacion neta).
+1) Homogeneidad de grado cero: numerario x 1.10. Desvio relativo maximo (tolerancia 1e-05).
 
+grupo                               n_var   desvio_max  cumple 
+---------------------------------  ------  -----------  -------
+Precios (escalan por k)                97        7e-10  TRUE   
+Flujos nominales (escalan por k)       19        5e-10  TRUE   
+Cantidades (no cambian)               123        6e-10  TRUE   
+
+2) Balanza de pagos: brecha base SAVext - (M - X) = 1.1523 (redondeo de la SAM).
+   d_brecha_BdP debe ser ~0 en cada choque.
+
+3) Resumen de choques (PIB e inversion en %; recaudacion y efecto tasa en pp del PIB base).
+   mult_ex_ante   = dPIB_real / efecto tasa.
+   pct_compensado = parte del efecto tasa que no llega a la recaudacion neta
+                    (autofinanciamiento en rebajas, erosion de base en alzas).
+   CPI            = numerario; debe ser 1 en todos los choques.
+
+choque      dPIB_real   dI_real   dC_real   dTax_pp   ef_tasa_pp   mult_ex_ante   pct_compensado   CPI   d_brecha_BdP
+---------  ----------  --------  --------  --------  -----------  -------------  ---------------  ----  -------------
+IDPC           0.1358    0.3373    0.0885   -0.1354      -0.1617        -0.8400          16.2707     1         0.0018
+IVA           -0.3466    0.3890   -0.7299    0.2733       0.4515        -0.7677          39.4720     1        -0.0102
+PIT           -0.0874    0.4001   -0.3058    0.1624       0.1810        -0.4828          10.2656     1        -0.0009
+TESP          -0.0960    0.0684   -0.1864    0.0612       0.0971        -0.9890          36.9352     1        -0.0030
+IDPC+PIT       0.0301    0.5068   -0.1547    0.0230       0.0182         1.6487         -26.1485     1         0.0006
 
 ==========================================================================================
-Fin del reporte - 2026-10-20 10:50:21 -03
+SENSIBILIDAD: elasticidades de oferta de factores
+==========================================================================================
+elast_empleo  = elasticidad del empleo al salario real neto de PIT = 1/(phi*(1-epsilon)).
+elast_capital = elasticidad del capital utilizado al retorno real neto = 1/psi.
+Calibracion vigente: elast_empleo = 0.500 (phi = 3.4483), elast_capital = 0.667 (psi = 1.50).
+dPIB_real, dKD, dLD en %; dTax y efecto tasa en pp del PIB base.
+
+choque    elast_empleo   elast_capital      phi   psi   dPIB_real       dKD       dLD   dTax_pp   ef_tasa_pp   mult_ex_ante   pct_compensado
+-------  -------------  --------------  -------  ----  ----------  --------  --------  --------  -----------  -------------  ---------------
+IDPC             0.862          5.0000   2.0002   0.2      0.6090    0.9077    0.2352   -0.0407      -0.1621        -3.7560          74.8771
+IDPC             0.500          5.0000   3.4483   0.2      0.5294    0.8383    0.1460   -0.0562      -0.1621        -3.2664          65.3358
+IDPC             0.250          5.0000   6.8966   0.2      0.4675    0.7842    0.0767   -0.0682      -0.1620        -2.8857          57.9182
+IDPC             0.862          1.0000   2.0002   1.0      0.2080    0.3110    0.0799   -0.1211      -0.1618        -1.2856          25.1609
+IDPC             0.500          1.0000   3.4483   1.0      0.1905    0.3025    0.0522   -0.1244      -0.1617        -1.1777          23.1011
+IDPC             0.250          1.0000   6.8966   1.0      0.1756    0.2953    0.0286   -0.1272      -0.1617        -1.0856          21.3439
+IDPC             0.862          0.6667   2.0002   1.5      0.1471    0.2204    0.0563   -0.1333      -0.1617        -0.9094          17.5871
+IDPC             0.500          0.6667   3.4483   1.5      0.1358    0.2162    0.0371   -0.1354      -0.1617        -0.8400          16.2708
+IDPC             0.250          0.6667   6.8966   1.5      0.1261    0.2125    0.0205   -0.1372      -0.1617        -0.7799          15.1310
+IDPC             0.862          0.5000   2.0002   2.0      0.1136    0.1707    0.0433   -0.1400      -0.1617        -0.7028          13.4268
+IDPC             0.500          0.5000   3.4483   2.0      0.1054    0.1682    0.0287   -0.1415      -0.1617        -0.6522          12.4713
+IDPC             0.250          0.5000   6.8966   2.0      0.0983    0.1659    0.0159   -0.1428      -0.1617        -0.6081          11.6372
+IVA              0.862          5.0000   2.0002   0.2     -1.2303   -1.5732   -0.7328    0.0920       0.4492        -2.7387          79.5285
+IVA              0.500          5.0000   3.4483   0.2     -0.9851   -1.3607   -0.4557    0.1409       0.4498        -2.1900          68.6835
+IVA              0.250          5.0000   6.8966   0.2     -0.7942   -1.1952   -0.2398    0.1790       0.4503        -1.7637          60.2594
+IVA              0.862          1.0000   2.0002   1.0     -0.5365   -0.5429   -0.4626    0.2351       0.4510        -1.1897          47.8723
+IVA              0.500          1.0000   3.4483   1.0     -0.4357   -0.4940   -0.3027    0.2548       0.4512        -0.9655          43.5322
+IVA              0.250          1.0000   6.8966   1.0     -0.3496   -0.4523   -0.1660    0.2716       0.4515        -0.7743          39.8317
+IVA              0.862          0.6667   2.0002   1.5     -0.4305   -0.3853   -0.4214    0.2569       0.4512        -0.9539          43.0577
+IVA              0.500          0.6667   3.4483   1.5     -0.3466   -0.3534   -0.2779    0.2733       0.4515        -0.7677          39.4720
+IVA              0.250          0.6667   6.8966   1.5     -0.2739   -0.3258   -0.1535    0.2874       0.4516        -0.6065          36.3687
+IVA              0.862          0.5000   2.0002   2.0     -0.3721   -0.2986   -0.3988    0.2690       0.4514        -0.8244          40.4133
+IVA              0.500          0.5000   3.4483   2.0     -0.2970   -0.2751   -0.2642    0.2835       0.4516        -0.6577          37.2139
+IVA              0.250          0.5000   6.8966   2.0     -0.2313   -0.2546   -0.1465    0.2963       0.4518        -0.5121          34.4218
+PIT              0.862          5.0000   2.0002   0.2     -0.2650   -0.2802   -0.2314    0.1266       0.1808        -1.4654          29.9943
+PIT              0.500          5.0000   3.4483   0.2     -0.1871   -0.2125   -0.1438    0.1420       0.1809        -1.0343          21.5247
+PIT              0.250          5.0000   6.8966   0.2     -0.1265   -0.1597   -0.0757    0.1539       0.1810        -0.6991          14.9383
+PIT              0.862          1.0000   2.0002   1.0     -0.1413   -0.0963   -0.1834    0.1518       0.1809        -0.7808          16.0884
+PIT              0.500          1.0000   3.4483   1.0     -0.1013   -0.0769   -0.1200    0.1596       0.1810        -0.5595          11.8317
+PIT              0.250          1.0000   6.8966   1.0     -0.0671   -0.0602   -0.0658    0.1662       0.1810        -0.3706           8.1983
+PIT              0.862          0.6667   2.0002   1.5     -0.1224   -0.0683   -0.1761    0.1557       0.1810        -0.6766          13.9716
+PIT              0.500          0.6667   3.4483   1.5     -0.0874   -0.0550   -0.1162    0.1624       0.1810        -0.4828          10.2656
+PIT              0.250          0.6667   6.8966   1.5     -0.0570   -0.0434   -0.0642    0.1682       0.1810        -0.3148           7.0546
+PIT              0.862          0.5000   2.0002   2.0     -0.1121   -0.0529   -0.1721    0.1578       0.1810        -0.6194          12.8089
+PIT              0.500          0.5000   3.4483   2.0     -0.0797   -0.0428   -0.1140    0.1640       0.1810        -0.4401           9.3945
+PIT              0.250          0.5000   6.8966   2.0     -0.0513   -0.0339   -0.0632    0.1694       0.1810        -0.2835           6.4116
+
+==========================================================================================
+Fin del reporte - 2026-10-20 11:58:40 -03

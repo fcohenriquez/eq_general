@@ -1,4 +1,17 @@
 ##################################
+# MEGC-Chile 12 sectores, SAM 2023.
+# Cierre macro:
+#  - Numerario: IPC (CPI[] = cpi_num). El sistema es homogeneo de grado cero en
+#    precios: todo parametro nominal esta indexado a CPI (o a exr si es externo).
+#  - Inversion determinada por el ahorro: inv_adj se ajusta para que S = I.
+#  - Ahorro externo fijo en moneda extranjera: SAVext = SAVext_target * exr.
+#  - Prestaciones sociales: lo que pagan empresas y gobierno es lo que reciben
+#    los hogares (PSh endogeno), de modo que la ley de Walras se cumple.
+#  - Las ofertas de factores responden al retorno real NETO de impuestos directos:
+#    el trabajo, al salario neto de PIT; el capital, al retorno neto del IDPC
+#    (capital de empresas) y del PIT (capital de hogares). Asi los impuestos
+#    directos e indirectos llegan a la oferta de factores por el mismo canal.
+##################################
 
 
 
@@ -247,7 +260,8 @@ block PRODUCTS
         #       sobre el precio con especifico.
         # pint: precio de los insumos intermedios; no paga especificos (supuesto) y
         #       t_iva_int = 0 salvo residuo de calibracion
-        <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + tau_e<pq_i>) * (1 + t_iva<pq_i>);
+        #       tau_e esta en pesos base por unidad fisica y se indexa al IPC (UTM).
+        <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + tau_e<pq_i> * CPI[]) * (1 + t_iva<pq_i>);
         <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>);
 
         # Demanda final gravada e intermedia, en unidades fisicas (precio basico base)
@@ -261,12 +275,12 @@ block PRODUCTS
         <qc_i::Pdom> Q<qc_i>[] = TD_Dom<qc_i>[];
 
         # Recaudacion IVA: demanda final a precio con especifico, intermedios a precio basico
-        <vt_i::Pdom> VAT_p<vt_i>[] = t_iva<vt_i> * (p<vt_i>[] + tau_e<vt_i>) * FD<vt_i>[]
+        <vt_i::Pdom> VAT_p<vt_i>[] = t_iva<vt_i> * (p<vt_i>[] + tau_e<vt_i> * CPI[]) * FD<vt_i>[]
                                    + t_iva_int<vt_i> * p<vt_i>[] * XI<vt_i>[];
 
-        # Recaudacion de especificos: monto fijo por unidad fisica de demanda final
-        # (la recaudacion sigue a los volumenes, no a los precios)
-        <te_i::Pdom> TESP_p<te_i>[] = tau_e<te_i> * FD<te_i>[];
+        # Recaudacion de especificos: monto real fijo por unidad fisica de demanda final
+        # (indexado al IPC; la recaudacion real sigue a los volumenes)
+        <te_i::Pdom> TESP_p<te_i>[] = tau_e<te_i> * CPI[] * FD<te_i>[];
 
         <idx_ar::Pdom> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
     };
@@ -290,7 +304,7 @@ block GOB
     identities
     {
         INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
-        TRGOV[] = trgov_data;
+        TRGOV[] = trgov_data * CPI[];
         SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
         #Kg[] = k_total_data * par_k_g;
         Kg[] = KD[] * par_k_g;
@@ -318,7 +332,10 @@ block EQUILIBRIUM
 
        <l::LAB> LFORCE<l>[] = l_force_data<l> * (LD<l>[] / l_total_data<l>)^epsilon<l>;
 
-       <l::LAB> w<l>[] = w_pot_calib<l> * (LD<l>[] / LFORCE<l>[])^phi<l>;
+       # Curva salarial en terminos reales y netos de PIT: el salario real neto
+       # w*(1-pit)/CPI depende del empleo. Se normaliza por la tasa de la base para
+       # que la calibracion no cambie (w = 1 en la base).
+       <l::LAB> w<l>[] * (1 - pit) / (1 - pit_base) = CPI[] * w_pot_calib<l> * (LD<l>[] / LFORCE<l>[])^phi<l>;
 
        #<l::LAB> u_rate<l>[] = (l_force_data<l> - LD<l>[]) / l_force_data<l>;
        
@@ -334,11 +351,22 @@ block EQUILIBRIUM
 
         u_k[] = KD[] / k_total_data;
 
-        pk[]  = pk_pot_calib * (u_k[])^psi;
+        # Curva de oferta de capital (utilizacion) en terminos reales y netos de
+        # impuestos directos. Tasa efectiva sobre la renta del capital: IDPC sobre el
+        # capital de empresas y PIT sobre el capital de hogares (el del gobierno no
+        # tributa). Normalizada por la tasa de la base (pk = 1 en la base).
+        pk[] * (1 - par_k_f * fit - par_k_h * pit) / (1 - par_k_f * fit_base - par_k_h * pit_base)
+              = CPI[] * pk_pot_calib * (u_k[])^psi;
 
         Kh[]  = KD[] * par_k_h;
         
-        PSh[] = pshdata;
+        # Prestaciones sociales: los hogares reciben lo que pagan empresas y gobierno
+        PSh[] = INGF[] * por_pres_soc_f + INGG[] * por_pres_soc_g;
+
+        # Indice de precios al consumidor (Laspeyres, canasta de hogares de la base)
+        # y numerario
+        CPI[] = SUM<c_cpi::Pcon>(cpi_q<c_cpi> * pq<c_cpi>[]) / cpi_den;
+        CPI[] = cpi_num;
     }
 }
 
@@ -348,22 +376,12 @@ block INVESTMENT
     {
         NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * pq<idx_nb>[]);
 
-        inv_adj_g[] = 1.0;
-        inv_adj_h[] = (SAV[] / (sh_i_h * NOM_I_BASE[]))^damp_inv;
-        inv_adj_f[] = (SAVf[] / (sh_i_f * NOM_I_BASE[]))^damp_inv;
-
-        # theta_g: fraccion del ahorro publico adicional (respecto de la base) que
-        # financia inversion. theta_g = 0 reproduce el cierre original (el ahorro
-        # publico no financia inversion); theta_g = 1 corresponde al cierre neoclasico.
-        # En la base SAVg = savg_base, el termino es nulo y la SAM se replica.
-        # Entra en inv_adj (no en TOTAL_INVEST) para que la demanda fisica de bienes
-        # de inversion (I_data * inv_adj) sea consistente con el gasto nominal.
-        inv_adj[] = sh_i_h * inv_adj_h[] + sh_i_f * inv_adj_f[] + sh_i_g * inv_adj_g[]
-                  + theta_g * (SAVg[] - savg_base) / NOM_I_BASE[];
-        
+        # Inversion determinada por el ahorro: inv_adj (indice de volumen de la
+        # inversion, base = 1) se ajusta para que la inversion iguale al ahorro total.
         TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
-        
-        SAVext[] = SAVext_target;
+
+        # Ahorro externo fijo en moneda extranjera
+        SAVext[] = SAVext_target * exr[];
 
         SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
     };

@@ -58,16 +58,17 @@ txt_escribir(c(
     sprintf("  numerario                : %s", fmt_lista(cm$numerario)),
     sprintf("  tipo_cambio              : %s", fmt_lista(cm$tipo_cambio)),
     sprintf("  ahorro_externo           : %s", fmt_lista(cm$ahorro_externo)),
-    sprintf("  theta_g (ahorro pub->inv): %s", fmt_lista(cm$theta_g)),
+    sprintf("  valor_numerario          : %s", fmt_lista(cm$valor_numerario)),
+    sprintf("  inversion                : %s", fmt_lista(cm$inversion)),
     sprintf("  mercado_trabajo          : %s", fmt_lista(cm$mercado_trabajo)),
     sprintf("  mercado_capital          : %s", fmt_lista(cm$mercado_capital)),
     sprintf("  utilizacion_capital_base : %s", fmt_lista(cm$utilizacion_capital_base)),
     sprintf("  tasa_desempleo_base      : %s", fmt_lista(cm$tasa_desempleo_base)),
     "",
     "Elasticidades:",
-    sprintf("  omega / sigma_q / sigma_t / eta_inv : %s / %s / %s / %s",
+    sprintf("  omega / sigma_q / sigma_t : %s / %s / %s",
             fmt_lista(el$utilidad_hogares_omega), fmt_lista(el$armington_sigma_q),
-            fmt_lista(el$cet_sigma_t), fmt_lista(el$inversion_eta)),
+            fmt_lista(el$cet_sigma_t)),
     sprintf("  wage_curve_eta           : %s", fmt_lista(el$wage_curve_eta)),
     sprintf("  informalidad             : %s", fmt_lista(el$informalidad)),
     sprintf("  wage_curve_phi           : %s", fmt_lista(el$wage_curve_phi)),
@@ -81,7 +82,7 @@ txt_escribir(c(
 vars_to_compare <- c(
     "Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
     paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)),
-    "pk", "exr", "inv_adj", "inv_adj_h", "inv_adj_f", "U",
+    "pk", "exr", "CPI", "PSh", "inv_adj", "U",
     paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo)),
     paste0("LD__", unlist(cfg$cuentas_sam$factores$trabajo))
 )
@@ -313,9 +314,15 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
                     (1 - uk_b) * 100, (1 - uk_s) * 100))
         cat(sprintf("     Capital utilizado (KD)   : %8.4f %%\n", (KD_s / KD_b - 1) * 100))
         cat(sprintf("     Retorno capital (pk)     : %8.4f %%\n", (pk_s / pk_b - 1) * 100))
-        cat(sprintf("     psi implícito            : %8.4f   (declarado: %.4f)\n",
-                    log(pk_s / pk_b) / log(KD_s / KD_b),
-                    cfg$elasticidades$capital_curve_psi))
+        # La oferta de capital responde al retorno neto de IDPC y PIT: el psi implicito
+        # se mide contra el retorno neto, no contra pk bruto.
+        par_b_m <- get_par_values(model_base,  silent = TRUE)
+        par_s_m <- get_par_values(model_shock, silent = TRUE)
+        neto_k  <- function(pr) as.numeric(1 - pr["par_k_f"] * pr["fit"] - pr["par_k_h"] * pr["pit"])
+        pkn_rat <- (pk_s * neto_k(par_s_m)) / (pk_b * neto_k(par_b_m))
+        cat(sprintf("     Retorno neto capital     : %8.4f %%\n", (pkn_rat - 1) * 100))
+        cat(sprintf("     psi implícito (neto)     : %8.4f   (declarado: %.4f)\n",
+                    log(pkn_rat) / log(KD_s / KD_b), as.numeric(par_s_m["psi"])))
     }
 
     # --- Diagnóstico Okun: contraste con evidencia empírica ---
@@ -687,66 +694,167 @@ reportar("SHOCK 5: Combinado - reduccion IDPC + aumento PIT", {
 })
 ```
 
-# SENSIBILIDAD: cierre ahorro-inversion (theta_g)
+# PRUEBAS DE CONSISTENCIA DEL CIERRE
 ```{r include=FALSE}
-# theta_g = fraccion del ahorro publico adicional que financia inversion (bloque INVESTMENT).
-# No altera la base, por lo que se varia sin recalibrar. savg_base se ancla al SAVg del
-# equilibrio base resuelto para que el termino sea exactamente nulo en la base.
-thetas  <- unlist(cfg$sensibilidad_cierre$barrido_theta_g %||% c(0, 0.5, 1))
-savg_b  <- as.numeric(res_base["SAVg"])
-opts_th <- list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
+opts_c  <- list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
+tol_cie <- cfg$pruebas_cierre$tolerancia %||% 1e-5
+dev_rel <- function(a, b) max(abs(as.numeric(a) - as.numeric(b)) / pmax(abs(as.numeric(b)), 1), na.rm = TRUE)
 
-# Choques individuales reconstruidos desde el YAML: fit_shock, pit_shock y dtau se
-# sobrescriben en los chunks de especificos y del choque combinado.
-par_b_th <- get_par_values(model, silent = TRUE)
-cfg_fit  <- cfg$shocks_default$fit
-choques_th <- list(
-    IDPC = list(fit = as.numeric(par_b_th["fit"]) *
+# --- Prueba 1: homogeneidad de grado cero en precios ---------------------------
+# Con el numerario multiplicado por k, todos los precios y flujos nominales deben
+# escalar por k y las cantidades no deben cambiar (Dewatripont y Michel, 1987).
+k_hom        <- cfg$pruebas_cierre$numerario_prueba_homogeneidad %||% 1.1
+cpi_num_base <- as.numeric(get_par_values(model, silent = TRUE)["cpi_num"])
+nm_ss <- names(res_base)
+ct_   <- unlist(cfg$cuentas_sam$factores$trabajo)
+v_precios <- intersect(c(grep("^(p|pq|pint|pz|pd|pe|pm)__", nm_ss, value = TRUE),
+                         paste0("w__", ct_), "pk", "exr", "CPI"), nm_ss)
+v_nominal <- intersect(c("Tax", "VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL",
+                         "INC", "BTINC", "INGG", "INGF", "SAV", "SAVf", "SAVg", "SAVext",
+                         "TOTAL_INVEST", "NOM_I_BASE", "TRGOV", "PSh"), nm_ss)
+v_cantid  <- intersect(c(grep("^(V|D|Q|M|EX|DS|Z|FD|XI)__", nm_ss, value = TRUE),
+                         paste0("LD__", ct_), paste0("u_rate__", ct_), "KD", "u_k", "inv_adj"), nm_ss)
+
+hom <- tryCatch({
+    m_hom <- set_free_par(model, free_par = list(cpi_num = cpi_num_base * k_hom))
+    m_hom <- steady_state(m_hom, calibration = FALSE, options_list = opts_c)
+    r_hom <- get_ss_values(m_hom, silent = TRUE)
+    data.frame(
+        grupo      = c("Precios (escalan por k)", "Flujos nominales (escalan por k)", "Cantidades (no cambian)"),
+        n_var      = c(length(v_precios), length(v_nominal), length(v_cantid)),
+        desvio_max = c(dev_rel(r_hom[v_precios], k_hom * res_base[v_precios]),
+                       dev_rel(r_hom[v_nominal], k_hom * res_base[v_nominal]),
+                       dev_rel(r_hom[v_cantid],  res_base[v_cantid])))
+}, error = function(e) {
+    message("Prueba de homogeneidad sin solucion: ", conditionMessage(e))
+    data.frame(grupo = "sin solucion", n_var = NA, desvio_max = NA)
+})
+hom$cumple <- !is.na(hom$desvio_max) & hom$desvio_max < tol_cie
+
+# --- Prueba 2: balanza de pagos (ley de Walras) ----------------------------------
+# La balanza de pagos no es una ecuacion del modelo: se cumple si todos los flujos
+# estan cerrados. SAVext debe igualar M (CIF) - X; la brecha de la base es redondeo
+# de la SAM y debe mantenerse en cada choque.
+brecha_bdp <- function(m, lst) as.numeric(get_ss_values(m, silent = TRUE)["SAVext"]) - (lst$M - lst$X)
+gap_b <- brecha_bdp(model, pib_model_list)
+
+# --- Prueba 3: resumen de choques -------------------------------------------------
+# Los choques individuales se reconstruyen desde el YAML porque fit_shock, pit_shock
+# y dtau se sobrescriben en chunks posteriores.
+par_b_c <- get_par_values(model, silent = TRUE)
+cfg_fit <- cfg$shocks_default$fit
+modelos_choque <- list(IDPC = model_shock_fit, IVA = model_shock_vat, PIT = model_shock_pit,
+                       TESP = model_shock_tesp, `IDPC+PIT` = model_shock_comb)
+
+resumen <- do.call(rbind, lapply(names(modelos_choque), function(nm_) {
+    m   <- modelos_choque[[nm_]]
+    v   <- get_ss_values(m, silent = TRUE)
+    lst <- calc_pib(m, model_ref = model)
+    RD  <- build_real_decomp(model, m, res_base, v)
+    pp  <- function(x) x / pib_model_list$PIB * 100
+    ef_tasa <- pp(sum(sapply(RD, `[[`, "ef_tasa")))
+    dY  <- (lst$PIB_real / pib_model_list$PIB_real - 1) * 100
+    dR  <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
+    data.frame(choque         = nm_,
+               dPIB_real      = dY,
+               dI_real        = (lst$I_real / pib_model_list$I_real - 1) * 100,
+               dC_real        = (lst$C_real / pib_model_list$C_real - 1) * 100,
+               dTax_pp        = dR,
+               ef_tasa_pp     = ef_tasa,
+               mult_ex_ante   = if (abs(ef_tasa) > 1e-10) dY / ef_tasa else NA,
+               pct_compensado = if (abs(ef_tasa) > 1e-10) (1 - dR / ef_tasa) * 100 else NA,
+               CPI            = as.numeric(v["CPI"]),
+               d_brecha_BdP   = brecha_bdp(m, lst) - gap_b)
+}))
+```
+
+# ANALISIS PRUEBAS DE CONSISTENCIA
+```{r}
+reportar("PRUEBAS DE CONSISTENCIA DEL CIERRE", {
+    cat(sprintf("1) Homogeneidad de grado cero: numerario x %.2f. Desvio relativo maximo (tolerancia %.0e).\n\n",
+                k_hom, tol_cie))
+    imprimir_tabla(hom, digits = 10)
+    cat(sprintf("\n2) Balanza de pagos: brecha base SAVext - (M - X) = %.4f (redondeo de la SAM).\n", gap_b))
+    cat("   d_brecha_BdP debe ser ~0 en cada choque.\n\n")
+    cat("3) Resumen de choques (PIB e inversion en %; recaudacion y efecto tasa en pp del PIB base).\n")
+    cat("   mult_ex_ante   = dPIB_real / efecto tasa.\n")
+    cat("   pct_compensado = parte del efecto tasa que no llega a la recaudacion neta\n")
+    cat("                    (autofinanciamiento en rebajas, erosion de base en alzas).\n")
+    cat("   CPI            = numerario; debe ser 1 en todos los choques.\n\n")
+    imprimir_tabla(resumen)
+})
+```
+
+# SENSIBILIDAD A LA OFERTA DE FACTORES
+```{r include=FALSE}
+# Elasticidad del empleo al salario real neto: 1 / (phi * (1 - epsilon)).
+# Elasticidad de la oferta de capital al retorno real neto: 1 / psi.
+# w_pot_calib y pk_pot_calib se ajustan para que w = pk = 1 en la base.
+so      <- cfg$sensibilidad_oferta
+eps_so  <- cfg$elasticidades$participacion_epsilon
+u_b_so  <- unlist(cfg$cierre_macro$tasa_desempleo_base)[ct_]
+uk_b_so <- cfg$cierre_macro$utilizacion_capital_base
+grid_so <- expand.grid(e_L = unlist(so$elasticidad_empleo %||% c(0.862, 0.5, 0.25)),
+                       psi = unlist(so$capital_curve_psi  %||% c(0.2, 1, 2)))
+
+choques_so <- list(
+    IDPC = list(fit = as.numeric(par_b_c["fit"]) *
                     (1 + cfg_fit$cambio_puntos_tasa * cfg_fit$participacion_idpc_en_firmtax /
                          cfg_fit$tasa_nominal_base)),
     IVA  = vat_shock,
-    PIT  = list(pit = as.numeric(par_b_th["pit"]) * cfg$shocks_default$pit$factor),
-    TESP = tesp_shock
-)
+    PIT  = list(pit = as.numeric(par_b_c["pit"]) * cfg$shocks_default$pit$factor))
 
-eval_theta <- function(th, nombre, par_shock) {
-    fila_na <- data.frame(choque = nombre, theta_g = th, dPIB_real = NA, dI_real = NA,
-                          dTax_pp = NA, dSAVg_pp = NA, dSAV_pp = NA, dSAVf_pp = NA, dY_dR = NA)
-    tryCatch({
-        m <- set_free_par(model, free_par = c(par_shock, list(theta_g = th, savg_base = savg_b)))
-        m <- steady_state(m, calibration = FALSE, options_list = opts_th)
-        v <- get_ss_values(m, silent = TRUE)
-        p <- calc_pib(m, model_ref = model)
-        pp <- function(x) x / pib_model_list$PIB * 100
-        dY <- (p$PIB_real / pib_model_list$PIB_real - 1) * 100
-        dR <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
-        data.frame(choque = nombre, theta_g = th,
-                   dPIB_real = dY,
-                   dI_real   = (p$I_real / pib_model_list$I_real - 1) * 100,
-                   dTax_pp   = dR,
-                   dSAVg_pp  = pp(as.numeric(v["SAVg"]) - as.numeric(res_base["SAVg"])),
-                   dSAV_pp   = pp(as.numeric(v["SAV"])  - as.numeric(res_base["SAV"])),
-                   dSAVf_pp  = pp(as.numeric(v["SAVf"]) - as.numeric(res_base["SAVf"])),
-                   dY_dR     = if (abs(dR) > 1e-10) dY / dR else NA)
-    }, error = function(e) {
-        message(sprintf("theta_g = %.2f, choque %s: sin solucion (%s)", th, nombre, conditionMessage(e)))
-        fila_na
-    })
+par_oferta <- function(e_L, psi) {
+    phi <- 1 / (e_L * (1 - eps_so))
+    c(setNames(as.list(rep(phi, length(ct_))), paste0("phi__", ct_)),
+      setNames(as.list(as.numeric((1 - u_b_so)^(-phi))), paste0("w_pot_calib__", ct_)),
+      list(psi = psi, pk_pot_calib = uk_b_so^(-psi)))
 }
 
-barrido_theta <- do.call(rbind, lapply(thetas, function(th)
-    do.call(rbind, Map(function(nm, ps) eval_theta(th, nm, ps), names(choques_th), choques_th))))
-barrido_theta <- barrido_theta[order(barrido_theta$choque, barrido_theta$theta_g), ]
+eval_oferta <- function(e_L, psi, nombre, par_shock) {
+    vacio <- c(dPIB_real = NA, dKD = NA, dLD = NA, dTax_pp = NA, ef_tasa_pp = NA,
+               mult_ex_ante = NA, pct_compensado = NA)
+    res <- tryCatch({
+        m   <- set_free_par(model, free_par = c(par_oferta(e_L, psi), par_shock))
+        m   <- steady_state(m, calibration = FALSE, options_list = opts_c)
+        v   <- get_ss_values(m, silent = TRUE)
+        lst <- calc_pib(m, model_ref = model)
+        RD  <- build_real_decomp(model, m, res_base, v)
+        pp  <- function(x) unname(as.numeric(x) / as.numeric(pib_model_list$PIB) * 100)
+        ef  <- pp(sum(sapply(RD, `[[`, "ef_tasa")))
+        dR  <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
+        dY  <- unname(as.numeric(lst$PIB_real / pib_model_list$PIB_real - 1) * 100)
+        c(dPIB_real      = dY,
+          dKD            = (as.numeric(v["KD"]) / as.numeric(res_base["KD"]) - 1) * 100,
+          dLD            = (sum(v[paste0("LD__", ct_)]) / sum(res_base[paste0("LD__", ct_)]) - 1) * 100,
+          dTax_pp        = dR,
+          ef_tasa_pp     = ef,
+          mult_ex_ante   = if (abs(ef) > 1e-10) dY / ef else NA,
+          pct_compensado = if (abs(ef) > 1e-10) (1 - dR / ef) * 100 else NA)
+    }, error = function(e) {
+        message(sprintf("e_L = %.3f, psi = %.2f, %s: sin solucion (%s)", e_L, psi, nombre, conditionMessage(e)))
+        vacio
+    })
+    data.frame(choque = nombre, elast_empleo = e_L, elast_capital = 1 / psi,
+               phi = 1 / (e_L * (1 - eps_so)), psi = psi, t(res), check.names = FALSE)
+}
+
+sens_oferta <- do.call(rbind, lapply(seq_len(nrow(grid_so)), function(i)
+    do.call(rbind, Map(function(nm_, ps) eval_oferta(grid_so$e_L[i], grid_so$psi[i], nm_, ps),
+                       names(choques_so), choques_so))))
+sens_oferta <- sens_oferta[order(sens_oferta$choque, -sens_oferta$elast_capital, -sens_oferta$elast_empleo), ]
 ```
 
-# ANALISIS SENSIBILIDAD theta_g
+# ANALISIS SENSIBILIDAD OFERTA DE FACTORES
 ```{r}
-reportar("SENSIBILIDAD: cierre ahorro-inversion (theta_g)", {
-    cat("theta_g = fraccion del ahorro publico adicional que financia inversion.\n")
-    cat("theta_g = 0 reproduce los choques individuales reportados arriba.\n")
-    cat("dPIB_real, dI_real en %; dTax, dSAVg, dSAV, dSAVf en pp del PIB nominal base;\n")
-    cat("dY_dR = dPIB_real / dTax (multiplicador sobre recaudacion neta).\n\n")
-    imprimir_tabla(barrido_theta)
+reportar("SENSIBILIDAD: elasticidades de oferta de factores", {
+    cat("elast_empleo  = elasticidad del empleo al salario real neto de PIT = 1/(phi*(1-epsilon)).\n")
+    cat("elast_capital = elasticidad del capital utilizado al retorno real neto = 1/psi.\n")
+    phi_v <- cfg$elasticidades$wage_curve_phi; psi_v <- cfg$elasticidades$capital_curve_psi
+    cat(sprintf("Calibracion vigente: elast_empleo = %.3f (phi = %.4f), elast_capital = %.3f (psi = %.2f).\n",
+                1 / (phi_v * (1 - eps_so)), phi_v, 1 / psi_v, psi_v))
+    cat("dPIB_real, dKD, dLD en %; dTax y efecto tasa en pp del PIB base.\n\n")
+    imprimir_tabla(sens_oferta)
 })
 ```
 

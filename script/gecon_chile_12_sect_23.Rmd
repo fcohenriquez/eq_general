@@ -254,21 +254,18 @@ SAV_h_v <- INC_v * por_sav_h_val
 SAVf_v <- INGF_v - TREMP_v - INGF_v * por_pres_soc_f_val - FIRMTAX_v - INGF_v * por_tr_f_g_val
 SAVg_v <- INGG_v - (sum(G_m) + (INGG_v * por_trgov_val) + INGG_v * por_pres_soc_g_val)
 Nominal_I_Total <- sum(I_m) + sum(V_m)
-I_base_benchmark <- sum(I_m)
-sh_i_h_v <- SAV_h_v / (I_base_benchmark + pad_floor)
-sh_i_f_v <- SAVf_v / (I_base_benchmark + pad_floor)
-sh_i_g_v <- (I_base_benchmark - SAV_h_v - SAVf_v) / (I_base_benchmark + pad_floor)
+# Ahorro externo de la base (en moneda extranjera; exr = 1 en la base).
+# Incluye la transferencia Empresas -> resto del mundo de la SAM.
 SAVext_v <- Nominal_I_Total - (SAV_h_v + SAVf_v + SAVg_v)
 
-# Protect against exactly zero shares to avoid division by zero in model calibration
-sh_i_h_v <- if(abs(sh_i_h_v) < 1e-6) 1e-6 else sh_i_h_v
-sh_i_f_v <- if(abs(sh_i_f_v) < 1e-6) 1e-6 else sh_i_f_v
-sh_i_g_v <- if(abs(sh_i_g_v) < 1e-6) 1e-6 else sh_i_g_v
+# Prestaciones sociales: lo pagado por empresas y gobierno debe igualar lo recibido
+# por los hogares (PSh es endogeno en el .gcn).
+chk_pres_soc <- INGF_v * por_pres_soc_f_val + INGG_v * por_pres_soc_g_val - as.numeric(pshdata)
+cat(sprintf("Prestaciones sociales pagadas - recibidas (base): %.6f\n", chk_pres_soc))
+stopifnot(abs(chk_pres_soc) < 1e-4)
 
-# theta_g: fraccion del ahorro publico adicional que financia inversion (bloque INVESTMENT).
-# 0 = cierre original. savg_base ancla el termino al ahorro publico de la base.
-theta_g_val <- if (!is.null(cfg$cierre_macro$theta_g)) cfg$cierre_macro$theta_g else 0.0
-stopifnot(is.numeric(theta_g_val), length(theta_g_val) == 1, theta_g_val >= 0, theta_g_val <= 1)
+# Numerario: IPC (valor configurable para la prueba de homogeneidad)
+cpi_num_val <- if (!is.null(cfg$cierre_macro$valor_numerario)) cfg$cierre_macro$valor_numerario else 1.0
 
 sigma_q_val <- cfg$elasticidades$armington_sigma_q
 sigma_t_val <- cfg$elasticidades$cet_sigma_t
@@ -353,6 +350,9 @@ alpha_v_unsc <- pq_base[pcon_idx] * (D_con_phys)^(1/omega_val)   # FOC CES con p
 alpha_v <- alpha_v_unsc / (sum(alpha_v_unsc) + pad_floor)
 U_val <- (sum(alpha_v * D_con_phys^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
 lambda_val <- U_val / (sum(D_con_phys * pq_base[pcon_idx]) + pad_floor)
+
+# IPC (Laspeyres): canasta fisica de consumo de hogares de la base; vale 1 en la base
+cpi_den_val <- sum(D_con_phys * pq_base[pcon_idx])
 
 net_rev <- revenue_vals * (1.0 - t_pro_r - t_esp_r)
 
@@ -444,14 +444,14 @@ par_flat <- unlist(list(
     por_cont_soc_f = por_cont_soc_f_val, por_cont_soc_g = por_cont_soc_g_val,
     por_pres_soc_f = por_pres_soc_f_val, por_pres_soc_g = por_pres_soc_g_val,
     pit = pit_val, fit = fit_val,
-    pshdata = as.numeric(pshdata),
+    # Tasas de la base: normalizan las curvas de oferta netas de impuestos
+    pit_base = pit_val, fit_base = fit_val,
     fact_row_in_k_data = as.numeric(fact_row_in_k_data), 
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
-    sh_i_h = sh_i_h_v, sh_i_f = sh_i_f_v, sh_i_g = sh_i_g_v,
-    damp_inv = cfg$elasticidades$inversion_eta,
-    # Cierre ahorro-inversion: theta_g (0 = cierre original) y ancla del ahorro publico base
-    theta_g = theta_g_val, savg_base = SAVg_v,
     SAVext_target = SAVext_v,
+    # Numerario IPC
+    cpi_den = cpi_den_val, cpi_num = cpi_num_val,
+    get_flow_values(D_con_phys, "cpi_q", p_names[pcon_idx]),
     get_flow_values(io_matrix[pnoconst_idx, sa_idx, drop=FALSE], "io", p_names[pnoconst_idx], s_names[sa_idx]),
     get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
     get_flow_values(gamma_e_v[pexp_idx], "gamma_e", p_names[pexp_idx]),
@@ -504,7 +504,7 @@ var_list <- list(
     SAVf = SAVf_v, SAVg = SAVg_v, SAVext = SAVext_v,
     NOM_I_BASE = sum(I_m),
     TOTAL_INVEST = Nominal_I_Total,
-    inv_adj = 1.0, inv_adj_h = 1.0, inv_adj_f = 1.0, inv_adj_g = 1.0,
+    inv_adj = 1.0, CPI = cpi_num_val,
     VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
     KD = k_used_data_val, u_k = uk_base_val,
@@ -591,11 +591,19 @@ chk_iva <- c(
 print(round(chk_iva, 8))
 if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con IVA en precios no replica la SAM; revisar chk_iva.")
 
-# --- Validacion del ancla de theta_g: SAVg del equilibrio base vs SAM ---
-# Si difieren, con theta_g > 0 el termino del bloque INVESTMENT no es exactamente nulo en la base.
-chk_savg <- as.numeric(ss_chk["SAVg"]) - SAVg_v
-cat(sprintf("theta_g = %.3f | SAVg modelo - SAM (ancla savg_base): %.8f\n", theta_g_val, chk_savg))
-if (theta_g_val > 0 && abs(chk_savg) > 1e-4) warning("SAVg base no coincide con savg_base; revisar el ancla de theta_g.")
+# --- Validacion del cierre: numerario, prestaciones sociales y balanza de pagos ---
+# La balanza de pagos no es una ecuacion del modelo: la implica la ley de Walras.
+# SAVext debe igualar las importaciones CIF menos las exportaciones (calculo_pib.Rmd
+# las valora asi). La brecha de la base proviene solo de redondeos de la SAM y debe
+# mantenerse constante en los choques.
+chk_cierre <- c(
+    CPI_menos_numerario = as.numeric(ss_chk["CPI"]) - cpi_num_val,
+    PSh_menos_SAM       = as.numeric(ss_chk["PSh"]) - as.numeric(pshdata),
+    inv_adj_menos_1     = as.numeric(ss_chk["inv_adj"]) - 1,
+    exr_menos_1         = as.numeric(ss_chk["exr"]) - 1
+)
+print(round(chk_cierre, 8))
+if (any(abs(chk_cierre) > 1e-4)) warning("El equilibrio base no reproduce el cierre esperado; revisar chk_cierre.")
 
 
 ```

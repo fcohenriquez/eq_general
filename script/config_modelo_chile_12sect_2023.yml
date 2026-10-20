@@ -202,23 +202,30 @@ elasticidades:
   utilidad_hogares_omega: 1.5
   armington_sigma_q: 2.0
   cet_sigma_t: 1.5
-  inversion_eta: 0.5
-  #wage_curve_phi: 0.1
-  wage_curve_phi: 2.0
-  capital_curve_psi: 0.2
+  # Oferta de factores (curvas en terminos reales y netos de impuestos directos).
+  # wage_curve_phi: la elasticidad del empleo al salario real neto es 1/(phi*(1-epsilon)).
+  #   phi = 3.4483 con epsilon = 0.42 da 0.5, valor central para el insumo laboral total
+  #   (hicksianas de 0.3 intensiva y 0.25 extensiva; Chetty et al., 2011).
+  #   Valor anterior: 2.0 (elasticidad 0.862).
+  wage_curve_phi: 3.4483
+  # capital_curve_psi: la elasticidad de la oferta de capital al retorno neto es 1/psi.
+  #   psi = 1.5 da 0.67, dentro del consenso de -0.5 a -1.0 para la elasticidad de la
+  #   inversion al costo de uso (Hassett y Hubbard, 1996) y coherente con la respuesta
+  #   moderada estimada para Chile (Cerda y Larrain, 2005). Valor anterior: 0.2 (elasticidad 5).
+  capital_curve_psi: 1.5
   participacion_epsilon: 0.42
-  #capital_curve_psi: 0.5
 
 cierre_macro:
-  numerario: "p_prod_otros"
-  tipo_cambio: "endogeno"
-  ahorro_externo: "fijo"
-  inversion_publica: "fija"
-  inversion_privada: "endogena_amortiguada"
-  # Fraccion del ahorro publico adicional (respecto de la base) que financia inversion.
-  # 0 = cierre original (el ahorro publico no financia inversion); 1 = cierre neoclasico.
-  # No altera el equilibrio base (SAVg = savg_base), por lo que se varia sin recalibrar.
-  theta_g: 0.0
+  # Numerario: IPC (Laspeyres, canasta de consumo de hogares de la base). El modelo es
+  # homogeneo de grado cero en precios: curvas de factores, transferencias e impuestos
+  # especificos estan indexados al IPC. Prueba de homogeneidad en eval_shocks.Rmd.
+  numerario: "IPC"
+  valor_numerario: 1.0
+  tipo_cambio: "endogeno (real)"
+  ahorro_externo: "fijo en moneda extranjera"
+  # Inversion determinada por el ahorro: el volumen de inversion se ajusta para que
+  # la inversion iguale al ahorro total (hogares, empresas, gobierno y externo).
+  inversion: "determinada_por_ahorro"
   #mercado_trabajo: "curva_salarial_con_desempleo"
   mercado_trabajo: "curva_salarial_con_participacion_endogena"
   #mercado_capital: "pleno_uso_stock_capital"
@@ -232,10 +239,24 @@ cierre_macro:
     Trabajo_2: 0.099
     Trabajo_3: 0.078
 
-# Sensibilidad de los choques al cierre ahorro-inversion (eval_shocks.Rmd).
-# Con theta_g = 0 se reproducen los resultados de los choques individuales.
-sensibilidad_cierre:
-  barrido_theta_g: [0.0, 0.5, 1.0]
+# Pruebas de consistencia del cierre (eval_shocks.Rmd)
+pruebas_cierre:
+  # Con el numerario en este valor, todos los precios y flujos nominales deben
+  # escalar por el mismo factor y las cantidades no deben cambiar.
+  numerario_prueba_homogeneidad: 1.1
+  tolerancia: 1.0e-5
+
+# Sensibilidad a las elasticidades de oferta de factores (eval_shocks.Rmd).
+# elasticidad_empleo: elasticidad del empleo al salario real neto, 1 / (phi * (1 - epsilon)).
+#   0.5 = calibracion central; 0.25 = cota inferior (margen extensivo, Chetty et al., 2011);
+#   0.862 = calibracion anterior (phi = 2), como referencia.
+# capital_curve_psi: la elasticidad de la oferta de capital al retorno neto es 1 / psi.
+#   1.5 = calibracion central (elasticidad 0.67); 1 y 2 acotan el rango de consenso
+#   (elasticidad 1 y 0.5); 0.2 = calibracion anterior (elasticidad 5), como referencia.
+# Ningun valor altera el equilibrio base (w = pk = 1), por lo que se varian sin recalibrar.
+sensibilidad_oferta:
+  elasticidad_empleo: [0.862, 0.5, 0.25]
+  capital_curve_psi: [0.2, 1.0, 1.5, 2.0]
 
 # Especificacion del IVA (Etapa 1): cuna de precio sobre la demanda final,
 # uso intermedio desgravado. El IVA que exceda la tasa tope sobre la demanda
