@@ -11,6 +11,12 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+# Asegurar que R 4.5.1 esté en el PATH
+r_bin_path <- "C:\\Users\\francisco.henriquez\\AppData\\Local\\Programs\\R\\R-4.5.1\\bin\\x64"
+if (!grepl("R-4.5.1", Sys.getenv("PATH"))) {
+  Sys.setenv(PATH = paste0(r_bin_path, ";", Sys.getenv("PATH")))
+}
+
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
@@ -132,6 +138,8 @@ shock_fit <- function(model, cambio_pp = -0.01,
 
 shock_funs <- list(iva = shock_iva, pit = shock_pit, fit = shock_fit)
 ```
+
+
 
 ```{r solve_shock}
 # Resuelve el modelo bajo un shock con manejo robusto de errores
@@ -293,14 +301,22 @@ saveRDS(oat_results, "oat_results.rds")
 
 ```{r oat_summary}
 oat_results |>
-  filter(shock_ok) |>
+  filter(shock_ok,
+         is.numeric(var_pib_real_pct),
+         !is.na(var_pib_real_pct)) |>
   group_by(parametro_var, shock) |>
-  summarise(min_pib = min(var_pib_real_pct, na.rm = TRUE),
-            base_pib = var_pib_real_pct[which.min(abs(valor_var -
-                                  param_base[parametro_var[1]]))],
-            max_pib  = max(var_pib_real_pct, na.rm = TRUE),
-            rango_pp = max_pib - min_pib, .groups = "drop")
+  summarise(
+    n        = n(),
+    min_pib  = min(var_pib_real_pct),
+    base_pib = var_pib_real_pct[which.min(abs(valor_var -
+                 param_base[parametro_var[1]]))],
+    max_pib  = max(var_pib_real_pct),
+    rango_pp = max_pib - min_pib,
+    .groups  = "drop"
+  )
 ```
+
+
 
 ```{r oat_plot, fig.width=10, fig.height=8}
 oat_results |>

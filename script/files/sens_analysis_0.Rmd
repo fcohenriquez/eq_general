@@ -1,0 +1,230 @@
+---
+title: "Análisis de Sensibilidad - MEGC Chile 12 sectores"
+author: "Generado"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+library(gEcon)
+library(dplyr)
+library(purrr)
+library(lhs)
+library(sensitivity)
+library(ggplot2)
+library(tidyr)
+library(yaml)
+# library(furrr) # Opcional para paralelizar
+
+source("build_and_calibrate.R")
+
+cfg <- yaml::read_yaml("config_modelo_chile_12sect_2023.yml")
+
+# Dependencias auxiliares
+vars_to_compare <- c(
+    "Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
+    paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)),
+    "pk", "exr", "inv_adj", "inv_adj_h", "inv_adj_f", "U",
+    paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo)),
+    paste0("LD__", unlist(cfg$cuentas_sam$factores$trabajo))
+)
+
+calc_pib <- function(model_obj) {
+    ss_vals <- get_ss_values(model_obj)
+    par_vals <- get_par_values(model_obj)
+    p_names <- unlist(cfg$productos)
+    p_eq <- ss_vals[paste0("p__", p_names)]
+    
+    C <- sum(ss_vals[paste0("D__", p_names)] * p_eq, na.rm = TRUE)
+    inv_adj_val <- ss_vals["inv_adj"]
+    if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
+    G_val <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_eq, na.rm = TRUE)
+    I_val <- sum(par_vals[paste0("I_data__", p_names)] * p_eq, na.rm = TRUE) * inv_adj_val
+    V_val <- sum(par_vals[paste0("vexist__", p_names)] * p_eq, na.rm = TRUE)
+    pe_eq <- ss_vals[paste0("pe__", p_names)]
+    E_vals <- ss_vals[paste0("EX__", p_names)]
+    X_val <- sum(E_vals * pe_eq, na.rm = TRUE)
+    pwm_eq <- par_vals[paste0("pworldm__", p_names)]
+    exr_val <- ss_vals["exr"]
+    M_vals <- ss_vals[paste0("M__", p_names)]
+    M_val <- sum(M_vals * pwm_eq * exr_val, na.rm = TRUE)
+    
+    p_base <- rep(1.0, length(p_names))
+    C_real <- sum(ss_vals[paste0("D__", p_names)] * p_base, na.rm = TRUE)
+    G_real <- sum(par_vals[paste0("gg_market_data_p__", p_names)] * p_base, na.rm = TRUE)
+    I_real <- sum(par_vals[paste0("I_data__", p_names)] * p_base, na.rm = TRUE) * inv_adj_val
+    V_real <- sum(par_vals[paste0("vexist__", p_names)] * p_base, na.rm = TRUE)
+    X_real <- sum(E_vals * p_base, na.rm = TRUE)
+    M_real <- sum(M_vals * pwm_eq * 1.0, na.rm = TRUE)  
+    
+    list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val, 
+         PIB = C + G_val + I_val + V_val + X_val - M_val,
+         C_real=C_real, G_real=G_real, I_real=I_real, V_real=V_real, X_real=X_real, M_real=M_real,
+         PIB_real = C_real + G_real + I_real + V_real + X_real - M_real,
+         u_rate = ss_vals[paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo))],
+         Tax = ss_vals["Tax"], FIRMTAX = ss_vals["FIRMTAX"], PITAX = ss_vals["PITAX"],
+         VAT = ss_vals["VAT"], TPROD = ss_vals["TPROD"], TESP = ss_vals["TESP"],
+         TARANCEL = ss_vals["TARANCEL"])
+}
+
+calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {
+    price_vars <- c(paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)), "pk", "exr")
+    comp <- data.frame(
+        Variable = vars,
+        Base = as.numeric(res_base[vars]),
+        Shock = as.numeric(res_shock[vars]),
+        stringsAsFactors = FALSE
+    )
+    comp$Cambio_Pct <- round((comp$Shock / comp$Base - 1) * 100, 4)
+    comp$Impacto_PIB_Pct <- ifelse(
+        comp$Variable %in% price_vars,
+        NA,
+        round((comp$Shock - comp$Base) / pib_real_base * 100, 4)
+    )
+    return(comp)
+}
+
+# Funciones de shocks
+vat_shock_fn <- function(m) {
+    p_names <- paste0("prod_", c("Agri", "Min", "Manu", "elect_agua_gas", "const", "com_hot_rest", "trans_comu_inf", "int_fin", "inmo_viv", "serv_emp", "serv_pers", "adm_pub"))
+    vat_names <- paste0("vat__", p_names)
+    vat_base <- get_par_values(m)[vat_names]
+    vat_shock <- as.list(as.numeric(vat_base) * 1.01)
+    names(vat_shock) <- vat_names
+    set_free_par(m, free_par = vat_shock)
+}
+
+```
+
+## Configuración y Funciones de Sensibilidad
+
+```{r config}
+param_ranges <- list(
+  omega   = c(0.5, 2.5),
+  sigma_q = c(1.05, 4.0),
+  sigma_t = c(0.5, 3.0),
+  phi     = c(0.05, 0.15),
+  eta     = c(0.2, 1.0)
+)
+
+shocks <- list(
+  iva = vat_shock_fn,
+  pit = function(m) set_free_par(m, free_par = list(pit = as.numeric(get_par_values(m)["pit"])*1.10)),
+  fit = function(m) set_free_par(m, free_par = list(fit = as.numeric(get_par_values(m)["fit"])*(1 - 0.916*0.01/0.27)))
+)
+
+recalibrar <- function(par_set) {
+  cfg2 <- cfg
+  cfg2$elasticidades$utilidad_hogares_omega <- par_set$omega
+  cfg2$elasticidades$armington_sigma_q      <- par_set$sigma_q
+  cfg2$elasticidades$cet_sigma_t            <- par_set$sigma_t
+  cfg2$elasticidades$wage_curve_phi         <- par_set$phi
+  cfg2$elasticidades$inversion_eta          <- par_set$eta
+  res <- build_and_calibrate(cfg2)
+  res$result
+}
+
+correr <- function(par_set, shock_name) {
+  # Recalibración
+  m_base_opt <- safely(recalibrar)(par_set)
+  if (is.null(m_base_opt$result)) return(tibble(shock = shock_name, !!!par_set, convergio = FALSE))
+  m_base <- m_base_opt$result
+  
+  res_b <- get_ss_values(m_base)
+  pib_b <- calc_pib(m_base)
+  
+  # Shock
+  m_shock <- shocks[[shock_name]](m_base)
+  m_shock_opt <- safely(steady_state)(m_shock, calibration = FALSE,
+              options_list = list(xscalm="auto", max_iter=10000, tol=3e-5))
+  if (is.null(m_shock_opt$result)) return(tibble(shock = shock_name, !!!par_set, convergio = FALSE))
+  m_shock <- m_shock_opt$result
+  
+  res_s <- get_ss_values(m_shock)
+  pib_s <- calc_pib(m_shock)
+  
+  comp <- calc_tax_impact(res_b, res_s, pib_b$PIB, pib_b$PIB_real, pib_s, vars_to_compare)
+  
+  # Variables adicionales (PIB Real)
+  var_pib_real <- (pib_s$PIB_real / pib_b$PIB_real - 1) * 100
+  comp <- bind_rows(comp, data.frame(Variable = "PIB_real", Base=pib_b$PIB_real, Shock=pib_s$PIB_real, Cambio_Pct=var_pib_real, Impacto_PIB_Pct=NA, stringsAsFactors=F))
+  
+  tibble(shock = shock_name, !!!par_set, convergio = TRUE) %>%
+    bind_cols(comp %>% select(Variable, Cambio_Pct, Impacto_PIB_Pct))
+}
+```
+
+## Pruebas
+```{r test_run, eval=FALSE}
+# Correr una prueba pequeña
+cat("Test run OAT (1 par, 1 shock)...\n")
+p1 <- list(omega=1.5, sigma_q=2.0, sigma_t=1.5, phi=0.1, eta=0.5)
+res_test <- correr(p1, "iva")
+print(head(res_test))
+```
+
+## Capa 1: One-at-a-Time (OAT)
+
+```{r oat_run, cache=TRUE}
+# Generar la grilla OAT
+grilla_oat <- map_dfr(names(param_ranges), function(p) {
+  vals <- seq(param_ranges[[p]][1], param_ranges[[p]][2], length.out = 5) # 5 puntos
+  df <- expand.grid(valor = vals, shock = names(shocks), stringsAsFactors = FALSE)
+  df$parametro_var <- p
+  
+  # Llenar el resto con los valores base
+  base_vals <- list(omega=1.5, sigma_q=2.0, sigma_t=1.5, phi=0.1, eta=0.5)
+  for (nm in names(base_vals)) {
+    if (nm != p) df[[nm]] <- base_vals[[nm]]
+  }
+  
+  # Asignar el valor variable
+  for (i in 1:nrow(df)) {
+    df[[p]][i] <- df$valor[i]
+  }
+  
+  df
+})
+
+# Correr OAT
+resultados_oat <- pmap_dfr(grilla_oat, function(...) {
+  args <- list(...)
+  par_set <- list(omega=args$omega, sigma_q=args$sigma_q, sigma_t=args$sigma_t, phi=args$phi, eta=args$eta)
+  res <- correr(par_set, args$shock)
+  res$parametro_var <- args$parametro_var
+  res$valor_var <- args$valor
+  res
+})
+
+write.csv(resultados_oat, "../output/resultados_sensibilidad_oat.csv", row.names = FALSE)
+```
+
+
+
+## Capa 3 y 4: LHS y Sobol
+
+```{r lhs_sobol, eval=FALSE}
+N <- 128 # Muestras
+H <- randomLHS(N, length(param_ranges))
+
+muestras <- as_tibble(mapply(function(col, rng) rng[1] + col*(rng[2]-rng[1]),
+                              as.data.frame(H), param_ranges))
+names(muestras) <- names(param_ranges)
+
+resultados_lhs <- expand_grid(muestras, shock = names(shocks)) %>%
+  pmap_dfr(function(...) {
+    args <- list(...)
+    par_set <- list(omega=args$omega, sigma_q=args$sigma_q, sigma_t=args$sigma_t, phi=args$phi, eta=args$eta)
+    correr(par_set, args$shock)
+  })
+
+write.csv(resultados_lhs, "../output/resultados_sensibilidad_lhs.csv", row.names = FALSE)
+
+# Ejemplo de Sobol sobre el PIB Real
+library(sensitivity)
+y_pib <- resultados_lhs %>% filter(shock=="iva", Variable=="PIB_real", convergio==TRUE) %>% pull(Cambio_Pct)
+
+# Nota: Para sobolSalt se requieren dos matrices X1, X2 independientes de LHS. 
+# Esto es un ejemplo simplificado.
+```
+

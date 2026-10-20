@@ -5,6 +5,64 @@ date: "2026-04-01"
 output: html_document
 ---
 
+# Archivo de resultados (texto plano)
+```{r}
+# Todo lo que se imprime en las secciones de ANALISIS se escribe tambien en este archivo.
+# Nombre configurable en el YAML (archivos: resultados_shocks_txt); ruta relativa al .Rmd.
+`%||%` <- function(a, b) if (is.null(a)) b else a
+archivo_txt <- cfg$archivos$resultados_shocks_txt %||% "resultados_shocks_12sect_2023.txt"
+
+txt_escribir <- function(lineas, nuevo = FALSE) {
+    con <- file(archivo_txt, open = if (nuevo) "w" else "a", encoding = "UTF-8")
+    on.exit(close(con))
+    writeLines(lineas, con)
+}
+
+# Evalua 'expr', muestra su salida en consola/HTML y la agrega al archivo bajo 'titulo'
+reportar <- function(titulo, expr) {
+    old <- options(width = 250)          # evita que los data.frame se corten en columnas
+    on.exit(options(old))
+    out <- capture.output(expr)
+    cat(out, sep = "\n")
+    txt_escribir(c("", strrep("=", 90), titulo, strrep("=", 90), out))
+    invisible(out)
+}
+
+fmt_lista <- function(x) {
+    if (is.null(x)) return("(no definido)")
+    if (is.null(names(x))) return(paste(unlist(x), collapse = ", "))
+    paste(sprintf("%s=%s", names(x), unlist(x)), collapse = ", ")
+}
+
+# Encabezado: deja registro de la configuracion con que se genero cada corrida
+el <- cfg$elasticidades; cm <- cfg$cierre_macro
+txt_escribir(c(
+    "MEGC-Chile - Resultados de la evaluacion de shocks",
+    sprintf("Generado            : %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
+    sprintf("Modelo              : %s (%s), anio base %s",
+            cfg$modelo$nombre, cfg$modelo$version, cfg$modelo$anio_base),
+    "",
+    "Cierre macroeconomico:",
+    sprintf("  numerario                : %s", fmt_lista(cm$numerario)),
+    sprintf("  tipo_cambio              : %s", fmt_lista(cm$tipo_cambio)),
+    sprintf("  ahorro_externo           : %s", fmt_lista(cm$ahorro_externo)),
+    sprintf("  mercado_trabajo          : %s", fmt_lista(cm$mercado_trabajo)),
+    sprintf("  mercado_capital          : %s", fmt_lista(cm$mercado_capital)),
+    sprintf("  utilizacion_capital_base : %s", fmt_lista(cm$utilizacion_capital_base)),
+    sprintf("  tasa_desempleo_base      : %s", fmt_lista(cm$tasa_desempleo_base)),
+    "",
+    "Elasticidades:",
+    sprintf("  omega / sigma_q / sigma_t / eta_inv : %s / %s / %s / %s",
+            fmt_lista(el$utilidad_hogares_omega), fmt_lista(el$armington_sigma_q),
+            fmt_lista(el$cet_sigma_t), fmt_lista(el$inversion_eta)),
+    sprintf("  wage_curve_eta           : %s", fmt_lista(el$wage_curve_eta)),
+    sprintf("  informalidad             : %s", fmt_lista(el$informalidad)),
+    sprintf("  wage_curve_phi           : %s", fmt_lista(el$wage_curve_phi)),
+    sprintf("  capital_curve_psi        : %s", fmt_lista(el$capital_curve_psi)),
+    sprintf("  participacion_epsilon    : %s", fmt_lista(el$participacion_epsilon))
+), nuevo = TRUE)
+```
+
 # Parametros
 ```{r}
 vars_to_compare <- c(
@@ -172,7 +230,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
         idx <- which(names(res) == v)
         if (length(idx) == 0) NA_real_ else as.numeric(res[idx[1]])
     }
-    
+
     var_pib_nom <- (p_shock_list$PIB / p_base_list$PIB - 1) * 100
     var_pib_real <- (p_shock_list$PIB_real / p_base_list$PIB_real - 1) * 100
 
@@ -274,7 +332,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
         cat(sprintf("     Identidad (1-u)(eta_L - eta_LF)  : %8.4f\n",
                     (1 - u_agg_b) * (eta_L - eta_LF)))
     }
-    
+
      # --- VA real a costo de factores vs PIB real (gasto) ---
     if (!is.null(res_base) && !is.null(res_shock)) {
         vn  <- grep("^V__Act_", names(res_base), value = TRUE)
@@ -302,7 +360,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
             cat(sprintf("     Okun contra VA real                     : %8.4f\n", okun_va))
         }
     }
-    
+
     # --- Impacto Fiscal como % del PIB nominal base ---
     pib_nom_base <- p_base_list$PIB
 
@@ -436,8 +494,12 @@ pib_shock_fit_real <- pib_shock_list$PIB_real
 
 comp_fit <- calc_tax_impact(res_base, res_shock_fit, pib_base, pib_real_base, pib_shock_list, vars_to_compare)
 
-print_macro_impact("disminución 1% de tasa IDPC", pib_model_list, pib_shock_list, model, model_shock_fit)
-print(comp_fit)
+reportar("SHOCK 1: Disminucion de 1 punto en la tasa IDPC (FIRMTAX)", {
+    cat(sprintf("Parametro fit: base %.6f -> shock %.6f  (chi = %.3f, dtau = %+.3f, tau0 = %.3f)\n\n",
+                as.numeric(fit_base), as.numeric(fit_shock), chi, dtau, tau0))
+    print_macro_impact("disminución 1% de tasa IDPC", pib_model_list, pib_shock_list, model, model_shock_fit)
+    print(comp_fit)
+})
 ```
 
 # SHOCK: 1 punto porcentual de Incremento IVA (Impuesto al Valor Agregado)
@@ -475,9 +537,6 @@ pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 
 comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pib_shock_vat_list, vars_to_compare)
 
-print_macro_impact("Aumento IVA 19% -> 20%", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
-print(comp_vat)
-
 # Traspaso a precios de comprador: dln(pq) / dln(1 + t_iva), por producto
 pn_iva <- sub("^t_iva__", "", grep("^t_iva__", names(par_all), value = TRUE))
 par_sv <- get_par_values(model_shock_vat, silent = TRUE)
@@ -489,7 +548,14 @@ traspaso <- data.frame(
     dln_1mt  = log((1 + par_sv[paste0("t_iva__", pn_iva)]) / (1 + par_all[paste0("t_iva__", pn_iva)]))
 )
 traspaso$traspaso <- ifelse(abs(traspaso$dln_1mt) > 1e-10, traspaso$dln_pq / traspaso$dln_1mt, NA)
-print(traspaso, digits = 4, row.names = FALSE)
+
+reportar("SHOCK 2: Aumento de la tasa legal de IVA 19% -> 20%", {
+    cat(sprintf("Factor sobre t_iva y t_iva_int: %.6f  (%d parametros)\n\n", fac_iva, length(iva_pars)))
+    print_macro_impact("Aumento IVA 19% -> 20%", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
+    print(comp_vat)
+    cat("\nTraspaso a precios de comprador: dln(pq) / dln(1 + t_iva)\n")
+    print(traspaso, digits = 4, row.names = FALSE)
+})
 ```
 
 
@@ -520,8 +586,11 @@ pib_shock_pit_list <- calc_pib(model_shock_pit, model_ref = model)
 # Comparación y visualización de impactos
 comp_pit <- calc_tax_impact(res_base, res_shock_pit, pib_base, pib_real_base, pib_shock_pit_list, vars_to_compare)
 
-print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list, model, model_shock_pit)
-print(comp_pit)
+reportar("SHOCK 3: Aumento de 10% en la carga efectiva de PIT", {
+    cat(sprintf("Parametro pit: base %.6f -> shock %.6f\n\n", as.numeric(pit_base), pit_shock))
+    print_macro_impact("Aumento 10% PIT", pib_model_list, pib_shock_pit_list, model, model_shock_pit)
+    print(comp_pit)
+})
 ```
 
 # SHOCK: Incremento de impuestos específicos (por unidad física, solo demanda final)
@@ -549,9 +618,6 @@ pib_shock_tesp_list <- calc_pib(model_shock_tesp, model_ref = model)
 ```{r}
 comp_tesp <- calc_tax_impact(res_base, res_shock_tesp, pib_base, pib_real_base, pib_shock_tesp_list, vars_to_compare)
 
-print_macro_impact("Aumento impuestos específicos", pib_model_list, pib_shock_tesp_list, model, model_shock_tesp)
-print(comp_tesp)
-
 # Traspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva)), por producto con tau_e > 0
 pn_e   <- sub("^tau_e__", "", esp_pars[as.numeric(par_all_e[esp_pars]) > 0])
 par_st <- get_par_values(model_shock_tesp, silent = TRUE)
@@ -563,7 +629,14 @@ tr_esp <- data.frame(
     dtau_iva = dtau * (1 + as.numeric(par_all_e[paste0("t_iva__", pn_e)]))
 )
 tr_esp$traspaso <- tr_esp$dpq / tr_esp$dtau_iva
-print(tr_esp, digits = 4, row.names = FALSE)
+
+reportar("SHOCK 4: Aumento de impuestos especificos (por unidad fisica, demanda final)", {
+    cat(sprintf("Factor sobre tau_e: %.6f  (%d productos con tau_e > 0)\n\n", fac_esp, length(pn_e)))
+    print_macro_impact("Aumento impuestos específicos", pib_model_list, pib_shock_tesp_list, model, model_shock_tesp)
+    print(comp_tesp)
+    cat("\nTraspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva))\n")
+    print(tr_esp, digits = 4, row.names = FALSE)
+})
 ```
 
 # SHOCK COMBINADO: Disminución FIT e Incremento PIT
@@ -593,6 +666,17 @@ pib_shock_comb_list <- calc_pib(model_shock_comb, model_ref = model)
 # Comparación y visualización de impactos
 comp_comb <- calc_tax_impact(res_base, res_shock_comb, pib_base, pib_real_base, pib_shock_comb_list, vars_to_compare)
 
-print_macro_impact("Mix: Reducción IDPC + Aumento PIT", pib_model_list, pib_shock_comb_list, model, model_shock_comb)
-print(comp_comb)
+reportar("SHOCK 5: Combinado - reduccion IDPC + aumento PIT", {
+    cat(sprintf("Parametro fit: base %.6f -> shock %.6f\n", as.numeric(fit_base), as.numeric(fit_shock)))
+    cat(sprintf("Parametro pit: base %.6f -> shock %.6f\n\n", as.numeric(pit_base), pit_shock))
+    print_macro_impact("Mix: Reducción IDPC + Aumento PIT", pib_model_list, pib_shock_comb_list, model, model_shock_comb)
+    print(comp_comb)
+})
+```
+
+# Cierre del archivo de resultados
+```{r}
+txt_escribir(c("", strrep("=", 90),
+               sprintf("Fin del reporte - %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"))))
+cat(sprintf("Resultados escritos en: %s\n", normalizePath(archivo_txt, winslash = "/")))
 ```
