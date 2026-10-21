@@ -3,37 +3,55 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{url}
-\usepackage{tikz-cd}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \usepackage{placeins}
 \usepackage{float}
 \usepackage{pdflscape}
 \usepackage{rotating}
 
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\figurename}{Figura}
+\renewcommand{\contentsname}{Contenido}
+
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1\baselineskip}
 
+\definecolor{marino}{RGB}{0,32,96}
+\definecolor{azul}{RGB}{46,117,182}
+\definecolor{oro}{RGB}{191,144,0}
+
+\tikzset{
+  caja/.style={draw=azul, rounded corners=2pt, align=center, text width=4.1cm,
+               font=\footnotesize, minimum height=0.95cm, fill=azul!7, inner sep=3pt,
+               execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000}},
+  choque/.style={caja, fill=marino, draw=marino, text=white, font=\footnotesize\bfseries, text width=6cm},
+  fiscal/.style={caja, fill=oro!14, draw=oro},
+  resultado/.style={caja, fill=marino!10, draw=marino, text width=8.6cm},
+  flecha/.style={-{Stealth[length=2mm]}, semithick, draw=marino!80}
+}
+
 \begin{document}
 
-\title{Modelo de equilibrio general computable de doce sectores para la evaluación de políticas tributarias}
+\title{Modelo de equilibrio general computable para la evaluación de políticas tributarias en Chile}
 \author{Departamento de Estudios Económicos y Tributarios, SII}
-\date{Septiembre 2026}
+\date{Octubre 2026}
 \maketitle
 
 \section*{Resumen ejecutivo}
 
-Este documento desarrolla un modelo de equilibrio general computable estático y determinístico de doce sectores para Chile, calibrado con una matriz de contabilidad social de 2023. Su objetivo es evaluar los efectos macroeconómicos y recaudatorios de cambios tributarios específicos. El modelo incorpora un hogar representativo, doce sectores productivos, trece bienes, un gobierno, firmas, un sector externo y un bloque de ahorro--inversión. Asimismo, utiliza mecanismos CET y Armington para representar la asignación entre ventas domésticas, exportaciones e importaciones. En los mercados de factores, el modelo admite capacidad ociosa del capital ---con una utilización base anclada en 82\% de la capacidad instalada--- y una fuerza de trabajo que responde al empleo. Ambos márgenes se calibran para que la respuesta del desempleo al producto sea coherente con la evidencia disponible para Chile: el coeficiente de Okun implícito, medido respecto del valor agregado real, se sitúa entre 0.276 y 0.327 según el choque. Los impuestos indirectos se representan como cuñas de precio entre el precio básico y el precio de comprador, y no como usos de bienes: el IVA grava la demanda final y otorga crédito pleno al uso intermedio, mientras que los impuestos específicos sobre productos se modelan como montos fijos por unidad física que paga únicamente la demanda final.
+Este documento desarrolla un modelo de equilibrio general computable estático y determinístico de doce sectores para Chile, calibrado con una matriz de contabilidad social de 2023. Su objetivo es evaluar los efectos macroeconómicos y recaudatorios de cambios tributarios específicos. El modelo incorpora un hogar representativo, doce sectores productivos, trece bienes, un gobierno, firmas, un sector externo y un bloque de ahorro--inversión, y utiliza mecanismos CET y Armington para representar la asignación entre ventas domésticas, exportaciones e importaciones.
 
-Los resultados muestran que las cuatro políticas tributarias evaluadas generan efectos agregados diferenciados y operan mediante distintos mecanismos de transmisión. Un aumento de un punto porcentual en la tasa del IVA ---equivalente a pasar de 19\% a 20\%--- reduce el valor agregado real a costo de factores en 0.9105\% (el PIB real medido por el gasto cae 0.9455\%), el consumo real en 1.2603\% y la inversión real en 0.6549\%. La tasa de desempleo aumenta entre 0.2879 y 0.3313 puntos porcentuales, según el tipo de trabajo, y la utilización del capital cae de 82.00\% a 81.01\% de la capacidad instalada. El efecto conjunto de tasa y base asciende a 0.2371 puntos del PIB inicial: la contracción de las bases absorbe 47\% del rendimiento mecánico de 0.4503 puntos. La variación nominal observada de la recaudación total es de 0.1755 puntos del PIB, debido a un efecto precio de -0.0616 puntos.
+Tres rasgos de la especificación condicionan la lectura de los resultados. Primero, el numerario es el índice de precios al consumidor y el sistema es homogéneo de grado cero en precios, de modo que todas las magnitudes nominales se expresan en unidades de poder adquisitivo constante del consumidor. Segundo, la inversión está determinada por el ahorro y el ahorro externo se fija en moneda extranjera. Tercero, las ofertas de los factores responden a su remuneración real neta de impuestos directos: el empleo, al salario real neto del impuesto a la renta de personas, con una elasticidad de 0.5; y los servicios de capital, al retorno real neto del impuesto de primera categoría y del impuesto personal, con una elasticidad de 0.67. Por esta vía, los impuestos directos e indirectos alcanzan la oferta de factores por el mismo canal. Los impuestos indirectos se representan como cuñas entre el precio básico y el precio de comprador: el IVA grava la demanda final y otorga crédito pleno al uso intermedio, y los impuestos específicos son montos por unidad física que paga solo la demanda final.
 
-Un aumento de 10\% en el impuesto a la renta de personas reduce el PIB real en 0.4644\%, el valor agregado real en 0.4559\%, el consumo real en 0.6335\% y la inversión real en 0.2541\%. La tasa de desempleo se incrementa entre 0.1479 y 0.1577 puntos porcentuales, según el tipo de trabajo, y la utilización del capital cae de 82.00\% a 81.50\% de la capacidad instalada. El efecto conjunto de tasa y base eleva la recaudación en 0.0837 puntos del PIB inicial, mientras que la variación nominal observada es de 0.0527 puntos, debido a un efecto precio de -0.0310 puntos.
+Se evalúan cinco medidas. Un aumento de la tasa del IVA de 19\% a 20\% reduce el PIB real en 0.3466\% y el consumo real en 0.7299\%, mientras la inversión real aumenta 0.3890\% porque el mayor ahorro público financia formación de capital. El desempleo sube entre 0.14 y 0.16 puntos porcentuales. El efecto conjunto de tasa y base eleva la recaudación en 0.3626 puntos del PIB inicial: la contracción de las bases absorbe 19.7\% del rendimiento mecánico de 0.4515 puntos. La variación observada, que incorpora la revaloración de las bases respecto del IPC, es de 0.2733 puntos.
 
-Un alza de 10\% en los impuestos específicos sobre productos reduce el valor agregado real en 0.2166\% (el PIB real por el gasto cae 0.2289\%), el consumo real en 0.3037\% y la inversión real en 0.1615\%. Su rendimiento mecánico es de 0.0970 puntos del PIB y la erosión de la propia base absorbe apenas 5\% de ese monto; la contracción de las demás bases, en cambio, resta 0.0503 puntos, de modo que el efecto conjunto de tasa y base sobre la recaudación total es de 0.0419 puntos y la variación nominal observada, de 0.0441 puntos.
+Un aumento de 10\% en la tasa efectiva del impuesto a la renta de personas reduce el PIB real en 0.0874\% y el consumo real en 0.3058\%, y eleva el desempleo entre 0.05 y 0.06 puntos. El efecto de tasa y base asciende a 0.1632 puntos del PIB y la erosión de las bases es de apenas 9.8\% del rendimiento mecánico. Un alza de 10\% de los impuestos específicos reduce el PIB real en 0.0960\% y genera 0.0695 puntos de recaudación de tasa y base, con una erosión de 28.4\%, concentrada en la base del IVA sobre los bienes gravados.
 
-En contraste, una disminución de un punto porcentual en la tasa del impuesto de primera categoría (IDPC) eleva el PIB real en 0.1733\%, el consumo real en 0.1369\% y la inversión real en 0.4116\%. También reduce la tasa de desempleo entre 0.0533 y 0.0696 puntos porcentuales, según el tipo de trabajo, aunque deteriora el saldo comercial. El efecto conjunto de tasa y base reduce la recaudación en 0.1255 puntos del PIB inicial: la expansión de las bases compensa cerca de 22\% del efecto mecánico. La variación nominal observada es de -0.1140 puntos, debido a un efecto precio positivo de 0.0115 puntos.
+Una disminución de un punto porcentual en la tasa legal del impuesto de primera categoría (IDPC) eleva el PIB real en 0.1358\%, la inversión real en 0.3373\% y la utilización del capital de 82.00\% a 82.18\% de la capacidad instalada. La pérdida de tasa y base es de 0.1334 puntos del PIB: la expansión de las bases compensa 17.5\% de la pérdida mecánica. Por último, un paquete que combina una rebaja del IDPC con un alza del impuesto personal eleva el PIB real en 0.0301\% y la recaudación en 0.0230 puntos del PIB, lo que ilustra la sustitución de tributación sobre el capital por tributación sobre el ingreso personal.
 
-
-\vspace{0.5\baselineskip}
-\noindent\textbf{Nota de versión.} Esta versión reespecifica el IVA y los impuestos específicos como cuñas de precio (Sección~\ref{sec:productos}) y ancla la utilización base del capital en 82\% de la capacidad instalada (Sección~\ref{sec:equilibrio}). Las cuatro simulaciones reportadas corresponden a la especificación vigente. Los resultados del incremento del IVA difieren de manera sustantiva de los publicados en versiones anteriores del documento, por las razones que se detallan en la Sección~\ref{sec:sim-iva}.
+El documento somete estos resultados a pruebas de consistencia del cierre ---homogeneidad, ley de Walras y balanza de pagos---, a un análisis de sensibilidad respecto de las elasticidades de oferta de factores y a un examen de coherencia económica frente a evidencia empírica independiente (Secciones~\ref{sec:sensibilidad} y~\ref{sec:coherencia}). Cada medida se evalúa respecto del equilibrio base y sus resultados se presentan por separado.
 
 \section{Introducción}
 
@@ -48,17 +66,18 @@ El modelo considera:
   \item Un gobierno.
   \item Firmas.
   \item Un sector externo.
-  \item Un bloque de ahorro--inversión.
-  \item Un tipo de capital, con grado de utilización endógeno.
-  \item Tres tipos de mano de obra (calificación baja, media y alta), con desempleo y participación laboral endógenos.
+  \item Un bloque de ahorro--inversión, con inversión determinada por el ahorro.
+  \item Un tipo de capital, con grado de utilización endógeno y oferta de servicios que responde al retorno real neto de impuestos directos.
+  \item Tres tipos de mano de obra (calificación baja, media y alta), con desempleo y participación laboral endógenos y oferta que responde al salario real neto de impuestos.
   \item Cinco instrumentos tributarios: IVA, impuesto a la renta de personas, impuesto de primera categoría, impuestos a la producción e impuestos específicos sobre productos, además de los derechos de importación. El IVA y los impuestos específicos operan como cuñas entre el precio básico y el precio de comprador.
+  \item El índice de precios al consumidor como numerario.
 \end{itemize}
 
 La calibración se realiza mediante el paquete \texttt{gEcon} para R\footnote{\url{http://gecon.r-forge.r-project.org/index.html}} y una matriz de contabilidad social (SAM) construida para Chile en 2023 a partir de la matriz insumo-producto más reciente disponible. Para su elaboración se adapta la metodología de compilación matricial propuesta por \cite{venegas_2013}.
 
 La literatura que enmarca este estudio comprende tres dimensiones. La primera corresponde a los fundamentos teóricos del equilibrio general y su aplicación empírica al análisis de políticas públicas \cite{arrow_debreu_1954,shoven_whalley_1984,shoven_whalley_1992,dixon_jorgenson_2013}. La segunda recoge la tradición de modelos aplicados calibrados con matrices de contabilidad social \cite{pyatt_round_1985,dervis_demelo_robinson_1982}, que permite representar de manera coherente los flujos entre hogares, firmas y gobierno. La tercera comprende la evidencia metodológica sobre evaluación tributaria mediante MEGC \cite{ballard_fullerton_shoven_whalley_1985}, que orienta la interpretación de los efectos sobre la recaudación, el bienestar y la composición de la demanda agregada.
 
-El resto del documento se organiza de la siguiente manera. Primero, se presenta la matriz de contabilidad social utilizada para calibrar el modelo y se describen las principales cuentas de la economía. Luego, se desarrollan los distintos bloques del MEGC ---hogares, producción, firmas, gobierno, sector externo y ahorro--inversión---, junto con el cierre macroeconómico adoptado. A continuación, se explica la metodología empleada para evaluar el impacto de las medidas tributarias simuladas. Posteriormente, se presentan los resultados de las simulaciones. Por último, se sintetizan los principales hallazgos y se plantean posibles extensiones del ejercicio.
+El resto del documento se organiza de la siguiente manera. Primero, se presenta la matriz de contabilidad social utilizada para calibrar el modelo. Luego, se desarrollan los bloques del MEGC ---hogares, producción, firmas, gobierno, equilibrio de factores, sector externo y ahorro--inversión---, junto con el cierre macroeconómico adoptado y la calibración de los mercados de factores. A continuación, se explica la metodología de evaluación del impacto fiscal y se presentan los resultados de las cinco simulaciones, su sensibilidad a las elasticidades de oferta de factores y el examen de coherencia económica. Por último, se sintetizan los hallazgos y se plantean extensiones.
 
 \section{Matriz de Contabilidad Social (SAM) de Chile}
 
@@ -70,7 +89,7 @@ La producción sectorial se obtuvo de la matriz de producción a precios básico
 
 El trabajo se clasificó en tres niveles de calificación ---baja, media y alta--- a partir de la distribución de remuneraciones por sector económico de la encuesta CASEN 2022. La categoría de baja calificación comprende a las personas con educación básica completa o inferior; la de calificación media, a quienes alcanzaron como máximo la educación media completa; y la de alta calificación, a quienes poseen educación superior completa o incompleta.
 
-La oferta disponible de cada bien se compone de la producción doméstica, las importaciones provenientes del resto del mundo (ROW), el IVA y los aranceles. Esta oferta se destina a demanda intermedia, consumo de los hogares y del gobierno, exportaciones e inversión. Esta última se desagrega entre inversión propiamente tal (S-I) y variación de existencias.
+El valor de la oferta disponible de cada bien se compone de la producción doméstica, las importaciones provenientes del resto del mundo (ROW), el IVA y los aranceles. Esta oferta se destina a demanda intermedia, consumo de los hogares y del gobierno, exportaciones e inversión. Esta última se desagrega entre inversión propiamente tal (S-I) y variación de existencias.
 
 Los impuestos específicos, el IVA, los aranceles y las importaciones se obtuvieron del cuadro de oferta total. Por su parte, los insumos intermedios se tomaron del cuadro de utilización intermedia total a precios de usuario, mientras que el consumo de los hogares y del gobierno, las exportaciones, la inversión y la variación de existencias se obtuvieron del cuadro de utilización final total a precios de usuario.
 
@@ -78,15 +97,13 @@ Los hogares obtienen su ingreso disponible a partir de las remuneraciones de los
 
 La totalidad de los ingresos laborales se asigna a los hogares. Los ingresos de capital corresponden a las rentas de la producción de los hogares, netas de las remuneraciones al trabajo. Las transferencias gubernamentales provienen de las transferencias sociales en especie; las prestaciones sociales corresponden a las efectuadas por empresas y gobierno; y las transferencias empresariales se determinan residualmente para cuadrar la cuenta. El gasto en bienes se obtiene del cuadro de utilización final total a precios de usuario. Las contribuciones sociales se aproximan mediante el ahorro previsional; el impuesto a la renta, mediante los impuestos netos de subvenciones; y el ahorro, mediante la formación bruta de capital.
 
-Las empresas perciben rentas del capital y contribuciones sociales, que destinan a transferencias a los hogares, prestaciones sociales, ahorro y pago de impuestos a la renta. Cabe destacar que el impuesto corporativo se modela como un gravamen sobre la renta del capital a nivel institucional (firmas), y no como una cuña directa sobre el costo de uso del capital en las decisiones productivas sectoriales. Por tanto, sus efectos se transmiten principalmente a través del ahorro empresarial y la inversión, más que mediante cambios directos en la demanda de factores.
+Las empresas perciben rentas del capital y contribuciones sociales, que destinan a transferencias a los hogares, prestaciones sociales, ahorro y pago de impuestos a la renta. El impuesto corporativo se registra como un gravamen sobre la renta del capital de las firmas. En el modelo, ese gravamen actúa además como una cuña entre el retorno bruto que pagan los sectores productivos y el retorno neto que determina la oferta de servicios de capital, en la tradición del costo de uso del capital \cite{hall_jorgenson_1967}. Sus efectos se transmiten, por tanto, por dos vías: el ahorro empresarial y los dividendos, por un lado, y la cantidad de capital que se pone en uso, por otro.
 
 Los retornos al capital de las empresas se obtienen de las rentas de la producción y de la propiedad neta registradas en las tablas de operaciones no financieras de las sociedades financieras y no financieras, más un ajuste destinado a cuadrar las cuentas. Los dividendos distribuidos a los hogares y al gobierno también se determinan mediante un ajuste. Las prestaciones sociales se aproximan mediante la variación neta de los fondos de pensiones registrada en las operaciones no financieras, neta de impuestos sobre subvenciones. Por su parte, el ahorro empresarial se obtiene de la formación bruta de capital de las empresas financieras y no financieras.
 
 El gobierno gasta en bienes y servicios, así como en ahorro, transferencias a los hogares y prestaciones sociales. Sus ingresos provienen de las rentas del capital, las contribuciones sociales, los impuestos a la renta, el IVA, los impuestos a la producción, los impuestos específicos sobre productos y los aranceles. En la clasificación utilizada para Chile, los impuestos a la producción agrupan tributos asociados al proceso productivo y al uso de activos o permisos ---como timbres y estampillas, contribuciones de bienes raíces, permisos de circulación, patentes y derechos municipales y no municipales, e impuestos a los juegos de azar, casinos e hipódromos, entre otros---. En cambio, los impuestos específicos sobre productos corresponden a gravámenes aplicados por unidad de bien o como porcentaje de su valor de venta. Dentro de estos últimos destacan los impuestos de la Ley de Alcoholes y los impuestos específicos a combustibles, tabaco y fuentes móviles.
 
-El resto del mundo percibe ingresos por las importaciones, las remuneraciones del trabajo extranjero y las rentas del capital que posee. Estos recursos se destinan al pago de las exportaciones de la economía, al ahorro externo y a las remuneraciones del capital doméstico situado en el extranjero. En esta representación, el ahorro externo corresponde al financiamiento neto proveniente del resto del mundo y es consistente con la diferencia entre la inversión y el ahorro doméstico. Su registro en la matriz sigue la convención contable de la SAM y puede reflejarse indirectamente en las cuentas de capital y propiedad.
-
-
+El resto del mundo percibe ingresos por las importaciones, las remuneraciones del trabajo extranjero y las rentas del capital que posee. Estos recursos se destinan al pago de las exportaciones de la economía, al ahorro externo y a las remuneraciones del capital doméstico situado en el extranjero. En esta representación, el ahorro externo corresponde al financiamiento neto proveniente del resto del mundo y es consistente con la diferencia entre la inversión y el ahorro doméstico.
 
 La Tabla~\ref{tab:sam-resumida-2023} presenta una versión resumida de la SAM utilizada en la calibración, agregada a un sector productivo, un producto y un tipo de trabajo. Las celdas se reportan con un decimal y las posiciones sin flujo observado se muestran como 0.0.
 
@@ -152,7 +169,7 @@ Esta sección describe los bloques que conforman la economía del modelo. La pro
 \begin{aligned}
 \mathrm{SEC}=\{&\mathrm{ActAgri},\mathrm{ActMin},\mathrm{ActManu},\mathrm{ActElectAguaGas}, \\
 &\mathrm{ActConst},\mathrm{ActComHotRest},\mathrm{ActTransComuInf},\mathrm{ActIntFin}, \\
-&\mathrm{ActServEmp},\mathrm{ActServPers},\mathrm{ActAdmPub}\}.
+&\mathrm{ActInmoViv},\mathrm{ActServEmp},\mathrm{ActServPers},\mathrm{ActAdmPub}\}.
 \end{aligned}
 \]
 
@@ -187,7 +204,8 @@ U = \left(\sum_{p \in \mathrm{PCON}} \alpha^{p} \left(D^{p}\right)^{\frac{\omega
 Esta optimización está sujeta a las siguientes restricciones:
 
 \[
-INC = \sum_{p \in \mathrm{PCON}} pq^{p} D^{p} + SAV + \mathrm{CONT}^{\mathrm{SOC}}
+INC = \sum_{p \in \mathrm{PCON}} pq^{p} D^{p} + SAV + \mathrm{CONT}^{\mathrm{SOC}},
+\qquad SAV = s^{h}\, INC, \qquad \mathrm{CONT}^{\mathrm{SOC}} = c^{h}\, INC
 \]
 
 \[
@@ -195,18 +213,16 @@ INC = BTINC - PITAX
 \]
 
 \[
-BTINC = L^{h} w + K^{h} p^{k} + \mathrm{TR}^{\mathrm{EMP}} + \mathrm{TR}^{\mathrm{GOV}} + PS^{h} + FACTROW^{K} + FACTROW^{L}
+BTINC = K^{h} p^{k} + \sum_{l\in\mathcal{L}} w_{l} L^{h}_{l} + \mathrm{TR}^{\mathrm{GOV}} + \mathrm{TR}^{\mathrm{EMP}} + PS^{h} + FACTROW^{K} + FACTROW^{L}
 \]
 
 \[
-PITAX = pit \cdot \left(K^{h} p^{k} + L^{h} w + \mathrm{TR}^{\mathrm{GOV}} + \mathrm{TR}^{\mathrm{EMP}} + PS^{h} + FACTROW^{K} + FACTROW^{L}\right)
+PITAX = pit \cdot BTINC
 \]
 
-En estas expresiones, $D^{p}$ es la demanda del hogar por el bien compuesto $p$, $\omega$ se fija en 1.5 y $\alpha^{p}$ representa el parámetro de participación del bien en el consumo, calibrado para reproducir la SAM. El precio relevante para los hogares es $pq^{p}$, el precio de comprador del bien compuesto, que incorpora el impuesto específico por unidad física y el IVA sobre la demanda final (Sección~\ref{sec:productos}). En consecuencia, la sustitución entre bienes en la función de utilidad responde a los precios efectivamente pagados por el hogar y no al precio básico $p^{p}$. Asimismo, $SAV$ representa el ahorro de los hogares y $CONT^{SOC}$, las contribuciones sociales que estos pagan.
+En estas expresiones, $D^{p}$ es la demanda del hogar por el bien compuesto $p$, $\omega$ se fija en 1.5 y $\alpha^{p}$ representa el parámetro de participación del bien en el consumo, calibrado para reproducir la SAM. El precio relevante para los hogares es $pq^{p}$, el precio de comprador del bien compuesto, que incorpora el impuesto específico por unidad física y el IVA sobre la demanda final (Sección~\ref{sec:productos}). En consecuencia, la sustitución entre bienes responde a los precios efectivamente pagados por el hogar y no al precio básico $p^{p}$. El ahorro $SAV$ y las contribuciones sociales $\mathrm{CONT}^{\mathrm{SOC}}$ son proporciones fijas $s^{h}$ y $c^{h}$ del ingreso disponible.
 
-Por su parte, $INC$ es el ingreso disponible de los hogares, $BTINC$ es el ingreso antes de impuestos y $pit$ es la tasa efectiva del impuesto a la renta de personas. En la descomposición de $BTINC$, $L^{h}$ representa la dotación de trabajo; $w$, el salario; $K^{h}$, la dotación de capital de los hogares; $p^{k}$, el retorno del capital; $TR^{EMP}$ y $TR^{GOV}$, las transferencias provenientes de las empresas y del gobierno; y $PS^{h}$, las prestaciones sociales recibidas por los hogares. Los términos $FACTROW^{K}$ y $FACTROW^{L}$ representan, respectivamente, los ingresos de capital y de trabajo provenientes del resto del mundo. De acuerdo con la SAM utilizada, ambos se fijan en cero: $FACTROW^{K}=0$ y $FACTROW^{L}=0$.
-
-En esta formulación, el vínculo con el sector externo no ingresa en el presupuesto del hogar mediante rentas residuales del comercio, sino que se internaliza en los bloques CET y Armington a través de los precios $pe^{p}$, $pd^{p}$, $pm^{p}$ y $p^{p}$.
+Por su parte, $INC$ es el ingreso disponible de los hogares, $BTINC$ es el ingreso antes de impuestos y $pit$ es la tasa efectiva del impuesto a la renta de personas, que en la SAM asciende a 2.55\% del ingreso antes de impuestos. En la descomposición de $BTINC$, $L^{h}_{l}$ representa el empleo del tipo de trabajo $l$; $w_{l}$, su salario; $K^{h}$, la dotación de capital de los hogares; $p^{k}$, el retorno del capital; $TR^{EMP}$ y $TR^{GOV}$, las transferencias provenientes de las empresas y del gobierno; y $PS^{h}$, las prestaciones sociales recibidas, que igualan lo que pagan empresas y gobierno (Sección~\ref{sec:equilibrio}). Los términos $FACTROW^{K}$ y $FACTROW^{L}$ representan los ingresos de capital y de trabajo provenientes del resto del mundo; de acuerdo con la SAM, ambos son nulos.
 
 \subsection{Bloque de sectores}
 
@@ -214,16 +230,16 @@ El bloque de sectores constituye el núcleo productivo del MEGC: en cada activid
 
 Debido a los ceros estructurales de la SAM, la especificación sectorial se divide según los insumos intermedios utilizados. Esta partición evita problemas numéricos al calibrar demandas de insumos cuyos flujos son exactamente nulos en la matriz.
 
-\textbf{1) Variables de decisión.} Para cada sector, la firma determina \(V^{s}\) (nivel de actividad), \(K^{s}\) (capital) y la demanda de cada tipo de trabajo \(L^{l,s}\), con \(l \in \mathcal{L}=\{1,2,3\}\). La demanda de insumos intermedios \(X^{p,s}\) no se elige de manera independiente, sino que queda determinada por coeficientes fijos una vez definido \(V^{s}\).
+\textbf{1) Variables de decisión.} Para cada sector, la firma determina \(V^{s}\) (nivel de actividad), \(K^{s}\) (capital) y la demanda de cada tipo de trabajo \(L^{l,s}\), con \(l \in \mathcal{L}=\{1,2,3\}\). La demanda de insumos intermedios \(X^{p,s}\) queda determinada por coeficientes fijos una vez definido \(V^{s}\).
 
 \textbf{2) Función objetivo.} El beneficio sectorial se representa como:
 
 \[
 \pi^{s} = V^{s}\left(\sum_{p \in \mathrm{PRODS}} pz^{p}\, make\_share^{p,s}\right)\left(1-tps^{s}-tes^{s}\right)
-- K^{s} p^{k} - \sum_{l \in \mathcal{L}} w^{l} L^{l,s} - \sum_{p \in \mathcal{I}(s)} io^{p,s} V^{s} pint^{p}
+- K^{s} p^{k} - \sum_{l \in \mathcal{L}} w_{l} L^{l,s} - \sum_{p \in \mathcal{I}(s)} io^{p,s} V^{s} pint^{p}
 \]
 
-donde \(\mathcal{I}(s)\) es el conjunto de insumos efectivamente utilizados por cada grupo sectorial e \(io^{p,s}\) es el requerimiento fijo del insumo compuesto $p$ por unidad de actividad. El primer término valora la producción al precio del productor $pz^{p}$, de manera consistente con el bloque CET. A este ingreso se restan los costos del capital, el trabajo y los insumos intermedios, valorados al precio de insumo $pint^{p}$. Este precio excluye los impuestos específicos y, salvo el residuo de calibración descrito más adelante, también el IVA, de modo que el crédito fiscal impide que el impuesto se acumule en cascada a lo largo de la cadena productiva \cite{ebrill_etal_2001}.
+donde \(\mathcal{I}(s)\) es el conjunto de insumos efectivamente utilizados por cada grupo sectorial e \(io^{p,s}\) es el requerimiento fijo del insumo compuesto $p$ por unidad de actividad. El primer término valora la producción al precio del productor $pz^{p}$, de manera consistente con el bloque CET. A este ingreso se restan los costos del capital, el trabajo y los insumos intermedios, valorados al precio de insumo $pint^{p}$. Este precio excluye los impuestos específicos y, salvo el residuo de calibración descrito más adelante, también el IVA, de modo que el crédito fiscal impide que el impuesto se acumule en cascada a lo largo de la cadena productiva \cite{ebrill_etal_2001}. Los sectores pagan el retorno bruto $p^{k}$; la brecha entre este y el retorno neto que perciben los propietarios del capital se determina en el bloque de equilibrio.
 
 \textbf{3) Tecnología de producción.} La actividad productiva combina capital y los tres tipos de trabajo mediante una Cobb--Douglas de valor agregado:
 
@@ -231,7 +247,7 @@ donde \(\mathcal{I}(s)\) es el conjunto de insumos efectivamente utilizados por 
 V^{s} = \gamma^{s} \left(K^{s}\right)^{\beta_{K}^{s}} \prod_{l \in \mathcal{L}} \left(L^{l,s}\right)^{\beta_{L,l}^{s}}.
 \]
 
-Los insumos intermedios, en cambio, siguen una estructura Leontief con coeficientes fijos proporcionales al nivel de actividad:
+Los insumos intermedios siguen una estructura Leontief con coeficientes fijos proporcionales al nivel de actividad:
 
 \[
 X^{p,s} = io^{p,s} V^{s}, \qquad p \in \mathcal{I}(s)
@@ -242,33 +258,25 @@ Así, el margen de sustitución dentro del bloque productivo opera entre capital
 \textbf{4) Identidades contables y matriz de producción.}
 
 \[
-YAP^{p,s} = V^{s} \cdot make\_share^{p,s}
-\]
-
-\[
+YAP^{p,s} = V^{s} \cdot make\_share^{p,s},
+\qquad
 revenue^{s} = \sum_{p \in \mathrm{PRODS}} YAP^{p,s} pz^{p}
 \]
 
 \[
-net\_revenue^{s} = revenue^{s} \left(1-tps^{s}-tes^{s}\right)
+net\_revenue^{s} = revenue^{s} \left(1-tps^{s}-tes^{s}\right),
+\qquad
+va\_nom^{s} = net\_revenue^{s} - \sum_{p \in \mathcal{I}(s)} io^{p,s} V^{s} pint^{p}
 \]
 
-\[
-va\_nom^{s} = net\_revenue^{s} - \sum_{p \in \mathcal{I}(s)} io^{p,s} V^{s} p^{p}
-\]
+La identidad \(YAP^{p,s}\) distribuye la producción sectorial entre los bienes de acuerdo con la matriz \(make\_share\). A partir de esta asignación se calculan el ingreso bruto, el ingreso neto de impuestos a la producción y, una vez descontado el costo de los insumos intermedios, el valor agregado nominal \(va\_nom^{s}\). La oferta por producto ingresa luego en el bloque CET.
 
-La identidad \(YAP^{p,s}\) distribuye la producción sectorial entre los bienes del productor de acuerdo con la matriz \(make\_share\) y las proporciones observadas en la SAM. A partir de esta asignación se calculan el ingreso bruto, el ingreso neto de impuestos operativos y, una vez descontado el costo de los insumos intermedios, el valor agregado nominal \(va\_nom^{s}\). Posteriormente, la oferta por producto ingresa en el bloque CET, que determina su distribución entre ventas domésticas y exportaciones.
-
-\textbf{5) Calibración.} El estado base reproduce exactamente la SAM y permite inferir los parámetros tecnológicos.\footnote{Durante la calibración se impone \(V^{s}=vst^{s}\Rightarrow \gamma^{s}\), \(K^{s}p^{k}=va\_nom^{s}\beta_{K}^{s}\Rightarrow \beta_{K}^{s}\) y \(w^{l}L^{l,s}=va\_nom^{s}\beta_{L,l}^{s}\Rightarrow \beta_{L,l}^{s}\) para cada tipo de trabajo \(l\). Las demandas intermedias se recuperan mediante los coeficientes fijos \(io^{p,s}\) observados en la SAM.}
-
-En síntesis, cada sector resuelve un problema de optimización microeconómica. Ante choques de política o de demanda, ajusta el empleo y el capital dentro de una tecnología Cobb--Douglas de valor agregado, mientras que la demanda intermedia varía en proporciones fijas consistentes con la SAM.
+\textbf{5) Calibración.} El estado base reproduce exactamente la SAM y permite inferir los parámetros tecnológicos.\footnote{Durante la calibración se impone \(V^{s}=vst^{s}\Rightarrow \gamma^{s}\), \(K^{s}p^{k}=va\_nom^{s}\beta_{K}^{s}\Rightarrow \beta_{K}^{s}\) y \(w_{l}L^{l,s}=va\_nom^{s}\beta_{L,l}^{s}\Rightarrow \beta_{L,l}^{s}\) para cada tipo de trabajo \(l\). Las demandas intermedias se recuperan mediante los coeficientes fijos \(io^{p,s}\) observados en la SAM.}
 
 \subsection{Bloque de productos y comercio exterior}
 \label{sec:productos}
 
-El bloque de productos conecta la producción con el comercio exterior y la absorción doméstica. A diferencia de una versión simplificada del modelo, la producción interna y las importaciones no se igualan directamente con la demanda final. Cada producto pasa por dos etapas: primero, una transformación CET entre ventas domésticas y exportaciones; luego, una agregación Armington entre oferta doméstica e importaciones para formar el bien compuesto utilizado internamente.
-
-En la implementación del archivo \texttt{.gcn}, las ecuaciones se agrupan por familias de productos para tratar los ceros estructurales de la SAM, de forma análoga a la partición técnica de los sectores. Con ello se evita sumar flujos que son exactamente nulos en el escenario base.
+El bloque de productos conecta la producción con el comercio exterior y la absorción doméstica. Cada producto pasa por dos etapas: primero, una transformación CET entre ventas domésticas y exportaciones; luego, una agregación Armington entre oferta doméstica e importaciones para formar el bien compuesto utilizado internamente. En la implementación del archivo \texttt{.gcn}, las ecuaciones se agrupan por familias de productos para tratar los ceros estructurales de la SAM.
 
 \textbf{1) Transformación CET entre ventas domésticas y exportaciones.} Siguiendo la especificación de elasticidad de transformación constante \cite{powell_gruen_1968}, para los bienes exportables el productor resuelve:
 
@@ -280,12 +288,12 @@ bajo la restricción tecnológica:
 
 \[
 Z^{p}=a_{t}^{p}\left[\gamma_{e}^{p}\left(EX^{p}\right)^{\rho_{t}}+\left(1-\gamma_{e}^{p}\right)\left(DS^{p}\right)^{\rho_{t}}\right]^{1/\rho_{t}},
-\qquad \rho_{t}=\frac{\sigma_{t}+1}{\sigma_{t}}
+\qquad \rho_{t}=\frac{\sigma_{t}+1}{\sigma_{t}},\qquad \sigma_{t}=1.5
 \]
 
-En esta expresión, $Z^{p}$ es la oferta total del bien del productor; $DS^{p}$, las ventas domésticas; $EX^{p}$, las exportaciones; $pz^{p}$, el precio del productor; $pd^{p}$, el precio de venta interna; y $pe^{p}$, el precio de exportación en moneda doméstica. Para los bienes no exportables, se impone $DS^{p}=Z^{p}$, $EX^{p}=0$ y $pz^{p}=pd^{p}$.
+En esta expresión, $Z^{p}$ es la oferta total del bien del productor; $DS^{p}$, las ventas domésticas; $EX^{p}$, las exportaciones; $pz^{p}$, el precio del productor; $pd^{p}$, el precio de venta interna; y $pe^{p}$, el precio de exportación en moneda doméstica. Para los bienes no exportables se impone $DS^{p}=Z^{p}$, $EX^{p}=0$ y $pz^{p}=pd^{p}$.
 
-\textbf{2) Agregado Armington para la absorción doméstica.} El bien compuesto usado por hogares, gobierno, inversión e insumos intermedios supone diferenciación imperfecta por origen \cite{armington_1969} y se obtiene resolviendo:
+\textbf{2) Agregado Armington para la absorción doméstica.} El bien compuesto supone diferenciación imperfecta por origen \cite{armington_1969} y se obtiene resolviendo:
 
 \[
 \max_{Q^{p},DD^{p},M^{p}} \; \Pi_{ARM}^{p}=p^{p}Q^{p}-pd^{p}DD^{p}-pm^{p}M^{p}
@@ -295,10 +303,10 @@ bajo la restricción:
 
 \[
 Q^{p}=a_{q}^{p}\left[\delta_{m}^{p}\left(M^{p}\right)^{\rho_{q}}+\left(1-\delta_{m}^{p}\right)\left(DD^{p}\right)^{\rho_{q}}\right]^{1/\rho_{q}},
-\qquad \rho_{q}=\frac{\sigma_{q}-1}{\sigma_{q}}
+\qquad \rho_{q}=\frac{\sigma_{q}-1}{\sigma_{q}},\qquad \sigma_{q}=2.0
 \]
 
-con $DD^{p}=DS^{p}$; es decir, el componente doméstico del agregado Armington coincide con las ventas internas determinadas por CET. Aquí, $Q^{p}$ es el bien compuesto; $M^{p}$, las importaciones; $p^{p}$, el precio compuesto; y $pm^{p}$, el precio de importación con arancel. En la calibración base, los parámetros $\delta_{m}^{p}$ y $\gamma_{e}^{p}$ se obtienen directamente de las participaciones observadas en la SAM.
+con $DD^{p}=DS^{p}$. Aquí, $Q^{p}$ es el bien compuesto; $M^{p}$, las importaciones; $p^{p}$, el precio básico del compuesto; y $pm^{p}$, el precio de importación con arancel. Los parámetros $\delta_{m}^{p}$ y $\gamma_{e}^{p}$ se obtienen de las participaciones observadas en la SAM.
 
 \textbf{3) Absorción doméstica y vaciado del mercado compuesto.} La absorción doméstica se separa según el tipo de comprador, porque el tratamiento tributario difiere entre demanda final y uso intermedio. En unidades físicas:
 
@@ -307,64 +315,62 @@ FD^{p}=D^{p}+GG^{p}+I^{data,p}\,inv\_adj,
 \qquad
 XI^{p}=\sum_{s\in\mathrm{SEC}}X^{p,s}
 \]
-
 \[
 TD\_Dom^{p}=FD^{p}+VEXIST^{p}+XI^{p}
 \]
 
-donde $FD^{p}$ es la demanda final gravada ---consumo de los hogares $D^{p}$, gasto del gobierno $GG^{p}$ e inversión endógena $I^{data,p}\,inv\_adj$---; $XI^{p}$, la demanda intermedia agregada; y $VEXIST^{p}$, la variación de existencias. El vaciado del mercado del bien compuesto es entonces una igualdad puramente física:
+donde $FD^{p}$ es la demanda final gravada ---consumo de los hogares $D^{p}$, gasto del gobierno $GG^{p}$ e inversión $I^{data,p}\,inv\_adj$, con $inv\_adj$ el índice de volumen de la inversión---; $XI^{p}$, la demanda intermedia agregada; y $VEXIST^{p}$, la variación de existencias. El vaciado del mercado del bien compuesto es una igualdad puramente física:
 
 \[
 Q^{p}=TD\_Dom^{p}
 \]
+Esta igualdad responde a que, en el sistema de cuentas nacionales, los impuestos sobre los productos son un componente de valoración que separa el precio básico del precio de comprador y no un uso de bienes \cite{sna_2008}. La especificación respeta esa distinción: los impuestos indirectos desplazan precios y no cantidades, de manera análoga al tratamiento estándar de los impuestos sobre ventas en los MEGC aplicados \cite{lofgren_harris_robinson_2002}.
 
-Esta formulación reemplaza la utilizada en versiones anteriores del modelo, en la que los impuestos indirectos se descontaban de la oferta como si absorbieran unidades físicas, mediante $Q^{p}+VAT^{p}/p^{p}+TESP^{p}/p^{p}=TD\_Dom^{p}$. En el sistema de cuentas nacionales, los impuestos sobre los productos son un componente de valoración que separa el precio básico del precio de comprador y no un uso de bienes \cite{sna_2008}. La especificación vigente respeta esa distinción: los impuestos indirectos desplazan precios y no cantidades, de manera análoga al tratamiento estándar de los impuestos sobre ventas en los MEGC aplicados \cite{lofgren_harris_robinson_2002}.
-
-\textbf{4) Impuestos indirectos como cuñas de precio.} Cada producto tiene dos precios de usuario, según quién lo compre:
+\textbf{4) Impuestos indirectos como cuñas tributarias.} Cada producto tiene dos precios de usuario, según quién lo compre:
 
 \[
-pq^{p}=\left(p^{p}+\tau_{e}^{p}\right)\left(1+t_{iva}^{p}\right),
+pq^{p}=\left(p^{p}+\tau_{e}^{p}\,IPC\right)\left(1+t_{iva}^{p}\right),
 \qquad
 pint^{p}=p^{p}\left(1+t_{iva,int}^{p}\right)
 \]
 
-El precio $pq^{p}$ es el precio de comprador que enfrentan los hogares, el gobierno y la inversión. Incorpora primero el impuesto específico $\tau_{e}^{p}$, expresado como un monto fijo por unidad física, y luego el IVA, que se aplica sobre el precio ya gravado con el específico. Este orden reproduce la regla del artículo 15 del DL 825, según la cual la base imponible del IVA incluye los demás tributos que afectan a la operación, con excepción del propio IVA \cite{dl825}. El precio $pint^{p}$ es el precio de los insumos intermedios: no incluye el impuesto específico ---se supone que el consumo intermedio no lo paga--- y su tasa $t_{iva,int}^{p}$ es nula salvo por el residuo de calibración que se describe en el punto 6.
+El precio $pq^{p}$ es el precio de comprador que enfrentan los hogares, el gobierno y la inversión. Incorpora primero el impuesto específico, un monto real $\tau_{e}^{p}$ por unidad física indexado al índice de precios al consumidor $IPC$, y luego el IVA, que se aplica sobre el precio ya gravado con el específico. Este orden reproduce la regla del artículo 15 del DL 825, según la cual la base imponible del IVA incluye los demás tributos que afectan a la operación, con excepción del propio IVA \cite{dl825}. La indexación al IPC reproduce el hecho de que, en Chile, los impuestos a los combustibles y al tabaco están expresados en UTM \cite{ley18502}, y es además una condición para que el modelo sea homogéneo de grado cero en precios (Sección~\ref{sec:equilibrio}). El precio $pint^{p}$ es el precio de los insumos intermedios: no incluye el impuesto específico ---se supone que el consumo intermedio no lo paga--- y su tasa $t_{iva,int}^{p}$ es nula salvo por el residuo de calibración que se describe en el punto 6.
 
 La recaudación de ambos instrumentos se obtiene aplicando esas cuñas a las bases físicas correspondientes:
 
 \[
-VAT^{p}=t_{iva}^{p}\left(p^{p}+\tau_{e}^{p}\right)FD^{p}+t_{iva,int}^{p}\,p^{p}\,XI^{p},
+VAT^{p}=t_{iva}^{p}\left(p^{p}+\tau_{e}^{p}\,IPC\right)FD^{p}+t_{iva,int}^{p}\,p^{p}\,XI^{p},
 \qquad
-TESP^{p}=\tau_{e}^{p}\,FD^{p}
+TESP^{p}=\tau_{e}^{p}\,IPC\,FD^{p}
 \]
 
-La segunda identidad tiene una implicancia relevante para la evaluación fiscal: como el impuesto específico es un monto por unidad física, su recaudación sigue a los volúmenes y es invariante a los precios. Un impuesto unitario y uno ad valorem equivalente en la base recaudan lo mismo, pero responden de manera distinta a cualquier perturbación que altere precios relativos o el nivel general de precios, diferencia bien documentada en la literatura sobre diseño de impuestos selectivos \cite{keen_1998,delipalla_keen_1992,cnossen_2005}. Esta propiedad también implica que el valor real de la recaudación específica se erosiona con la inflación cuando el gravamen no se indexa; en Chile, los impuestos a los combustibles y al tabaco están expresados en UTM, lo que provee esa indexación \cite{ley18502}.
+Como el impuesto específico es un monto real por unidad física, su recaudación real sigue a los volúmenes de demanda final y no a los precios relativos. Un impuesto unitario y uno ad valorem equivalente en la base recaudan lo mismo, pero responden de manera distinta a cualquier perturbación que altere precios relativos, diferencia bien documentada en la literatura sobre diseño de impuestos selectivos \cite{keen_1998,delipalla_keen_1992,cnossen_2005}.
 
 \textbf{5) Recaudación aduanera y vínculo con precios externos.} El bloque completa las identidades tributarias y de precios de frontera:
 
 \[
 ARANCEL^{p}=tar\_rate^{p}\,pworldm^{p}\,exr\,M^{p}
 \]
-
 \[
 pm^{p}=pworldm^{p}\,exr\left(1+tar\_rate^{p}\right),
 \qquad
 pe^{p}=pworlde^{p}\,exr
 \]
 
-donde $tar\_rate^{p}$ es la tasa arancelaria efectiva por producto. En conjunto, el bloque determina la relación entre el precio del productor $pz^{p}$, el precio doméstico $pd^{p}$, el precio importado $pm^{p}$, el precio básico del compuesto $p^{p}$ y los dos precios de usuario $pq^{p}$ y $pint^{p}$. En la versión actual del cierre externo, el tipo de cambio $exr$ es endógeno, de modo que estos precios transmiten el ajuste necesario para compatibilizar el equilibrio comercial con un nivel fijo de ahorro externo.
+donde $tar\_rate^{p}$ es la tasa arancelaria efectiva por producto y $exr$ es el tipo de cambio, endógeno. Como el numerario es el IPC, $exr$ es un tipo de cambio real: el precio de la moneda extranjera medido en canastas de consumo doméstico.
 
-\textbf{6) Calibración de las cuñas tributarias.} La SAM registra la recaudación de IVA y de impuestos específicos por producto, pero no distingue qué parte recae sobre la demanda final. La calibración asigna toda la fila de IVA a la demanda final gravada, con un tope igual a la tasa legal $\bar{t}=0.19$, y envía el excedente al uso intermedio como residuo transitorio:
+\textbf{6) Calibración de las cuñas tributarias.} La SAM registra la recaudación de IVA y de impuestos específicos por producto, pero no distingue qué parte recae sobre la demanda final. La calibración asigna todo el IVA a la demanda final gravada, con un tope igual a la tasa legal $\bar{t}=0.19$, y envía el excedente al uso intermedio como residuo transitorio:
 
 \[
 IVA^{p}_{FD}=\min\left\{IVA^{p},\;\frac{\bar{t}}{1+\bar{t}}\,FD^{p}_{c}\right\},
 \qquad
-t_{iva}^{p}=\frac{IVA^{p}_{FD}}{FD^{p}_{c}-IVA^{p}_{FD}},
-\qquad
+t_{iva}^{p}=\frac{IVA^{p}_{FD}}{FD^{p}_{c}-IVA^{p}_{FD}}
+\]
+\[
 t_{iva,int}^{p}=\frac{IVA^{p}-IVA^{p}_{FD}}{XI^{p}_{c}-\left(IVA^{p}-IVA^{p}_{FD}\right)}
 \]
 
-donde el subíndice $c$ indica valoración a precios de comprador de la SAM. El residuo $t_{iva,int}^{p}$ no es un artificio contable sin contenido económico: recoge el IVA que no se recupera como crédito porque la cadena de débitos y créditos se interrumpe en actividades exentas, situación que genera efectos de cascada sobre los precios de los insumos \cite{ebrill_etal_2001,keen_2013}. En una etapa posterior este residuo se reemplazará por estimaciones de IVA no recuperable por sector construidas a partir del formulario 29.
+donde el subíndice $c$ indica valoración a precios de comprador de la SAM. El residuo $t_{iva,int}^{p}$ recoge el IVA que no se recupera como crédito porque la cadena de débitos y créditos se interrumpe en actividades exentas, situación que genera efectos de cascada sobre los precios de los insumos \cite{ebrill_etal_2001,keen_2013}.
 
 El impuesto específico unitario se recupera de la condición de que la recaudación observada coincida con $\tau_{e}^{p}$ veces la demanda final física, valorada al precio básico del año base:
 
@@ -372,300 +378,211 @@ El impuesto específico unitario se recupera de la condición de que la recaudac
 \tau_{e}^{p}=\frac{p^{p,b}\;TESP^{p}}{FD^{p}_{c}-IVA^{p}_{FD}-TESP^{p}}
 \]
 
-Con estas expresiones, el equilibrio base reproduce exactamente la SAM. El bien \emph{otros} queda excluido de ambos gravamenes, de modo que $t_{iva}^{p}=t_{iva,int}^{p}=\tau_{e}^{p}=0$ y $pq^{p}=pint^{p}=p^{p}$ para ese producto.
+En la SAM 2023 la totalidad de los impuestos específicos recae sobre el compuesto manufacturero, donde el gravamen representa 3.2\% del precio sin IVA de la demanda final. Con estas expresiones, el equilibrio base reproduce exactamente la SAM. El bien \emph{otros} queda excluido de ambos gravámenes, de modo que $pq^{p}=pint^{p}=p^{p}$ para ese producto.
 
 \subsection{Bloque de las firmas}
 
-En este bloque, las firmas no se modelan como unidades físicas de producción ---función asignada al bloque de sectores---, sino como una institución que administra el flujo de renta del capital. Esta institución recibe ingresos, paga dividendos, impuestos y transferencias, y retiene el residuo como ahorro corporativo.
+En este bloque, las firmas no se modelan como unidades físicas de producción ---función asignada al bloque de sectores---, sino como una institución que administra el flujo de renta del capital: recibe ingresos, paga dividendos, impuestos, prestaciones y transferencias, y retiene el residuo como ahorro corporativo.
 
-\textbf{1) Ingreso bruto de las firmas.} El ingreso inicial de las empresas se define como:
+\textbf{1) Ingreso bruto de las firmas.}
 
 \[
 ING^{F} = K^{F} p^{k} + CONT^{SOCF}, \qquad CONT^{SOCF}=\theta_{cs}^{F}\, CONT^{SOC}
 \]
 
-El primer componente corresponde a la renta del capital corporativo y el segundo, a la fracción de contribuciones sociales asignada a las firmas (identificada en la codificación de \texttt{gEcon} como \texttt{por\_cont\_soc\_f}).
-
-\textbf{2) Transferencias a hogares (dividendos).} Las utilidades distribuidas se modelan como una proporción fija del ingreso bruto:
+\textbf{2) Transferencias a hogares (dividendos), prestaciones y transferencias al fisco.}
 
 \[
-TR^{EMP}=\theta_{tr}^{F}\, ING^{F}
+TR^{EMP}=\theta_{tr}^{F}\, ING^{F},\qquad PREST^{SOCF}=\theta_{ps}^{F}\, ING^{F}, \qquad TR^{FG}=\theta_{fg}^{F}\, ING^{F}
 \]
 
-Esta identidad corresponde a \texttt{TREMP} en el archivo \texttt{.gcn}.
-
-\textbf{3) Impuesto corporativo.} La recaudación sobre firmas se calcula sobre la base de renta del capital:
+\textbf{3) Impuesto corporativo.}
 
 \[
 FIRMTAX = fit\cdot\left(K^{F}p^{k}\right)
 \]
 
-donde $fit$ es la tasa del impuesto corporativo (primera categoría).
+donde $fit$ es la tasa efectiva del impuesto a las firmas, que en la SAM equivale a 13.05\% de la renta del capital corporativo.
 
-\textbf{4) Asignación institucional del capital.} La dotación de capital en manos de firmas corresponde a una participación fija del capital efectivamente utilizado en la economía:
+\textbf{4) Asignación institucional del capital.} La dotación de capital en manos de firmas es una participación fija del capital efectivamente utilizado en la economía, $K^{F}=\kappa^{F}\, KD$, con $\kappa^{F}=0.7643$. En consecuencia, la base del impuesto corporativo varía con el grado de utilización del capital y no solo con su retorno.
 
-\[
-K^{F}=\kappa^{F}\, KD
-\]
-
-con $\kappa^{F}$ equivalente al parámetro exógeno \texttt{par\_k\_f} de calibración y $KD$ el capital utilizado definido en el bloque de equilibrio. En consecuencia, la base del impuesto corporativo varía con el grado de utilización del capital y no solo con su retorno.
-
-\textbf{5) Ahorro corporativo residual.} El ahorro de firmas resulta como residuo luego de cumplir todos los pagos institucionales:
+\textbf{5) Ahorro corporativo residual.}
 
 \[
 SAV^{F}=ING^{F}-TR^{EMP}-PREST^{SOCF}-FIRMTAX-TR^{FG}
 \]
 
-\[
-PREST^{SOCF}=\theta_{ps}^{F}\, ING^{F}, \qquad TR^{FG}=\theta_{fg}^{F}\, ING^{F}
-\]
-
-De manera equivalente, puede escribirse como la restricción presupuestaria de la institución de las firmas:
-
-\[
-ING^{F}=TR^{EMP}+PREST^{SOCF}+FIRMTAX+TR^{FG}+SAV^{F}
-\]
-
-En síntesis, este bloque transforma la renta del capital corporativo en distribución a hogares, pagos al gobierno y ahorro empresarial, cerrando el circuito financiero que luego alimenta el bloque ahorro--inversión.
+En síntesis, este bloque transforma la renta del capital corporativo en distribución a hogares, pagos al gobierno y ahorro empresarial, que alimenta el bloque ahorro--inversión. El impuesto corporativo, además, entra en la curva de oferta de servicios de capital a través del retorno neto (Sección~\ref{sec:equilibrio}).
 
 \subsection{Bloque del gobierno}
 
-El bloque de gobierno representa al sector público consolidado: recauda impuestos, recibe rentas y transferencias, ejecuta gasto público y determina el ahorro fiscal residual. No resuelve un problema de optimización explícito; opera como un sistema contable de cierre macroeconómico.
+El bloque de gobierno representa al sector público consolidado: recauda impuestos, recibe rentas y transferencias, ejecuta gasto público y determina el ahorro fiscal residual. No resuelve un problema de optimización explícito.
 
-\textbf{1) Recaudación tributaria total.} La recaudación agregada se compone de seis fuentes:
+\textbf{1) Recaudación tributaria total.}
 
 \[
 \begin{aligned}
-TOTAL^{TAX}={}&\ VAT+PITAX+FIRMTAX \\
-&+\sum_{s\in\mathrm{SEC}}\left(tps^{s}+tes^{s}\right)revenue^{s} \\
+TOTAL^{TAX}={}& VAT+PITAX+FIRMTAX+\sum_{s\in\mathrm{SEC}}\left(tps^{s}+tes^{s}\right)revenue^{s}\\
 &+\sum_{p\in\mathrm{PRODS}}\left(TESP^{p}+ARANCEL^{p}\right)
 \end{aligned}
 \]
 
-donde $VAT$ es el IVA agregado; $PITAX$, el impuesto a la renta de personas; $FIRMTAX$, el impuesto corporativo; y el término sectorial, los impuestos a la producción y otros gravámenes aplicados sobre las ventas brutas de cada actividad. En la aplicación para Chile, los impuestos a la producción incluyen tributos como timbres y estampillas, contribuciones territoriales, permisos de circulación, patentes y derechos municipales y no municipales, e impuestos a los juegos de azar, casinos e hipódromos. Por su parte, $ARANCEL^{p}$ corresponde a la recaudación aduanera y $TESP^{p}=\tau_{e}^{p}FD^{p}$, a los impuestos específicos sobre productos, que en la especificación vigente dejan de ser un monto exógeno de la SAM y pasan a responder al volumen de demanda final. Entre estos últimos se encuentran los impuestos de la Ley de Alcoholes y los impuestos específicos a los combustibles, el tabaco y las fuentes móviles. La recaudación agregada por este concepto suma el componente unitario por producto y el componente ad valorem $tes^{s}$ que la SAM registra a nivel de actividad. El IVA y los derechos de importación se mantienen desagregados en el modelo.
+donde $VAT=\sum_{p}VAT^{p}$; $PITAX$ es el impuesto a la renta de personas; $FIRMTAX$, el impuesto corporativo; el término $tps^{s}$ recoge los impuestos a la producción sobre las ventas brutas de cada actividad; $TESP^{p}$, los impuestos específicos por unidad física; y $ARANCEL^{p}$, la recaudación aduanera. El componente ad valorem sectorial $tes^{s}$ de los impuestos específicos es nulo en la calibración utilizada.
 
-\textbf{2) IVA e impuesto a la renta de personas.} En forma desagregada:
-
-\[
-VAT=\sum_{p\in\mathrm{PRODS}} VAT^{p}
-\]
+\textbf{2) Ingreso total del fisco.}
 
 \[
-\begin{aligned}
-PITAX={}&\ pit\cdot\Big(wL^{h}+p^{k}K^{h}+TR^{GOB}+TR^{EMP} \\
-&\qquad\ +PS^{h}+FACTROW^{K}+FACTROW^{L}\Big)
-\end{aligned}
+ING^{GOB}=p^{k}K^{g}+CONT^{SOCG}+TOTAL^{TAX}+TR^{FG}, \qquad K^{g}=\kappa^{g}\,KD
 \]
 
-La primera identidad agrega el IVA recaudado por producto en el bloque \texttt{PRODUCTS}; la segunda aplica la tasa efectiva $pit$ sobre la base de ingresos del hogar.
-
-\textbf{3) Ingreso total del fisco.} Los recursos del gobierno se escriben como:
+\textbf{3) Transferencias y prestaciones.} Las transferencias del gobierno a hogares se fijan en términos reales, indexadas al IPC, y las prestaciones sociales que paga el fisco son una proporción de su ingreso:
 
 \[
-ING^{GOB}=p^{k}K^{g}+CONT^{SOCG}+TOTAL^{TAX}+TR^{FG}
+TR^{GOB}=\overline{TR}^{GOB}\,IPC,\qquad PREST^{SOCG}=\theta_{ps}^{G}\,ING^{GOB}
 \]
 
-donde $p^{k}K^{g}$ corresponde a la renta del capital público, con $K^{g}=\kappa^{g}\,KD$; $CONT^{SOCG}$, a la fracción de contribuciones sociales que recibe el gobierno; y $TR^{FG}$, a las transferencias desde firmas.
-
-\textbf{4) Transferencias del gobierno a hogares.} Se modelan como una proporción del ingreso fiscal:
-
-\[
-TR^{GOB}=\theta_{trgov}\,ING^{GOB}
-\]
-
-Esta regla replica el mecanismo de transferencias observado en la SAM.
-
-\textbf{5) Gasto corriente y ahorro fiscal residual.} El ahorro del gobierno resulta de restar al ingreso total sus compromisos corrientes:
+\textbf{4) Gasto corriente y ahorro fiscal residual.}
 
 \[
 SAV^{G}=ING^{GOB}-\left(\sum_{p\in\mathrm{PRODS}}pq^{p}GG^{p}+TR^{GOB}+PREST^{SOCG}\right)
 \]
 
-Equivalentemente,
+El volumen de compras del gobierno $GG^{p}$ permanece fijo en el nivel base y se valora a precios de comprador, de modo que el sector público paga el IVA y los impuestos específicos asociados a sus compras. El ahorro fiscal es la variable de ajuste del presupuesto: toda variación de la recaudación que no absorban las prestaciones o el costo de las compras se traduce en ahorro público, que el cierre ahorro--inversión transforma en inversión.
 
-\[
-ING^{GOB}=\sum_{p\in\mathrm{PRODS}}pq^{p}GG^{p}+TR^{GOB}+PREST^{SOCG}+SAV^{G}
-\]
-
-El gasto del gobierno se valúra a precios de comprador $pq^{p}$, de modo que el sector público paga el IVA y los impuestos específicos asociados a sus compras. Como su volumen de compras permanece fijo en el nivel base, un alza de la tasa del IVA eleva simultáneamente la recaudación y el costo nominal del gasto público; el efecto neto sobre el ahorro fiscal recoge ambos movimientos.
-
-En síntesis, el bloque fiscal concentra la recaudación proveniente de hogares, firmas, sectores y comercio exterior; financia gasto y transferencias; y su saldo $SAV^{G}$ interactúa con el cierre ahorro--inversión y con la necesidad de ahorro externo del modelo.
-
-\subsection{Bloque del equilibrio}
+\subsection{Bloque del equilibrio y cierre macroeconómico}
 \label{sec:equilibrio}
 
-El bloque de equilibrio completa el cierre macroeconómico del modelo. Para ello, impone las restricciones de escasez y coherencia contable que deben cumplirse simultáneamente después de la optimización de los hogares, los sectores, los bloques CET--Armington, las firmas y el gobierno.
+El bloque de equilibrio impone las restricciones de escasez y coherencia contable que deben cumplirse simultáneamente, define la oferta de los factores y fija el anclaje nominal.
 
-\textbf{1) Demanda agregada de trabajo.} La demanda total de trabajo se obtiene sumando el empleo utilizado por los conjuntos sectoriales definidos en la implementación y la fracción exógena asociada al resto del mundo:
-
-\[
-LD=\sum_{s\in \mathrm{SECTORS\_A}}L^{s}+\sum_{s\in \mathrm{SECTORS\_B}}L^{s}+\sum_{s\in \mathrm{SECTORS\_C}}L^{s}+L^{ROW}
-\]
-
-Esta identidad reemplaza el supuesto de pleno empleo: la cantidad efectivamente empleada surge de las decisiones de las firmas y no tiene por qué coincidir con la fuerza laboral total disponible.
-
-\textbf{2) Participación laboral endógena.} La fuerza de trabajo de cada tipo responde al nivel de empleo, lo que recoge en forma reducida los efectos de trabajador desalentado y trabajador adicional:
+\textbf{1) Demanda agregada de trabajo.} La demanda de cada tipo de trabajo es la suma del empleo sectorial, más una fracción asociada al resto del mundo que es nula en la SAM:
 
 \[
-L^{FORCE}_{l}=L^{FORCE,data}_{l}\left(\frac{LD_{l}}{L^{data}_{l}}\right)^{\varepsilon}
+LD_{l}=\sum_{s\in \mathrm{SEC}}L^{l,s}+L^{ROW}_{l}
 \]
 
-donde $L^{FORCE,data}_{l}$ y $L^{data}_{l}$ son la fuerza de trabajo y el empleo del escenario base, y $\varepsilon=0.42$. En la base, $LD_{l}=L^{data}_{l}$, de modo que la fuerza de trabajo coincide con el dato. Con este valor, una caída de 1\% del empleo reduce la fuerza de trabajo en 0.42\%, de modo que parte del ajuste se manifiesta como menor participación y no como mayor desempleo.
-
-\textbf{3) Curva salarial.} El salario se determina mediante una curva salarial que vincula el salario con la tasa de ocupación de la fuerza de trabajo:
+\textbf{2) Participación laboral endógena.} La fuerza de trabajo de cada tipo responde al nivel de empleo, lo que recoge en forma reducida los efectos del trabajador desalentado y del trabajador adicional:
 
 \[
-w_{l}=w^{pot}_{l}\left(\frac{LD_{l}}{L^{FORCE}_{l}}\right)^{\phi}, \qquad w^{pot}_{l}=\left(1-u^{b}_{l}\right)^{-\phi}
+L^{FORCE}_{l}=L^{FORCE,data}_{l}\left(\frac{LD_{l}}{L^{data}_{l}}\right)^{\varepsilon},\qquad \varepsilon=0.42
 \]
 
-de modo que $w_{l}=1$ en el escenario base. Se adopta $\phi=2.0$. Como la curva está expresada en términos de la tasa de ocupación $(1-u)$ y no de la tasa de desempleo, su elasticidad respecto de $u$ es $-\phi\,u/(1-u)$, que con un desempleo agregado de 8.34\% equivale a $-0.18$. Este valor duplica aproximadamente la elasticidad central de $-0.1$ documentada por \cite{blanchflower_oswald_1994}, pero se encuentra dentro de la dispersión de esa literatura; su elección se discute en la subsección de calibración.
+donde $L^{FORCE,data}_{l}$ y $L^{data}_{l}$ son la fuerza de trabajo y el empleo del escenario base. Una caída de 1\% del empleo reduce la fuerza de trabajo en 0.42\%, de modo que parte del ajuste se manifiesta como menor participación y no como mayor desempleo.
 
-\textbf{4) Tasa de desempleo.} La diferencia entre fuerza laboral y empleo efectivo se resume en una identidad de desempleo:
+\textbf{3) Curva salarial en términos reales y netos de impuestos.} El salario real neto del impuesto personal depende de la tasa de ocupación de la fuerza de trabajo:
+
+\[
+\frac{w_{l}\left(1-pit\right)}{1-pit^{b}}=IPC\cdot w^{pot}_{l}\left(\frac{LD_{l}}{L^{FORCE}_{l}}\right)^{\phi}, \qquad w^{pot}_{l}=\left(1-u^{b}_{l}\right)^{-\phi},\qquad \phi=3.4483
+\]
+
+La normalización por $1-pit^{b}$ garantiza $w_{l}=1$ en la base. Combinando la curva con la de participación, el empleo responde al salario real neto con una elasticidad $1/[\phi(1-\varepsilon)]=0.5$. Un alza del impuesto personal desplaza la curva: para un mismo empleo, los trabajadores exigen un salario bruto mayor, lo que transmite el impuesto al costo laboral de las firmas. Expresada respecto de la tasa de desempleo, la elasticidad del salario real es $-\phi\,u/(1-u)$, que con un desempleo agregado de 8.34\% equivale a $-0.31$, el triple de la elasticidad de $-0.1$ documentada por \cite{blanchflower_oswald_1994}. La curva se interpreta aquí como una curva de oferta de forma reducida, calibrada a la elasticidad del insumo laboral y no a la curva salarial regional; la Sección~\ref{sec:calib-factores} discute esta elección.
+
+\textbf{4) Tasa de desempleo.}
 
 \[
 u_{l}=\frac{L^{FORCE}_{l}-LD_{l}}{L^{FORCE}_{l}}
 \]
 
-Con ello, los choques no se absorben únicamente mediante movimientos salariales, sino también mediante variaciones de la tasa de desempleo y de la participación. En la calibración base, las tasas de desempleo de los trabajos de baja, media y alta calificación son 7.6\%, 9.9\% y 7.8\%, respectivamente.
+En la calibración base, las tasas de desempleo de los trabajos de baja, media y alta calificación son 7.6\%, 9.9\% y 7.8\%, respectivamente, obtenidas de la Encuesta Nacional de Empleo del INE.
 
-\textbf{5) Utilización endógena del capital.} El modelo no impone el pleno uso del stock de capital. El capital efectivamente utilizado, su grado de utilización y su retorno se determinan mediante:
+\textbf{5) Utilización endógena del capital y oferta de servicios de capital.} El modelo no impone el pleno uso del stock de capital. El capital efectivamente utilizado, su grado de utilización y su retorno se determinan mediante:
 
 \[
-KD=\sum_{s\in \mathrm{SECTORS\_A}}K^{s}+\sum_{s\in \mathrm{SECTORS\_B}}K^{s}, \qquad
+KD=\sum_{s\in \mathrm{SEC}}K^{s}, \qquad
 u_{k}=\frac{KD}{K^{TOT}}, \qquad
-p^{k}=p^{k,pot}\,u_{k}^{\psi}
+\frac{p^{k}\left(1-\kappa^{F}fit-\kappa^{h}pit\right)}{1-\kappa^{F}fit^{b}-\kappa^{h}pit^{b}}=IPC\cdot p^{k,pot}\,u_{k}^{\psi},\qquad \psi=1.5
 \]
 
-con $\psi=0.2$. El stock $K^{TOT}$ deja de ser una restricción de recursos y pasa a representar la capacidad instalada: $u_{k}$ mide el grado en que esa capacidad se utiliza, y hacerlo más intensamente ---turnos adicionales, menor mantenimiento programado--- tiene un costo creciente en términos de retorno \cite{greenwood_hercowitz_huffman_1988}. La especificación es análoga a la curva salarial del mercado laboral, con $1/\psi$ como elasticidad de la oferta de servicios de capital. Bajo esta formulación, $p^{k}$ admite la interpretación de precio sombra del factor cuasi-fijo \cite{berndt_fuss_1986}.
+El lado izquierdo es el retorno neto de impuestos directos, normalizado por su valor base: el capital de las firmas tributa el impuesto corporativo, el de los hogares el impuesto personal y el del gobierno no tributa. Las participaciones en la propiedad del capital utilizado son $\kappa^{F}=0.7643$, $\kappa^{h}=0.2158$ y $\kappa^{g}=0.0198$, y suman uno, de modo que la renta asociada a la capacidad ociosa desaparece de los ingresos institucionales en la proporción correcta. La oferta de servicios de capital responde al retorno real neto con elasticidad $1/\psi=0.67$.
 
-La SAM registra la renta del capital efectivamente utilizado, de modo que $KD^{b}$ es observable pero $K^{TOT}$ no lo es. En versiones anteriores se imponía $u_{k}^{b}=1$, es decir, se identificaba el capital utilizado con la capacidad instalada. La versión vigente ancla la utilización base en $u_{k}^{b}=0.82$, valor tomado del uso de capacidad instalada que reporta el Indicador Mensual de Confianza Empresarial de ICARE y la Universidad Adolfo Ibáñez para diciembre de 2023 \cite{imce_2023}. La capacidad instalada y el retorno potencial se obtienen entonces de forma residual:
+El stock $K^{TOT}$ representa la capacidad instalada: utilizarla más intensamente ---turnos adicionales, menor mantenimiento programado--- tiene un costo creciente en términos de retorno \cite{greenwood_hercowitz_huffman_1988}, y $p^{k}$ admite la interpretación de precio sombra del factor cuasi-fijo \cite{berndt_fuss_1986}. La especificación es la contraparte para el capital de la curva salarial: el impuesto corporativo opera como una cuña entre el retorno bruto que pagan los sectores y el retorno neto que determina la oferta, análoga a la cuña tributaria del costo de uso del capital \cite{hall_jorgenson_1967}. Una rebaja de $fit$ eleva el retorno neto para un mismo retorno bruto, incentiva un mayor uso de la capacidad instalada y reduce el costo del capital para las firmas.
+
+La SAM registra la renta del capital efectivamente utilizado, de modo que $KD^{b}$ es observable pero $K^{TOT}$ no lo es. La utilización base se ancla en $u_{k}^{b}=0.82$, valor tomado del uso de capacidad instalada que reporta el Indicador Mensual de Confianza Empresarial de ICARE y la Universidad Adolfo Ibáñez para diciembre de 2023 \cite{imce_2023}. La capacidad instalada y el retorno potencial se obtienen de forma residual, $K^{TOT}=KD^{b}/u_{k}^{b}$ y $p^{k,pot}=\left(u_{k}^{b}\right)^{-\psi}$, de modo que en la base $p^{k}=1$. Sustituyendo ambas expresiones se obtiene que el retorno real neto depende solo de $KD/KD^{b}$ y no del nivel de $u_{k}^{b}$: el anclaje en 82\% es una renormalización que modifica el nivel reportado de utilización sin alterar ninguna respuesta de equilibrio, y es el paso previo para imponer en el futuro un techo de capacidad $u_{k}\leq 1$, extensión en la que el nivel base sí importaría \cite{corrado_mattey_1997}. En cualquier simulación se cumple $\Delta\ln(\text{retorno neto})/\Delta\ln KD=\psi$, lo que sirve como verificación de la implementación.
+
+\textbf{6) Participaciones de los hogares y prestaciones sociales.}
 
 \[
-K^{TOT}=\frac{KD^{b}}{u_{k}^{b}},
-\qquad
-p^{k,pot}=\left(u_{k}^{b}\right)^{-\psi}
+K^{h}=\kappa^{h}\,KD, \qquad L^{h}_{l}=LD_{l}, \qquad PS^{h}=PREST^{SOCF}+PREST^{SOCG}
 \]
 
-de modo que en el escenario base $p^{k}=1$ y el equilibrio reproduce la SAM. Conviene explicitar una propiedad de esta parametrización. Sustituyendo ambas expresiones en la curva de utilización se obtiene
+Las prestaciones que reciben los hogares son endógenas e iguales a las que pagan empresas y gobierno. Esta igualdad cierra el circuito institucional, de modo que la ley de Walras se cumple sin cuentas residuales.
+
+\textbf{7) Anclaje nominal y homogeneidad.} El numerario es el índice de precios al consumidor, un índice de Laspeyres de los precios de comprador ponderado por la canasta física de consumo de los hogares del año base:
 
 \[
-p^{k}=\left(u_{k}^{b}\right)^{-\psi}\left(\frac{KD}{K^{TOT}}\right)^{\psi}=\left(\frac{KD}{KD^{b}}\right)^{\psi},
+IPC=\frac{\sum_{p\in \mathrm{PCON}} D^{p,b}\,pq^{p}}{\sum_{p\in \mathrm{PCON}} D^{p,b}\,pq^{p,b}}=1
 \]
 
-es decir, el retorno del capital depende únicamente de la variación del capital utilizado respecto de la base y no del nivel de $u_{k}^{b}$. Por lo tanto, el anclaje en 82\% es una renormalización: modifica el nivel reportado de utilización ---que pasa a interpretarse como porcentaje de la capacidad instalada y no como índice base 100--- sin alterar ninguna respuesta de equilibrio. Su valor es interpretativo y analítico: sitúa la economía a distancia de su techo de capacidad, hace comparables los resultados con las series de utilización empresariales \cite{corrado_mattey_1997} y es el paso previo necesario para imponer una restricción de capacidad $u_{k}\leq 1$ o una elasticidad $\psi$ creciente cerca del techo, extensión en la cual el nivel base sí alteraría las respuestas. Por construcción, en cualquier simulación se cumple $\Delta\ln p^{k}/\Delta\ln KD=\psi$, lo que sirve como verificación de la implementación.
+Para que la elección del numerario no afecte las asignaciones reales, el sistema debe ser homogéneo de grado cero en precios \cite{dewatripont_michel_1987}. Esto exige que todo parámetro expresado en unidades monetarias esté indexado: las transferencias del gobierno y los impuestos específicos, al IPC; el ahorro externo, al tipo de cambio; y las curvas de oferta de los factores se expresan en términos reales. La propiedad se verifica numéricamente en la Sección~\ref{sec:coherencia}. Con el IPC como numerario, todos los valores nominales que reporta el documento están expresados en unidades de poder adquisitivo constante del consumidor, y una variación de los precios básicos o de las remuneraciones de los factores equivale a una variación de su valor real en términos de consumo.
 
-Las dotaciones institucionales de capital ---hogares, firmas y gobierno--- escalan con $KD$. Como sus participaciones suman exactamente uno en la SAM (0.2158, 0.7643 y 0.0198, respectivamente) y el resto del mundo no recibe renta del capital, la renta asociada a la capacidad ociosa desaparece de los ingresos institucionales en la proporción correcta, sin generar ingresos residuales.
+\subsection{Bloque de ahorro--inversión y cierre externo}
+\label{sec:ahorro-inversion}
 
-La motivación de este bloque es cuantitativa. Con capital plenamente utilizado y tecnología Cobb--Douglas en el valor agregado, la elasticidad del empleo respecto del nivel de actividad es exactamente $1/\beta_{L}$, independiente de la curva salarial. Con una participación del trabajo de $\beta_{L}=0.4597$, esa elasticidad es 2.18, lo que implica una respuesta del desempleo varias veces superior a la observada empíricamente.
-
-\textbf{6) Numerario nominal.} Para cerrar el sistema de precios relativos se fija un numerario, mientras que el tipo de cambio se determina endógenamente. En esta versión del modelo, el tipo de cambio $exr$ es una variable de equilibrio que se ajusta para compatibilizar el balance externo con el nivel de ahorro externo fijado exógenamente.
-
-En consecuencia, los precios relativos entre bienes domésticos e internacionales pueden variar. Esto permite que el sector externo absorba los choques macroeconómicos mediante cambios en la competitividad y en los términos de intercambio, en lugar de hacerlo mediante variaciones del ahorro externo.
-
-\textbf{7) Participaciones fijas de los hogares.} La participación de los hogares en capital y prestaciones se calibra con parámetros exógenos, mientras que su dotación laboral depende del empleo efectivo:
+\textbf{1) Inversión determinada por el ahorro.} El índice de volumen de la inversión $inv\_adj$ se ajusta para que la inversión, valorada a precios de comprador, más la variación de existencias iguale el ahorro total de la economía:
 
 \[
-K^{h}=par_{k}^{h}\,KD, \qquad L^{h}=par_{l}^{h}\,LD, \qquad PS^{h}=psh^{data}
+NOM\_I^{BASE}=\sum_{p\in\mathrm{PRODS}} I^{data,p}\,pq^{p}
+\]
+\[
+TOTAL^{INV}=NOM\_I^{BASE}\,inv\_adj+\sum_{p\in\mathrm{PRODS}}VEXIST^{p}p^{p}
 \]
 
-Así, tanto el ingreso laboral como la renta del capital de los hogares se ajustan con el nivel de empleo y con el grado de utilización del capital.
+\[
+SAV+SAV^{F}+SAV^{G}+SAV^{EXT}=TOTAL^{INV}
+\]
 
-\textbf{8) Coherencia comercial.} El sector externo queda cerrado dentro de los bloques CET y Armington: las ventas externas $EX^{p}$, las ventas domésticas $DS^{p}$, las importaciones $M^{p}$ y el bien compuesto $Q^{p}$ se determinan endógenamente a partir de precios relativos, sin necesidad de introducir rentas residuales adicionales en este bloque.
+La composición por producto de la inversión permanece fija en la canasta de la SAM y su volumen se ajusta proporcionalmente. Este es el cierre neoclásico de los modelos de equilibrio general aplicado \cite{sen_1963,lofgren_harris_robinson_2002}: no existe una función de inversión independiente y todo ahorro adicional ---de hogares, firmas o gobierno--- se traduce en formación de capital. En particular, el ahorro público que genera un alza tributaria financia inversión, y la pérdida de ahorro público de una rebaja la reduce.
+
+\textbf{2) Ahorro externo fijo en moneda extranjera.}
+
+\[
+SAV^{EXT}=\overline{SAV}^{EXT}\,exr
+\]
+
+El financiamiento externo se fija en divisas y el tipo de cambio real se ajusta para que el déficit comercial en moneda extranjera sea compatible con ese monto, haciendo que la balanza de pagos se cumpla como consecuencia de la ley de Walras, y su cumplimiento sirve como verificación de que todos los flujos están cerrados.
+
 
 \subsection{Calibración de los mercados de factores}
+\label{sec:calib-factores}
 
-Los parámetros $\phi$, $\psi$ y $\varepsilon$ se eligen conjuntamente para que la respuesta del desempleo al producto sea coherente con la evidencia empírica. Log-linealizando las demandas de factores de la tecnología Cobb--Douglas con insumos Leontief, junto con la curva salarial, la curva de participación y la curva de utilización del capital, se obtiene:
+Los parámetros $\phi$ y $\psi$ se calibran a partir de la evidencia microeconómica sobre la respuesta de la oferta de factores a su remuneración neta. La Tabla~\ref{tab:calib-factores} resume los valores adoptados.
 
-\[
-\frac{\hat{l}}{\hat{v}}=\frac{1+\psi}{1+\psi\beta_{L}+\phi(1-\varepsilon)\beta_{K}},
-\qquad
-\frac{\Delta u}{\hat{v}}=(1-u)\,(1-\varepsilon)\,\frac{\hat{l}}{\hat{v}}
-\]
-
-donde $\hat{l}$ y $\hat{v}$ son las variaciones porcentuales del empleo y de la actividad, y $\beta_{L}=0.4597$ y $\beta_{K}=0.5403$ son las participaciones agregadas del trabajo y del capital en el valor agregado de la SAM. La segunda expresión corresponde al coeficiente de Okun implícito del modelo \cite{okun_1962} y puede reescribirse como $(1-u)(\eta_{L}-\eta_{LF})$, donde $\eta_{L}$ y $\eta_{LF}$ son las elasticidades del empleo y de la fuerza de trabajo respecto del producto.
-
-Dos propiedades de estas expresiones orientan la calibración. Primero, cuando el capital se mantiene plenamente utilizado ($\psi\to\infty$), $\hat{l}/\hat{v}\to 1/\beta_{L}=2.18$ con independencia de $\phi$: ningún valor de la curva salarial corrige la sobrerreacción del desempleo. Segundo, aun con oferta de capital perfectamente elástica ($\psi=0$) y fuerza de trabajo fija ($\varepsilon=0$), el coeficiente de Okun no puede ser inferior a $(1-u)/(1+\phi\beta_{K})$, que para valores razonables de $\phi$ excede la evidencia. El margen de participación es, por tanto, necesario.
-
-Como referencia empírica se utiliza el informe de \cite{clapes_okun}, que estima la ley de Okun en diferencias para Chile con datos trimestrales de 2010 a 2023. La especificación estática arroja un coeficiente de $-0.281$. La especificación dinámica arroja un coeficiente de impacto de $-0.207$ y una persistencia del desempleo de 0.572, lo que implica un multiplicador de largo plazo de $-0.367$. Dado que un modelo estático compara equilibrios con ajuste completo, se adopta como objetivo la banda 0.28--0.37 y, dentro de ella, preferentemente su extremo superior.
-
-La Tabla~\ref{tab:calib-factores} resume los valores adoptados. Con ellos, la aproximación analítica entrega un coeficiente de Okun de 0.371, una elasticidad empleo--producto de 0.70 y una elasticidad fuerza de trabajo--producto de 0.29. En las simulaciones, el coeficiente medido respecto del valor agregado real se ubica en 0.326--0.327 para los tres choques de base amplia (IVA, PIT e IDPC) y desciende a 0.276 en el alza de los impuestos específicos. La diferencia con la aproximación analítica refleja la composición sectorial de cada choque, que la expresión agregada no captura: cuando la medida se concentra en unos pocos productos, la intensidad laboral de los sectores afectados determina la respuesta agregada del empleo.
+Para el trabajo, la síntesis de la evidencia cuasi experimental apunta a elasticidades hicksianas de alrededor de 0.3 en el margen intensivo y 0.25 en el extensivo \cite{chetty_etal_2011,chetty_2012}. El modelo representa el insumo laboral total sin distinguir horas de personas, por lo que se adopta una elasticidad del empleo al salario real neto de 0.5, que con $\varepsilon=0.42$ implica $\phi=3.4483$. Para el capital, la revisión de \cite{hassett_hubbard_2002} sitúa la elasticidad de la inversión respecto del costo de uso entre $-0.5$ y $-1.0$, y la evidencia para Chile documenta un efecto negativo y significativo del impuesto corporativo sobre la inversión, concentrado en las empresas pequeñas y medianas \cite{cerda_larrain_2005}. Se adopta $\psi=1.5$, que implica una elasticidad de la oferta de servicios de capital de 0.67, en el centro de ese rango. Lo anterior se debe a que el modelo estático representa servicios de capital y su grado de utilización, no la acumulación del stock.
 
 \begin{table}[H]
 \centering
 \caption{Parámetros de los mercados de factores}
 \label{tab:calib-factores}
 \small
-\begin{tabular}{|l|c|c|p{6.5cm}|}
+\begin{tabular}{|l|c|c|p{7.2cm}|}
   \hline
   Parámetro & Símbolo & Valor & Interpretación \\
   \hline
-  Curva salarial & $\phi$ & 2.0 & Elasticidad salario--desempleo implícita de $-0.18$ \\
+  Curva salarial & $\phi$ & 3.4483 & Elasticidad del empleo al salario real neto de $1/[\phi(1-\varepsilon)]=0.5$ \\
   \hline
-  Utilización del capital & $\psi$ & 0.2 & Elasticidad de la oferta de servicios de capital de 5 \\
+  Curva de utilización del capital & $\psi$ & 1.5 & Elasticidad de los servicios de capital al retorno real neto de $1/\psi=0.67$ \\
   \hline
   Participación laboral & $\varepsilon$ & 0.42 & Elasticidad de la fuerza de trabajo respecto del empleo \\
   \hline
-  Utilización base del capital & $u_{k}^{b}$ & 0.82 & Uso de capacidad instalada, IMCE ICARE--UAI, diciembre 2023. Renormaliza el nivel reportado sin alterar las respuestas de equilibrio \\
+  Utilización base del capital & $u_{k}^{b}$ & 0.82 & Uso de capacidad instalada, IMCE ICARE--UAI, diciembre 2023. Renormaliza el nivel reportado sin alterar las respuestas \\
   \hline
 \end{tabular}
 \end{table}
 
-Esta calibración tiene limitaciones que conviene explicitar. El informe utilizado como referencia no ha sido sometido a revisión de pares; su regresión en diferencias interanuales sobre datos trimestrales induce autocorrelación en los errores, y su muestra incluye los trimestres de la pandemia, que pueden tener una influencia considerable sobre el coeficiente estimado. El parámetro $\psi$ carece de un ancla empírica directa para Chile, donde no existe una serie oficial de utilización de capacidad por sector, y $\varepsilon$ se obtiene de la identidad de Okun y no de una estimación propia de $\eta_{LF}$. El nivel base $u_{k}^{b}$ proviene de una encuesta de opinión empresarial de cobertura principalmente industrial, por lo que su extensión al conjunto de la economía es una aproximación; su efecto, sin embargo, se limita a la interpretación de los niveles reportados. Por estas razones, los tres parámetros se incluyen en el análisis de sensibilidad. Finalmente, la curva salarial y la curva de participación son dispositivos de forma reducida que replican la elasticidad observada, no una teoría estructural del desempleo.
-
-
-\subsection{Bloque de ahorro--inversión y cierre externo}
-
-El cierre ahorro--inversión no es neoclásico. La inversión del gobierno permanece fija en su nivel base, mientras que la inversión de los hogares y las firmas varía endógenamente en función de su ahorro, con una respuesta amortiguada. En consecuencia, el ajuste macroeconómico combina cambios en la inversión privada y en los precios relativos, especialmente a través del tipo de cambio, mientras el financiamiento externo permanece constante.
-
-\textbf{1) Inversión pública fija e inversión privada variable.} Primero se define el costo nominal de la canasta base de inversión:
+La respuesta del desempleo al producto no es un objetivo de la calibración, sino un estadístico de contraste. Log-linealizando las demandas de factores de la tecnología Cobb--Douglas con insumos Leontief junto con las curvas de oferta, para un choque que no altere la cuña entre las remuneraciones de ambos factores se obtiene:
 
 \[
-NOM\_I^{BASE}=\sum_{p\in\mathrm{PRODS}} I^{data,p}\,pq^{p}
-\]
-
-Luego, el componente gubernamental se mantiene fijo mediante:
-
-\[
-inv\_adj^{G}=1
-\]
-
-En cambio, los componentes de hogares y firmas se ajustan en proporción a su ahorro, con un parámetro de amortiguación $\eta$:
-
-\[
-inv\_adj^{H}=\left(\frac{SAV}{sh\_i^{H}\,NOM\_I^{BASE}}\right)^{\eta},
+\frac{\hat{k}}{\hat{l}}=\frac{1+\phi(1-\varepsilon)}{1+\psi},
 \qquad
-inv\_adj^{F}=\left(\frac{SAV^{F}}{sh\_i^{F}\,NOM\_I^{BASE}}\right)^{\eta}
+\frac{\hat{l}}{\hat{v}}=\frac{1+\psi}{1+\psi\beta_{L}+\phi(1-\varepsilon)\beta_{K}},
+\qquad
+\frac{\Delta u}{\hat{v}}=(1-u)\,(1-\varepsilon)\,\frac{\hat{l}}{\hat{v}}
 \]
 
-En la calibración utilizada se fija $\eta=0.5$\footnote{Con este valor, la inversión de hogares y firmas responde a cambios en el ahorro con una elasticidad menor que uno y, por tanto, de manera amortiguada.}.
+donde $\hat{k}$, $\hat{l}$ y $\hat{v}$ son las variaciones porcentuales del capital utilizado, el empleo y la actividad, y $\beta_{L}=0.4597$ y $\beta_{K}=0.5403$ son las participaciones agregadas del trabajo y del capital en el valor agregado de la SAM. La tercera expresión es el coeficiente de Okun implícito del modelo \cite{okun_1962} y puede reescribirse como $(1-u)(\eta_{L}-\eta_{LF})$, con $\eta_{L}$ y $\eta_{LF}$ las elasticidades del empleo y de la fuerza de trabajo respecto del producto. Una cuña uniforme ---como la que introduce un impuesto general al consumo, que reduce en la misma proporción el salario real y el retorno real--- se cancela en la primera expresión, de modo que estas fórmulas son pertinentes para el IVA y, aproximadamente, para los impuestos específicos. No lo son para el impuesto personal ni para el corporativo, que desplazan la oferta de un solo factor.
 
-El multiplicador agregado de inversión que entra al bloque de productos es un promedio ponderado de esos tres componentes:
+Con la calibración central, $\hat{k}/\hat{l}=1.2$, $\hat{l}/\hat{v}=0.90$ y el coeficiente de Okun analítico es 0.48. Como referencia empírica se utiliza el informe de \cite{clapes_okun}, que estima la ley de Okun en diferencias para Chile con datos trimestrales de 2010 a 2023: la especificación estática arroja un coeficiente de $-0.281$ y la dinámica, un multiplicador de largo plazo de $-0.367$. El valor analítico excede esa banda. Con una elasticidad del empleo de 0.25 ---el extremo inferior de la evidencia microeconómica--- se obtendría 0.35, dentro de ella; con 0.86, 0.57. La calibración privilegia la evidencia sobre la oferta de factores por sobre el ajuste a la ley de Okun, por dos razones: la elasticidad del empleo al salario neto es el parámetro que gobierna directamente la respuesta a los impuestos sobre el trabajo, y la ley de Okun es una regularidad de forma reducida de ciclos dominados por la demanda, que este modelo de oferta no está diseñado para replicar.
 
-\[
-inv\_adj=sh\_i^{H}inv\_adj^{H}+sh\_i^{F}inv\_adj^{F}+sh\_i^{G}inv\_adj^{G}
-\]
-
-Así, la demanda de inversión por producto no permanece completamente fija. La inversión pública queda anclada a la canasta calibrada, mientras que la inversión de los hogares y las firmas puede expandirse o contraerse según su ahorro disponible, con una elasticidad acotada por $\eta$.
-
-\textbf{2) Requerimiento total de financiamiento.} El financiamiento total asociado a la inversión agregada y a la variación de existencias viene dado por:
-
-\[
-TOTAL^{INV}=NOM\_I^{BASE}\,inv\_adj+\sum_{p\in\mathrm{PRODS}}VEXIST^{p}p^{p}
-\]
-
-De este modo, el costo nominal de la inversión total depende del ajuste conjunto entre inversión privada variable, inversión pública fija y variación de existencias.
-
-\textbf{3) Cierre externo con ahorro externo fijo.} En la versión actual del modelo, el ahorro externo se considera exógeno y se fija en su nivel de referencia:
-
-\[
-SAV^{EXT}=SAV_{\text{target}}^{EXT}
-\]
-
-Dado este cierre, el equilibrio macroeconómico se logra mediante ajustes en el tipo de cambio real, el cual se determina endógenamente para compatibilizar el balance entre ahorro e inversión agregados.
-
-En este contexto, los choques fiscales o distributivos no pueden absorberse mediante variaciones del financiamiento externo. Por ello, el ajuste ocurre a través de cambios en los precios relativos, que afectan la competitividad externa, las decisiones de consumo e inversión y la composición del gasto entre bienes domésticos e importados.
-
-Este cierre implica que la restricción externa es activa y que la economía no puede expandir su nivel de absorción más allá de lo permitido por su capacidad de financiamiento externo.
+Esta calibración tiene limitaciones que conviene explicitar. La elasticidad del capital carece de un ancla empírica directa para Chile en términos de servicios de capital, y la de la inversión al costo de uso que se usa como referencia mide un margen distinto. El parámetro $\varepsilon$ no proviene de una estimación propia de la elasticidad de la participación. El nivel base $u_{k}^{b}$ proviene de una encuesta de opinión empresarial de cobertura principalmente industrial, aunque su efecto se limita a la interpretación de los niveles. Finalmente, las curvas de oferta son dispositivos de forma reducida, no una teoría estructural del desempleo. La Sección~\ref{sec:sensibilidad} cuantifica la dependencia de los resultados respecto de $\phi$ y $\psi$.
 
 \section{Metodología de evaluación del impacto fiscal}
 
@@ -678,15 +595,11 @@ Para cada instrumento tributario \(i\), la recaudación en los escenarios base y
 \[
 r_i^k=100\frac{R_i^k}{\mathrm{PIB}_{nom}^{b}},
 \qquad k\in\{b,s\},
-\]
-
-donde \(b\) identifica el equilibrio base y \(s\) el equilibrio simulado. Por tanto, el impacto fiscal se mide en puntos porcentuales del PIB nominal base:
-
-\[
+\qquad
 \Delta r_i=100\frac{R_i^s-R_i^b}{\mathrm{PIB}_{nom}^{b}}.
 \]
 
-El uso de un denominador fijo evita que el cambio reportado combine variaciones de recaudación con movimientos simultáneos del PIB. Asimismo, se utiliza el PIB nominal porque tanto la recaudación como sus bases valoradas se expresan en unidades corrientes del numerario del modelo.
+El uso de un denominador fijo evita que el cambio reportado combine variaciones de recaudación con movimientos simultáneos del PIB. Como el numerario es el IPC, tanto la recaudación como el PIB nominal se expresan en unidades de poder adquisitivo del consumidor, de modo que $\Delta r_i$ mide la variación de la recaudación real deflactada por el IPC.
 
 \subsection{Descomposición entre tasa, base real y precio}
 \label{sec:metodologia-descomp}
@@ -697,7 +610,7 @@ La recaudación de cada instrumento se representa como la suma de productos entr
 R_i=\sum_j \tau_{ij}P_{ij}Q_{ij},
 \]
 
-donde \(j\) identifica productos, sectores o componentes de ingreso, según el impuesto analizado. Se aplica la descomposición de Shapley para un producto de tres factores \cite{shapley_1953}. Definiendo las variaciones entre escenarios como \(\Delta x=x^s-x^b\) y los promedios como \(\bar{x}=(x^s+x^b)/2\), los efectos se calculan mediante:
+donde \(j\) identifica productos, sectores o componentes de ingreso. Se aplica la descomposición de Shapley \cite{shapley_1953}, en la formulación desarrollada para agregados económicos por \cite{shorrocks_2013}, a un producto de tres factores. Definiendo \(\Delta x=x^s-x^b\) y \(\bar{x}=(x^s+x^b)/2\):
 
 \begin{align*}
 E_i^{tasa} &= \sum_j \Delta\tau_{ij}\left(\bar P_{ij}\bar Q_{ij}+\tfrac{1}{12}\Delta P_{ij}\Delta Q_{ij}\right),\\
@@ -705,35 +618,13 @@ E_i^{base} &= \sum_j \Delta Q_{ij}\left(\bar\tau_{ij}\bar P_{ij}+\tfrac{1}{12}\D
 E_i^{precio} &= \sum_j \Delta P_{ij}\left(\bar\tau_{ij}\bar Q_{ij}+\tfrac{1}{12}\Delta\tau_{ij}\Delta Q_{ij}\right).
 \end{align*}
 
-La fórmula simétrica de punto medio, sin los términos de orden superior, omite exactamente \(\tfrac{1}{4}\Delta\tau\,\Delta P\,\Delta Q\); los términos \(\tfrac{1}{12}\) reparten esa interacción en partes iguales entre los tres efectos \cite{sun_1998}. En consecuencia, la descomposición es exacta:
+La fórmula simétrica de punto medio, sin los términos de orden superior, omite exactamente \(\tfrac{1}{4}\Delta\tau\,\Delta P\,\Delta Q\); los términos \(\tfrac{1}{12}\) reparten esa interacción en partes iguales entre los tres efectos, lo que equivale al valor de Shapley \cite{sun_1998,albrecht_2002}. En consecuencia, la descomposición es exacta, \(\Delta R_i=E_i^{tasa}+E_i^{base}+E_i^{precio}\), y la discrepancia numérica es inferior a \(10^{-14}\) puntos del PIB en todas las simulaciones. Se reporta también el efecto conjunto de tasa y base, \(E_i^{tasa+base}=E_i^{tasa}+E_i^{base}\).
 
-\[
-\Delta R_i=E_i^{tasa}+E_i^{base}+E_i^{precio},
-\]
-
-y la discrepancia numérica entre ambos lados es del orden de la precisión de máquina (inferior a \(10^{-14}\) puntos del PIB en todas las simulaciones), por lo que no se reporta un residuo. El reporte presenta también el efecto conjunto de tasa y base:
-
-\[
-E_i^{tasa+base}=E_i^{tasa}+E_i^{base}.
-\]
-
-Esta agrupación permite separar el efecto precio del efecto conjunto de la medida tributaria y de la respuesta real de la base. Todos los componentes se dividen por el PIB nominal base y se expresan en puntos porcentuales del PIB.
-
-Para los impuestos específicos sobre productos, la recaudación es un producto de solo dos factores, $R=\sum_{p}\tau_{e}^{p}FD^{p}$, por lo que la descomposición se reduce a su versión bilineal exacta:
-
-\[
-E^{tasa}=\sum_{p}\Delta\tau_{e}^{p}\,\overline{FD}^{p},
-\qquad
-E^{base}=\sum_{p}\Delta FD^{p}\,\bar{\tau}_{e}^{p},
-\qquad
-E^{precio}\equiv 0.
-\]
-
-La anulación del efecto precio no es una simplificación del método, sino una propiedad del instrumento: un impuesto unitario no se revaloriza con los precios nominales. Bajo la representación ad valorem previa, la recaudación específica heredaba un efecto precio que no corresponde al diseño legal del tributo.
+Para los impuestos específicos, la recaudación es $R=\sum_{p}\tau_{e}^{p}\,IPC\,FD^{p}$. Como el IPC es el numerario, el factor de precio vale uno en todos los escenarios y la descomposición se reduce a su versión bilineal exacta, con $E^{precio}\equiv 0$: un impuesto unitario indexado no se revaloriza con los precios relativos.
 
 \subsection{Aplicación por instrumento tributario}
 
-La identificación de tasa, precio y base real depende de la estructura de cada impuesto. La Tabla~\ref{tab:descomposicion-fiscal} resume la correspondencia utilizada en la implementación.
+La Tabla~\ref{tab:descomposicion-fiscal} resume la correspondencia utilizada en la implementación.
 
 \begin{table}[H]
 \centering
@@ -744,758 +635,759 @@ La identificación de tasa, precio y base real depende de la estructura de cada 
   \hline
   Instrumento & Tasa & Precio & Base real o cantidad \\
   \hline
-  IVA & \(t_{iva}^p\) sobre demanda final y \(t_{iva,int}^p\) sobre uso intermedio & Precio con específico \(p^p+\tau_e^p\) para la demanda final y precio básico \(p^p\) para el uso intermedio & Demanda final física \(FD^p\) y demanda intermedia física \(XI^p\), disponibles directamente como variables del modelo. \\
+  IVA & \(t_{iva}^p\) sobre demanda final y \(t_{iva,int}^p\) sobre uso intermedio & Precio con específico \(p^p+\tau_e^p\,IPC\) para la demanda final y precio básico \(p^p\) para el uso intermedio & Demanda final física \(FD^p\) y demanda intermedia física \(XI^p\). \\
   \hline
-  Impuestos específicos sobre productos & \(\tau_e^p\), monto por unidad física & No aplica: la recaudación no depende de precios & Demanda final física \(FD^p\). La descomposición se reduce a dos factores y el efecto precio es idénticamente nulo. \\
+  Impuestos específicos & \(\tau_e^p\), monto real por unidad física & IPC (igual a uno) & Demanda final física \(FD^p\). El efecto precio es idénticamente nulo. \\
   \hline
-  IDPC & \(fit\) & Retorno del capital \(p^k\) & Capital corporativo \(K^F=\kappa^F KD\), que varía con la utilización del capital. Dado que \(p^k=p^{k,pot}u_k^{\psi}\), los efectos precio y base del IDPC guardan la razón \(\psi\). \\
+  IDPC & \(fit\) & Retorno bruto del capital \(p^k\) & Capital corporativo \(K^F=\kappa^F KD\). En los choques que no alteran $fit$ ni $pit$, los efectos precio y base del IDPC guardan la razón \(\psi\). \\
   \hline
-  PIT & \(pit\) & \(p^k\) para el capital, \(w^l\) para el trabajo y un valor unitario para las transferencias & Capital de los hogares \(K^h\), empleo por tipo \(L^{h,l}\) y transferencias recibidas. Los efectos de las subbases se calculan por separado y luego se agregan. \\
+  PIT & \(pit\) & \(p^k\) para el capital, \(w_l\) para el trabajo y un valor unitario para las transferencias & Capital de los hogares \(K^h\), empleo por tipo \(L^{h}_{l}\) y transferencias recibidas, descompuestos por separado y luego agregados. \\
   \hline
-  Impuestos a la producción y gravámenes sectoriales & \(tps^s\) y \(tes^s\) & Índice de precios de producción construido a partir de \(pz^p\) & Producción sectorial implícita, obtenida al deflactar los ingresos sectoriales. \\
+  Impuestos a la producción & \(tps^s\) & Índice de precios de producción construido a partir de \(pz^p\) & Producción sectorial implícita, obtenida al deflactar los ingresos sectoriales. \\
   \hline
-  Aranceles & \(tar\_rate^p\) & Tipo de cambio \(exr\) & Importaciones \(M^p\) valoradas a precios mundiales. Si la tasa no cambia, el efecto tasa es cero. \\
+  Aranceles & \(tar\_rate^p\) & Tipo de cambio \(exr\) & Importaciones \(M^p\) valoradas a precios mundiales. \\
   \hline
 \end{tabular}
 \end{table}
 
 \subsection{Interpretación de los efectos}
 
-El efecto tasa aproxima el rendimiento mecánico del cambio tributario, manteniendo constantes la valoración y la base real. El efecto base recoge la respuesta de las cantidades inducida por el nuevo equilibrio ---por ejemplo, cambios en el consumo, la producción, el empleo o las importaciones---. El efecto precio refleja la revaloración nominal de la base provocada por movimientos de los precios relativos, los salarios, el retorno del capital o el tipo de cambio.
-
-Esta separación es relevante porque el efecto precio depende del numerario y del cierre macroeconómico. En consecuencia, no debe interpretarse de manera aislada como una proyección del flujo de caja fiscal. El efecto base contiene la respuesta real de los agentes, mientras que el efecto tasa constituye el punto de comparación con una estimación estática.
-
-\subsection{Medición de la actividad real}
-
-El PIB real se calcula por el lado del gasto, valorando los componentes de demanda final a precios del escenario base. En versiones anteriores del modelo, el IVA se representaba en el equilibrio de cada mercado de productos como unidades de cantidad proporcionales a la absorción gravada. Por ello, cuando cambiaba la tasa del IVA, la variación de esas unidades se registraba en el PIB real como un cambio de volumen y no de precio, lo que sesgaba la medida en simulaciones que modificaban el IVA \cite{sna_2008}. La reespecificación descrita en la Sección~\ref{sec:productos} elimina ese sesgo por construcción: como $Q^{p}=TD\_Dom^{p}$ en unidades físicas y los impuestos operan sobre precios, un alza de la tasa no genera volumen ficticio. La verificación numérica es concluyente: en el choque del IVA la base real implícita de los impuestos indirectos pasa de aumentar 2.74\% a caer 1.21\%, acompañando la contracción de los volúmenes, y la brecha entre ambas medidas de actividad se reduce de 0.47 a 0.035 puntos porcentuales.
-
-Por este motivo se reporta también el valor agregado real a costo de factores:
-
-\[
-VA^{real}=\sum_{s}\frac{va^{b}_{s}}{V^{b}_{s}}\,V^{s}_{s},
-\]
-
-donde $va^{b}_{s}$ es el valor agregado nominal del sector en la base y $V_{s}$ su nivel de actividad. La expresión es válida porque los insumos intermedios son proporcionales a la actividad, de modo que el valor agregado por unidad de producto es constante a precios base. Bajo la especificación vigente, ambas medidas difieren en 0.035 puntos porcentuales en el choque del IVA, 0.009 en el del PIT, 0.004 en el del IDPC y 0.012 en el de los impuestos específicos. Con la especificación anterior, la brecha del choque del IVA era de 0.47 puntos, un orden de magnitud mayor. El valor agregado real se mantiene como medida de referencia porque es invariante a la valoración de la demanda final y permite comparar los tres choques sobre una misma base. El coeficiente de Okun se evalúa respecto del valor agregado real.
-
+El efecto tasa aproxima el rendimiento mecánico del cambio tributario, manteniendo constantes la valoración y la base real. El efecto base recoge la respuesta de las cantidades inducida por el nuevo equilibrio ---consumo, producción, empleo, utilización del capital o importaciones---. Por su parte, el efecto precio refleja la revaloración de cada base respecto de la canasta de consumo. Por lo tanto, el efecto de tasa y base es el indicador central de la evaluación fiscal de cada medida.
 
 \section{Simulaciones de políticas tributarias}
 \label{sec:simulaciones}
 
-Esta sección evalúa el impacto macroeconómico y fiscal de cuatro políticas tributarias: el incremento del IVA, el aumento del impuesto a la renta de personas (PIT), la disminución del impuesto a las firmas y el alza de los impuestos específicos sobre productos. Para cada una se reportan el PIB real medido por el gasto y el valor agregado real a costo de factores, la utilización de los factores y la descomposición del impacto fiscal.
+Esta sección evalúa cinco medidas: el incremento del IVA, el aumento del impuesto a la renta de personas (PIT), la disminución del impuesto de primera categoría (IDPC), el alza de los impuestos específicos y un paquete que combina la rebaja del IDPC con el alza del PIT. Para cada una se reportan el PIB real medido por el gasto ---un índice de Laspeyres de las cantidades del escenario simulado valoradas a precios de la base---, sus componentes, los mercados de factores y la descomposición del impacto fiscal. Cada medida se evalúa respecto del equilibrio base y sus resultados se presentan por separado.
 
-La reespecificación de los impuestos indirectos tiene un efecto visible en estos resultados. Bajo el tratamiento anterior, la recaudación de impuestos específicos era estrictamente constante ante cualquier choque, de modo que la fila correspondiente registraba ceros en las tres descomposiciones. Con el impuesto unitario sobre demanda final, esa recaudación responde a los volúmenes: aporta -0.0139 puntos del PIB en el alza del IVA, -0.0056 en la del PIT y +0.0021 en la rebaja del IDPC, siempre con efecto precio exactamente nulo. Además, el alza de los propios impuestos específicos pasa a ser un choque simulable, lo que se desarrolla en la Sección~\ref{sec:sim-tesp}.
+Dos propiedades del cierre (Sección~\ref{sec:ahorro-inversion}) condicionan la lectura de cada simulación. Como la inversión está determinada por el ahorro, una variación del ahorro público se traduce en una variación de la inversión del mismo signo, mientras el consumo sigue al ingreso disponible de los hogares. Como el ahorro externo está fijo en divisas, el saldo comercial en moneda extranjera permanece constante; las variaciones de exportaciones e importaciones en moneda doméstica reflejan también la valoración al nuevo tipo de cambio real.
 
 \subsection{Incremento del IVA}
 \label{sec:sim-iva}
 
-En esta sección se evalúa el impacto macroeconómico de un aumento de un punto porcentual en la tasa del IVA, equivalente a pasar de una tasa de referencia de 19\% a 20\%\footnote{En la implementación vigente, las tasas efectivas por producto $t_{iva}^{p}$ ---expresadas sobre el precio sin impuesto--- se multiplican por el factor $20/19$ definido en el archivo de configuración. Como la cuña es multiplicativa, esto equivale a elevar la tasa legal de 19\% a 20\% preservando la estructura relativa de tasas efectivas calibrada desde la SAM.}. Por tanto, el choque corresponde a un incremento proporcional de aproximadamente 5.26\% en las tasas efectivas calibradas.
+Se evalúa un aumento de un punto porcentual en la tasa del IVA, equivalente a pasar de 19\% a 20\%\footnote{Las tasas efectivas por producto $t_{iva}^{p}$ y $t_{iva,int}^{p}$ ---expresadas sobre el precio sin impuesto--- se multiplican por $20/19$. Como la cuña es multiplicativa, esto equivale a elevar la tasa legal preservando la estructura relativa de tasas efectivas calibrada desde la SAM y supone una eficiencia de recaudación constante.}, es decir, un incremento proporcional de 5.26\% en las tasas efectivas calibradas.
 
-La Figura~\ref{fig:vat-transmission} resume los principales canales de transmisión de esta política. Bajo el cierre con tipo de cambio flexible y ahorro externo fijo, el choque aumenta inicialmente el precio al consumidor, reduce el ingreso real de los hogares y contrae el consumo. La caída de la absorción interna se transmite luego a la producción, al empleo y a la utilización del capital. Al mismo tiempo, la menor demanda de importaciones reduce la presión externa y desencadena un ajuste cambiario, mientras que el aumento de la tasa eleva directamente la recaudación por IVA.
+La Figura~\ref{fig:vat-transmission} resume los canales de transmisión. Con el IPC como numerario, el alza de la cuña no puede elevar el nivel de los precios de comprador; se manifiesta en cambio como una caída de los precios básicos y de las remuneraciones de los factores medidas en canastas de consumo. Un impuesto general al consumo equivale así a un impuesto uniforme sobre las rentas de los factores: el salario real neto y el retorno real del capital caen, la oferta de ambos factores se contrae y la actividad disminuye. Al mismo tiempo, la recaudación adicional se acumula como ahorro público y financia inversión.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagrams/diagram_02_aumento_iva.png}
-\caption{Diagrama conceptual de transmisión para el aumento del IVA.}
+\begin{tikzpicture}[node distance=0.6cm]
+  \node[choque] (A) at (0,0) {$\uparrow t_{iva}$: 19\% $\to$ 20\%};
+  \node[caja] (B) at (-4.8,-1.7) {$\uparrow$ cuña entre precio de comprador y precio básico; con IPC fijo, $\downarrow$ precios básicos};
+  \node[fiscal] (C) at (0,-1.7) {$\uparrow$ recaudación del IVA (efecto tasa)};
+  \node[caja] (D) at (4.8,-1.7) {$\downarrow$ ingreso real de los hogares};
+  \node[caja] (E) at (-4.8,-3.5) {$\downarrow$ salario real neto y retorno real del capital};
+  \node[caja] (F) at (0,-3.5) {$\uparrow$ ahorro público $\Rightarrow$ $\uparrow$ inversión (cierre por ahorro)};
+  \node[caja] (G) at (4.8,-3.5) {$\downarrow$ consumo};
+  \node[caja] (H) at (-4.8,-5.3) {$\downarrow$ empleo, participación y utilización del capital};
+  \node[caja] (I) at (4.8,-5.3) {$\downarrow$ importaciones; ahorro externo fijo en divisas $\Rightarrow$ $\downarrow$ exportaciones};
+  \node[caja] (J) at (-4.8,-7.1) {$\downarrow$ PIB real};
+  \node[fiscal] (K) at (0,-7.1) {$\downarrow$ bases de IDPC, PIT, producción, específicos y aranceles};
+  \node[resultado] (L) at (0,-8.9) {Recaudación neta $\uparrow$; PIB real $\downarrow$; consumo $\downarrow$ e inversión $\uparrow$};
+  \draw[flecha] (A) -- (B); \draw[flecha] (A) -- (C); \draw[flecha] (A) -- (D);
+  \draw[flecha] (B) -- (E); \draw[flecha] (C) -- (F); \draw[flecha] (D) -- (G);
+  \draw[flecha] (E) -- (H); \draw[flecha] (G) -- (I); \draw[flecha] (H) -- (J);
+  \draw[flecha] (J) -- (K); \draw[flecha] (K) -- (L); \draw[flecha] (F.south east) -- ++(0.35,-0.4) -- (2.4,-8.42);
+\end{tikzpicture}
+\caption{Diagrama de transmisión del aumento del IVA.}
 \label{fig:vat-transmission}
 \end{figure}
 
 \begin{table}[H]
 \centering
-\caption{Resultados agregados del incremento del IVA}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  PIB nominal & 282097.80 & 279515.35 & -0.9154\% \\
-  \hline
-  PIB real (gasto) & 282097.80 & 279430.61 & -0.9455\% \\
-  \hline
-  Valor agregado real (costo de factores) & 249320.66 & 247050.60 & -0.9105\% \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Componentes de demanda del incremento del IVA}
+\caption{Indicadores macroeconómicos del incremento del IVA (variación porcentual)}
 \begin{tabular}{|l|r|r|}
   \hline
-   & Cambio real & Cambio nominal \\
+  Indicador & Real & Nominal \\
   \hline
-  Consumo & -1.2603\% & -1.1367\% \\
+  PIB (gasto) & $-0.3466$ & $-0.4301$ \\
   \hline
-  Inversión & -0.6549\% & -0.5657\% \\
+  Consumo de los hogares & $-0.7299$ & $-0.7312$ \\
   \hline
-  Gasto de gobierno & 0.0000\% & -- \\
+  Inversión & 0.3890 & 0.3372 \\
   \hline
-  Exportaciones & -1.3389\% & -1.6619\% \\
+  Gasto del gobierno & 0.0000 & -- \\
   \hline
-  Importaciones & -1.2997\% & -1.6228\% \\
+  Exportaciones & $-0.4766$ & $-0.9994$ \\
   \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Comercio exterior del incremento del IVA}
-\begin{tabular}{|l|r|r|r|}
+  Importaciones & $-0.4905$ & $-1.0132$ \\
   \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Exportaciones & 86815.42 & 85372.66 & -1442.75 \\
-  \hline
-  Importaciones & 84351.36 & 82982.49 & -1368.88 \\
-  \hline
-  Saldo comercial & 2464.05 & 2390.18 & -73.88 \\
+  Tipo de cambio real ($exr$) & -- & $-0.5253$ \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Mercado laboral del incremento del IVA}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Desempleo, baja calificación & 7.60\% & 7.93\% & 0.3313 p.p. \\
-  \hline
-  Desempleo, calificación media & 9.90\% & 10.21\% & 0.3145 p.p. \\
-  \hline
-  Desempleo, alta calificación & 7.80\% & 8.09\% & 0.2879 p.p. \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Utilización de factores y respuesta agregada del empleo del incremento del IVA}
-\small
-\begin{tabular}{|l|r|}
-  \hline
-  Indicador & Valor \\
-  \hline
-  Utilización del capital, escenario simulado (\% de capacidad instalada; base 82.00\%) & 81.0076\% \\
-  \hline
-  Capital utilizado ($KD$) & -1.2102\% \\
-  \hline
-  Retorno del capital ($p^{k}$) & -0.2432\% \\
-  \hline
-  Desempleo agregado (base 8.3359\%) & 8.6327\% \\
-  \hline
-  Elasticidad empleo--producto $\eta_{L}$ (respecto del PIB real) & 0.5900 \\
-  \hline
-  Elasticidad fuerza de trabajo--producto $\eta_{LF}$ (respecto del PIB real) & 0.2483 \\
-  \hline
-  Coeficiente de Okun respecto del PIB real & 0.3139 \\
-  \hline
-  Coeficiente de Okun respecto del valor agregado real & 0.3260 \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Variación de recaudación tributaria del incremento del IVA (porcentaje del PIB nominal inicial)}
+\caption{Mercados de factores del incremento del IVA}
 \small
 \begin{tabular}{|l|r|r|r|}
   \hline
-   & Base (\% del PIB) & Simulado (\% del PIB) & Cambio (p.p. del PIB) \\
+  Indicador & Base & Simulado & Cambio \\
   \hline
-  Recaudación total & 18.1916 & 18.3671 & 0.1755 \\
+  Desempleo, baja calificación (\%) & 7.60 & 7.75 & 0.1471 p.p. \\
   \hline
-  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.6932 & -0.0691 \\
+  Desempleo, calificación media (\%) & 9.90 & 10.06 & 0.1565 p.p. \\
   \hline
-  PIT & 1.8103 & 1.7897 & -0.0206 \\
+  Desempleo, alta calificación (\%) & 7.80 & 7.94 & 0.1446 p.p. \\
   \hline
-  IVA & 8.6254 & 8.9320 & 0.3067 \\
+  Desempleo agregado (\%) & 8.3359 & 8.4837 & 0.1478 p.p. \\
   \hline
-  Impuestos a la producción & 1.4745 & 1.4560 & -0.0185 \\
+  Empleo total & -- & -- & $-0.2779$\% \\
   \hline
-  Impuestos específicos & 0.9727 & 0.9588 & -0.0139 \\
+  Salarios brutos (tipos 1, 2 y 3) & 1.000 & -- & $-0.548$ / $-0.598$ / $-0.540$\% \\
   \hline
-  Aranceles & 0.5465 & 0.5373 & -0.0091 \\
+  Utilización del capital (\% de capacidad) & 82.00 & 81.71 & $-0.2898$ p.p. \\
+  \hline
+  Capital utilizado ($KD$) & -- & -- & $-0.3534$\% \\
+  \hline
+  Retorno bruto y neto del capital & 1.000 & 0.9947 & $-0.5296$\% \\
+  \hline
+  Coeficiente de Okun (respecto del PIB real) & -- & -- & 0.426 \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Descomposición del impacto fiscal del incremento del IVA (puntos del PIB nominal inicial)}
+\caption{Recaudación y descomposición del impacto fiscal del incremento del IVA (porcentaje y puntos del PIB nominal inicial)}
 \label{tab:iva-descomposicion}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|r|r|r|r|r|}
+\begin{tabular}{|l|r|r|r|r|r|r|r|}
   \hline
-  Impuesto & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
+  Impuesto & Base & Simulado & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
   \hline
-  IVA & 0.3067 & 0.4503 & -0.1088 & 0.3414 & -0.0348 \\
+  Total & 18.1916 & 18.4648 & 0.2733 & 0.4515 & $-0.0889$ & 0.3626 & $-0.0893$ \\
   \hline
-  IDPC (\textit{FIRMTAX}) & -0.0691 & 0.0000 & -0.0576 & -0.0576 & -0.0115 \\
+  IVA & 8.6254 & 8.9792 & 0.3538 & 0.4515 & $-0.0514$ & 0.4000 & $-0.0462$ \\
   \hline
-  PIT & -0.0206 & 0.0000 & -0.0133 & -0.0133 & -0.0073 \\
+  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.7203 & $-0.0420$ & 0.0000 & $-0.0168$ & $-0.0168$ & $-0.0252$ \\
   \hline
-  Impuestos a la producción & -0.0185 & 0.0000 & -0.0123 & -0.0123 & -0.0063 \\
+  PIT & 1.8103 & 1.7970 & $-0.0132$ & 0.0000 & $-0.0061$ & $-0.0061$ & $-0.0071$ \\
   \hline
-  Impuestos específicos & -0.0139 & 0.0000 & -0.0139 & -0.0139 & 0.0000 \\
+  Impuestos a la producción & 1.4745 & 1.4620 & $-0.0126$ & 0.0000 & $-0.0047$ & $-0.0047$ & $-0.0079$ \\
   \hline
-  Aranceles & -0.0091 & 0.0000 & -0.0073 & -0.0073 & -0.0018 \\
+  Impuestos específicos & 0.9727 & 0.9657 & $-0.0070$ & 0.0000 & $-0.0070$ & $-0.0070$ & 0.0000 \\
   \hline
-  Total & 0.1755 & 0.4503 & -0.2132 & 0.2371 & -0.0616 \\
+  Aranceles & 0.5465 & 0.5407 & $-0.0057$ & 0.0000 & $-0.0029$ & $-0.0029$ & $-0.0029$ \\
   \hline
 \end{tabular}%
 }
 \end{table}
 
-El aumento de un punto porcentual en la tasa del IVA contrae la actividad agregada: el valor agregado real a costo de factores disminuye 0.9105\% y el PIB real medido por el gasto, 0.9455\%. Ambas medidas difieren ahora en 0.035 puntos porcentuales, frente a los 0.47 puntos que se obtenían bajo la especificación anterior. La base real implícita de los impuestos indirectos cae 1.2116\%, en lugar de aumentar 2.74\% como ocurría cuando el impuesto absorbía unidades físicas del bien compuesto. Este es el diagnóstico más directo de que el sesgo de medición identificado en la Sección~\ref{sec:productos} quedó corregido: el alza de la tasa ya no se registra como volumen.
+El alza del IVA reduce el PIB real en 0.3466\%. El PIB nominal cae 0.4301\%, más que el real, porque con el IPC fijo los precios básicos ---y con ellos el valor de las exportaciones y las importaciones--- descienden.
 
-El PIB nominal cae 0.9154\%, es decir, menos que el PIB real. La relación se invierte respecto de la especificación anterior y es la esperada: el PIB a precios de mercado incorpora los impuestos sobre productos, de modo que una cuña mayor sostiene el valor nominal mientras los volúmenes se contraen. El mismo patrón aparece en el consumo, con una caída real de 1.2603\% y nominal de 1.1367\%.
+La incidencia del impuesto es transparente en este cierre. Los salarios brutos caen entre 0.54\% y 0.60\% y el retorno del capital, 0.53\%, todos en unidades de consumo, una magnitud del mismo orden que el aumento medio de 0.53\% en el factor $(1+t_{iva})$ ponderado por la canasta de consumo. El consumo real cae 0.7299\%, en la misma proporción que el ingreso disponible, porque las tasas de ahorro y de contribuciones son fijas. La inversión real, en cambio, aumenta 0.3890\%: el ahorro público crece 12.0\% y compensa con holgura la caída del ahorro de hogares y firmas. El empleo se reduce 0.28\%, la tasa de desempleo sube entre 0.14 y 0.16 puntos según el tipo de trabajo y la utilización del capital cae de 82.00\% a 81.71\% de la capacidad instalada. El capital utilizado cae 1.27 veces más que el empleo, cerca del cociente analítico de 1.2 para una cuña uniforme.
 
-La contracción de la actividad es también sustancialmente menor que la estimada antes: 0.91\% del valor agregado real frente a 1.32\%. La diferencia obedece al crédito pleno sobre el uso intermedio. En la especificación anterior, el impuesto encarecía implícitamente los insumos y distorsionaba las decisiones de producción; con la cadena de débitos y créditos operativa, el IVA recae sobre la demanda final y preserva la eficiencia productiva, en el sentido de \cite{diamond_mirrlees_1971}. El resultado no es un artificio de calibración: es la propiedad que justifica la arquitectura misma del impuesto al valor agregado \cite{ebrill_etal_2001}.
+En el frente externo, la menor absorción reduce las importaciones reales en 0.49\%, y como el déficit comercial en divisas está fijo, las exportaciones reales deben caer en una magnitud similar, 0.48\%. El tipo de cambio cae 0.53\% respecto del IPC, prácticamente lo mismo que los precios básicos domésticos: medido contra los precios básicos, el tipo de cambio real casi no se mueve, como corresponde a un impuesto que grava en destino y exime las exportaciones.
 
-Por componentes, el consumo real cae 1.2603\%, la inversión real disminuye 0.6549\% y el gasto real del gobierno permanece constante. En el frente externo, las exportaciones reales caen 1.3389\% y las importaciones reales, 1.2997\%, por lo que el saldo comercial disminuye de 2464.05 a 2390.18. Esta combinación es coherente con el mecanismo ilustrado en la figura: la menor absorción interna reduce las importaciones, pero el ajuste de los precios relativos debilita en mayor medida las exportaciones. El consumo es ahora el componente más afectado, por encima de las exportaciones, lo que refleja que la cuña recae sobre la demanda final doméstica y no sobre los costos de producción.
+El efecto tasa mecánico es de 0.4515 puntos del PIB. El efecto base resta 0.0889 puntos, 19.7\% del rendimiento mecánico: la base del propio IVA aporta $-0.0514$ puntos y las demás bases, $-0.0375$, de los cuales $-0.0168$ corresponden al IDPC por la menor utilización del capital corporativo. El efecto conjunto de tasa y base es de 0.3626 puntos. El efecto precio agregado, de $-0.0893$ puntos, mide la caída del valor real de las bases medidas a precios básicos y a remuneraciones de factores; incluyéndolo, la recaudación real observada aumenta 0.2733 puntos del PIB.
 
-En los mercados de factores, la tasa de desempleo aumenta 0.3313 puntos porcentuales para el trabajo de baja calificación, 0.3145 para el de calificación media y 0.2879 para el de alta calificación. La utilización del capital cae de 82.00\% a 81.01\% de la capacidad instalada, con una contracción de 1.21\% del capital utilizado, y el retorno del capital disminuye 0.24\%. El coeficiente de Okun respecto del valor agregado real es 0.326, prácticamente idéntico al de los choques de PIT e IDPC. Bajo la especificación anterior, el coeficiente medido respecto del PIB real ascendía a 0.503 por el sesgo del denominador; corregida la medición, ambos indicadores convergen a 0.314 y 0.326, lo que elimina la necesidad de advertir sobre esa discrepancia.
+El traspaso del impuesto al precio de comprador es unitario respecto del precio básico por construcción, bajo competencia perfecta. Respecto del IPC, el traspaso por producto refleja precios relativos: los precios de comprador de los bienes con tasa efectiva alta ---electricidad, servicios empresariales, manufacturas, con traspasos de 0.31 a 0.38--- suben respecto de la canasta, y los de los bienes con tasa baja ---vivienda, servicios personales, construcción--- caen.
 
-La variación nominal observada de la recaudación total es de 0.1755 puntos del PIB inicial. Al excluir el efecto precio, el efecto conjunto de tasa y base alcanza 0.2371 puntos del PIB. Este monto se compone de un efecto tasa mecánico de 0.4503 puntos, asociado íntegramente al IVA, y de un efecto base de -0.2132 puntos, que absorbe el 47\% del rendimiento mecánico. La contracción reduce la base del propio IVA en 0.1088 puntos y la del IDPC en 0.0576 puntos, esta última por la menor utilización del capital corporativo. Las bases del PIT, los impuestos a la producción, los impuestos específicos y los aranceles disminuyen en 0.0133, 0.0123, 0.0139 y 0.0073 puntos, respectivamente. La pérdida en impuestos específicos ---nula por construcción en la especificación anterior--- es enteramente de cantidad y refleja el menor consumo físico de los bienes gravados.
-
-El efecto precio agregado es de -0.0616 puntos del PIB, y sus principales componentes corresponden al IVA y al IDPC, con -0.0348 y -0.0115 puntos, respectivamente. Su magnitud se reduce a dos tercios de la estimada bajo la especificación anterior, de modo que el resultado recaudatorio depende menos de la revaloración nominal de las bases. Aún así, dado que este componente depende del numerario y del ajuste de los precios relativos, la evaluación fiscal de la política se concentra en la suma de los efectos tasa y base.
-
-\textbf{Conclusión del incremento del IVA:} el aumento de la tasa de referencia de 19\% a 20\% genera un efecto conjunto de tasa y base equivalente a 0.2371 puntos del PIB inicial. El rendimiento mecánico de la mayor tasa es atenuado en 47\% por la contracción de la base del IVA y de las demás bases tributarias, en particular la del impuesto corporativo. Este aumento de la recaudación tiene como contrapartida una caída de 0.91\% del valor agregado real, de la utilización del capital y del empleo, junto con un deterioro del saldo comercial. Relativo al resto de las medidas evaluadas, el IVA resulta el instrumento menos costoso por punto recaudado: 3.8 puntos de valor agregado real por punto del PIB de recaudación de tasa más base, frente a 5.2 en los impuestos específicos y 5.4 en el impuesto a la renta de personas. Esta jerarquía se invierte respecto de la versión anterior del modelo, en la que el IVA apareció como el más costoso (6.3), y la explicación es la desgravación del uso intermedio.
+\textbf{Conclusión del incremento del IVA:} el aumento de la tasa de 19\% a 20\% genera un efecto de tasa y base de 0.3626 puntos del PIB inicial, con una erosión de 19.7\% del rendimiento mecánico. El efecto en actividad es una caída de 0.35\% del PIB real, que proviene de la contracción de la oferta de trabajo y de capital frente a la caída de sus remuneraciones reales. La composición del gasto se desplaza del consumo hacia la inversión, un resultado que depende del cierre por ahorro.
 
 \subsection{Aumento del impuesto a la renta de personas (PIT)}
 
-Esta simulación evalúa un aumento de 10\% en la tasa efectiva del impuesto a la renta de personas, representada en el modelo por el parámetro \textit{pit}. Bajo el cierre con tipo de cambio flexible y ahorro externo fijo, el choque reduce el ingreso disponible de los hogares y contrae el consumo. Al disminuir el ahorro de los hogares, también debilita parcialmente la inversión privada. La Figura~\ref{fig:pit-transmission} resume este mecanismo: el menor gasto privado comprime la absorción interna, reduce la producción y la utilización de los factores, y activa un ajuste externo mediante los precios relativos.
+Esta simulación evalúa un aumento de 10\% en la tasa efectiva del impuesto a la renta de personas, que pasa de 2.546\% a 2.801\% del ingreso antes de impuestos. El impuesto opera por dos canales (Figura~\ref{fig:pit-transmission}): reduce el ingreso disponible y el consumo, y desplaza la curva salarial y la oferta de capital de los hogares, que responden a remuneraciones netas.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagrams/diagram_03_aumento_pit.png}
-\caption{Diagrama conceptual de transmisión para el aumento del impuesto a la renta de personas (PIT).}
+\begin{tikzpicture}
+  \node[choque] (A) at (0,0) {$\uparrow pit$ (+10\%)};
+  \node[caja] (B) at (-4.8,-1.7) {$\downarrow$ salario neto y retorno neto del capital de los hogares};
+  \node[fiscal] (C) at (0,-1.7) {$\uparrow$ recaudación del PIT (efecto tasa)};
+  \node[caja] (D) at (4.8,-1.7) {$\downarrow$ ingreso disponible};
+  \node[caja] (E) at (-4.8,-3.5) {$\downarrow$ oferta de trabajo: $\uparrow$ salario bruto, $\downarrow$ empleo};
+  \node[caja] (F) at (0,-3.5) {$\uparrow$ ahorro público $\Rightarrow$ $\uparrow$ inversión};
+  \node[caja] (G) at (4.8,-3.5) {$\downarrow$ consumo y ahorro de los hogares};
+  \node[caja] (H) at (-4.8,-5.3) {$\downarrow$ PIB real, con mayor caída del empleo};
+  \node[caja] (I) at (4.8,-5.3) {$\downarrow$ importaciones y exportaciones};
+  \node[fiscal] (K) at (0,-5.3) {$\downarrow$ bases del IVA, IDPC y demás impuestos};
+  \node[resultado] (L) at (0,-7.1) {Recaudación neta $\uparrow$ con baja erosión; PIB real $\downarrow$ moderado};
+  \draw[flecha] (A) -- (B); \draw[flecha] (A) -- (C); \draw[flecha] (A) -- (D);
+  \draw[flecha] (B) -- (E); \draw[flecha] (C) -- (F); \draw[flecha] (D) -- (G);
+  \draw[flecha] (E) -- (H); \draw[flecha] (G) -- (I); \draw[flecha] (H) -- (K);
+  \draw[flecha] (G) -- (K); \draw[flecha] (K) -- (L); \draw[flecha] (F.south east) -- ++(0.35,-0.4) -- (2.4,-6.62);
+\end{tikzpicture}
+\caption{Diagrama de transmisión del aumento del impuesto a la renta de personas.}
 \label{fig:pit-transmission}
 \end{figure}
 
 \begin{table}[H]
 \centering
-\caption{Resultados agregados del aumento del PIT}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  PIB nominal & 282097.80 & 280195.92 & -0.6742\% \\
-  \hline
-  PIB real (gasto) & 282097.80 & 280787.82 & -0.4644\% \\
-  \hline
-  Valor agregado real (costo de factores) & 249320.66 & 248184.01 & -0.4559\% \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Componentes de demanda del aumento del PIT}
+\caption{Indicadores macroeconómicos del aumento del PIT (variación porcentual)}
 \begin{tabular}{|l|r|r|}
   \hline
-   & Cambio real & Cambio nominal \\
+  Indicador & Real & Nominal \\
   \hline
-  Consumo & -0.6335\% & -0.8359\% \\
+  PIB (gasto) & $-0.0874$ & $-0.0857$ \\
   \hline
-  Inversión & -0.2541\% & -0.4497\% \\
+  Consumo de los hogares & $-0.3058$ & $-0.3058$ \\
   \hline
-  Gasto de gobierno & 0.0000\% & -- \\
+  Inversión & 0.4001 & 0.3988 \\
   \hline
-  Exportaciones & -0.6146\% & -0.7846\% \\
+  Gasto del gobierno & 0.0000 & -- \\
   \hline
-  Importaciones & -0.5683\% & -0.7384\% \\
+  Exportaciones & $-0.0502$ & $-0.0611$ \\
   \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Comercio exterior del aumento del PIT}
-\begin{tabular}{|l|r|r|r|}
+  Importaciones & $-0.0516$ & $-0.0626$ \\
   \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Exportaciones & 86815.42 & 86134.25 & -681.17 \\
-  \hline
-  Importaciones & 84351.36 & 83728.48 & -622.89 \\
-  \hline
-  Saldo comercial & 2464.05 & 2405.77 & -58.28 \\
+  Tipo de cambio real ($exr$) & -- & $-0.0110$ \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Mercado laboral del aumento del PIT}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Desempleo, baja calificación & 7.60\% & 7.76\% & 0.1577 p.p. \\
-  \hline
-  Desempleo, calificación media & 9.90\% & 10.05\% & 0.1492 p.p. \\
-  \hline
-  Desempleo, alta calificación & 7.80\% & 7.95\% & 0.1479 p.p. \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Utilización de factores y respuesta agregada del empleo del aumento del PIT}
-\small
-\begin{tabular}{|l|r|}
-  \hline
-  Indicador & Valor \\
-  \hline
-  Utilización del capital, escenario simulado (\% de capacidad instalada; base 82.00\%) & 81.5033\% \\
-  \hline
-  Capital utilizado ($KD$) & -0.6057\% \\
-  \hline
-  Retorno del capital ($p^{k}$) & -0.1214\% \\
-  \hline
-  Desempleo agregado (base 8.3359\%) & 8.4846\% \\
-  \hline
-  Elasticidad empleo--producto $\eta_{L}$ (respecto del PIB real) & 0.6022 \\
-  \hline
-  Elasticidad fuerza de trabajo--producto $\eta_{LF}$ (respecto del PIB real) & 0.2531 \\
-  \hline
-  Coeficiente de Okun respecto del PIB real & 0.3203 \\
-  \hline
-  Coeficiente de Okun respecto del valor agregado real & 0.3263 \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Variación de recaudación tributaria del aumento del PIT (porcentaje del PIB nominal inicial)}
+\caption{Mercados de factores del aumento del PIT}
 \small
 \begin{tabular}{|l|r|r|r|}
   \hline
-   & Base (\% del PIB) & Simulado (\% del PIB) & Cambio (p.p. del PIB) \\
+  Indicador & Base & Simulado & Cambio \\
   \hline
-  Recaudación total & 18.1916 & 18.2442 & 0.0527 \\
+  Desempleo, baja calificación (\%) & 7.60 & 7.65 & 0.0519 p.p. \\
   \hline
-  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.7277 & -0.0346 \\
+  Desempleo, calificación media (\%) & 9.90 & 9.96 & 0.0600 p.p. \\
   \hline
-  PIT & 1.8103 & 1.9798 & 0.1696 \\
+  Desempleo, alta calificación (\%) & 7.80 & 7.86 & 0.0631 p.p. \\
   \hline
-  IVA & 8.6254 & 8.5633 & -0.0621 \\
+  Desempleo agregado (\%) & 8.3359 & 8.3976 & 0.0617 p.p. \\
   \hline
-  Impuestos a la producción & 1.4745 & 1.4640 & -0.0105 \\
+  Empleo total & -- & -- & $-0.1162$\% \\
   \hline
-  Impuestos específicos & 0.9727 & 0.9671 & -0.0056 \\
+  Salarios brutos (tipos 1, 2 y 3) & 1.000 & -- & 0.068 / 0.032 / 0.025\% \\
   \hline
-  Aranceles & 0.5465 & 0.5424 & -0.0041 \\
+  Utilización del capital (\% de capacidad) & 82.00 & 81.95 & $-0.0451$ p.p. \\
+  \hline
+  Capital utilizado ($KD$) & -- & -- & $-0.0550$\% \\
+  \hline
+  Retorno bruto / neto del capital & 1.000 & -- & $-0.0210$ / $-0.0824$\% \\
+  \hline
+  Coeficiente de Okun (respecto del PIB real) & -- & -- & 0.707 \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Descomposición del impacto fiscal del aumento del PIT (puntos del PIB nominal inicial)}
+\caption{Recaudación y descomposición del impacto fiscal del aumento del PIT (porcentaje y puntos del PIB nominal inicial)}
 \label{tab:pit-descomposicion}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|r|r|r|r|r|}
+\begin{tabular}{|l|r|r|r|r|r|r|r|}
   \hline
-  Impuesto & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
+  Impuesto & Base & Simulado & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
   \hline
-  IVA & -0.0621 & 0.0000 & -0.0448 & -0.0448 & -0.0173 \\
+  Total & 18.1916 & 18.3540 & 0.1624 & 0.1810 & $-0.0178$ & 0.1632 & $-0.0008$ \\
   \hline
-  IDPC (\textit{FIRMTAX}) & -0.0346 & 0.0000 & -0.0288 & -0.0288 & -0.0058 \\
+  IVA & 8.6254 & 8.6155 & $-0.0099$ & 0.0000 & $-0.0098$ & $-0.0098$ & 0.0000 \\
   \hline
-  PIT & 0.1696 & 0.1805 & -0.0071 & 0.1734 & -0.0039 \\
+  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.7586 & $-0.0036$ & 0.0000 & $-0.0026$ & $-0.0026$ & $-0.0010$ \\
   \hline
-  Impuestos a la producción & -0.0105 & 0.0000 & -0.0074 & -0.0074 & -0.0032 \\
+  PIT & 1.8103 & 1.9904 & 0.1801 & 0.1810 & $-0.0011$ & 0.1799 & 0.0003 \\
   \hline
-  Impuestos específicos & -0.0056 & 0.0000 & -0.0056 & -0.0056 & 0.0000 \\
+  Impuestos a la producción & 1.4745 & 1.4719 & $-0.0027$ & 0.0000 & $-0.0027$ & $-0.0027$ & 0.0000 \\
   \hline
-  Aranceles & -0.0041 & 0.0000 & -0.0031 & -0.0031 & -0.0009 \\
+  Impuestos específicos & 0.9727 & 0.9714 & $-0.0012$ & 0.0000 & $-0.0012$ & $-0.0012$ & 0.0000 \\
   \hline
-  Total & 0.0527 & 0.1805 & -0.0968 & 0.0837 & -0.0310 \\
+  Aranceles & 0.5465 & 0.5461 & $-0.0004$ & 0.0000 & $-0.0003$ & $-0.0003$ & $-0.0001$ \\
   \hline
 \end{tabular}%
 }
 \end{table}
 
-El aumento de 10\% en la tasa del impuesto a la renta personal reduce el PIB real en 0.4644\% y el PIB nominal en 0.6742\%. El valor agregado real a costo de factores cae 0.4559\%, por lo que ambas medidas de actividad difieren en menos de 0.01 puntos porcentuales. La contracción del producto es menor que la provocada por el aumento de un punto porcentual del IVA, aunque la caída del consumo es considerable. Este resultado es consistente con un choque que afecta directamente el ingreso disponible de los hogares y, a través de ese canal, reduce tanto el consumo como el ahorro privado.
+El alza del impuesto personal reduce el PIB real en 0.0874\%. El consumo real cae 0.3058\%, en línea con el ingreso disponible, y la inversión real aumenta 0.4001\% por el mayor ahorro público. La firma del canal de oferta es visible en el mercado laboral: los salarios brutos suben entre 0.03\% y 0.07\%, porque la curva salarial neta obliga a las firmas a pagar más por el mismo empleo, y el empleo cae 0.12\%, más que el producto. El retorno neto del capital de los hogares también disminuye, de modo que el capital utilizado cae 0.06\%, menos que el empleo.
 
-Por componentes, el consumo real cae 0.6335\%, la inversión real disminuye 0.2541\% y el gasto real del gobierno permanece constante. En el frente externo, las exportaciones reales caen 0.6146\% y las importaciones reales, 0.5683\%, por lo que el saldo comercial disminuye de 2464.05 a 2405.77. En el mercado laboral, la tasa de desempleo aumenta 0.1577 puntos porcentuales para el trabajo de baja calificación, 0.1492 para el de calificación media y 0.1479 para el de alta calificación, con un coeficiente de Okun de 0.326 respecto del valor agregado real. La utilización del capital cae de 82.00\% a 81.50\% de la capacidad instalada ---el capital utilizado se contrae 0.61\%--- y el retorno del capital disminuye 0.12\%.
+El efecto tasa es de 0.1810 puntos del PIB y el efecto base resta apenas 0.0178 puntos, 9.8\% del rendimiento mecánico. La base del propio impuesto casi no se erosiona ($-0.0011$ puntos), porque una parte relevante de ella está compuesta por transferencias y prestaciones que no responden al impuesto, y las restantes bases pierden 0.0166 puntos, concentrados en el IVA. El efecto precio es prácticamente nulo y la recaudación real observada aumenta 0.1624 puntos del PIB.
 
-La variación nominal observada de la recaudación total es de 0.0527 puntos del PIB inicial. Al excluir la revaloración nominal de las bases, el efecto conjunto de tasa y base asciende a 0.0837 puntos del PIB. Este resultado se compone de un efecto tasa mecánico de 0.1805 puntos, asociado íntegramente al PIT, y de un efecto base de -0.0968 puntos, que absorbe el 54\% del rendimiento mecánico. La mayor parte de la erosión proviene de otras bases: el IVA, el IDPC, los impuestos a la producción, los impuestos específicos y los aranceles pierden 0.0448, 0.0288, 0.0074, 0.0056 y 0.0031 puntos, respectivamente, mientras que la base del propio PIT cae 0.0071 puntos. La pérdida de 0.0056 puntos en los impuestos específicos es enteramente de cantidad: refleja el menor consumo físico de combustibles, alcoholes y tabaco, y no admite compensación por precios.
+\textbf{Conclusión del aumento del PIT:} el alza de 10\% en la tasa efectiva genera un efecto de tasa y base de 0.1632 puntos del PIB inicial, con una erosión de 9.8\% del rendimiento mecánico, y reduce el PIB real en 0.09\%. La baja erosión de la propia base y el acotado efecto sobre el producto están condicionados por la baja tasa efectiva media del impuesto en la SAM y por su representación como una tasa plana, aspectos que la Sección~\ref{sec:coherencia} discute.
 
-El efecto precio agregado es de -0.0310 puntos del PIB, por lo que reduce la variación observada desde el efecto conjunto de tasa y base de 0.0837 puntos hasta 0.0527 puntos. Sus principales componentes corresponden al IVA y al IDPC, con -0.0173 y -0.0058 puntos, respectivamente.
+\subsection{Disminución del impuesto de primera categoría}
 
-\textbf{Conclusión del aumento del PIT:} el aumento de 10\% en la tasa genera un efecto conjunto de tasa y base equivalente a 0.0837 puntos del PIB inicial. El efecto mecánico positivo del PIT es atenuado en cerca de la mitad, principalmente por la contracción de las bases del IVA y del impuesto corporativo. Este aumento de la recaudación viene acompañado de una caída del ingreso disponible, el consumo, la inversión, el producto, el empleo y la utilización del capital.
+Esta simulación evalúa una disminución de un punto porcentual en la tasa legal del IDPC, de 27\% a 26\%\footnote{La carga observada de \textit{FIRMTAX} no coincide con la tasa legal de 27\%, porque el agregado incluye tributos empresariales distintos del IDPC. La disminución se implementa mediante el factor multiplicativo \(\left(1 - \chi\,\frac{0.01}{0.27}\right)\), con \(\chi=0.916\), que corresponde a la participación del IDPC devengado ---según estadísticas del SII--- en el impuesto directo pagado por las empresas que registra el Banco Central para 2023. La tasa efectiva $fit$ pasa de 13.047\% a 12.604\%.}.
 
-\subsection{Disminución del impuesto a las firmas}
-
-Esta simulación evalúa una disminución de un punto porcentual en la tasa del impuesto de primera categoría (IDPC), equivalente a pasar de 27\% a 26\%\footnote{La carga observada de \textit{FIRMTAX} no coincide con la tasa nominal de referencia de 27\%, porque el agregado incluye tributos empresariales distintos del IDPC. La disminución de un punto porcentual se implementa mediante el factor multiplicativo \(\left(1 - \chi\,\frac{0.01}{0.27}\right)\), con \(\chi=0.916\), participación del IDPC devengado según estadísticas del SII en el impuesto directo pagado por empresas según el Banco Central, para 2023.}.
-En el modelo, el agregado \textit{FIRMTAX} incorpora la tributación observada de las firmas en el escenario base; por ello, el choque se interpreta como una reducción de la carga corporativa que afecta directamente la recaudación sobre el capital empresarial.
-
-La Figura~\ref{fig:fit-transmission} sintetiza el mecanismo de transmisión de esta medida. Bajo el cierre con tipo de cambio flexible y ahorro externo fijo, la menor tributación eleva el ingreso neto de las firmas y activa dos canales complementarios: una parte se transmite a los hogares mediante mayores dividendos y consumo, mientras que otra incrementa el ahorro corporativo y la inversión. Como resultado, aumentan la producción, la absorción interna y la utilización de los factores, pero también se intensifica la presión sobre la restricción externa.
+La Figura~\ref{fig:fit-transmission} sintetiza los canales. La rebaja eleva el retorno neto del capital corporativo para un mismo retorno bruto, lo que incentiva un mayor uso de la capacidad instalada; al mismo tiempo, eleva el ahorro de las firmas y los dividendos, y reduce el ahorro público.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagrams/diagram_01_disminucion_fit.png}
-\caption{Diagrama conceptual de transmisión para la disminución del IDPC.}
+\begin{tikzpicture}
+  \node[choque] (A) at (0,0) {$\downarrow fit$ (IDPC: 27\% $\to$ 26\%)};
+  \node[caja] (B) at (-4.8,-1.7) {$\uparrow$ retorno neto del capital corporativo};
+  \node[fiscal] (C) at (0,-1.7) {$\downarrow$ recaudación del IDPC (efecto tasa)};
+  \node[caja] (D) at (4.8,-1.7) {$\uparrow$ ahorro de las firmas y dividendos};
+  \node[caja] (E) at (-4.8,-3.5) {$\uparrow$ oferta de servicios de capital: $\uparrow$ utilización, $\downarrow$ retorno bruto};
+  \node[caja] (F) at (0,-3.5) {$\downarrow$ ahorro público};
+  \node[caja] (G) at (4.8,-3.5) {$\uparrow$ ingreso de los hogares $\Rightarrow$ $\uparrow$ consumo};
+  \node[caja] (H) at (-4.8,-5.3) {$\uparrow$ PIB real, empleo y salarios};
+  \node[caja] (I) at (0,-5.3) {$\uparrow$ inversión: el ahorro de las firmas supera la caída del ahorro público};
+  \node[caja] (J) at (4.8,-5.3) {$\uparrow$ importaciones y exportaciones};
+  \node[fiscal] (K) at (0,-7.1) {$\uparrow$ bases de todos los impuestos, incluida la del IDPC};
+  \node[resultado] (L) at (0,-8.9) {Pérdida fiscal parcialmente compensada; PIB real $\uparrow$};
+  \draw[flecha] (A) -- (B); \draw[flecha] (A) -- (C); \draw[flecha] (A) -- (D);
+  \draw[flecha] (B) -- (E); \draw[flecha] (C) -- (F); \draw[flecha] (D) -- (G);
+  \draw[flecha] (D) -- (I); \draw[flecha] (F) -- (I); \draw[flecha] (E) -- (H);
+  \draw[flecha] (G) -- (J); \draw[flecha] (H) -- (K); \draw[flecha] (K) -- (L);
+\end{tikzpicture}
+\caption{Diagrama de transmisión de la disminución del IDPC.}
 \label{fig:fit-transmission}
 \end{figure}
 
 \begin{table}[H]
 \centering
-\caption{Resultados agregados de la disminución del IDPC}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  PIB nominal & 282097.80 & 282808.52 & 0.2519\% \\
-  \hline
-  PIB real (gasto) & 282097.80 & 282586.79 & 0.1733\% \\
-  \hline
-  Valor agregado real (costo de factores) & 249320.66 & 249743.51 & 0.1696\% \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Componentes de demanda de la disminución del IDPC}
+\caption{Indicadores macroeconómicos de la disminución del IDPC (variación porcentual)}
 \begin{tabular}{|l|r|r|}
   \hline
-   & Cambio real & Cambio nominal \\
+  Indicador & Real & Nominal \\
   \hline
-  Consumo & 0.1369\% & 0.2129\% \\
+  PIB (gasto) & 0.1358 & 0.1399 \\
   \hline
-  Inversión & 0.4116\% & 0.4858\% \\
+  Consumo de los hogares & 0.0885 & 0.0885 \\
   \hline
-  Gasto de gobierno & 0.0000\% & -- \\
+  Inversión & 0.3373 & 0.3327 \\
   \hline
-  Exportaciones & 0.2034\% & 0.2635\% \\
+  Gasto del gobierno & 0.0000 & -- \\
   \hline
-  Importaciones & 0.2425\% & 0.3027\% \\
+  Exportaciones & 0.2028 & 0.1779 \\
   \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Comercio exterior de la disminución del IDPC}
-\begin{tabular}{|l|r|r|r|}
+  Importaciones & 0.2087 & 0.1838 \\
   \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Exportaciones & 86815.42 & 87044.20 & 228.78 \\
-  \hline
-  Importaciones & 84351.36 & 84606.66 & 255.30 \\
-  \hline
-  Saldo comercial & 2464.05 & 2437.54 & -26.51 \\
+  Tipo de cambio real ($exr$) & -- & $-0.0249$ \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Mercado laboral de la disminución del IDPC}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Desempleo, baja calificación & 7.60\% & 7.53\% & -0.0696 p.p. \\
-  \hline
-  Desempleo, calificación media & 9.90\% & 9.84\% & -0.0587 p.p. \\
-  \hline
-  Desempleo, alta calificación & 7.80\% & 7.75\% & -0.0533 p.p. \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Utilización de factores y respuesta agregada del empleo de la disminución del IDPC}
-\small
-\begin{tabular}{|l|r|}
-  \hline
-  Indicador & Valor \\
-  \hline
-  Utilización del capital, escenario simulado (\% de capacidad instalada; base 82.00\%) & 82.1846\% \\
-  \hline
-  Capital utilizado ($KD$) & 0.2252\% \\
-  \hline
-  Retorno del capital ($p^{k}$) & 0.0450\% \\
-  \hline
-  Desempleo agregado (base 8.3359\%) & 8.2804\% \\
-  \hline
-  Elasticidad empleo--producto $\eta_{L}$ (respecto del PIB real) & 0.6021 \\
-  \hline
-  Elasticidad fuerza de trabajo--producto $\eta_{LF}$ (respecto del PIB real) & 0.2529 \\
-  \hline
-  Coeficiente de Okun respecto del PIB real & 0.3200 \\
-  \hline
-  Coeficiente de Okun respecto del valor agregado real & 0.3270 \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Variación de recaudación tributaria de la disminución del IDPC (porcentaje del PIB nominal inicial)}
+\caption{Mercados de factores de la disminución del IDPC}
 \small
 \begin{tabular}{|l|r|r|r|}
   \hline
-   & Base (\% del PIB) & Simulado (\% del PIB) & Cambio (p.p. del PIB) \\
+  Indicador & Base & Simulado & Cambio \\
   \hline
-  Recaudación total & 18.1916 & 18.0776 & -0.1140 \\
+  Desempleo, baja calificación (\%) & 7.60 & 7.57 & $-0.0283$ p.p. \\
   \hline
-  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.6131 & -0.1491 \\
+  Desempleo, calificación media (\%) & 9.90 & 9.88 & $-0.0204$ p.p. \\
   \hline
-  PIT & 1.8103 & 1.8141 & 0.0039 \\
+  Desempleo, alta calificación (\%) & 7.80 & 7.78 & $-0.0188$ p.p. \\
   \hline
-  IVA & 8.6254 & 8.6495 & 0.0242 \\
+  Desempleo agregado (\%) & 8.3359 & 8.3162 & $-0.0197$ p.p. \\
   \hline
-  Impuestos a la producción & 1.4745 & 1.4778 & 0.0033 \\
+  Empleo total & -- & -- & 0.0371\% \\
   \hline
-  Impuestos específicos & 0.9727 & 0.9748 & 0.0021 \\
+  Salarios brutos (tipos 1, 2 y 3) & 1.000 & -- & 0.106 / 0.078 / 0.071\% \\
   \hline
-  Aranceles & 0.5465 & 0.5482 & 0.0017 \\
+  Utilización del capital (\% de capacidad) & 82.00 & 82.18 & 0.1772 p.p. \\
+  \hline
+  Capital utilizado ($KD$) & -- & -- & 0.2162\% \\
+  \hline
+  Retorno bruto / neto del capital & 1.000 & -- & $-0.0535$ / 0.3244\% \\
+  \hline
+  Coeficiente de Okun (respecto del PIB real) & -- & -- & 0.145 \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Descomposición del impacto fiscal de la disminución del IDPC (puntos del PIB nominal inicial)}
+\caption{Recaudación y descomposición del impacto fiscal de la disminución del IDPC (porcentaje y puntos del PIB nominal inicial)}
 \label{tab:idpc-descomposicion}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|r|r|r|r|r|}
+\begin{tabular}{|l|r|r|r|r|r|r|r|}
   \hline
-  Impuesto & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
+  Impuesto & Base & Simulado & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
   \hline
-  IVA & 0.0242 & 0.0000 & 0.0177 & 0.0177 & 0.0065 \\
+  Total & 18.1916 & 18.0562 & $-0.1354$ & $-0.1617$ & 0.0283 & $-0.1334$ & $-0.0020$ \\
   \hline
-  IDPC (\textit{FIRMTAX}) & -0.1491 & -0.1618 & 0.0105 & -0.1512 & 0.0021 \\
+  IVA & 8.6254 & 8.6383 & 0.0129 & 0.0000 & 0.0130 & 0.0130 & $-0.0001$ \\
   \hline
-  PIT & 0.0039 & 0.0000 & 0.0025 & 0.0025 & 0.0014 \\
+  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.6082 & $-0.1541$ & $-0.1617$ & 0.0101 & $-0.1516$ & $-0.0025$ \\
   \hline
-  Impuestos a la producción & 0.0033 & 0.0000 & 0.0021 & 0.0021 & 0.0012 \\
+  PIT & 1.8103 & 1.8119 & 0.0016 & 0.0000 & 0.0010 & 0.0010 & 0.0006 \\
   \hline
-  Impuestos específicos & 0.0021 & 0.0000 & 0.0021 & 0.0021 & 0.0000 \\
+  Impuestos a la producción & 1.4745 & 1.4760 & 0.0015 & 0.0000 & 0.0014 & 0.0014 & 0.0001 \\
   \hline
-  Aranceles & 0.0017 & 0.0000 & 0.0014 & 0.0014 & 0.0003 \\
+  Impuestos específicos & 0.9727 & 0.9743 & 0.0016 & 0.0000 & 0.0016 & 0.0016 & 0.0000 \\
   \hline
-  Total & -0.1140 & -0.1618 & 0.0363 & -0.1255 & 0.0115 \\
+  Aranceles & 0.5465 & 0.5475 & 0.0010 & 0.0000 & 0.0012 & 0.0012 & $-0.0001$ \\
   \hline
 \end{tabular}%
 }
 \end{table}
 
-En términos macroeconómicos, la rebaja del impuesto a las firmas produce una expansión moderada de la actividad: el PIB real aumenta 0.1733\%, el valor agregado real 0.1696\% y el PIB nominal 0.2519\%. Por el lado de la demanda, el consumo real aumenta 0.1369\% y la inversión real, 0.4116\%. Estos resultados son coherentes con los dos canales destacados en la figura: mayores dividendos para los hogares, que elevan el consumo, y un mayor ahorro de las firmas, que impulsa la inversión mediante el bloque ahorro--inversión.
+La rebaja del IDPC eleva el PIB real en 0.1358\%. El canal dominante es la oferta de capital: el retorno neto sube 0.32\% mientras el retorno bruto que pagan los sectores cae 0.05\%, y el capital utilizado aumenta 0.22\%, con lo que la utilización sube de 82.00\% a 82.18\% de la capacidad instalada. El mayor uso de capital eleva la productividad marginal del trabajo: los salarios brutos suben entre 0.07\% y 0.11\% y el empleo, 0.04\%. Por eso el coeficiente de Okun es bajo (0.15): la expansión descansa en el capital y no en el trabajo.
 
-En el frente externo, las exportaciones y las importaciones aumentan 0.2034\% y 0.2425\%, respectivamente, pero el saldo comercial disminuye de 2464.05 a 2437.54. Esta dinámica refleja que la expansión de la absorción interna también incrementa la presión sobre la restricción externa. En el mercado laboral, la tasa de desempleo cae 0.0696 puntos porcentuales para el trabajo de baja calificación, 0.0587 para el de calificación media y 0.0533 para el de alta calificación, con un coeficiente de Okun de 0.327 respecto del valor agregado real. La utilización del capital sube de 82.00\% a 82.18\% de la capacidad instalada, con un aumento de 0.23\% del capital utilizado, y su retorno aumenta 0.05\%.
+Por el lado del gasto, el ahorro de las firmas aumenta 1.02\% y el público cae 5.03\%; el primero domina y la inversión real crece 0.3373\%. El consumo real aumenta 0.0885\%, la misma proporción que el ingreso disponible, impulsado por mayores dividendos y salarios. Las exportaciones y las importaciones aumentan 0.20\% y 0.21\%.
 
-La variación nominal observada de la recaudación total corresponde a una disminución de 0.1140 puntos del PIB inicial. Al excluir la revaloración nominal de las bases, el efecto conjunto de tasa y base es una caída de 0.1255 puntos del PIB. Este resultado combina un efecto tasa mecánico de -0.1618 puntos, asociado íntegramente al IDPC, y un efecto base positivo de 0.0363 puntos, que compensa cerca de 22\% de la pérdida mecánica. En el propio IDPC, el efecto base es de 0.0105 puntos, reflejo de la mayor utilización del capital corporativo. La expansión económica también eleva las bases del IVA, el PIT, los impuestos a la producción, los impuestos específicos y los aranceles, cuyos aportes ascienden a 0.0177, 0.0025, 0.0021, 0.0021 y 0.0014 puntos del PIB, respectivamente.
+El efecto tasa es de $-0.1617$ puntos del PIB y el efecto base compensa 0.0283 puntos, 17.5\% de la pérdida mecánica. De esa compensación, 0.0101 puntos provienen de la propia base del IDPC, por el mayor uso del capital corporativo, y 0.0130 puntos del IVA. El efecto precio es de $-0.0020$ puntos, explicado por la caída del retorno bruto. La pérdida real observada es de 0.1354 puntos del PIB.
 
-El efecto precio agregado es positivo y alcanza 0.0115 puntos del PIB, por lo que reduce la pérdida desde 0.1255 hasta 0.1140 puntos. Su principal componente corresponde a la revaloración de la base del IVA, con 0.0065 puntos del PIB. En el IDPC, el efecto precio de 0.0021 puntos equivale a una quinta parte del efecto base, en línea con $\psi=0.2$. Los impuestos específicos aportan 0.0021 puntos, en su totalidad por cantidad y con efecto precio nulo, como corresponde a un gravamen unitario.
-
-\textbf{Conclusión de la disminución del impuesto a las firmas:} la reducción de un punto porcentual del IDPC genera una pérdida fiscal de tasa más base equivalente a 0.1255 puntos del PIB inicial. La expansión de las bases tributarias ---incluida la del propio IDPC, por la mayor utilización del capital--- compensa parcialmente el efecto mecánico de la rebaja, mientras que el efecto precio positivo reduce la pérdida nominal observada a 0.1140 puntos del PIB. La medida eleva moderadamente el producto, el consumo y, especialmente, la inversión, y mejora el mercado laboral, pero deteriora el saldo comercial. La principal disyuntiva se plantea, por tanto, entre una mayor actividad de corto plazo y menores ingresos fiscales.
+\textbf{Conclusión de la disminución del IDPC:} la rebaja de un punto de la tasa legal genera una pérdida de tasa y base de 0.1334 puntos del PIB inicial y eleva el PIB real en 0.14\%, con una expansión liderada por la utilización del capital y la inversión.
 
 \subsection{Aumento de los impuestos específicos sobre productos}
 \label{sec:sim-tesp}
 
-Esta simulación evalúa un aumento de 10\% en el impuesto específico por unidad física $\tau_{e}^{p}$ de todos los productos gravados, que en la SAM corresponden esencialmente a combustibles, alcoholes, tabaco y fuentes móviles. El ejercicio solo es posible bajo la especificación vigente: mientras el gravamen se representaba como un monto exógeno de la SAM, su recaudación era constante ante cualquier perturbación y el choque carecía de contenido.
-
-El mecanismo de transmisión difiere del resto de las medidas evaluadas. La cuña actúa sobre el precio de comprador de un conjunto acotado de bienes, por lo que la pérdida de poder adquisitivo se concentra y, al mismo tiempo, se activa una sustitución entre bienes en la función de utilidad CES del hogar. Como el impuesto no grava el uso intermedio, no encarece directamente los costos de producción; el efecto sobre la actividad opera por la vía de la demanda final y del ingreso real.
-
-La Figura~\ref{fig:tesp-transmission} resume este mecanismo. El aumento de $\tau_{e}^{p}$ eleva el precio de comprador del bien gravado y, con ello, la recaudación específica de manera directa. La menor demanda final del bien gravado contrae su producción, el empleo del sector y las bases del IVA, el PIT, los impuestos a la producción y los aranceles, mientras que la base imponible del propio IVA aumenta al incorporar el mayor monto específico. La contracción de la absorción interna en el sector gravado reduce la presión externa y desencadena el ajuste cambiario habitual, con efectos de segundo orden sobre exportaciones e importaciones.
+Esta simulación evalúa un aumento de 10\% en el impuesto específico por unidad física $\tau_{e}^{p}$, que en la SAM recae íntegramente sobre el compuesto manufacturero y corresponde esencialmente a combustibles, alcoholes, tabaco y fuentes móviles. La cuña actúa sobre el precio de comprador de un conjunto acotado de bienes, activa una sustitución en la función de utilidad CES y no grava el uso intermedio (Figura~\ref{fig:tesp-transmission}).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagrams/diagram_04_aumento_impuesto_especifico.png}
-\caption{Diagrama conceptual de transmisión para el aumento de los impuestos específicos.}
+\begin{tikzpicture}
+  \node[choque] (A) at (0,0) {$\uparrow \tau_{e}$ (+10\%)};
+  \node[caja] (B) at (-4.8,-1.7) {$\uparrow$ precio de comprador de las manufacturas (específico incluido en la base del IVA)};
+  \node[fiscal] (C) at (0,-1.7) {$\uparrow$ recaudación específica (efecto tasa)};
+  \node[caja] (D) at (4.8,-1.7) {$\downarrow$ ingreso real de los hogares};
+  \node[caja] (E) at (-4.8,-3.5) {Sustitución CES: $\downarrow$ demanda final física de manufacturas};
+  \node[caja] (F) at (0,-3.5) {$\uparrow$ ahorro público $\Rightarrow$ $\uparrow$ inversión};
+  \node[caja] (G) at (4.8,-3.5) {$\downarrow$ consumo};
+  \node[caja] (H) at (-4.8,-5.3) {$\downarrow$ producción manufacturera, empleo y utilización del capital};
+  \node[caja] (I) at (4.8,-5.3) {$\downarrow$ importaciones y exportaciones};
+  \node[fiscal] (K) at (0,-5.3) {$\downarrow$ base del IVA sobre manufacturas y demás bases};
+  \node[resultado] (L) at (0,-7.1) {Recaudación neta $\uparrow$; erosión concentrada en el IVA; PIB real $\downarrow$};
+  \draw[flecha] (A) -- (B); \draw[flecha] (A) -- (C); \draw[flecha] (A) -- (D);
+  \draw[flecha] (B) -- (E); \draw[flecha] (C) -- (F); \draw[flecha] (D) -- (G);
+  \draw[flecha] (E) -- (H); \draw[flecha] (G) -- (I); \draw[flecha] (E) -- (K);
+  \draw[flecha] (H) -- (K); \draw[flecha] (K) -- (L); \draw[flecha] (F.south east) -- ++(0.35,-0.4) -- (2.4,-6.62);
+\end{tikzpicture}
+\caption{Diagrama de transmisión del aumento de los impuestos específicos.}
 \label{fig:tesp-transmission}
 \end{figure}
 
 \begin{table}[H]
 \centering
-\caption{Resultados agregados del aumento de los impuestos específicos}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  PIB nominal & 282097.80 & 281512.75 & -0.2074\% \\
-  \hline
-  PIB real (gasto) & 282097.80 & 281452.10 & -0.2289\% \\
-  \hline
-  Valor agregado real (costo de factores) & 249320.66 & 248780.63 & -0.2166\% \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Componentes de demanda del aumento de los impuestos específicos}
+\caption{Indicadores macroeconómicos del aumento de los impuestos específicos (variación porcentual)}
 \begin{tabular}{|l|r|r|}
   \hline
-   & Cambio real & Cambio nominal \\
+  Indicador & Real & Nominal \\
   \hline
-  Consumo & -0.3037\% & -0.2517\% \\
+  PIB (gasto) & $-0.0960$ & $-0.1238$ \\
   \hline
-  Inversión & -0.1615\% & -0.1362\% \\
+  Consumo de los hogares & $-0.1864$ & $-0.1867$ \\
   \hline
-  Gasto de gobierno & 0.0000\% & -- \\
+  Inversión & 0.0684 & 0.0370 \\
   \hline
-  Exportaciones & -0.4262\% & -0.5006\% \\
+  Gasto del gobierno & 0.0000 & -- \\
   \hline
-  Importaciones & -0.4193\% & -0.4936\% \\
+  Exportaciones & $-0.2273$ & $-0.3739$ \\
   \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Comercio exterior del aumento de los impuestos específicos}
-\begin{tabular}{|l|r|r|r|}
+  Importaciones & $-0.2339$ & $-0.3805$ \\
   \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Exportaciones & 86815.42 & 86380.83 & -434.59 \\
-  \hline
-  Importaciones & 84351.36 & 83935.00 & -416.36 \\
-  \hline
-  Saldo comercial & 2464.05 & 2445.82 & -18.23 \\
+  Tipo de cambio real ($exr$) & -- & $-0.1469$ \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Mercado laboral del aumento de los impuestos específicos}
-\begin{tabular}{|l|r|r|r|}
-  \hline
-   & Escenario inicial & Escenario simulado & Cambio \\
-  \hline
-  Desempleo, baja calificación & 7.60\% & 7.67\% & 0.0747 p.p. \\
-  \hline
-  Desempleo, calificación media & 9.90\% & 9.96\% & 0.0630 p.p. \\
-  \hline
-  Desempleo, alta calificación & 7.80\% & 7.86\% & 0.0576 p.p. \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Utilización de factores y respuesta agregada del empleo del aumento de los impuestos específicos}
-\small
-\begin{tabular}{|l|r|}
-  \hline
-  Indicador & Valor \\
-  \hline
-  Utilización del capital, escenario simulado (\% de capacidad instalada; base 82.00\%) & 81.7499\% \\
-  \hline
-  Capital utilizado ($KD$) & -0.3050\% \\
-  \hline
-  Retorno del capital ($p^{k}$) & -0.0611\% \\
-  \hline
-  Desempleo agregado (base 8.3359\%) & 8.3957\% \\
-  \hline
-  Elasticidad empleo--producto $\eta_{L}$ (respecto del PIB real) & 0.4918 \\
-  \hline
-  Elasticidad fuerza de trabajo--producto $\eta_{LF}$ (respecto del PIB real) & 0.2067 \\
-  \hline
-  Coeficiente de Okun respecto del PIB real & 0.2614 \\
-  \hline
-  Coeficiente de Okun respecto del valor agregado real & 0.2763 \\
-  \hline
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Variación de recaudación tributaria del aumento de los impuestos específicos (porcentaje del PIB nominal inicial)}
+\caption{Mercados de factores del aumento de los impuestos específicos}
 \small
 \begin{tabular}{|l|r|r|r|}
   \hline
-   & Base (\% del PIB) & Simulado (\% del PIB) & Cambio (p.p. del PIB) \\
+  Indicador & Base & Simulado & Cambio \\
   \hline
-  Recaudación total & 18.1916 & 18.2357 & 0.0441 \\
+  Desempleo, baja calificación (\%) & 7.60 & 7.64 & 0.0381 p.p. \\
   \hline
-  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.7448 & -0.0174 \\
+  Desempleo, calificación media (\%) & 9.90 & 9.93 & 0.0348 p.p. \\
   \hline
-  PIT & 1.8103 & 1.8057 & -0.0046 \\
+  Desempleo, alta calificación (\%) & 7.80 & 7.83 & 0.0321 p.p. \\
   \hline
-  IVA & 8.6254 & 8.6061 & -0.0193 \\
+  Desempleo agregado (\%) & 8.3359 & 8.3689 & 0.0330 p.p. \\
   \hline
-  Impuestos a la producción & 1.4745 & 1.4707 & -0.0039 \\
+  Empleo total & -- & -- & $-0.0622$\% \\
   \hline
-  Impuestos específicos & 0.9727 & 1.0648 & 0.0921 \\
+  Salarios brutos (tipos 1, 2 y 3) & 1.000 & -- & $-0.142$ / $-0.133$ / $-0.120$\% \\
   \hline
-  Aranceles & 0.5465 & 0.5436 & -0.0029 \\
+  Utilización del capital (\% de capacidad) & 82.00 & 81.91 & $-0.0860$ p.p. \\
+  \hline
+  Capital utilizado ($KD$) & -- & -- & $-0.1049$\% \\
+  \hline
+  Retorno bruto y neto del capital & 1.000 & 0.9984 & $-0.1573$\% \\
+  \hline
+  Coeficiente de Okun (respecto del PIB real) & -- & -- & 0.344 \\
   \hline
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Descomposición del impacto fiscal del aumento de los impuestos específicos (puntos del PIB nominal inicial)}
+\caption{Recaudación y descomposición del impacto fiscal del aumento de los impuestos específicos (porcentaje y puntos del PIB nominal inicial)}
 \label{tab:tesp-descomposicion}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|r|r|r|r|r|}
+\begin{tabular}{|l|r|r|r|r|r|r|r|}
   \hline
-  Impuesto & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
+  Impuesto & Base & Simulado & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
   \hline
-  IVA & -0.0193 & 0.0000 & -0.0277 & -0.0277 & 0.0084 \\
+  Total & 18.1916 & 18.2528 & 0.0612 & 0.0971 & $-0.0276$ & 0.0695 & $-0.0083$ \\
   \hline
-  IDPC (\textit{FIRMTAX}) & -0.0174 & 0.0000 & -0.0145 & -0.0145 & -0.0029 \\
+  IVA & 8.6254 & 8.6139 & $-0.0115$ & 0.0000 & $-0.0153$ & $-0.0153$ & 0.0038 \\
   \hline
-  PIT & -0.0046 & 0.0000 & -0.0030 & -0.0030 & -0.0015 \\
+  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.7498 & $-0.0125$ & 0.0000 & $-0.0050$ & $-0.0050$ & $-0.0075$ \\
   \hline
-  Impuestos a la producción & -0.0039 & 0.0000 & -0.0025 & -0.0025 & -0.0014 \\
+  PIT & 1.8103 & 1.8069 & $-0.0034$ & 0.0000 & $-0.0017$ & $-0.0017$ & $-0.0017$ \\
   \hline
-  Impuestos específicos & 0.0921 & 0.0970 & -0.0049 & 0.0921 & 0.0000 \\
+  Impuestos a la producción & 1.4745 & 1.4716 & $-0.0029$ & 0.0000 & $-0.0008$ & $-0.0008$ & $-0.0021$ \\
   \hline
-  Aranceles & -0.0029 & 0.0000 & -0.0025 & -0.0025 & -0.0004 \\
+  Impuestos específicos & 0.9727 & 1.0665 & 0.0938 & 0.0971 & $-0.0033$ & 0.0938 & 0.0000 \\
   \hline
-  Total & 0.0441 & 0.0970 & -0.0552 & 0.0419 & 0.0022 \\
+  Aranceles & 0.5465 & 0.5442 & $-0.0022$ & 0.0000 & $-0.0014$ & $-0.0014$ & $-0.0008$ \\
   \hline
 \end{tabular}%
 }
 \end{table}
 
-El alza de 10\% en los gravamenes específicos reduce el valor agregado real en 0.2166\% y el PIB real por el gasto en 0.2289\%. El PIB nominal, en cambio, cae solo 0.2074\%: la diferencia refleja que el PIB a precios de mercado incorpora los impuestos sobre productos, de modo que la mayor cuña sostiene el valor nominal mientras los volúmenes se contraen. El mismo patrón aparece en el consumo, cuya caída real de 0.3037\% supera su caída nominal de 0.2517\%. Esta separación entre magnitudes reales y nominales solo es observable porque los impuestos indirectos operan ahora como cuñas de precio.
+El alza de 10\% del gravamen unitario reduce el PIB real en 0.0960\%. El mecanismo combina un efecto ingreso ---el consumo real cae 0.1864\%--- con una sustitución que se aleja de las manufacturas. La cuña reduce las remuneraciones reales de los factores: los salarios caen entre 0.12\% y 0.14\% y el retorno del capital, 0.16\%. El capital utilizado cae 1.7 veces más que el empleo, por encima del cociente de 1.2 que corresponde a una cuña uniforme, porque el choque se concentra en la manufactura, más intensiva en capital que el promedio. La inversión real aumenta 0.0684\% por el mayor ahorro público.
 
-En los mercados de factores, la tasa de desempleo aumenta entre 0.0576 y 0.0747 puntos porcentuales según el tipo de trabajo, y la utilización del capital cae de 82.00\% a 81.75\% de la capacidad instalada. El coeficiente de Okun respecto del valor agregado real es 0.276, por debajo de los valores de 0.326 y 0.327 obtenidos en los choques de PIT e IDPC y del extremo inferior de la banda empírica de referencia. La explicación es de composición: la medida concentra su impacto en un subconjunto de productos cuyos sectores proveedores tienen una intensidad laboral menor que el promedio de la economía, de modo que una misma contracción del valor agregado se traduce en menos empleo perdido. El resultado ilustra una limitación de la aproximación agregada usada en la calibración de $\phi$, $\psi$ y $\varepsilon$, que no distingue el origen sectorial del choque.
+El rendimiento mecánico asciende a 0.0971 puntos del PIB. La erosión de la propia base es de 0.0033 puntos, 3.4\% del efecto tasa, lo que equivale a una caída de 0.34\% de la demanda final física de manufacturas. La erosión relevante proviene de las demás bases, que pierden 0.0242 puntos, de los cuales 0.0153 corresponden al IVA sobre los bienes gravados. El efecto de tasa y base es de 0.0695 puntos, 71.6\% del rendimiento mecánico, y la recaudación real observada aumenta 0.0612 puntos. El efecto precio de la propia recaudación específica es exactamente nulo, mientras el del IVA es positivo (0.0038 puntos), porque su base incorpora el mayor monto específico.
 
-Desde el punto de vista recaudatorio, el rendimiento mecánico asciende a 0.0970 puntos del PIB y la erosión de la propia base del impuesto es de apenas 0.0049 puntos, esto es, 5\% del efecto tasa. Se trata de la relación tasa--base más favorable de las cuatro simulaciones y es coherente con la baja elasticidad precio que la especificación CES atribuye a estos bienes en el nivel de agregación del modelo. La atenuación relevante proviene de las demás bases: el IVA pierde 0.0277 puntos, el IDPC 0.0145, el PIT 0.0030, los impuestos a la producción 0.0025 y los aranceles 0.0025, lo que suma 0.0503 puntos. El efecto conjunto de tasa y base sobre la recaudación total es, por tanto, de 0.0419 puntos del PIB, menos de la mitad del rendimiento mecánico.
+El traspaso al precio de comprador medido respecto del IPC es de 0.55: de cada peso de aumento del gravamen, incluido el IVA que recae sobre él, el precio de comprador sube 0.55 respecto de la canasta de consumo, porque el precio básico de las manufacturas cae 0.15\% en el nuevo equilibrio.
 
-El efecto precio agregado es de 0.0022 puntos del PIB y resulta de la compensación entre una revaloración positiva de la base del IVA ---que se calcula sobre el precio con impuesto específico incluido--- y efectos precio negativos en los demás instrumentos. En la fila de impuestos específicos, el efecto precio es exactamente nulo: la descomposición bilineal de la Sección~\ref{sec:metodologia-descomp} se cumple sin residuo y confirma numéricamente que el gravamen unitario no se revaloriza con los precios.
+\textbf{Conclusión del aumento de los impuestos específicos:} el alza genera un efecto de tasa y base de 0.0695 puntos del PIB inicial, con una erosión de 28.4\% del rendimiento mecánico, y reduce el PIB real en 0.10\%. La erosión se concentra en la base del IVA de los bienes gravados, y el ajuste productivo recae sobre un sector intensivo en capital.
 
-\textbf{Conclusión del aumento de los impuestos específicos:} un alza de 10\% en los montos por unidad física genera un efecto conjunto de tasa y base de 0.0419 puntos del PIB inicial, con un costo en actividad de 0.2166\% del valor agregado real. La relación entre costo en actividad y recaudación de tasa más base es de 5.2 puntos de valor agregado por punto del PIB recaudado, similar a la del aumento del PIT (5.4) pero concentrada en un conjunto acotado de bienes, lo que tiene implicancias distributivas que este modelo de hogar representativo no permite evaluar y que requieren la extensión por quintiles.
+\subsection{Paquete combinado: rebaja del IDPC y alza del PIT}
+\label{sec:sim-comb}
+
+El último ejercicio combina una rebaja de 2.28\% de la tasa efectiva del impuesto corporativo ---de 13.047\% a 12.749\%, equivalente a 0.67 puntos de la tasa legal con $\chi=0.916$--- con un alza de 7\% de la tasa efectiva del impuesto personal, de 2.546\% a 2.724\%. El paquete representa una sustitución de tributación sobre el capital corporativo por tributación sobre el ingreso personal.
+
+\begin{table}[H]
+\centering
+\caption{Indicadores macroeconómicos y de factores del paquete combinado}
+\small
+\begin{tabular}{|l|r|l|r|}
+  \hline
+  Indicador & Cambio & Indicador & Cambio \\
+  \hline
+  PIB real (gasto) & 0.0301\% & Desempleo agregado & 0.0300 p.p. \\
+  \hline
+  PIB nominal & 0.0340\% & Empleo total & $-0.0564$\% \\
+  \hline
+  Consumo real & $-0.1547$\% & Capital utilizado ($KD$) & 0.1067\% \\
+  \hline
+  Inversión real & 0.5068\% & Utilización del capital & 82.00 $\to$ 82.09\% \\
+  \hline
+  Exportaciones reales & 0.1011\% & Retorno bruto / neto del capital & $-0.0507$ / 0.1601\% \\
+  \hline
+  Importaciones reales & 0.1040\% & Salarios brutos (tipos 1, 2 y 3) & 0.119 / 0.075 / 0.065\% \\
+  \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Recaudación y descomposición del impacto fiscal del paquete combinado (porcentaje y puntos del PIB nominal inicial)}
+\label{tab:comb-descomposicion}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|r|r|r|r|r|r|r|}
+  \hline
+  Impuesto & Base & Simulado & Cambio observado & Efecto tasa & Efecto base & Tasa más base & Efecto precio \\
+  \hline
+  Total & 18.1916 & 18.2146 & 0.0230 & 0.0182 & 0.0067 & 0.0249 & $-0.0019$ \\
+  \hline
+  IVA & 8.6254 & 8.6272 & 0.0018 & 0.0000 & 0.0019 & 0.0019 & $-0.0001$ \\
+  \hline
+  IDPC (\textit{FIRMTAX}) & 4.7622 & 4.6564 & $-0.1059$ & $-0.1085$ & 0.0050 & $-0.1035$ & $-0.0024$ \\
+  \hline
+  PIT & 1.8103 & 1.9375 & 0.1273 & 0.1267 & $-0.0001$ & 0.1267 & 0.0006 \\
+  \hline
+  Impuestos a la producción & 1.4745 & 1.4737 & $-0.0009$ & 0.0000 & $-0.0009$ & $-0.0009$ & 0.0001 \\
+  \hline
+  Impuestos específicos & 0.9727 & 0.9729 & 0.0002 & 0.0000 & 0.0002 & 0.0002 & 0.0000 \\
+  \hline
+  Aranceles & 0.5465 & 0.5469 & 0.0004 & 0.0000 & 0.0006 & 0.0006 & $-0.0001$ \\
+  \hline
+\end{tabular}%
+}
+\end{table}
+
+El paquete eleva el PIB real en 0.0301\% y la recaudación real en 0.0230 puntos del PIB, es decir, aumenta simultáneamente la actividad y los ingresos fiscales. Su composición es reveladora: el capital utilizado crece 0.11\% por el mayor retorno neto, mientras el empleo cae 0.06\% y el desempleo sube 0.03 puntos por el desplazamiento de la curva salarial neta. La producción se recompone hacia el capital, la inversión real crece 0.51\% y el consumo real cae 0.15\%.
+
+\section{Sensibilidad a la oferta de factores}
+\label{sec:sensibilidad}
+
+Las elasticidades de oferta de los factores son los parámetros con menor respaldo empírico directo y los que gobiernan la respuesta del producto a los impuestos. Se evalúan los choques del IDPC, el IVA y el PIT en una grilla de doce combinaciones: tres valores de la elasticidad del empleo al salario real neto ---0.25, 0.5 y 0.862--- y cuatro de la elasticidad de los servicios de capital al retorno real neto ---0.5, 0.67, 1 y 5, correspondientes a $\psi$ igual a 2, 1.5, 1 y 0.2---. Ninguno de estos valores altera el equilibrio base, por lo que se varían sin recalibrar. Las Tablas~\ref{tab:sens-pib} y~\ref{tab:sens-comp} presentan la variación del PIB real y la fracción del efecto tasa que no llega a la recaudación observada.
+
+\begin{table}[H]
+\centering
+\caption{Variación del PIB real (\%) según las elasticidades de oferta de factores}
+\label{tab:sens-pib}
+\small
+\begin{tabular}{|l|c|r|r|r|r|}
+  \hline
+  & Elasticidad & \multicolumn{4}{c|}{Elasticidad del capital ($1/\psi$)} \\
+  \cline{3-6}
+  Choque & del empleo & 5.00 & 1.00 & 0.67 & 0.50 \\
+  \hline
+  IDPC & 0.862 & 0.6090 & 0.2080 & 0.1471 & 0.1136 \\
+  & 0.500 & 0.5294 & 0.1905 & \textbf{0.1358} & 0.1054 \\
+  & 0.250 & 0.4675 & 0.1756 & 0.1261 & 0.0983 \\
+  \hline
+  IVA & 0.862 & $-1.2303$ & $-0.5365$ & $-0.4305$ & $-0.3721$ \\
+  & 0.500 & $-0.9851$ & $-0.4357$ & $\mathbf{-0.3466}$ & $-0.2970$ \\
+  & 0.250 & $-0.7942$ & $-0.3496$ & $-0.2739$ & $-0.2313$ \\
+  \hline
+  PIT & 0.862 & $-0.2650$ & $-0.1413$ & $-0.1224$ & $-0.1121$ \\
+  & 0.500 & $-0.1871$ & $-0.1013$ & $\mathbf{-0.0874}$ & $-0.0797$ \\
+  & 0.250 & $-0.1265$ & $-0.0671$ & $-0.0570$ & $-0.0513$ \\
+  \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Fracción del efecto tasa que no llega a la recaudación observada (\%): erosión en las alzas, autofinanciamiento en la rebaja}
+\label{tab:sens-comp}
+\small
+\begin{tabular}{|l|c|r|r|r|r|}
+  \hline
+  & Elasticidad & \multicolumn{4}{c|}{Elasticidad del capital ($1/\psi$)} \\
+  \cline{3-6}
+  Choque & del empleo & 5.00 & 1.00 & 0.67 & 0.50 \\
+  \hline
+  IDPC & 0.862 & 74.9 & 25.2 & 17.6 & 13.4 \\
+  & 0.500 & 65.3 & 23.1 & \textbf{16.3} & 12.5 \\
+  & 0.250 & 57.9 & 21.3 & 15.1 & 11.6 \\
+  \hline
+  IVA & 0.862 & 79.5 & 47.9 & 43.1 & 40.4 \\
+  & 0.500 & 68.7 & 43.5 & \textbf{39.5} & 37.2 \\
+  & 0.250 & 60.3 & 39.8 & 36.4 & 34.4 \\
+  \hline
+  PIT & 0.862 & 30.0 & 16.1 & 14.0 & 12.8 \\
+  & 0.500 & 21.5 & 11.8 & \textbf{10.3} & 9.4 \\
+  & 0.250 & 14.9 & 8.2 & 7.1 & 6.4 \\
+  \hline
+\end{tabular}
+\end{table}
+
+La grilla permite cuantificar, para cada medida, la dependencia de sus resultados respecto de las elasticidades de oferta. En la rebaja del IDPC, la elasticidad del capital es el parámetro determinante: al pasar de 0.67 a 5, el efecto sobre el PIB real se multiplica por cuatro y el autofinanciamiento sube de 16\% a 65\%; dentro del rango de consenso empírico ---elasticidades del capital entre 0.5 y 1 y del empleo entre 0.25 y 0.86---, el efecto sobre el PIB real se sitúa entre 0.10\% y 0.21\% y el autofinanciamiento entre 12\% y 25\%. En el alza del IVA, ambas elasticidades importan, con predominio de la del capital; en el rango de consenso, la caída del PIB real se sitúa entre 0.23\% y 0.54\%, y la fracción del efecto tasa que no llega a la recaudación observada, entre 34\% y 48\%. En el alza del PIT, la elasticidad del empleo pesa tanto como la del capital, porque el impuesto desplaza directamente la curva salarial; en el rango de consenso, la caída del PIB real se sitúa entre 0.05\% y 0.14\% y la fracción no recaudada, entre 6\% y 16\%. En ninguna combinación de la grilla la respuesta de las bases revierte el signo del efecto mecánico: aun con la oferta de capital más elástica, las alzas aumentan la recaudación y la rebaja del IDPC la reduce.
+
+Siguiendo la práctica de reportar los resultados de un MEGC con su dependencia de los parámetros inciertos \cite{dixon_rimmer_2013}, las cifras centrales de la Sección~\ref{sec:simulaciones} deben leerse junto con estos rangos. En particular, el efecto de la rebaja del IDPC sobre el PIB real depende de manera decisiva de la elasticidad de la oferta de capital.
+
+\section{Coherencia económica de los resultados}
+\label{sec:coherencia}
+
+Un modelo de equilibrio general resuelve simultáneamente un sistema no lineal de varios cientos de ecuaciones. Que el sistema converja no garantiza que las magnitudes resultantes tengan sentido económico, y un MEGC calibrado no admite pruebas de bondad de ajuste, de modo que su credibilidad descansa en la trazabilidad de los mecanismos y en la confrontación de sus resultados con regularidades conocidas \cite{kehoe_2005}. Esta sección organiza ese examen en los tres niveles de la literatura sobre validación \cite{dixon_rimmer_2013}: verificaciones internas, coherencia de los signos y plausibilidad de las magnitudes.
+
+\subsection{Verificaciones internas}
+
+\textbf{1) Homogeneidad de grado cero.} Multiplicando el numerario por 1.10, los 97 precios del modelo y sus 19 flujos nominales escalan exactamente por ese factor y las 123 cantidades no cambian, con desvíos relativos máximos de $7\times10^{-10}$, $5\times10^{-10}$ y $6\times10^{-10}$, respectivamente. La prueba confirma que no existe ningún parámetro monetario sin indexar y que los resultados reales no dependen de la escala del numerario \cite{dewatripont_michel_1987}.
+
+\textbf{2) Ley de Walras y balanza de pagos.} La balanza de pagos no es una ecuación del modelo. La brecha base entre el ahorro externo y el déficit comercial es de 1.15 unidades, atribuible al redondeo de la SAM, y su variación en los cinco choques es inferior a 0.011 unidades, menos de $4\times10^{-6}$ por ciento del PIB. Además, el saldo comercial medido en divisas ---el saldo en moneda doméstica dividido por $exr$--- es 2464.05 en la base y en los cinco escenarios. El IPC vale exactamente uno en todos los ejercicios.
+
+\textbf{3) Curva de oferta de capital.} La especificación implica que el cociente entre las variaciones logarítmicas del retorno real neto y del capital utilizado debe igualar $\psi=1.5$. El cociente es 1.5000 en los cinco choques, incluidos los que modifican $fit$ y $pit$, lo que confirma que la cuña tributaria entra en la curva tal como está especificada.
+
+\textbf{4) Descomposición de la respuesta del empleo.} El coeficiente de Okun coincide con $(1-u)(\eta_{L}-\eta_{LF})$ en todos los ejercicios: 0.4264 frente a 0.4259 en el IVA, 0.7069 frente a 0.7066 en el PIT, 0.1451 frente a 0.1451 en el IDPC y 0.3442 frente a 0.3442 en los impuestos específicos.
+
+\textbf{5) Descomposición fiscal.} El residuo entre la variación observada de la recaudación y la suma de los tres efectos es inferior a $10^{-14}$ puntos del PIB, y el efecto precio de los impuestos específicos es nulo en los cinco ejercicios. El efecto tasa de Shapley aproxima el rendimiento mecánico estatutario: 0.4515 frente a 0.4540 en el IVA (alza de 5.263\% sobre 8.6254 puntos del PIB), 0.1810 frente a 0.1810 en el PIT, $-0.1617$ frente a $-0.1616$ en el IDPC y 0.0971 frente a 0.0973 en los específicos. La diferencia en el IVA, de 0.5\%, proviene de que la fórmula de Shapley evalúa la variación de la tasa en el promedio de precios y cantidades de ambos escenarios.
+
+\subsection{Coherencia de los signos}
+
+La Tabla~\ref{tab:signos} contrasta el signo que predice la teoría con el que entrega el modelo.
+
+\begin{table}[H]
+\centering
+\caption{Signo esperado y signo obtenido, por variable y simulación}
+\label{tab:signos}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|}
+  \hline
+  Variable & IVA $\uparrow$ & PIT $\uparrow$ & IDPC $\downarrow$ & T. esp. $\uparrow$ & Coincide \\
+  \hline
+  PIB real & $-$ & $-$ & $+$ & $-$ & Sí \\
+  \hline
+  Consumo real & $-$ & $-$ & $+$ & $-$ & Sí \\
+  \hline
+  Empleo & $-$ & $-$ & $+$ & $-$ & Sí \\
+  \hline
+  Tasa de desempleo & $+$ & $+$ & $-$ & $+$ & Sí \\
+  \hline
+  Utilización del capital & $-$ & $-$ & $+$ & $-$ & Sí \\
+  \hline
+  Salario bruto & $-$ & $+$ & $+$ & $-$ & Sí \\
+  \hline
+  Retorno neto del capital & $-$ & $-$ & $+$ & $-$ & Sí \\
+  \hline
+  Recaudación del instrumento modificado & $+$ & $+$ & $-$ & $+$ & Sí \\
+  \hline
+  Bases de los instrumentos no modificados & $-$ & $-$ & $+$ & $-$ & Sí \\
+  \hline
+  Inversión real & $+$ & $+$ & $+$ & $+$ & Sí, bajo cierre por ahorro \\
+  \hline
+  Saldo comercial en divisas & 0 & 0 & 0 & 0 & Sí \\
+  \hline
+\end{tabular}%
+}
+\end{table}
+
+\textbf{1) Dirección de los efectos.} Las alzas del IVA, del PIT y de los impuestos específicos contraen el PIB real y la rebaja del IDPC lo expande, como predice la teoría para impuestos que reducen ---o, en la rebaja, elevan--- la remuneración neta de los factores. En cada medida, la respuesta depende del canal: el IVA y los impuestos específicos reducen las remuneraciones reales de ambos factores, el PIT desplaza sobre todo la oferta de trabajo y la rebaja del IDPC desplaza la oferta de capital.
+
+\textbf{2) Salarios brutos.} El signo del salario bruto distingue los canales con nitidez. Cae con el IVA y los específicos, que reducen la demanda de trabajo medida en unidades de consumo; sube con el PIT, porque el impuesto desplaza la oferta y el salario bruto debe compensar parcialmente la cuña; y sube con la rebaja del IDPC, porque el mayor uso de capital eleva la productividad marginal del trabajo.
+
+\textbf{3) Inversión.} La inversión aumenta en cada una de las medidas, incluida la rebaja corporativa. En las alzas, el signo es consecuencia directa del cierre: el ahorro público adicional se traduce en formación de capital. En la rebaja, el ahorro de las firmas crece más de lo que cae el ahorro público. Bajo un cierre con inversión exógena o determinada por la tasa de interés, las alzas tributarias no tendrían este efecto, y el resultado no debe interpretarse como una propiedad de la economía chilena sino del cierre adoptado \cite{sen_1963,robinson_2006}.
+
+\textbf{4) Respuesta de las bases y curva de Laffer.} La base propia del instrumento modificado se mueve siempre en sentido contrario a la tasa, sin revertir el signo del efecto mecánico: su respuesta equivale a 11.4\% del efecto tasa en el IVA, 0.6\% en el PIT, 6.2\% en el IDPC y 3.4\% en los impuestos específicos. Incluso en el escenario de sensibilidad más elástico, el autofinanciamiento de la rebaja corporativa no supera 75\%. La economía se sitúa, por tanto, en la rama creciente de la curva de Laffer para los cuatro instrumentos, resultado esperable para tasas moderadas y consistente con las estimaciones que ubican el máximo recaudatorio a tasas muy superiores a las vigentes \cite{trabandt_uhlig_2011}. Las bases de los instrumentos no modificados se mueven siempre en la misma dirección que la actividad, condición mínima de coherencia de un ejercicio de equilibrio general.
+
+\textbf{5) Sector externo.} Con ahorro externo fijo en divisas, el saldo comercial en moneda extranjera no puede variar, y así ocurre en los cinco ejercicios. Las importaciones y las exportaciones se mueven en la misma dirección y en magnitudes similares: una menor absorción reduce las importaciones y, para mantener el saldo, las exportaciones deben contraerse. El tipo de cambio cae respecto del IPC en todos los choques; en el IVA lo hace en la misma proporción que los precios básicos domésticos, de modo que la competitividad medida a precios básicos prácticamente no cambia.
+
+\subsection{Plausibilidad de las magnitudes}
+
+La Tabla~\ref{tab:magnitudes} resume cuatro estadísticos implícitos del modelo y sus referentes empíricos.
+
+\begin{table}[H]
+\centering
+\caption{Magnitudes implícitas del modelo y referentes empíricos}
+\label{tab:magnitudes}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|p{4.4cm}|r|r|r|r|p{5.2cm}|}
+  \hline
+  Estadístico implícito & IVA & PIT & IDPC & T. esp. & Referente empírico \\
+  \hline
+  Multiplicador respecto de la recaudación del propio impuesto & $-0.98$ & $-0.49$ & $-0.88$ & $-1.02$ & $-3.5$ para el IVA en países industriales \cite{riera_crichton_etal_2016}; $-1.7$ en muestra mundial y $-3.6$ en Europa industrial \cite{gunter_etal_2021}; máximo de $2.3$ para el impuesto personal en EE.UU. \cite{mertens_ravn_2013} \\
+  \hline
+  Multiplicador respecto de la recaudación total observada & $-1.27$ & $-0.54$ & $-1.00$ & $-1.57$ & Sin referente directo: incorpora la erosión de las bases no modificadas \\
+  \hline
+  Elasticidad del componente de cantidad de las bases no modificadas respecto del PIB real & 1.13 & 1.16 & 1.00 & 1.46 & 1.0 a 1.05 en la metodología del balance estructural \cite{velasco_etal_2010,corbo_etal_2011} \\
+  \hline
+  Coeficiente de Okun respecto del PIB real & 0.426 & 0.707 & 0.145 & 0.344 & 0.28 a 0.37 \cite{clapes_okun}; pertinente solo para choques de cuña uniforme \\
+  \hline
+\end{tabular}%
+}
+\end{table}
+
+\textbf{1) Multiplicadores tributarios.} Los multiplicadores del modelo son sistemáticamente menores que los de la literatura de identificación narrativa: el del IVA, de $-0.98$, se ubica por debajo de las estimaciones de $-1.7$ a $-3.6$ para economías con tasa general elevada \cite{riera_crichton_etal_2016,gunter_etal_2021}, y el del PIT, de $-0.49$, muy por debajo del máximo de 2.3 estimado para el impuesto personal en Estados Unidos \cite{mertens_ravn_2013}. La diferencia es esperable y tiene una explicación precisa: las estimaciones empíricas miden la respuesta de corto plazo, que incluye la contracción de la demanda agregada, mientras el cierre por ahorro del modelo elimina ese canal y deja solo los efectos de oferta.
+
+\textbf{2) Elasticidad de las bases al producto.} Descontando el instrumento modificado, el componente de cantidad de la recaudación restante se mueve con una elasticidad respecto del PIB real de 1.13 en el alza del IVA, 1.16 en la del PIT y 1.00 en la rebaja del IDPC, valores cercanos a la elasticidad unitaria de los ingresos tributarios no mineros respecto del PIB que utiliza la metodología del balance estructural chileno \cite{velasco_etal_2010,corbo_etal_2011}, aunque el modelo no fue calibrado contra ese parámetro. En el alza de los impuestos específicos la elasticidad es 1.46, porque la erosión se concentra en la base del IVA de los bienes gravados, que cae más que el producto agregado.
+
+\textbf{3) Respuesta del desempleo.} La ley de Okun es un referente pertinente para choques que reducen en la misma proporción las remuneraciones reales de ambos factores. En el alza del IVA, el coeficiente respecto del PIB real es 0.426, cercano al valor analítico de 0.48 y por encima de la banda empírica de 0.28--0.37; como se discutió en la Sección~\ref{sec:calib-factores}, la calibración privilegia la elasticidad de la oferta laboral, y con una elasticidad de 0.25 el coeficiente quedaría dentro de la banda. En el alza de los impuestos específicos el coeficiente es 0.344, dentro de la banda, porque el ajuste recae sobre un sector intensivo en capital. En el alza del PIT (0.707) la ley de Okun no es un referente pertinente, porque el impuesto desplaza la oferta de trabajo y comprime el empleo más que el producto; tampoco lo es en la rebaja del IDPC (0.145), que desplaza la oferta de capital y expande el producto más que el empleo. La ley de Okun es una regularidad de ciclos dominados por la demanda, no una restricción estructural del modelo.
+
+\textbf{4) Elasticidad de la base de los impuestos específicos.} La erosión de 3.4\% del rendimiento mecánico puede contrastarse directamente. En el nivel de agregación del modelo, el gravamen representa 3.2\% del precio sin IVA de la demanda final de manufacturas, de modo que un alza de 10\% eleva ese precio en 0.32\% antes de los ajustes de equilibrio; tras ellos, el precio de comprador sube 0.18\% respecto del IPC y la base física cae 0.34\%. Sobre los bienes efectivamente gravados, en cambio, el impuesto representa una fracción mucho mayor del precio: del orden de un cuarto a un tercio en la gasolina automotriz, gravada con 6 UTM por metro cúbico \cite{ley18502}, y más de la mitad en el tabaco elaborado \cite{bcn_correctivos_2023}. Allí, un alza de 10\% elevaría el precio final entre 2\% y 3\%, y con elasticidades precio de la demanda de combustibles de $-0.09$ en el corto plazo y $-0.31$ en el largo plazo \cite{havranek_etal_2012} la base caería entre 0.2\% y 0.9\%, una erosión de entre 2\% y 9\% del rendimiento mecánico. El rango contiene el 3.4\% del modelo: los dos sesgos de la agregación ---un alza de precio demasiado pequeña sobre una demanda demasiado elástica--- se compensan en el agregado recaudatorio. Lo que la agregación no preserva es la composición sectorial y distributiva del ajuste.
+
+\subsection{Resultados condicionados a la especificación}
+
+\textbf{1) El destino de la recaudación.} Bajo el cierre por ahorro, la recaudación adicional se convierte en inversión y la recaudación perdida, en menor inversión. Como el nivel de actividad lo determina la oferta de factores, reciclar la recaudación mediante una transferencia de suma alzada a los hogares cambiaría sobre todo la composición del gasto ---más consumo, menos inversión--- y muy poco el PIB real, porque las curvas de oferta no dependen del ingreso no laboral. El destino de la recaudación sí importa para el bienestar, y la práctica estándar de evaluar las medidas con recaudación neutral \cite{shoven_whalley_1984,ballard_fullerton_shoven_whalley_1985} sigue siendo necesaria para medir costos de eficiencia.
+
+\textbf{2) La representación del impuesto personal.} El acotado efecto del alza del PIT sobre el PIB real y la baja erosión de su base se explican en buena parte por su representación: una tasa efectiva media de 2.55\%, plana y aplicada sobre una base que incluye transferencias y prestaciones inelásticas. La pérdida de eficiencia de un impuesto crece aproximadamente con el cuadrado de la tasa marginal \cite{auerbach_hines_2002}, y en un impuesto progresivo la tasa marginal que enfrentan los contribuyentes de mayores ingresos excede con holgura la tasa media. Una representación con tasas marginales por tramo, como la prevista en la extensión por quintiles, elevaría el efecto del impuesto personal sobre la oferta de trabajo y sobre el producto.
+
+\textbf{3) La representación del impuesto corporativo.} El IDPC actúa sobre la oferta de servicios de capital en un marco estático, de modo que su efecto opera sobre la utilización y no sobre la acumulación del stock. Los efectos de largo plazo de la tributación corporativa sobre la inversión y la productividad \cite{arnold_etal_2011} quedan fuera del alcance del modelo, y la magnitud del efecto de corto plazo depende críticamente de $\psi$ (Sección~\ref{sec:sensibilidad}). Por la misma razón, el resultado del paquete que combina la rebaja del IDPC con el alza del PIT (Sección~\ref{sec:sim-comb}) depende de las elasticidades de oferta de ambos factores y debe leerse con esa salvedad.
+
+\subsection{Síntesis}
+
+Las identidades internas se cumplen sin residuo apreciable: el modelo es homogéneo de grado cero, satisface la ley de Walras y la balanza de pagos, y su descomposición fiscal es exacta. Los signos coinciden con la teoría en todos los bloques de variables, con la precisión de que el signo de la inversión es una propiedad del cierre. Las magnitudes son plausibles con dos matices: los multiplicadores son menores que los de la evidencia narrativa porque el modelo contiene solo efectos de oferta, y la respuesta del desempleo en el alza del IVA excede la banda empírica de la ley de Okun porque la calibración privilegia la elasticidad de la oferta laboral. Las extensiones que se desprenden del examen son concretas: el cálculo de la variación equivalente, la representación del impuesto personal con tasas marginales por tramo y la desagregación de los productos gravados con impuestos selectivos.
 
 \section{Conclusión general}
 
-El documento desarrolla un modelo de equilibrio general computable estático y determinístico para una economía de doce sectores y trece bienes, calibrado con una matriz de contabilidad social para Chile. El modelo integra los bloques de hogares, producción, firmas, gobierno, sector externo, recaudación tributaria y ahorro--inversión. También articula la oferta doméstica, las exportaciones y las importaciones mediante los mecanismos CET y Armington. En los mercados de factores, la utilización endógena del capital y la participación laboral endógena permiten que el ajuste de las cantidades se distribuya entre capital y trabajo, y que la respuesta del desempleo al producto se mantenga dentro del rango observado para Chile.
+El documento desarrolla un modelo de equilibrio general computable estático y determinístico para una economía de doce sectores y trece bienes, calibrado con una matriz de contabilidad social para Chile de 2023. El modelo integra los bloques de hogares, producción, firmas, gobierno, sector externo, recaudación tributaria y ahorro--inversión; utiliza el IPC como numerario en un sistema homogéneo de grado cero; cierra la cuenta de capital con inversión determinada por el ahorro y ahorro externo fijo en divisas; y representa la oferta de los factores como función de sus remuneraciones reales netas de impuestos, de modo que los impuestos directos e indirectos alcanzan la producción por el mismo canal.
 
-Los ejercicios muestran que las cuatro reformas tributarias producen efectos agregados diferenciados. El aumento de 10\% del impuesto a la renta de personas reduce el valor agregado real en 0.4559\%, el consumo real en 0.6335\% y la inversión real en 0.2541\%, e incrementa la tasa de desempleo entre 0.1479 y 0.1577 puntos porcentuales. El alza de 10\% de los impuestos específicos reduce el valor agregado real en 0.2166\%, el consumo real en 0.3037\% y la inversión real en 0.1615\%, y eleva el desempleo entre 0.0576 y 0.0747 puntos. La disminución de un punto porcentual del IDPC eleva el PIB real en 0.1733\% y la inversión real en 0.4116\%, y reduce la tasa de desempleo entre 0.0533 y 0.0696 puntos porcentuales, aunque deteriora el saldo comercial. El incremento de un punto porcentual en la tasa del IVA reduce el valor agregado real en 0.9105\%, el consumo real en 1.2603\% y la inversión real en 0.6549\%, y aumenta la tasa de desempleo entre 0.2879 y 0.3313 puntos porcentuales.
+Los ejercicios identifican los mecanismos de transmisión de cada medida. El alza del IVA de 19\% a 20\% reduce el PIB real en 0.35\% porque reduce las remuneraciones reales de ambos factores, y eleva la recaudación de tasa y base en 0.3626 puntos del PIB. El alza de 10\% del impuesto personal desplaza la oferta de trabajo, reduce el PIB real en 0.09\% y recauda 0.1632 puntos, con una erosión de 9.8\% del rendimiento mecánico. La rebaja de un punto del IDPC eleva el retorno neto del capital, expande la utilización y el PIB real en 0.14\% y cuesta 0.1334 puntos del PIB, de los cuales la expansión de las bases recupera 17.5\%. El alza de 10\% de los impuestos específicos reduce el PIB real en 0.10\% y recauda 0.0695 puntos, con una erosión concentrada en la base del IVA de los bienes gravados. El paquete que sustituye tributación corporativa por tributación personal eleva simultáneamente el PIB real y la recaudación.
 
-Desde el punto de vista recaudatorio, al considerar el efecto conjunto de tasa y base, el incremento del IVA eleva la recaudación total en 0.2371 puntos del PIB inicial, el aumento del PIT en 0.0837 puntos y el alza de los impuestos específicos en 0.0419 puntos, mientras que la disminución del IDPC la reduce en 0.1255 puntos. Las variaciones nominales observadas son de 0.1755, 0.0527, 0.0441 y -0.1140 puntos, respectivamente, debido a efectos precio de -0.0616, -0.0310, 0.0022 y 0.0115 puntos del PIB. En los aumentos tributarios, la contracción de las bases absorbe entre la mitad y algo más de la mitad del rendimiento mecánico; en la rebaja del IDPC, la expansión de las bases compensa cerca de 22\% de la pérdida. Una parte relevante de estos efectos base proviene del impuesto corporativo, cuya base responde al grado de utilización del capital.
+En cada ejercicio, la respuesta de las bases distintas de la gravada explica una parte sustantiva de la diferencia entre el rendimiento mecánico y el resultado recaudatorio. Este resultado refuerza el argumento a favor de la evaluación en equilibrio general frente a estimaciones de equilibrio parcial centradas en la base del tributo modificado.
 
-Ordenados por costo en actividad por punto del PIB recaudado, el IVA resulta el instrumento menos oneroso (3.8 puntos de valor agregado real), seguido de los impuestos específicos (5.2) y del impuesto a la renta de personas (5.4). Esta jerarquía depende de manera decisiva de que el IVA otorgue crédito pleno sobre el uso intermedio: bajo la especificación anterior, que gravaba implícitamente los insumos, el mismo choque aparecía como el más costoso de los tres. La comparación entre instrumentos revela además un patrón común: la erosión de las bases distintas de la gravada explica una parte sustantiva de la atenuación del rendimiento mecánico. En el alza de los impuestos específicos, la propia base cede solo 5\% del efecto tasa, pero la contracción de las restantes bases resta 0.0503 puntos del PIB, más de la mitad del rendimiento. Este resultado refuerza el argumento a favor de la evaluación en equilibrio general: una estimación de equilibrio parcial del mismo choque, centrada en la elasticidad de la demanda del bien gravado, habría proyectado un rendimiento cercano al mecánico.
+Una ventaja de este tipo de modelos es que permiten evaluar simultáneamente los efectos de una medida sobre variables reales, externas, laborales y fiscales. A diferencia de los análisis parciales, esta perspectiva integrada hace visibles las disyuntivas entre actividad, empleo, recaudación y composición del gasto.
 
-Una ventaja de este tipo de modelos es que permiten evaluar simultáneamente los efectos de una medida sobre variables reales, externas, laborales y fiscales, y no solo sobre la dimensión que motiva originalmente la reforma. A diferencia de los análisis parciales, esta perspectiva integrada hace visibles las disyuntivas entre actividad, empleo, recaudación y sector externo, y ofrece una base más completa para la evaluación de la política tributaria.
+Los resultados deben interpretarse considerando sus limitaciones. Primero, el cierre por ahorro elimina los efectos de demanda agregada, de modo que los efectos en actividad son de oferta, lo que determina que las alzas tributarias eleven la inversión. Segundo, las elasticidades de oferta de factores provienen de evidencia microeconómica internacional y, para el capital, de un margen análogo pero distinto; la sensibilidad muestra que el efecto de la rebaja del IDPC depende de manera decisiva de la elasticidad del capital. Tercero, la respuesta del desempleo en el alza del IVA excede la banda empírica de la ley de Okun. Cuarto, la calibración supone que el consumo intermedio no paga impuestos específicos y representa el IVA no recuperable mediante un residuo agregado, en lugar de derivarlo de la estructura de exenciones y de la información del formulario 29. Quinto, el traspaso del impuesto a precios es unitario respecto del precio básico, supuesto que la literatura sobre incidencia de impuestos selectivos matiza en presencia de poder de mercado \cite{delipalla_keen_1992,benedek_etal_2020}.
 
-Los resultados deben interpretarse considerando algunas limitaciones. Las dos primeras observaciones de versiones anteriores ---el registro del IVA como volumen en el PIB real por el gasto y la ausencia de distinción entre precio de comprador y precio de vendedor--- quedan resueltas por la especificación descrita en la Sección~\ref{sec:productos}, que separa $pq^{p}$ de $p^{p}$ y deja el vaciado de mercado en unidades físicas.
-
-Permanecen, sin embargo, otras limitaciones. Primero, los parámetros de los mercados de factores se calibran para reproducir un coeficiente de Okun obtenido de una única fuente, y la elasticidad de la oferta de servicios de capital carece de un ancla empírica directa para Chile. Segundo, la calibración supone que el consumo intermedio no paga impuestos específicos, supuesto que subestima la carga sobre los sectores intensivos en combustibles ---transporte y minería, en particular--- y que la evidencia sobre recuperación parcial del impuesto al diésel permitiría refinar. Tercero, el residuo $t_{iva,int}^{p}$ representa el IVA no recuperable de manera agregada y transitoria, en lugar de derivarlo de la estructura de exenciones y de la información del formulario 29. Cuarto, el traspaso del impuesto a precios es unitario por construcción, supuesto razonable bajo competencia perfecta pero que la literatura sobre incidencia de impuestos selectivos matiza en presencia de poder de mercado \cite{delipalla_keen_1992}. Quinto, el nivel base de utilización del capital renormaliza los resultados sin imponer un techo de capacidad; incorporar la restricción $u_{k}\leq 1$ es la extensión natural de este margen.
-
-Como próximas etapas, se propone estimar directamente las elasticidades del empleo y de la fuerza de trabajo respecto del producto con datos de la Encuesta Nacional de Empleo, e implementar un análisis de sensibilidad que incluya los parámetros $\phi$, $\psi$ y $\varepsilon$. Entre las extensiones posibles se encuentran una representación más detallada de la estructura tributaria, una mayor desagregación sectorial y de productos, la incorporación de hogares heterogéneos, el análisis distributivo y una profundización del mercado laboral mediante rigideces adicionales o mecanismos de informalidad.
-
+Como próximas etapas, se propone estimar con datos de la Encuesta Nacional de Empleo las elasticidades del empleo y de la participación, evaluar las medidas bajo cierres alternativos de la cuenta de capital, incorporar hogares por quintil con tasas marginales del impuesto personal por tramo y desagregar los productos gravados con impuestos selectivos. Entre las extensiones de mayor alcance se encuentran una restricción de capacidad $u_{k}\leq 1$, una versión dinámica que permita la acumulación de capital y la incorporación de rigideces o informalidad en el mercado laboral.
 
 \section{Disponibilidad de código}
 
