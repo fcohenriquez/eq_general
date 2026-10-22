@@ -10,7 +10,7 @@ output: html_document
 # Todo lo que se imprime en las secciones de ANALISIS se escribe tambien en este archivo.
 # Nombre configurable en el YAML (archivos: resultados_shocks_txt); ruta relativa al .Rmd.
 `%||%` <- function(a, b) if (is.null(a)) b else a
-archivo_txt <- cfg$archivos$resultados_shocks_txt %||% "resultados_shocks_12sect_2023.txt"
+archivo_txt <- cfg$archivos$resultados_output %||% "resultados_shocks_12sect_2023.txt"
 
 txt_escribir <- function(lineas, nuevo = FALSE) {
     con <- file(archivo_txt, open = if (nuevo) "w" else "a", encoding = "UTF-8")
@@ -73,7 +73,12 @@ txt_escribir(c(
     sprintf("  informalidad             : %s", fmt_lista(el$informalidad)),
     sprintf("  wage_curve_phi           : %s", fmt_lista(el$wage_curve_phi)),
     sprintf("  capital_curve_psi        : %s", fmt_lista(el$capital_curve_psi)),
-    sprintf("  participacion_epsilon    : %s", fmt_lista(el$participacion_epsilon))
+    sprintf("  participacion_epsilon    : %s", fmt_lista(el$participacion_epsilon)),
+    "",
+    "Criterio fiscal: el impacto recaudatorio es la variacion total de la recaudacion,",
+    "  dR = efecto tasa + efecto base + efecto precio (pp del PIB nominal base).",
+    "  Con el IPC como numerario los tres efectos son reales: el efecto base mide el",
+    "  volumen de las bases y el efecto precio, su valor real (incidencia del impuesto)."
 ), nuevo = TRUE)
 ```
 
@@ -87,6 +92,10 @@ vars_to_compare <- c(
     paste0("LD__", unlist(cfg$cuentas_sam$factores$trabajo))
 )
 
+# Descomposicion exacta de Shapley de R = sum(tau * P * Q) en tres efectos
+# (Shapley, 1953; Sun, 1998): dR = ef_tasa + ef_cantidad + ef_precio.
+# ef_cantidad es el "efecto base" del documento (volumen de la base) y ef_precio la
+# variacion del valor real de cada unidad de base respecto del IPC (numerario).
 decomp3 <- function(tau_b, tau_s, P_b, P_s, Q_b, Q_s) {
     # valores agregados (suma sobre productos si son vectores)
     R_b <- sum(tau_b * P_b * Q_b, na.rm = TRUE)
@@ -101,14 +110,12 @@ decomp3 <- function(tau_b, tau_s, P_b, P_s, Q_b, Q_s) {
     dP      <- P_s   - P_b
     dQ      <- Q_s   - Q_b
 
-    #ef_tasa     <- sum(dtau  * P_bar * Q_bar, na.rm = TRUE)
-    #ef_cantidad <- sum(tau_bar * P_bar * dQ,  na.rm = TRUE)
-    #ef_precio   <- sum(tau_bar * Q_bar * dP,  na.rm = TRUE)
+    # Los terminos /12 reparten en partes iguales la interaccion triple (Shapley exacto)
     ef_tasa     <- sum(dtau * (P_bar * Q_bar + dP * dQ / 12),       na.rm = TRUE)
     ef_precio   <- sum(dP   * (tau_bar * Q_bar + dtau * dQ / 12),   na.rm = TRUE)
     ef_cantidad <- sum(dQ   * (tau_bar * P_bar + dtau * dP / 12),   na.rm = TRUE)
 
-    res <- dR - (ef_tasa + ef_cantidad + ef_precio)  # residuo de orden superior
+    res <- dR - (ef_tasa + ef_cantidad + ef_precio)  # debe ser ~0 (precision de maquina)
     list(R_b = R_b, R_s = R_s, dR = dR,
          ef_tasa = ef_tasa, ef_cantidad = ef_cantidad,
          ef_precio = ef_precio, residuo = res)
@@ -129,9 +136,14 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     sn <- gsub("prod_", "Act_", pn)
     ct <- unlist(cfg$cuentas_sam$factores$trabajo)
 
-    # ---------------- VAT (Etapa 1: cuna de precio) ----------------
-    # R = t_iva * p * FD  +  t_iva_int * p * XI
-    # tau: tasa sin impuesto; P: precio basico p; Q: base fisica (FD o XI)
+    # IPC (numerario): los especificos son montos reales indexados, tau_e * IPC
+    cpi_b <- as.numeric(gv(res_base, "CPI")); cpi_s <- as.numeric(gv(res_shock, "CPI"))
+
+    # ---------------- VAT (cuna de precio sobre demanda final) ----------------
+    # R = t_iva * (p + tau_e * IPC) * FD  +  t_iva_int * p * XI
+    # tau: tasa sin impuesto; P: precio neto de IVA; Q: base fisica (FD o XI).
+    # Con IPC fijo, el efecto precio recoge la caida de los precios netos respecto
+    # de la canasta de consumo (incidencia de la cuna).
     pn_vat <- pn[paste0("t_iva__", pn) %in% names(par_b)]
     p_b   <- gv(res_base , paste0("p__",  pn_vat)); p_s  <- gv(res_shock, paste0("p__",  pn_vat))
     FD_b  <- gv(res_base , paste0("FD__", pn_vat)); FD_s <- gv(res_shock, paste0("FD__", pn_vat))
@@ -140,19 +152,22 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     t_s   <- as.numeric(par_s[paste0("t_iva__", pn_vat)])
     ti_b  <- as.numeric(par_b[paste0("t_iva_int__", pn_vat)])
     ti_s  <- as.numeric(par_s[paste0("t_iva_int__", pn_vat)])
-    # La base de la demanda final es el precio con especifico (p + tau_e); la intermedia, p.
+    # La base de la demanda final es el precio con especifico (p + tau_e * IPC); la intermedia, p.
     tv_b  <- as.numeric(par_b[paste0("tau_e__", pn_vat)])
     tv_s  <- as.numeric(par_s[paste0("tau_e__", pn_vat)])
-    D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b + tv_b, p_s + tv_s, FD_b, FD_s),
+    D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b + tv_b * cpi_b, p_s + tv_s * cpi_s, FD_b, FD_s),
                         decomp3(ti_b, ti_s, p_b, p_s, XI_b, XI_s))
 
     # ---------------- FIRMTAX ----------------
+    # P = retorno bruto pk relativo al IPC. Si el choque no altera fit ni pit,
+    # ef_precio / ef_cantidad ~ psi (curva de oferta de capital).
     fit_b <- as.numeric(par_b["fit"]); fit_s <- as.numeric(par_s["fit"])
     pk_b  <- as.numeric(gv(res_base ,"pk")); pk_s <- as.numeric(gv(res_shock,"pk"))
     Kf_b  <- as.numeric(gv(res_base ,"Kf")); Kf_s <- as.numeric(gv(res_shock,"Kf"))
     D_FIRM <- decomp3(fit_b, fit_s, pk_b, pk_s, Kf_b, Kf_s)
 
     # ---------------- PITAX ----------------
+    # P = remuneracion real de cada factor (pk, w); transferencias con P = 1.
     pit_b <- as.numeric(par_b["pit"]); pit_s <- as.numeric(par_s["pit"])
     Kh_b  <- as.numeric(gv(res_base ,"Kh")); Kh_s <- as.numeric(gv(res_shock,"Kh"))
     w_b   <- gv(res_base , paste0("w__", ct)); w_s <- gv(res_shock, paste0("w__", ct))
@@ -167,18 +182,10 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     cap  <- decomp3(pit_b, pit_s, pk_b, pk_s, Kh_b, Kh_s)
     lab  <- decomp3(pit_b, pit_s, w_b,  w_s,  Lh_b, Lh_s)
     trf  <- decomp3(pit_b, pit_s, rep(1,1), rep(1,1), tr_b, tr_s)
-    D_PIT <- list(
-        R_b = cap$R_b + lab$R_b + trf$R_b,
-        R_s = cap$R_s + lab$R_s + trf$R_s,
-        dR  = cap$dR  + lab$dR  + trf$dR,
-        ef_tasa     = cap$ef_tasa     + lab$ef_tasa     + trf$ef_tasa,
-        ef_cantidad = cap$ef_cantidad + lab$ef_cantidad + trf$ef_cantidad,
-        ef_precio   = cap$ef_precio   + lab$ef_precio   + trf$ef_precio,
-        residuo     = cap$residuo + lab$residuo + trf$residuo
-    )
+    D_PIT <- sum_decomp(cap, lab, trf)
 
     # ---------------- TPROD ----------------
-    # Filter sectors that have 'tps__Act_<sector>' parameter defined in the model
+    # P = indice de precios de produccion (relativo al IPC); Q = ingreso deflactado.
     sn_tprod <- sn[paste0("tps__", sn) %in% names(par_b)]
     tps   <- as.numeric(par_b[paste0("tps__", sn_tprod)])
     rev_b <- gv(res_base , paste0("revenue__", sn_tprod))
@@ -191,15 +198,15 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     Qrev_s  <- rev_s / pzdef_s
     D_TPROD <- decomp3(tps, tps, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
 
-    # ---------------- TESP (Etapa 5: impuesto por unidad fisica sobre demanda final) ----------------
-    # Parte por producto: R = tau_e * FD. tau_e es un monto nominal por unidad fisica,
-    # asi que no hay efecto precio (P = 1) y la recaudacion sigue a los volumenes.
+    # ---------------- TESP (impuesto por unidad fisica sobre demanda final) ----------------
+    # Parte por producto: R = tau_e * IPC * FD. Con P = IPC = 1 (numerario), el efecto
+    # precio es nulo por construccion y la recaudacion sigue a los volumenes.
     pn_esp <- pn[paste0("tau_e__", pn) %in% names(par_b)]
     tau_b  <- as.numeric(par_b[paste0("tau_e__", pn_esp)])
     tau_s  <- as.numeric(par_s[paste0("tau_e__", pn_esp)])
     FDe_b  <- gv(res_base , paste0("FD__", pn_esp))
     FDe_s  <- gv(res_shock, paste0("FD__", pn_esp))
-    D_TESP_p <- decomp3(tau_b, tau_s, rep(1, length(pn_esp)), rep(1, length(pn_esp)), FDe_b, FDe_s)
+    D_TESP_p <- decomp3(tau_b, tau_s, rep(cpi_b, length(pn_esp)), rep(cpi_s, length(pn_esp)), FDe_b, FDe_s)
 
     # Parte sectorial (tes__Act_*): es cero en la SAM 2023; se mantiene por completitud
     sn_tesp <- sn[paste0("tes__", sn) %in% names(par_b)]
@@ -218,7 +225,7 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     D_TESP <- sum_decomp(D_TESP_p, D_TESP_s)
 
     # ---------------- TARANCEL ----------------
-    # Filter products that have 'tar_rate__prod_<prod>' parameter defined in the model
+    # P = tipo de cambio real exr (precio de la divisa en canastas de consumo).
     pn_tar <- pn[paste0("tar_rate__", pn) %in% names(par_b)]
     tar    <- as.numeric(par_b[paste0("tar_rate__", pn_tar)])
     pwm    <- as.numeric(par_b[paste0("pworldm__", pn_tar)])
@@ -326,14 +333,10 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     }
 
     # --- Diagnóstico Okun: contraste con evidencia empírica ---
-    #LD_b <- sapply(cat_trabajo, function(l) gv(res_base,  paste0("LD__", l)))
-    #LD_s <- sapply(cat_trabajo, function(l) gv(res_shock, paste0("LD__", l)))
     ct   <- sub("^u_rate__", "", cat_trabajo)
     LD_b <- sapply(ct, function(l) gv(res_base,  paste0("LD__", l)))
     LD_s <- sapply(ct, function(l) gv(res_shock, paste0("LD__", l)))
     if (!any(is.na(LD_b)) && abs(var_pib_real) > 1e-8) {
-        #LF_b <- LD_b / (1 - u_base[cat_trabajo])
-        #LF_s <- LD_s / (1 - u_shock[cat_trabajo])
         LF_b <- LD_b / (1 - as.numeric(u_base[cat_trabajo]))
         LF_s <- LD_s / (1 - as.numeric(u_shock[cat_trabajo]))
         u_agg_b <- 1 - sum(LD_b) / sum(LF_b)
@@ -411,44 +414,49 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     }
     cat("\n")
 
-#    if (!is.null(model_base) && !is.null(model_shock)) {
-#        res_base <- get_ss_values(model_base, silent = TRUE)
-#        res_shock <- get_ss_values(model_shock, silent = TRUE)
-#        RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
-      if (!is.null(res_base) && !is.null(res_shock)) {
+    # --- Descomposicion del impacto recaudatorio: dR = Ef.Tasa + Ef.Base + Ef.Precio ---
+    if (!is.null(res_base) && !is.null(res_shock)) {
         RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
         nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL")
+        pp <- function(x) x / pib_nom_base * 100
 
-        cat("  Descomposición Tasa / Cantidad (Real) / Precio (pp PIB base):\n")
-        cat(sprintf("     %-9s %9s %9s %9s %9s %9s %9s\n",
-                    "Impuesto", "ΔR(pp)", "Ef.Tasa", "Ef.Cant", "Ef.Total", "Ef.Prec", "Resid"))
-        cat("     ", strrep("-", 72), "\n", sep = "")
+        cat("  Descomposición del impacto recaudatorio (pp PIB base): ΔR = Ef.Tasa + Ef.Base + Ef.Precio\n")
+        cat(sprintf("     %-9s %9s %9s %9s %9s %9s\n",
+                    "Impuesto", "Ef.Tasa", "Ef.Base", "Ef.Prec", "ΔR total", "Resid"))
+        cat("     ", strrep("-", 62), "\n", sep = "")
 
-        tot <- c(dR = 0, t = 0, q = 0, tot = 0, p = 0, r = 0)
+        tot <- c(t = 0, q = 0, p = 0, dR = 0, r = 0)
         for (nm in nombres) {
             d <- RD[[nm]]
-            ef_tot_val <- d$ef_tasa + d$ef_cantidad
-            cat(sprintf("     %-9s %+9.4f %+9.4f %+9.4f %+9.4f %+9.4f %+9.1e\n",
-                        nm,
-                        d$dR          / pib_nom_base * 100,
-                        d$ef_tasa     / pib_nom_base * 100,
-                        d$ef_cantidad / pib_nom_base * 100,
-                        ef_tot_val    / pib_nom_base * 100,
-                        d$ef_precio   / pib_nom_base * 100,
-                        d$residuo     / pib_nom_base * 100))
-            tot["dR"]  <- tot["dR"]  + d$dR
-            tot["t"]   <- tot["t"]   + d$ef_tasa
-            tot["q"]   <- tot["q"]   + d$ef_cantidad
-            tot["tot"] <- tot["tot"] + ef_tot_val
-            tot["p"]   <- tot["p"]   + d$ef_precio
-            tot["r"]   <- tot["r"]   + d$residuo
+            cat(sprintf("     %-9s %+9.4f %+9.4f %+9.4f %+9.4f %+9.1e\n",
+                        nm, pp(d$ef_tasa), pp(d$ef_cantidad), pp(d$ef_precio),
+                        pp(d$dR), pp(d$residuo)))
+            tot <- tot + c(d$ef_tasa, d$ef_cantidad, d$ef_precio, d$dR, d$residuo)
         }
-        cat("     ", strrep("-", 72), "\n", sep = "")
-        cat(sprintf("     %-9s %+9.4f %+9.4f %+9.4f %+9.4f %+9.4f %+9.1e\n",
-                    "TOTAL",
-                    tot["dR"]/pib_nom_base*100, tot["t"]/pib_nom_base*100,
-                    tot["q"]/pib_nom_base*100, tot["tot"]/pib_nom_base*100,
-                    tot["p"]/pib_nom_base*100, tot["r"]/pib_nom_base*100))
+        cat("     ", strrep("-", 62), "\n", sep = "")
+        cat(sprintf("     %-9s %+9.4f %+9.4f %+9.4f %+9.4f %+9.1e\n",
+                    "TOTAL", pp(tot["t"]), pp(tot["q"]), pp(tot["p"]), pp(tot["dR"]), pp(tot["r"])))
+
+        # Erosion total respecto del rendimiento mecanico y su particion volumen / valor.
+        # En alzas: fraccion del efecto tasa que no se materializa; en rebajas: fraccion
+        # de la perdida mecanica que compensan las bases.
+        if (abs(tot["t"]) > 1e-10) {
+            cat(sprintf("     Erosión total %6.2f %%  (volumen %6.2f %%, valor %6.2f %%)  respecto del efecto tasa\n",
+                        -(tot["q"] + tot["p"]) / tot["t"] * 100,
+                        -tot["q"] / tot["t"] * 100,
+                        -tot["p"] / tot["t"] * 100))
+        }
+        # Verificacion: en la base del IDPC, si el choque no altera fit ni pit,
+        # Ef.Prec / Ef.Base debe ser ~psi.
+        dF    <- RD[["FIRMTAX"]]
+        par_b2 <- get_par_values(model_base,  silent = TRUE)
+        par_s2 <- get_par_values(model_shock, silent = TRUE)
+        sin_cuna_directa <- isTRUE(all.equal(as.numeric(par_b2[c("fit", "pit")]),
+                                             as.numeric(par_s2[c("fit", "pit")])))
+        if (sin_cuna_directa && abs(dF$ef_cantidad) > 1e-12) {
+            cat(sprintf("     IDPC: Ef.Prec / Ef.Base = %.4f  (psi = %.4f)\n",
+                        dF$ef_precio / dF$ef_cantidad, as.numeric(par_s2["psi"])))
+        }
         cat("\n")
     }
 }
@@ -464,8 +472,8 @@ calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_sh
         stringsAsFactors = FALSE
     )
 
-    # Cambio % directo en unidades del numerario (exr=1)
-    # Todos los valores ya son "reales" respecto al numerario, no necesitan deflactarse
+    # Cambio % directo en unidades del numerario (IPC = 1): los valores ya estan
+    # expresados en poder adquisitivo del consumidor y no necesitan deflactarse.
     comp$Cambio_Pct <- round((comp$Shock / comp$Base - 1) * 100, 4)
 
     # Impacto como % del PIB real base (solo para montos, no para precios)
@@ -489,9 +497,6 @@ chi <- cfg$shocks_default$fit$participacion_idpc_en_firmtax
 dtau <- cfg$shocks_default$fit$cambio_puntos_tasa
 tau0 <- cfg$shocks_default$fit$tasa_nominal_base
 fit_shock <- fit_base * (1 + dtau * chi / tau0)
-
-# fit_shock <- fit_base * (1 - 0.916 * (0.01 / 0.27))
-
 
 # 2. Aplicar el shock usando set_free_par
 model_shock_fit <- set_free_par(model, free_par = list(fit = fit_shock))
@@ -662,11 +667,13 @@ reportar("SHOCK 4: Aumento de impuestos especificos (por unidad fisica, demanda 
 # SHOCK COMBINADO: Disminución FIT e Incremento PIT
 ```{r include=FALSE}
 # 1. Definir los shocks
+# Rebaja de 2.28% de la tasa efectiva fit (0.615 * 0.01 / 0.27), equivalente a
+# 0.67 puntos de la tasa legal del IDPC con chi = 0.916 (0.615 / 0.916 = 0.671).
 fit_base <- get_par_values(model, silent = TRUE)["fit"]
-fit_shock <- fit_base * (1 - 0.615 * (0.01 / 0.27)) # Misma magnitud que el shock individual
+fit_shock <- fit_base * (1 - 0.615 * (0.01 / 0.27))
 
 pit_base <- get_par_values(model, silent = TRUE)["pit"]
-pit_shock <- as.numeric(pit_base) * 1.07 # Incremento del X% en la tasa
+pit_shock <- as.numeric(pit_base) * 1.07 # Incremento del 7% en la tasa efectiva
 
 # 2. Aplicar ambos shocks simultáneamente
 model_shock_comb <- set_free_par(model, free_par = list(fit = fit_shock, pit = pit_shock))
@@ -738,6 +745,42 @@ hom$cumple <- !is.na(hom$desvio_max) & hom$desvio_max < tol_cie
 brecha_bdp <- function(m, lst) as.numeric(get_ss_values(m, silent = TRUE)["SAVext"]) - (lst$M - lst$X)
 gap_b <- brecha_bdp(model, pib_model_list)
 
+# --- Indicadores fiscales del articulo (pp del PIB nominal base) -----------------
+# El indicador central es la variacion total de la recaudacion, dTax_pp, que se
+# descompone de manera exacta en efecto tasa + efecto base + efecto precio. Con el IPC
+# como numerario, los tres efectos son reales: el efecto precio mide la variacion del
+# valor real de cada unidad de base (precio relativo a la canasta de consumo).
+#   pct_erosion    = -(efecto base + efecto precio) / efecto tasa * 100: erosion total
+#                    (alzas) o compensacion total (rebajas) del rendimiento mecanico.
+#   pct_base       = -efecto base / efecto tasa * 100: componente de volumen.
+#   pct_precio     = -efecto precio / efecto tasa * 100: componente de valor.
+#   pct_base_otros = parte del efecto base que ocurre en impuestos distintos del
+#                    modificado (lo que omite un calculo de equilibrio parcial).
+#   resid_pp       = dTax_pp - (tasa + base + precio); debe ser ~0.
+# Impuestos modificados por cada choque (nombres de build_real_decomp):
+impuestos_propios <- list(IDPC = "FIRMTAX", IVA = "VAT", PIT = "PITAX",
+                          TESP = "TESP", `IDPC+PIT` = c("FIRMTAX", "PITAX"))
+
+indicadores_fiscales <- function(RD, v, propios) {
+    pp    <- function(x) unname(as.numeric(x) / as.numeric(pib_model_list$PIB) * 100)
+    suma  <- function(campo, imp = names(RD)) sum(sapply(RD[imp], `[[`, campo))
+    ef_t  <- pp(suma("ef_tasa"))
+    ef_b  <- pp(suma("ef_cantidad"))
+    ef_bp <- pp(suma("ef_cantidad", intersect(propios, names(RD))))
+    ef_p  <- pp(suma("ef_precio"))
+    dR    <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
+    pct   <- function(x) if (abs(ef_t) > 1e-10) -x / ef_t * 100 else NA_real_
+    c(dTax_pp        = dR,
+      ef_tasa_pp     = ef_t,
+      ef_base_pp     = ef_b,
+      ef_precio_pp   = ef_p,
+      pct_erosion    = pct(ef_b + ef_p),
+      pct_base       = pct(ef_b),
+      pct_precio     = pct(ef_p),
+      pct_base_otros = if (abs(ef_b) > 1e-10) (ef_b - ef_bp) / ef_b * 100 else NA_real_,
+      resid_pp       = dR - (ef_t + ef_b + ef_p))
+}
+
 # --- Prueba 3: resumen de choques -------------------------------------------------
 # Los choques individuales se reconstruyen desde el YAML porque fit_shock, pit_shock
 # y dtau se sobrescriben en chunks posteriores.
@@ -751,20 +794,18 @@ resumen <- do.call(rbind, lapply(names(modelos_choque), function(nm_) {
     v   <- get_ss_values(m, silent = TRUE)
     lst <- calc_pib(m, model_ref = model)
     RD  <- build_real_decomp(model, m, res_base, v)
-    pp  <- function(x) x / pib_model_list$PIB * 100
-    ef_tasa <- pp(sum(sapply(RD, `[[`, "ef_tasa")))
-    dY  <- (lst$PIB_real / pib_model_list$PIB_real - 1) * 100
-    dR  <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
+    ind <- indicadores_fiscales(RD, v, impuestos_propios[[nm_]])
+    dY  <- unname(as.numeric(lst$PIB_real / pib_model_list$PIB_real - 1) * 100)
+    ef  <- unname(ind["ef_tasa_pp"])
     data.frame(choque         = nm_,
                dPIB_real      = dY,
                dI_real        = (lst$I_real / pib_model_list$I_real - 1) * 100,
                dC_real        = (lst$C_real / pib_model_list$C_real - 1) * 100,
-               dTax_pp        = dR,
-               ef_tasa_pp     = ef_tasa,
-               mult_ex_ante   = if (abs(ef_tasa) > 1e-10) dY / ef_tasa else NA,
-               pct_compensado = if (abs(ef_tasa) > 1e-10) (1 - dR / ef_tasa) * 100 else NA,
+               t(ind),
+               mult_ex_ante   = if (abs(ef) > 1e-10) dY / ef else NA,
                CPI            = as.numeric(v["CPI"]),
-               d_brecha_BdP   = brecha_bdp(m, lst) - gap_b)
+               d_brecha_BdP   = brecha_bdp(m, lst) - gap_b,
+               check.names = FALSE, row.names = NULL)
 }))
 ```
 
@@ -776,10 +817,19 @@ reportar("PRUEBAS DE CONSISTENCIA DEL CIERRE", {
     imprimir_tabla(hom, digits = 10)
     cat(sprintf("\n2) Balanza de pagos: brecha base SAVext - (M - X) = %.4f (redondeo de la SAM).\n", gap_b))
     cat("   d_brecha_BdP debe ser ~0 en cada choque.\n\n")
-    cat("3) Resumen de choques (PIB e inversion en %; recaudacion y efecto tasa en pp del PIB base).\n")
+    cat("3) Resumen de choques (PIB e inversion en %; recaudacion y efectos en pp del PIB base).\n")
+    cat("   dTax_pp        = variacion total de la recaudacion real: indicador central.\n")
+    cat("                    dTax_pp = ef_tasa_pp + ef_base_pp + ef_precio_pp (descomposicion exacta).\n")
+    cat("   ef_base_pp     = efecto base: variacion del volumen de las bases.\n")
+    cat("   ef_precio_pp   = efecto precio: variacion del valor real de las bases respecto del IPC\n")
+    cat("                    (incidencia del impuesto; real, no depende de la escala del numerario).\n")
+    cat("   pct_erosion    = -(ef_base + ef_precio) / ef_tasa (%): erosion total en alzas,\n")
+    cat("                    compensacion total en rebajas.\n")
+    cat("   pct_base       = -ef_base / ef_tasa (%): componente de volumen de la erosion.\n")
+    cat("   pct_precio     = -ef_precio / ef_tasa (%): componente de valor de la erosion.\n")
+    cat("   pct_base_otros = % del efecto base que ocurre en impuestos distintos del modificado.\n")
+    cat("   resid_pp       = residuo de la descomposicion; debe ser ~0.\n")
     cat("   mult_ex_ante   = dPIB_real / efecto tasa.\n")
-    cat("   pct_compensado = parte del efecto tasa que no llega a la recaudacion neta\n")
-    cat("                    (autofinanciamiento en rebajas, erosion de base en alzas).\n")
     cat("   CPI            = numerario; debe ser 1 en todos los choques.\n\n")
     imprimir_tabla(resumen)
 })
@@ -812,37 +862,94 @@ par_oferta <- function(e_L, psi) {
 }
 
 eval_oferta <- function(e_L, psi, nombre, par_shock) {
-    vacio <- c(dPIB_real = NA, dKD = NA, dLD = NA, dTax_pp = NA, ef_tasa_pp = NA,
-               mult_ex_ante = NA, pct_compensado = NA)
+    vacio <- c(dPIB_real = NA, dKD = NA, dLD = NA,
+               dTax_pp = NA, ef_tasa_pp = NA, ef_base_pp = NA, ef_precio_pp = NA,
+               pct_erosion = NA, pct_base = NA, pct_precio = NA, pct_base_otros = NA,
+               resid_pp = NA, mult_ex_ante = NA)
     res <- tryCatch({
         m   <- set_free_par(model, free_par = c(par_oferta(e_L, psi), par_shock))
         m   <- steady_state(m, calibration = FALSE, options_list = opts_c)
         v   <- get_ss_values(m, silent = TRUE)
         lst <- calc_pib(m, model_ref = model)
         RD  <- build_real_decomp(model, m, res_base, v)
-        pp  <- function(x) unname(as.numeric(x) / as.numeric(pib_model_list$PIB) * 100)
-        ef  <- pp(sum(sapply(RD, `[[`, "ef_tasa")))
-        dR  <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
+        ind <- indicadores_fiscales(RD, v, impuestos_propios[[nombre]])
         dY  <- unname(as.numeric(lst$PIB_real / pib_model_list$PIB_real - 1) * 100)
-        c(dPIB_real      = dY,
-          dKD            = (as.numeric(v["KD"]) / as.numeric(res_base["KD"]) - 1) * 100,
-          dLD            = (sum(v[paste0("LD__", ct_)]) / sum(res_base[paste0("LD__", ct_)]) - 1) * 100,
-          dTax_pp        = dR,
-          ef_tasa_pp     = ef,
-          mult_ex_ante   = if (abs(ef) > 1e-10) dY / ef else NA,
-          pct_compensado = if (abs(ef) > 1e-10) (1 - dR / ef) * 100 else NA)
+        ef  <- unname(ind["ef_tasa_pp"])
+        c(dPIB_real    = dY,
+          dKD          = (as.numeric(v["KD"]) / as.numeric(res_base["KD"]) - 1) * 100,
+          dLD          = (sum(v[paste0("LD__", ct_)]) / sum(res_base[paste0("LD__", ct_)]) - 1) * 100,
+          ind,
+          mult_ex_ante = if (abs(ef) > 1e-10) dY / ef else NA)
     }, error = function(e) {
         message(sprintf("e_L = %.3f, psi = %.2f, %s: sin solucion (%s)", e_L, psi, nombre, conditionMessage(e)))
         vacio
     })
     data.frame(choque = nombre, elast_empleo = e_L, elast_capital = 1 / psi,
-               phi = 1 / (e_L * (1 - eps_so)), psi = psi, t(res), check.names = FALSE)
+               phi = 1 / (e_L * (1 - eps_so)), psi = psi, t(res[names(vacio)]),
+               check.names = FALSE, row.names = NULL)
 }
 
 sens_oferta <- do.call(rbind, lapply(seq_len(nrow(grid_so)), function(i)
     do.call(rbind, Map(function(nm_, ps) eval_oferta(grid_so$e_L[i], grid_so$psi[i], nm_, ps),
                        names(choques_so), choques_so))))
 sens_oferta <- sens_oferta[order(sens_oferta$choque, -sens_oferta$elast_capital, -sens_oferta$elast_empleo), ]
+
+# --- Resumen para el texto: rango de los indicadores dentro de la evidencia ---------
+# Rango de elasticidades considerado (YAML: sensibilidad_oferta$rango_resumen); los
+# puntos de la grilla fuera de el (p. ej. psi = 0.2) quedan como prueba de estres.
+# amplitud_solo_empleo / amplitud_solo_capital: max - min del indicador al mover una
+# elasticidad dentro del rango y dejar la otra en su valor calibrado.
+rr      <- so$rango_resumen
+rng_eL  <- unlist(rr$elasticidad_empleo  %||% c(0.25, 0.862))
+rng_eK  <- unlist(rr$elasticidad_capital %||% c(0.5, 1.0))
+eL_cal  <- 1 / (cfg$elasticidades$wage_curve_phi * (1 - eps_so))
+eK_cal  <- 1 / cfg$elasticidades$capital_curve_psi
+tol_g   <- 1e-3
+en_rango   <- with(sens_oferta,
+                   elast_empleo  >= min(rng_eL) - tol_g & elast_empleo  <= max(rng_eL) + tol_g &
+                   elast_capital >= min(rng_eK) - tol_g & elast_capital <= max(rng_eK) + tol_g)
+cal_L      <- abs(sens_oferta$elast_empleo  - eL_cal) < tol_g
+cal_K      <- abs(sens_oferta$elast_capital - eK_cal) < tol_g
+indic_so   <- c("dTax_pp", "pct_erosion", "ef_tasa_pp", "ef_base_pp", "ef_precio_pp",
+                "pct_base", "pct_precio", "pct_base_otros")
+amplitud   <- function(x) if (sum(!is.na(x)) >= 2) diff(range(x, na.rm = TRUE)) else NA_real_
+extremo    <- function(f, x) if (any(!is.na(x))) f(x, na.rm = TRUE) else NA_real_
+
+resumen_so <- do.call(rbind, lapply(unique(sens_oferta$choque), function(nm_) {
+    es  <- sens_oferta$choque == nm_
+    do.call(rbind, lapply(indic_so, function(k) {
+        x <- sens_oferta[[k]]
+        data.frame(choque                = nm_,
+                   indicador             = k,
+                   central               = if (any(es & cal_L & cal_K)) x[es & cal_L & cal_K][1] else NA_real_,
+                   minimo                = extremo(min, x[es & en_rango]),
+                   maximo                = extremo(max, x[es & en_rango]),
+                   amplitud_solo_empleo  = amplitud(x[es & en_rango & cal_K]),
+                   amplitud_solo_capital = amplitud(x[es & en_rango & cal_L]),
+                   n_casos               = sum(!is.na(x[es & en_rango])))
+    }))
+}))
+
+# --- Grillas para el documento: filas = elast_empleo, columnas = elast_capital ------
+# Reproducen las tablas de variacion total y erosion total de la seccion de sensibilidad.
+grilla_so <- function(indicador) {
+    do.call(rbind, lapply(unique(sens_oferta$choque), function(nm_) {
+        d  <- sens_oferta[sens_oferta$choque == nm_, ]
+        ek <- sort(unique(d$elast_capital), decreasing = TRUE)
+        eL <- sort(unique(d$elast_empleo),  decreasing = TRUE)
+        do.call(rbind, lapply(eL, function(l) {
+            fila <- sapply(ek, function(k) {
+                x <- d[[indicador]][abs(d$elast_empleo - l) < tol_g & abs(d$elast_capital - k) < tol_g]
+                if (length(x)) x[1] else NA_real_
+            })
+            data.frame(choque = nm_, elast_empleo = l,
+                       t(setNames(fila, sprintf("eK_%.2f", ek))),
+                       check.names = FALSE, row.names = NULL)
+        }))
+    }))
+}
+grilla_total   <- grilla_so("dTax_pp")
+grilla_erosion <- grilla_so("pct_erosion")
 ```
 
 # ANALISIS SENSIBILIDAD OFERTA DE FACTORES
@@ -853,8 +960,24 @@ reportar("SENSIBILIDAD: elasticidades de oferta de factores", {
     phi_v <- cfg$elasticidades$wage_curve_phi; psi_v <- cfg$elasticidades$capital_curve_psi
     cat(sprintf("Calibracion vigente: elast_empleo = %.3f (phi = %.4f), elast_capital = %.3f (psi = %.2f).\n",
                 1 / (phi_v * (1 - eps_so)), phi_v, 1 / psi_v, psi_v))
-    cat("dPIB_real, dKD, dLD en %; dTax y efecto tasa en pp del PIB base.\n\n")
+    cat("dPIB_real, dKD, dLD en %; recaudacion y efectos en pp del PIB base.\n")
+    cat("dTax_pp        = variacion total de la recaudacion real (indicador central)\n")
+    cat("                 = ef_tasa_pp + ef_base_pp + ef_precio_pp.\n")
+    cat("pct_erosion    = -(ef_base + ef_precio) / ef_tasa (%): erosion total en alzas, compensacion total en rebajas.\n")
+    cat("pct_base       = componente de volumen; pct_precio = componente de valor (suman pct_erosion).\n")
+    cat("pct_base_otros = % del efecto base en impuestos distintos del modificado.\n\n")
     imprimir_tabla(sens_oferta)
+
+    cat("\nVariacion total de la recaudacion (dTax_pp, pp del PIB base): filas = elast_empleo, columnas = elast_capital.\n")
+    imprimir_tabla(grilla_total)
+    cat("\nErosion total (pct_erosion, % del efecto tasa): filas = elast_empleo, columnas = elast_capital.\n")
+    imprimir_tabla(grilla_erosion, digits = 1)
+
+    cat(sprintf("\nResumen dentro de la evidencia: elast_empleo en [%.3f, %.3f], elast_capital en [%.3f, %.3f].\n",
+                min(rng_eL), max(rng_eL), min(rng_eK), max(rng_eK)))
+    cat("central = calibracion vigente (NA si no esta en la grilla).\n")
+    cat("amplitud_solo_X = max - min al mover solo la elasticidad X, con la otra en su valor calibrado.\n\n")
+    imprimir_tabla(resumen_so)
 })
 ```
 

@@ -11,7 +11,7 @@ archivos:
   sam: "../data/sam_2023_12sect_sinmg_trab.csv"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_12_sect_23_auto.gcn"
-  resultados_output: "resultados_cge_12sect_2023.csv"
+  resultados_output: "../output/resultados_shocks_12sect_2023.txt"
 
 opciones_datos:
   separador_csv: ","
