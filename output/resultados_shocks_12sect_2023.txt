@@ -1,5 +1,5 @@
 MEGC-Chile - Resultados de la evaluacion de shocks
-Generado            : 2026-10-22 15:23:48 -03
+Generado            : 2026-10-23 11:23:56 -03
 Modelo              : CGE Chile (12sect_2023), anio base 2023
 
 Cierre macroeconomico:
@@ -787,4 +787,504 @@ PIT      pct_precio         0.4393   -0.0334    0.9368                 0.7983   
 PIT      pct_base_otros    93.7689   91.5060   97.4596                 5.4709                  0.0431         9
 
 ==========================================================================================
-Fin del reporte - 2026-10-22 15:24:26 -03
+Fin del reporte - 2026-10-23 11:24:36 -03
+
+==========================================================================================
+SENSIBILIDAD: elasticidades de consumo (omega) y de comercio exterior (sigma_q, sigma_t)
+==========================================================================================
+Generado            : 2026-10-23 11:26:00 -03
+Modelo              : CGE Chile (12sect_2023), anio base 2023
+Calibracion vigente : omega = 1.50, sigma_q = 2.00, sigma_t = 1.50
+Elasticidades evaluadas: omega, sigma_q, sigma_t
+Grilla omega        : 0.5, 0.8, 1.2, 1.5, 2
+Grilla sigma_q      : 1.4, 2, 2.9, 3.8
+Grilla sigma_t      : 0.6, 1, 1.5, 3
+
+En cada punto se fijan alpha, delta_m, aq, gamma_e y at para las elasticidades del punto;
+desvio_base mide la distancia de esa base a la base vigente (debe ser ~0).
+dexr en %; recaudacion y efectos en pp del PIB nominal base; dR_X_pp = variacion por impuesto.
+dTax_pp = ef_tasa_pp + ef_base_pp + ef_precio_pp (descomposicion exacta).
+pct_erosion = -(ef_base + ef_precio) / ef_tasa (%): erosion en alzas, compensacion en rebajas.
+Cada choque se presenta por separado.
+
+1) CONTROL: base y choque nulo con omega distinto del calibrado (alpha analitico).
+   res_ini, desvio_base, desvio_nulo y dTax_nulo_pp deben ser ~0.
+
+ omega     res_ini   desvio_base   desvio_nulo   dTax_nulo_pp
+------  ----------  ------------  ------------  -------------
+   0.5   2.856e-05             0             0              0
+   0.8   2.856e-05             0             0              0
+   1.2   2.856e-05             0             0              0
+   2.0   2.856e-05             0             0              0
+
+   CONTROL SUPERADO: la base con omega alternativo replica la SAM y un choque nulo la
+   devuelve intacta. Los resultados de omega son validos.
+
+==========================================================================================
+A) ANALISIS DE CONSUMO: elasticidad de sustitucion entre bienes de consumo (omega)
+==========================================================================================
+
+A.1) Elasticidad precio propia implicita de la CES (no compensada): -omega + (omega - 1) * s_i
+     s_i = participacion del producto en el gasto de consumo de hogares de la base.
+
+producto               participacion_gasto   elasticidad_propia_om_0.5   elasticidad_propia_om_0.8   elasticidad_propia_om_1.2   elasticidad_propia_om_1.5   elasticidad_propia_om_2
+--------------------  --------------------  --------------------------  --------------------------  --------------------------  --------------------------  ------------------------
+prod_Agri                           0.0451                     -0.5226                     -0.8090                     -1.1910                     -1.4774                   -1.9549
+prod_Manu                           0.4406                     -0.7203                     -0.8881                     -1.1119                     -1.2797                   -1.5594
+prod_elect_agua_gas                 0.0283                     -0.5141                     -0.8057                     -1.1943                     -1.4859                   -1.9717
+prod_com_hot_rest                   0.0721                     -0.5360                     -0.8144                     -1.1856                     -1.4640                   -1.9279
+prod_trans_comu_inf                 0.0874                     -0.5437                     -0.8175                     -1.1825                     -1.4563                   -1.9126
+prod_int_fin                        0.0517                     -0.5258                     -0.8103                     -1.1897                     -1.4742                   -1.9483
+prod_inmo_viv                       0.1192                     -0.5596                     -0.8238                     -1.1762                     -1.4404                   -1.8808
+prod_serv_emp                       0.0210                     -0.5105                     -0.8042                     -1.1958                     -1.4895                   -1.9790
+prod_serv_pers                      0.1311                     -0.5656                     -0.8262                     -1.1738                     -1.4344                   -1.8689
+prod_adm_pub                        0.0015                     -0.5007                     -0.8003                     -1.1997                     -1.4993                   -1.9985
+prod_otros                          0.0021                     -0.5011                     -0.8004                     -1.1996                     -1.4989                   -1.9979
+
+A.2) Indicadores recaudatorios por valor de omega (sigma_q y sigma_t calibrados).
+     En la rebaja del IDPC, la erosion total corresponde a la compensacion de la perdida mecanica.
+
+choque   indicador                om_0.5    om_0.8    om_1.2    om_1.5    om_2.0
+-------  ---------------------  --------  --------  --------  --------  --------
+IDPC     Variacion total (pp)    -0.1363   -0.1360   -0.1356   -0.1354   -0.1350
+IDPC     Efecto base (pp)         0.0277    0.0279    0.0282    0.0283    0.0286
+IDPC     Efecto precio (pp)      -0.0023   -0.0022   -0.0021   -0.0020   -0.0019
+IDPC     Erosion total (%)       15.7298   15.9097   16.1250   16.2707   16.4885
+IVA      Variacion total (pp)     0.2855    0.2818    0.2769    0.2733    0.2672
+IVA      Efecto base (pp)        -0.0772   -0.0807   -0.0854   -0.0889   -0.0947
+IVA      Efecto precio (pp)      -0.0891   -0.0892   -0.0892   -0.0893   -0.0894
+IVA      Erosion total (%)       36.8072   37.6118   38.6775   39.4720   40.7879
+PIT      Variacion total (pp)     0.1621    0.1622    0.1623    0.1624    0.1625
+PIT      Efecto base (pp)        -0.0180   -0.0179   -0.0178   -0.0178   -0.0177
+PIT      Efecto precio (pp)      -0.0009   -0.0009   -0.0008   -0.0008   -0.0008
+PIT      Erosion total (%)       10.4449   10.3852   10.3138   10.2656   10.1936
+TESP     Variacion total (pp)     0.0676    0.0656    0.0631    0.0612    0.0582
+TESP     Efecto base (pp)        -0.0218   -0.0236   -0.0259   -0.0276   -0.0304
+TESP     Efecto precio (pp)      -0.0078   -0.0080   -0.0081   -0.0083   -0.0084
+TESP     Erosion total (%)       30.4852   32.4671   35.0445   36.9352   40.0175
+
+A.3) Detalle por choque
+
+Choque IDPC - variacion de omega (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+IDPC        0.5         2       1.5  si        -0.1363      -0.1617       0.0277        -0.0023       15.7298    17.1602      -1.4303      0.0129       0.0015           0.0009         -0.1547        0.0015
+IDPC        0.8         2       1.5  si        -0.1360      -0.1617       0.0279        -0.0022       15.9097    17.2801      -1.3705      0.0129       0.0016           0.0009         -0.1545        0.0015
+IDPC        1.2         2       1.5  si        -0.1356      -0.1617       0.0282        -0.0021       16.1250    17.4240      -1.2990      0.0129       0.0016           0.0010         -0.1542        0.0015
+IDPC        1.5         2       1.5  si        -0.1354      -0.1617       0.0283        -0.0020       16.2707    17.5214      -1.2507      0.0129       0.0016           0.0010         -0.1541        0.0015
+IDPC        2.0         2       1.5  si        -0.1350      -0.1617       0.0286        -0.0019       16.4885    17.6673      -1.1788      0.0130       0.0017           0.0011         -0.1538        0.0015
+
+Choque IDPC - variacion de omega, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+IDPC        0.5         2       1.5             0   -0.0269   -0.1363      -0.1617       0.0277        -0.0023       15.7298    17.1602      -1.4303          64.4195          0      0.0129       0.0015           0.0009         -0.1547        0.0015  si     
+IDPC        0.8         2       1.5             0   -0.0262   -0.1360      -0.1617       0.0279        -0.0022       15.9097    17.2801      -1.3705          64.3753          0      0.0129       0.0016           0.0009         -0.1545        0.0015  si     
+IDPC        1.2         2       1.5             0   -0.0254   -0.1356      -0.1617       0.0282        -0.0021       16.1250    17.4240      -1.2990          64.3246          0      0.0129       0.0016           0.0010         -0.1542        0.0015  si     
+IDPC        1.5         2       1.5             0   -0.0249   -0.1354      -0.1617       0.0283        -0.0020       16.2707    17.5214      -1.2507          64.2917          0      0.0129       0.0016           0.0010         -0.1541        0.0015  si     
+IDPC        2.0         2       1.5             0   -0.0240   -0.1350      -0.1617       0.0286        -0.0019       16.4885    17.6673      -1.1788          64.2448          0      0.0130       0.0017           0.0011         -0.1538        0.0015  si     
+
+Choque IVA - variacion de omega (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+IVA         0.5         2       1.5  si         0.2855       0.4517      -0.0772        -0.0891       36.8072    17.0802      19.7269      0.3647      -0.0052          -0.0050         -0.0416       -0.0142
+IVA         0.8         2       1.5  si         0.2818       0.4517      -0.0807        -0.0892       37.6118    17.8676      19.7442      0.3614      -0.0057          -0.0052         -0.0417       -0.0137
+IVA         1.2         2       1.5  si         0.2769       0.4515      -0.0854        -0.0892       38.6775    18.9119      19.7656      0.3571      -0.0065          -0.0055         -0.0419       -0.0131
+IVA         1.5         2       1.5  si         0.2733       0.4515      -0.0889        -0.0893       39.4720    19.6914      19.7806      0.3538      -0.0070          -0.0057         -0.0420       -0.0126
+IVA         2.0         2       1.5  si         0.2672       0.4513      -0.0947        -0.0894       40.7879    20.9839      19.8040      0.3483      -0.0079          -0.0061         -0.0421       -0.0118
+
+Choque IVA - variacion de omega, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+IVA         0.5         2       1.5             0   -0.5240    0.2855       0.4517      -0.0772        -0.0891       36.8072    17.0802      19.7269          47.1474          0      0.3647      -0.0052          -0.0050         -0.0416       -0.0142  si     
+IVA         0.8         2       1.5             0   -0.5244    0.2818       0.4517      -0.0807        -0.0892       37.6118    17.8676      19.7442          45.4954          0      0.3614      -0.0057          -0.0052         -0.0417       -0.0137  si     
+IVA         1.2         2       1.5             0   -0.5249    0.2769       0.4515      -0.0854        -0.0892       38.6775    18.9119      19.7656          43.5015          0      0.3571      -0.0065          -0.0055         -0.0419       -0.0131  si     
+IVA         1.5         2       1.5             0   -0.5253    0.2733       0.4515      -0.0889        -0.0893       39.4720    19.6914      19.7806          42.1415          0      0.3538      -0.0070          -0.0057         -0.0420       -0.0126  si     
+IVA         2.0         2       1.5             0   -0.5258    0.2672       0.4513      -0.0947        -0.0894       40.7879    20.9839      19.8040          40.0941          0      0.3483      -0.0079          -0.0061         -0.0421       -0.0118  si     
+
+Choque PIT - variacion de omega (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+PIT         0.5         2       1.5  si         0.1621        0.181      -0.0180         -9e-04       10.4449     9.9451       0.4998     -0.0099      -0.0013           -4e-04         -0.0039       -0.0027
+PIT         0.8         2       1.5  si         0.1622        0.181      -0.0179         -9e-04       10.3852     9.9055       0.4797     -0.0099      -0.0013           -4e-04         -0.0038       -0.0027
+PIT         1.2         2       1.5  si         0.1623        0.181      -0.0178         -8e-04       10.3138     9.8582       0.4556     -0.0099      -0.0012           -4e-04         -0.0037       -0.0027
+PIT         1.5         2       1.5  si         0.1624        0.181      -0.0178         -8e-04       10.2656     9.8262       0.4393     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027
+PIT         2.0         2       1.5  si         0.1625        0.181      -0.0177         -8e-04       10.1936     9.7785       0.4151     -0.0098      -0.0012           -3e-04         -0.0035       -0.0027
+
+Choque PIT - variacion de omega, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+PIT         0.5         2       1.5             0   -0.0118    0.1621        0.181      -0.0180         -9e-04       10.4449     9.9451       0.4998          93.8297          0     -0.0099      -0.0013           -4e-04         -0.0039       -0.0027  si     
+PIT         0.8         2       1.5             0   -0.0115    0.1622        0.181      -0.0179         -9e-04       10.3852     9.9055       0.4797          93.8097          0     -0.0099      -0.0013           -4e-04         -0.0038       -0.0027  si     
+PIT         1.2         2       1.5             0   -0.0112    0.1623        0.181      -0.0178         -8e-04       10.3138     9.8582       0.4556          93.7855          0     -0.0099      -0.0012           -4e-04         -0.0037       -0.0027  si     
+PIT         1.5         2       1.5             0   -0.0110    0.1624        0.181      -0.0178         -8e-04       10.2656     9.8262       0.4393          93.7690          0     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027  si     
+PIT         2.0         2       1.5             0   -0.0107    0.1625        0.181      -0.0177         -8e-04       10.1936     9.7785       0.4151          93.7441          0     -0.0098      -0.0012           -3e-04         -0.0035       -0.0027  si     
+
+Choque TESP - variacion de omega (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+TESP        0.5         2       1.5  si         0.0676       0.0972      -0.0218        -0.0078       30.4852    22.4532       8.0320     -0.0074       0.0953          -0.0016         -0.0116       -0.0037
+TESP        0.8         2       1.5  si         0.0656       0.0972      -0.0236        -0.0080       32.4671    24.2769       8.1902     -0.0086       0.0948          -0.0018         -0.0119       -0.0035
+TESP        1.2         2       1.5  si         0.0631       0.0971      -0.0259        -0.0081       35.0445    26.6642       8.3803     -0.0103       0.0942          -0.0021         -0.0122       -0.0032
+TESP        1.5         2       1.5  si         0.0612       0.0971      -0.0276        -0.0083       36.9352    28.4258       8.5094     -0.0115       0.0938          -0.0022         -0.0125       -0.0029
+TESP        2.0         2       1.5  si         0.0582       0.0971      -0.0304        -0.0084       40.0175    31.3144       8.7031     -0.0136       0.0931          -0.0025         -0.0128       -0.0026
+
+Choque TESP - variacion de omega, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+TESP        0.5         2       1.5             0   -0.1439    0.0676       0.0972      -0.0218        -0.0078       30.4852    22.4532       8.0320          91.2028          0     -0.0074       0.0953          -0.0016         -0.0116       -0.0037  si     
+TESP        0.8         2       1.5             0   -0.1449    0.0656       0.0972      -0.0236        -0.0080       32.4671    24.2769       8.1902          90.0631          0     -0.0086       0.0948          -0.0018         -0.0119       -0.0035  si     
+TESP        1.2         2       1.5             0   -0.1461    0.0631       0.0971      -0.0259        -0.0081       35.0445    26.6642       8.3803          88.8000          0     -0.0103       0.0942          -0.0021         -0.0122       -0.0032  si     
+TESP        1.5         2       1.5             0   -0.1469    0.0612       0.0971      -0.0276        -0.0083       36.9352    28.4258       8.5094          87.9997          0     -0.0115       0.0938          -0.0022         -0.0125       -0.0029  si     
+TESP        2.0         2       1.5             0   -0.1481    0.0582       0.0971      -0.0304        -0.0084       40.0175    31.3144       8.7031          86.8751          0     -0.0136       0.0931          -0.0025         -0.0128       -0.0026  si     
+
+==========================================================================================
+B) ANALISIS DE COMERCIO EXTERIOR: Armington (sigma_q) y CET (sigma_t)
+==========================================================================================
+
+B.1) Rango de los indicadores recaudatorios sobre todas las combinaciones evaluadas
+     (variaciones por separado y grilla cruzada; omega calibrado).
+     desvio_max_pp = maxima distancia de la variacion total a su valor central.
+
+choque    dTax_central   dTax_min   dTax_max   desvio_max_pp   erosion_central   erosion_min   erosion_max   dexr_central   dexr_min   dexr_max   n_casos
+-------  -------------  ---------  ---------  --------------  ----------------  ------------  ------------  -------------  ---------  ---------  --------
+IDPC           -0.1354    -0.1354    -0.1353           1e-04           16.2707       16.2407       16.3492        -0.0249    -0.0263    -0.0229        12
+IVA             0.2733     0.2732     0.2733           1e-04           39.4720       39.4679       39.4853        -0.5253    -0.5259    -0.5248        12
+PIT             0.1624     0.1624     0.1625           1e-04           10.2656       10.2347       10.2784        -0.0110    -0.0121    -0.0097        12
+TESP            0.0612     0.0612     0.0613           0e+00           36.9352       36.9140       36.9416        -0.1469    -0.1479    -0.1459        12
+
+B.2) Detalle por choque: variacion de sigma_q
+
+Choque IDPC - variacion de sigma_q (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+IDPC        1.5       1.4       1.5  si        -0.1354      -0.1617       0.0283         -0.002       16.2452    17.5061      -1.2609      0.0129       0.0016           0.0010         -0.1541        0.0015
+IDPC        1.5       2.0       1.5  si        -0.1354      -0.1617       0.0283         -0.002       16.2707    17.5214      -1.2507      0.0129       0.0016           0.0010         -0.1541        0.0015
+IDPC        1.5       2.9       1.5  si        -0.1353      -0.1617       0.0284         -0.002       16.3051    17.5420      -1.2369      0.0129       0.0016           0.0010         -0.1540        0.0015
+IDPC        1.5       3.8       1.5  si        -0.1353      -0.1617       0.0284         -0.002       16.3365    17.5609      -1.2243      0.0129       0.0016           0.0011         -0.1540        0.0015
+
+Choque IDPC - variacion de sigma_q, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+IDPC        1.5       1.4       1.5             0   -0.0256   -0.1354      -0.1617       0.0283         -0.002       16.2452    17.5061      -1.2609          64.3022          0      0.0129       0.0016           0.0010         -0.1541        0.0015  si     
+IDPC        1.5       2.0       1.5             0   -0.0249   -0.1354      -0.1617       0.0283         -0.002       16.2707    17.5214      -1.2507          64.2917          0      0.0129       0.0016           0.0010         -0.1541        0.0015  si     
+IDPC        1.5       2.9       1.5             0   -0.0240   -0.1353      -0.1617       0.0284         -0.002       16.3051    17.5420      -1.2369          64.2755          0      0.0129       0.0016           0.0010         -0.1540        0.0015  si     
+IDPC        1.5       3.8       1.5             0   -0.0234   -0.1353      -0.1617       0.0284         -0.002       16.3365    17.5609      -1.2243          64.2591          0      0.0129       0.0016           0.0011         -0.1540        0.0015  si     
+
+Choque IVA - variacion de sigma_q (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+IVA         1.5       1.4       1.5  si         0.2733       0.4515      -0.0889        -0.0893       39.4696    19.6898      19.7798      0.3538       -0.007          -0.0057          -0.042       -0.0126
+IVA         1.5       2.0       1.5  si         0.2733       0.4515      -0.0889        -0.0893       39.4720    19.6914      19.7806      0.3538       -0.007          -0.0057          -0.042       -0.0126
+IVA         1.5       2.9       1.5  si         0.2732       0.4515      -0.0889        -0.0893       39.4759    19.6940      19.7819      0.3538       -0.007          -0.0057          -0.042       -0.0126
+IVA         1.5       3.8       1.5  si         0.2732       0.4515      -0.0889        -0.0893       39.4801    19.6967      19.7834      0.3538       -0.007          -0.0057          -0.042       -0.0126
+
+Choque IVA - variacion de sigma_q, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+IVA         1.5       1.4       1.5             0   -0.5255    0.2733       0.4515      -0.0889        -0.0893       39.4696    19.6898      19.7798          42.1384          0      0.3538       -0.007          -0.0057          -0.042       -0.0126  si     
+IVA         1.5       2.0       1.5             0   -0.5253    0.2733       0.4515      -0.0889        -0.0893       39.4720    19.6914      19.7806          42.1415          0      0.3538       -0.007          -0.0057          -0.042       -0.0126  si     
+IVA         1.5       2.9       1.5             0   -0.5251    0.2732       0.4515      -0.0889        -0.0893       39.4759    19.6940      19.7819          42.1469          0      0.3538       -0.007          -0.0057          -0.042       -0.0126  si     
+IVA         1.5       3.8       1.5             0   -0.5251    0.2732       0.4515      -0.0889        -0.0893       39.4801    19.6967      19.7834          42.1529          0      0.3538       -0.007          -0.0057          -0.042       -0.0126  si     
+
+Choque PIT - variacion de sigma_q (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+PIT         1.5       1.4       1.5  si         0.1624        0.181      -0.0178         -8e-04       10.2774     9.8336       0.4439     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027
+PIT         1.5       2.0       1.5  si         0.1624        0.181      -0.0178         -8e-04       10.2656     9.8262       0.4393     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027
+PIT         1.5       2.9       1.5  si         0.1624        0.181      -0.0178         -8e-04       10.2502     9.8167       0.4335     -0.0099      -0.0012           -3e-04         -0.0036       -0.0027
+PIT         1.5       3.8       1.5  si         0.1625        0.181      -0.0178         -8e-04       10.2368     9.8084       0.4284     -0.0099      -0.0012           -3e-04         -0.0036       -0.0027
+
+Choque PIT - variacion de sigma_q, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+PIT         1.5       1.4       1.5             0   -0.0115    0.1624        0.181      -0.0178         -8e-04       10.2774     9.8336       0.4439          93.7734          0     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027  si     
+PIT         1.5       2.0       1.5             0   -0.0110    0.1624        0.181      -0.0178         -8e-04       10.2656     9.8262       0.4393          93.7690          0     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027  si     
+PIT         1.5       2.9       1.5             0   -0.0104    0.1624        0.181      -0.0178         -8e-04       10.2502     9.8167       0.4335          93.7633          0     -0.0099      -0.0012           -3e-04         -0.0036       -0.0027  si     
+PIT         1.5       3.8       1.5             0   -0.0100    0.1625        0.181      -0.0178         -8e-04       10.2368     9.8084       0.4284          93.7584          0     -0.0099      -0.0012           -3e-04         -0.0036       -0.0027  si     
+
+Choque TESP - variacion de sigma_q (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+TESP        1.5       1.4       1.5  si         0.0612       0.0971      -0.0276        -0.0083       36.9332    28.4239       8.5093     -0.0115       0.0938          -0.0022         -0.0125       -0.0029
+TESP        1.5       2.0       1.5  si         0.0612       0.0971      -0.0276        -0.0083       36.9352    28.4258       8.5094     -0.0115       0.0938          -0.0022         -0.0125       -0.0029
+TESP        1.5       2.9       1.5  si         0.0612       0.0971      -0.0276        -0.0083       36.9344    28.4263       8.5081     -0.0115       0.0938          -0.0022         -0.0125       -0.0029
+TESP        1.5       3.8       1.5  si         0.0612       0.0971      -0.0276        -0.0083       36.9311    28.4252       8.5059     -0.0115       0.0938          -0.0023         -0.0125       -0.0029
+
+Choque TESP - variacion de sigma_q, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+TESP        1.5       1.4       1.5             0   -0.1465    0.0612       0.0971      -0.0276        -0.0083       36.9332    28.4239       8.5093          88.0024          0     -0.0115       0.0938          -0.0022         -0.0125       -0.0029  si     
+TESP        1.5       2.0       1.5             0   -0.1469    0.0612       0.0971      -0.0276        -0.0083       36.9352    28.4258       8.5094          87.9997          0     -0.0115       0.0938          -0.0022         -0.0125       -0.0029  si     
+TESP        1.5       2.9       1.5             0   -0.1473    0.0612       0.0971      -0.0276        -0.0083       36.9344    28.4263       8.5081          87.9956          0     -0.0115       0.0938          -0.0022         -0.0125       -0.0029  si     
+TESP        1.5       3.8       1.5             0   -0.1475    0.0612       0.0971      -0.0276        -0.0083       36.9311    28.4252       8.5059          87.9916          0     -0.0115       0.0938          -0.0023         -0.0125       -0.0029  si     
+
+B.2) Detalle por choque: variacion de sigma_t
+
+Choque IDPC - variacion de sigma_t (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+IDPC        1.5         2       0.6  si             NA           NA           NA             NA            NA         NA           NA          NA           NA               NA              NA            NA
+IDPC        1.5         2       1.0  si        -0.1354      -0.1617       0.0283         -0.002       16.2670    17.5226      -1.2556      0.0129       0.0016            0.001         -0.1541        0.0015
+IDPC        1.5         2       1.5  si        -0.1354      -0.1617       0.0283         -0.002       16.2707    17.5214      -1.2507      0.0129       0.0016            0.001         -0.1541        0.0015
+IDPC        1.5         2       3.0  si        -0.1354      -0.1617       0.0283         -0.002       16.2847    17.5230      -1.2383      0.0129       0.0016            0.001         -0.1540        0.0015
+
+Choque IDPC - variacion de sigma_t, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+IDPC        1.5         2       0.6            NA        NA        NA           NA           NA             NA            NA         NA           NA               NA         NA          NA           NA               NA              NA            NA  si     
+IDPC        1.5         2       1.0             0   -0.0254   -0.1354      -0.1617       0.0283         -0.002       16.2670    17.5226      -1.2556          64.3127          0      0.0129       0.0016            0.001         -0.1541        0.0015  si     
+IDPC        1.5         2       1.5             0   -0.0249   -0.1354      -0.1617       0.0283         -0.002       16.2707    17.5214      -1.2507          64.2917          0      0.0129       0.0016            0.001         -0.1541        0.0015  si     
+IDPC        1.5         2       3.0             0   -0.0239   -0.1354      -0.1617       0.0283         -0.002       16.2847    17.5230      -1.2383          64.2438          0      0.0129       0.0016            0.001         -0.1540        0.0015  si     
+
+Choque IVA - variacion de sigma_t (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+IVA         1.5         2       0.6  si             NA           NA           NA             NA            NA         NA           NA          NA           NA               NA              NA            NA
+IVA         1.5         2       1.0  si         0.2733       0.4515      -0.0889        -0.0893       39.4701    19.6896      19.7804      0.3538       -0.007          -0.0057          -0.042       -0.0126
+IVA         1.5         2       1.5  si         0.2733       0.4515      -0.0889        -0.0893       39.4720    19.6914      19.7806      0.3538       -0.007          -0.0057          -0.042       -0.0126
+IVA         1.5         2       3.0  si         0.2732       0.4515      -0.0889        -0.0893       39.4769    19.6953      19.7816      0.3538       -0.007          -0.0057          -0.042       -0.0126
+
+Choque IVA - variacion de sigma_t, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+IVA         1.5         2       0.6            NA        NA        NA           NA           NA             NA            NA         NA           NA               NA         NA          NA           NA               NA              NA            NA  si     
+IVA         1.5         2       1.0             0   -0.5256    0.2733       0.4515      -0.0889        -0.0893       39.4701    19.6896      19.7804          42.1382          0      0.3538       -0.007          -0.0057          -0.042       -0.0126  si     
+IVA         1.5         2       1.5             0   -0.5253    0.2733       0.4515      -0.0889        -0.0893       39.4720    19.6914      19.7806          42.1415          0      0.3538       -0.007          -0.0057          -0.042       -0.0126  si     
+IVA         1.5         2       3.0             0   -0.5248    0.2732       0.4515      -0.0889        -0.0893       39.4769    19.6953      19.7816          42.1488          0      0.3538       -0.007          -0.0057          -0.042       -0.0126  si     
+
+Choque PIT - variacion de sigma_t (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+PIT         1.5         2       0.6  si             NA           NA           NA             NA            NA         NA           NA          NA           NA               NA              NA            NA
+PIT         1.5         2       1.0  si         0.1624        0.181      -0.0178         -8e-04       10.2659     9.8240       0.4419     -0.0099      -0.0012           -3e-04         -0.0036       -0.0027
+PIT         1.5         2       1.5  si         0.1624        0.181      -0.0178         -8e-04       10.2656     9.8262       0.4393     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027
+PIT         1.5         2       3.0  si         0.1624        0.181      -0.0178         -8e-04       10.2624     9.8289       0.4335     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027
+
+Choque PIT - variacion de sigma_t, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+PIT         1.5         2       0.6            NA        NA        NA           NA           NA             NA            NA         NA           NA               NA         NA          NA           NA               NA              NA            NA  si     
+PIT         1.5         2       1.0             0   -0.0114    0.1624        0.181      -0.0178         -8e-04       10.2659     9.8240       0.4419          93.7680          0     -0.0099      -0.0012           -3e-04         -0.0036       -0.0027  si     
+PIT         1.5         2       1.5             0   -0.0110    0.1624        0.181      -0.0178         -8e-04       10.2656     9.8262       0.4393          93.7690          0     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027  si     
+PIT         1.5         2       3.0             0   -0.0102    0.1624        0.181      -0.0178         -8e-04       10.2624     9.8289       0.4335          93.7701          0     -0.0099      -0.0012           -4e-04         -0.0036       -0.0027  si     
+
+Choque TESP - variacion de sigma_t (resto en valores calibrados), resumen recaudatorio:
+choque    omega   sigma_q   sigma_t  valido    dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp
+-------  ------  --------  --------  -------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ----------  -----------  ---------------  --------------  ------------
+TESP        1.5         2       0.6  si             NA           NA           NA             NA            NA         NA           NA          NA           NA               NA              NA            NA
+TESP        1.5         2       1.0  si         0.0612       0.0971      -0.0276        -0.0083       36.9416    28.4340       8.5076     -0.0115       0.0938          -0.0022         -0.0125       -0.0029
+TESP        1.5         2       1.5  si         0.0612       0.0971      -0.0276        -0.0083       36.9352    28.4258       8.5094     -0.0115       0.0938          -0.0022         -0.0125       -0.0029
+TESP        1.5         2       3.0  si         0.0613       0.0971      -0.0276        -0.0083       36.9207    28.4100       8.5107     -0.0115       0.0938          -0.0022         -0.0125       -0.0029
+
+Choque TESP - variacion de sigma_t, detalle completo:
+choque    omega   sigma_q   sigma_t   desvio_base      dexr   dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp   dR_VAT_pp   dR_TESP_pp   dR_TARANCEL_pp   dR_FIRMTAX_pp   dR_TPROD_pp  valido 
+-------  ------  --------  --------  ------------  --------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------  ----------  -----------  ---------------  --------------  ------------  -------
+TESP        1.5         2       0.6            NA        NA        NA           NA           NA             NA            NA         NA           NA               NA         NA          NA           NA               NA              NA            NA  si     
+TESP        1.5         2       1.0             0   -0.1464    0.0612       0.0971      -0.0276        -0.0083       36.9416    28.4340       8.5076          88.0062          0     -0.0115       0.0938          -0.0022         -0.0125       -0.0029  si     
+TESP        1.5         2       1.5             0   -0.1469    0.0612       0.0971      -0.0276        -0.0083       36.9352    28.4258       8.5094          87.9997          0     -0.0115       0.0938          -0.0022         -0.0125       -0.0029  si     
+TESP        1.5         2       3.0             0   -0.1476    0.0613       0.0971      -0.0276        -0.0083       36.9207    28.4100       8.5107          87.9871          0     -0.0115       0.0938          -0.0022         -0.0125       -0.0029  si     
+
+B.3) Cruce sigma_q x sigma_t (omega calibrado)
+
+Variacion total de la recaudacion (dTax_pp): filas = sigma_q, columnas = sigma_t.
+choque    sigma_q   st_0.60   st_1.00   st_1.50   st_3.00
+-------  --------  --------  --------  --------  --------
+IDPC          1.4        NA   -0.1354   -0.1354   -0.1354
+IDPC          2.0        NA   -0.1354   -0.1354   -0.1354
+IDPC          2.9        NA   -0.1353   -0.1353   -0.1353
+IDPC          3.8        NA   -0.1353   -0.1353   -0.1353
+IVA           1.4        NA    0.2733    0.2733    0.2733
+IVA           2.0        NA    0.2733    0.2733    0.2732
+IVA           2.9        NA    0.2733    0.2732    0.2732
+IVA           3.8        NA    0.2732    0.2732    0.2732
+PIT           1.4        NA    0.1624    0.1624    0.1624
+PIT           2.0        NA    0.1624    0.1624    0.1624
+PIT           2.9        NA    0.1624    0.1624    0.1624
+PIT           3.8        NA    0.1625    0.1625    0.1625
+TESP          1.4        NA    0.0612    0.0612    0.0613
+TESP          2.0        NA    0.0612    0.0612    0.0613
+TESP          2.9        NA    0.0612    0.0612    0.0613
+TESP          3.8        NA    0.0612    0.0612    0.0613
+
+Erosion total (pct_erosion, % del efecto tasa): filas = sigma_q, columnas = sigma_t.
+choque    sigma_q   st_0.60   st_1.00   st_1.50   st_3.00
+-------  --------  --------  --------  --------  --------
+IDPC          1.4        NA      16.2      16.2      16.3
+IDPC          2.0        NA      16.3      16.3      16.3
+IDPC          2.9        NA      16.3      16.3      16.3
+IDPC          3.8        NA      16.3      16.3      16.3
+IVA           1.4        NA      39.5      39.5      39.5
+IVA           2.0        NA      39.5      39.5      39.5
+IVA           2.9        NA      39.5      39.5      39.5
+IVA           3.8        NA      39.5      39.5      39.5
+PIT           1.4        NA      10.3      10.3      10.3
+PIT           2.0        NA      10.3      10.3      10.3
+PIT           2.9        NA      10.3      10.3      10.2
+PIT           3.8        NA      10.2      10.2      10.2
+TESP          1.4        NA      36.9      36.9      36.9
+TESP          2.0        NA      36.9      36.9      36.9
+TESP          2.9        NA      36.9      36.9      36.9
+TESP          3.8        NA      36.9      36.9      36.9
+
+Amplitud al mover una sola elasticidad dentro de la grilla (por choque):
+choque   parametro    dTax_min   dTax_max   erosion_min   erosion_max   n_casos
+-------  ----------  ---------  ---------  ------------  ------------  --------
+IDPC     omega         -0.1363    -0.1350       15.7298       16.4885         5
+IVA      omega          0.2672     0.2855       36.8072       40.7879         5
+PIT      omega          0.1621     0.1625       10.1936       10.4449         5
+TESP     omega          0.0582     0.0676       30.4852       40.0175         5
+IDPC     sigma_q       -0.1354    -0.1353       16.2452       16.3365         4
+IVA      sigma_q        0.2732     0.2733       39.4696       39.4801         4
+PIT      sigma_q        0.1624     0.1625       10.2368       10.2774         4
+TESP     sigma_q        0.0612     0.0612       36.9311       36.9352         4
+IDPC     sigma_t       -0.1354    -0.1354       16.2670       16.2847         3
+IVA      sigma_t        0.2732     0.2733       39.4701       39.4769         3
+PIT      sigma_t        0.1624     0.1624       10.2624       10.2659         3
+TESP     sigma_t        0.0612     0.0613       36.9207       36.9416         3
+
+==========================================================================================
+ANALISIS: sensibilidad a las elasticidades de consumo y de comercio exterior
+==========================================================================================
+A) Elasticidad de sustitución en el consumo
+
+La elasticidad de sustitución entre los bienes de consumo del hogar, ω, se fija en 1.5 y se evalúa
+en los valores 0.5, 0.8, 1.2, 1.5 y 2.0. Como interviene en la calibración de los parámetros de
+participación α, en cada punto estos se recalculan para que el equilibrio base siga reproduciendo
+la SAM; el control de choque nulo confirma que la base recalculada coincide con la vigente, por lo
+que la grilla aísla la respuesta de la recaudación a cada medida. El parámetro opera a través de la
+recomposición de la canasta de consumo ante cambios en los precios relativos de comprador: como las
+tasas efectivas del IVA difieren entre productos, el traslado del gasto entre bienes altera la base
+del impuesto (Atkinson y Stiglitz, 1980).
+
+Disminución del IDPC. La variación total de la recaudación se sitúa entre −0.1363 y −0.1350 puntos
+del PIB inicial, en torno al valor central de −0.1354, y la compensación total de la pérdida
+mecánica, entre 15.7% y 16.5%. El resultado es prácticamente invariante a ω: la amplitud de la
+variación total en la grilla es de 0.0012 puntos del PIB. La medida apenas altera los precios
+relativos de los bienes de consumo, que es el canal por el que opera ω; las variaciones
+proporcionales del nivel de precios de comprador las absorbe el numerario.
+
+Incremento del IVA. La variación total de la recaudación se sitúa entre 0.2672 y 0.2855 puntos del
+PIB inicial, en torno al valor central de 0.2733, y la erosión total del rendimiento mecánico,
+entre 36.8% y 40.8%. La dispersión proviene principalmente del efecto base, que varía entre −0.0947
+y −0.0772 puntos, mientras el efecto precio se mantiene entre −0.0894 y −0.0891 puntos. Por
+impuesto, la mayor variación se concentra en la recaudación del IVA, que varía entre 0.3483 y
+0.3647 puntos. Entre 40.1% y 47.1% del efecto base se produce en impuestos distintos del
+modificado. La recaudación es mayor cuanto menor es ω, porque una menor sustitución reduce el
+traslado del gasto hacia los bienes con menor carga tributaria efectiva.
+
+Aumento del impuesto a la renta de personas. La variación total de la recaudación se sitúa entre
+0.1621 y 0.1625 puntos del PIB inicial, en torno al valor central de 0.1624, y la erosión total del
+rendimiento mecánico, entre 10.2% y 10.4%. El resultado es prácticamente invariante a ω: la
+amplitud de la variación total en la grilla es de 0.0005 puntos del PIB. La medida apenas altera
+los precios relativos de los bienes de consumo, que es el canal por el que opera ω; las variaciones
+proporcionales del nivel de precios de comprador las absorbe el numerario.
+
+Aumento de los impuestos específicos. La variación total de la recaudación se sitúa entre 0.0582 y
+0.0676 puntos del PIB inicial, en torno al valor central de 0.0612, y la erosión total del
+rendimiento mecánico, entre 30.5% y 40.0%. La dispersión proviene principalmente del efecto base,
+que varía entre −0.0304 y −0.0218 puntos, mientras el efecto precio se mantiene entre −0.0084 y
+−0.0078 puntos. Por impuesto, la mayor variación se concentra en la recaudación del IVA, que varía
+entre −0.0136 y −0.0074 puntos. La recaudación de los impuestos específicos, el impuesto
+modificado, varía entre 0.0931 y 0.0953 puntos. Entre 86.9% y 91.2% del efecto base se produce en
+impuestos distintos del modificado. La recaudación es mayor cuanto menor es ω, porque una menor
+sustitución reduce el traslado del gasto hacia los bienes con menor carga tributaria efectiva.
+
+La elasticidad precio propia no compensada que implica la función CES es ε = −ω + (ω − 1)·s, donde
+s es la participación del bien en el gasto de consumo de los hogares (Femenia, 2012). Con el valor
+calibrado, las elasticidades implícitas se ubican entre −1.50 y −1.28; la del bien con mayor
+participación en el gasto (manufactura, 44.1%) es −1.28. La evidencia para los combustibles, uno de
+los principales bienes gravados con impuestos específicos, sitúa la elasticidad precio media de
+corto y largo plazo en −0.34 y −0.84 (Brons et al., 2008), y en −0.09 y −0.31 una vez corregido el
+sesgo de publicación (Havranek, Irsova y Janda, 2012). Como el modelo representa agregados de
+producto y no bienes individuales, la comparación es indicativa. Si la elasticidad efectiva fuera
+menor que la calibrada, las estimaciones centrales del incremento del IVA y del aumento de los
+impuestos específicos resultarían conservadoras, porque con valores menores de ω la erosión de sus
+bases es menor.
+
+B) Elasticidades de comercio exterior
+
+La elasticidad de sustitución Armington entre bienes importados y domésticos, σ_q, y la elasticidad
+de transformación CET entre exportaciones y ventas domésticas, σ_t, se fijan en 2.0 y 1.5. Se
+evalúan σ_q en 1.4, 2.0, 2.9 y 3.8, y σ_t en 0.6, 1.0, 1.5 y 3.0, por separado y en una grilla
+cruzada, porque ambas determinan conjuntamente el ajuste del tipo de cambio real que requiere el
+cierre con ahorro externo fijo en divisas (de Melo y Robinson, 1989). El rango de σ_q se apoya en
+el promedio estimado para los países de ingreso alto (Devarajan, Go y Robinson, 2023) y en la
+mediana de la elasticidad de Armington corregida por sesgos de publicación y de diseño (Bajzik et
+al., 2020); el de σ_t, en los promedios estimados para países de ingreso alto y en desarrollo
+(Devarajan, Go y Robinson, 2023).
+
+Disminución del IDPC. En las 12 combinaciones evaluadas, la variación total de la recaudación se
+sitúa entre −0.1354 y −0.1353 puntos del PIB inicial, en torno al valor central de −0.1354, y la
+compensación total de la pérdida mecánica, entre 16.2% y 16.3%. La distancia máxima respecto del
+valor central es de 0.0001 puntos del PIB. El resultado recaudatorio es robusto a las elasticidades
+de comercio exterior dentro del rango evaluado.
+
+Incremento del IVA. En las 12 combinaciones evaluadas, la variación total de la recaudación se
+sitúa entre 0.2732 y 0.2733 puntos del PIB inicial, en torno al valor central de 0.2733, y la
+erosión total del rendimiento mecánico, en 39.5%. La distancia máxima respecto del valor central es
+de 0.0001 puntos del PIB. El resultado recaudatorio es robusto a las elasticidades de comercio
+exterior dentro del rango evaluado.
+
+Aumento del impuesto a la renta de personas. En las 12 combinaciones evaluadas, la variación total
+de la recaudación se sitúa entre 0.1624 y 0.1625 puntos del PIB inicial, en torno al valor central
+de 0.1624, y la erosión total del rendimiento mecánico, entre 10.2% y 10.3%. La distancia máxima
+respecto del valor central es de 0.0001 puntos del PIB. El resultado recaudatorio es robusto a las
+elasticidades de comercio exterior dentro del rango evaluado.
+
+Aumento de los impuestos específicos. En las 12 combinaciones evaluadas, la variación total de la
+recaudación se sitúa entre 0.0612 y 0.0613 puntos del PIB inicial, en torno al valor central de
+0.0612, y la erosión total del rendimiento mecánico, en 36.9%. La distancia máxima respecto del
+valor central es de 0.0000 puntos del PIB. El resultado recaudatorio es robusto a las elasticidades
+de comercio exterior dentro del rango evaluado.
+
+Este resultado se explica porque las elasticidades de comercio exterior operan a través del ajuste
+del tipo de cambio real, que con las elasticidades centrales varía entre −0.53% y −0.01% en las
+medidas evaluadas. Ante movimientos de esa magnitud, la curvatura de las funciones Armington y CET
+introduce en las bases tributarias diferencias de segundo orden. Además, el IVA y los impuestos
+específicos gravan la demanda final sin distinguir el origen del bien, de modo que la sustitución
+entre bienes domésticos e importados no altera materialmente sus bases. La conclusión se refiere a
+las medidas evaluadas y no se extiende a instrumentos que alteren directamente los precios
+relativos de los bienes transables, como los aranceles, para los cuales la literatura documenta una
+dependencia sustantiva de los resultados respecto de estas elasticidades (Hertel et al., 2007).
+
+Síntesis
+
+La variación total de la recaudación conserva el signo del efecto tasa en todas las combinaciones
+evaluadas. Los resultados recaudatorios de las medidas evaluadas son robustos a las elasticidades
+de comercio exterior. Los resultados del incremento del IVA y del aumento de los impuestos
+específicos son sensibles a ω, por lo que conviene reportarlos junto con su rango (Harrison y
+Vinod, 1992; Dixon y Rimmer, 2013).
+
+Referencias
+
+Atkinson, A. B. y Stiglitz, J. E. (1980). Lectures on Public Economics. McGraw-Hill.
+
+Bajzik, J., Havranek, T., Irsova, Z. y Schwarz, J. (2020). Estimating the Armington elasticity: The
+importance of study design and publication bias. Journal of International Economics, 127, 103383.
+
+Brons, M., Nijkamp, P., Pels, E. y Rietveld, P. (2008). A meta-analysis of the price elasticity of
+gasoline demand. A SUR approach. Energy Economics, 30(5), 2105–2122.
+
+de Melo, J. y Robinson, S. (1989). Product differentiation and the treatment of foreign trade in
+computable general equilibrium models of small economies. Journal of International Economics,
+27(1–2), 47–67.
+
+Devarajan, S., Go, D. S. y Robinson, S. (2023). Trade Elasticities in Aggregate Models: Estimates
+for 191 Countries. World Bank, Policy Research Working Paper 10490.
+
+Dixon, P. B. y Rimmer, M. T. (2013). Validation in computable general equilibrium modeling. En P.
+B. Dixon y D. W. Jorgenson (eds.), Handbook of Computable General Equilibrium Modeling, vol. 1,
+1271–1330. Elsevier.
+
+Femenia, F. (2012). Functional Forms Commonly Used in CGE Models. AGRODEP, Technical Note TN-02.
+
+Harrison, G. W. y Vinod, H. D. (1992). The sensitivity analysis of applied general equilibrium
+models: Completely randomized factorial sampling designs. Review of Economics and Statistics,
+74(2), 357–362.
+
+Havranek, T., Irsova, Z. y Janda, K. (2012). Demand for gasoline is more price-inelastic than
+commonly thought. Energy Economics, 34(1), 201–207.
+
+Hertel, T., Hummels, D., Ivanic, M. y Keeney, R. (2007). How confident can we be of CGE-based
+assessments of Free Trade Agreements? Economic Modelling, 24(4), 611–635.
+

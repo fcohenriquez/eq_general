@@ -53,7 +53,7 @@ Un aumento de 10\% en la tasa efectiva del impuesto a la renta de personas eleva
 
 Una disminución de un punto porcentual en la tasa legal del impuesto de primera categoría (IDPC) reduce la recaudación real en 0.1354 puntos del PIB. La expansión del volumen de las bases compensa 17.5\% de la pérdida mecánica de 0.1617 puntos y la caída del retorno bruto del capital reduce esa compensación a 16.3\%. El PIB real aumenta 0.1358\% y la utilización del capital sube de 82.00\% a 82.18\% de la capacidad instalada. Por último, un paquete que combina una rebaja del IDPC con un alza del impuesto personal eleva la recaudación real en 0.0230 puntos del PIB y el PIB real en 0.0301\%, lo que ilustra la sustitución de tributación sobre el capital por tributación sobre el ingreso personal.
 
-El documento somete estos resultados a pruebas de consistencia del cierre ---homogeneidad, ley de Walras y balanza de pagos---, a un análisis de sensibilidad respecto de las elasticidades de oferta de factores y a un examen de coherencia económica frente a evidencia empírica independiente (Secciones~\ref{sec:sensibilidad} y~\ref{sec:coherencia}). Dentro del rango de elasticidades compatible con la evidencia microeconómica, el aumento de la recaudación real por el alza del IVA se sitúa entre 0.2351 y 0.2963 puntos del PIB inicial; el del alza del impuesto personal, entre 0.1518 y 0.1694 puntos; y la pérdida por la rebaja del IDPC, entre 0.1211 y 0.1428 puntos. Cada medida se evalúa respecto del equilibrio base y sus resultados se presentan por separado.
+El documento somete estos resultados a pruebas de consistencia del cierre ---homogeneidad, ley de Walras y balanza de pagos---, a un análisis de sensibilidad respecto de las elasticidades de oferta de factores, de sustitución en el consumo y de comercio exterior, y a un examen de coherencia económica frente a evidencia empírica independiente (Secciones~\ref{sec:sensibilidad} y~\ref{sec:coherencia}). Dentro del rango de elasticidades compatible con la evidencia microeconómica, el aumento de la recaudación real por el alza del IVA se sitúa entre 0.2351 y 0.2963 puntos del PIB inicial; el del alza del impuesto personal, entre 0.1518 y 0.1694 puntos; y la pérdida por la rebaja del IDPC, entre 0.1211 y 0.1428 puntos. Los resultados recaudatorios son prácticamente invariantes a las elasticidades de comercio exterior. La elasticidad de sustitución en el consumo desplaza, dentro de un rango acotado y sin alterar su signo, el aumento de la recaudación real del alza del IVA, que se sitúa entre 0.2672 y 0.2855 puntos del PIB inicial cuando esa elasticidad varía entre 0.5 y 2.0, y el del alza de los impuestos específicos, que se sitúa entre 0.0582 y 0.0676 puntos; en la rebaja del IDPC y en el alza del impuesto personal, su incidencia es inferior a 0.0015 puntos. Cada medida se evalúa respecto del equilibrio base y sus resultados se presentan por separado.
 
 \section{Introducción}
 
@@ -79,7 +79,7 @@ La calibración se realiza mediante el paquete \texttt{gEcon} para R\footnote{\u
 
 La literatura que enmarca este estudio comprende tres dimensiones. La primera corresponde a los fundamentos teóricos del equilibrio general y su aplicación empírica al análisis de políticas públicas \cite{arrow_debreu_1954,shoven_whalley_1984,shoven_whalley_1992,dixon_jorgenson_2013}. La segunda recoge la tradición de modelos aplicados calibrados con matrices de contabilidad social \cite{pyatt_round_1985,dervis_demelo_robinson_1982}, que permite representar de manera coherente los flujos entre hogares, firmas y gobierno. La tercera comprende la evidencia metodológica sobre evaluación tributaria mediante MEGC \cite{ballard_fullerton_shoven_whalley_1985} y la teoría de la incidencia tributaria en equilibrio general \cite{harberger_1962,fullerton_metcalf_2002}, que orientan la interpretación de los efectos sobre la recaudación, el bienestar y la composición de la demanda agregada.
 
-El resto del documento se organiza de la siguiente manera. Primero, se presenta la matriz de contabilidad social utilizada para calibrar el modelo. Luego, se desarrollan los bloques del MEGC ---hogares, producción, firmas, gobierno, equilibrio de factores, sector externo y ahorro--inversión---, junto con el cierre macroeconómico adoptado y la calibración de los mercados de factores. A continuación, se explica la metodología de evaluación del impacto fiscal y se presentan los resultados de las cinco simulaciones, su sensibilidad a las elasticidades de oferta de factores y el examen de coherencia económica. Por último, se sintetizan los hallazgos y se plantean extensiones.
+El resto del documento se organiza de la siguiente manera. Primero, se presenta la matriz de contabilidad social utilizada para calibrar el modelo. Luego, se desarrollan los bloques del MEGC ---hogares, producción, firmas, gobierno, equilibrio de factores, sector externo y ahorro--inversión---, junto con el cierre macroeconómico adoptado y la calibración de los mercados de factores. A continuación, se explica la metodología de evaluación del impacto fiscal y se presentan los resultados de las cinco simulaciones, su sensibilidad a las elasticidades de oferta de factores, de sustitución en el consumo y de comercio exterior, y el examen de coherencia económica. Por último, se sintetizan los hallazgos y se plantean extensiones.
 
 \section{Matriz de Contabilidad Social (SAM) de Chile}
 
@@ -222,7 +222,7 @@ BTINC = K^{h} p^{k} + \sum_{l\in\mathcal{L}} w_{l} L^{h}_{l} + \mathrm{TR}^{\mat
 PITAX = pit \cdot BTINC
 \]
 
-En estas expresiones, $D^{p}$ es la demanda del hogar por el bien compuesto $p$, $\omega$ se fija en 1.5 y $\alpha^{p}$ representa el parámetro de participación del bien en el consumo, calibrado para reproducir la SAM. El precio relevante para los hogares es $pq^{p}$, el precio de comprador del bien compuesto, que incorpora el impuesto específico por unidad física y el IVA sobre la demanda final (Sección~\ref{sec:productos}). En consecuencia, la sustitución entre bienes responde a los precios efectivamente pagados por el hogar y no al precio básico $p^{p}$. El ahorro $SAV$ y las contribuciones sociales $\mathrm{CONT}^{\mathrm{SOC}}$ son proporciones fijas $s^{h}$ y $c^{h}$ del ingreso disponible.
+En estas expresiones, $D^{p}$ es la demanda del hogar por el bien compuesto $p$, $\omega$ se fija en 1.5 y $\alpha^{p}$ representa el parámetro de participación del bien en el consumo, calibrado para reproducir la SAM. La Sección~\ref{sec:sens-consumo-comercio} evalúa la sensibilidad de los resultados recaudatorios al valor de $\omega$. El precio relevante para los hogares es $pq^{p}$, el precio de comprador del bien compuesto, que incorpora el impuesto específico por unidad física y el IVA sobre la demanda final (Sección~\ref{sec:productos}). En consecuencia, la sustitución entre bienes responde a los precios efectivamente pagados por el hogar y no al precio básico $p^{p}$. El ahorro $SAV$ y las contribuciones sociales $\mathrm{CONT}^{\mathrm{SOC}}$ son proporciones fijas $s^{h}$ y $c^{h}$ del ingreso disponible.
 
 Por su parte, $INC$ es el ingreso disponible de los hogares, $BTINC$ es el ingreso antes de impuestos y $pit$ es la tasa efectiva del impuesto a la renta de personas, que en la SAM asciende a 2.55\% del ingreso antes de impuestos. En la descomposición de $BTINC$, $L^{h}_{l}$ representa el empleo del tipo de trabajo $l$; $w_{l}$, su salario; $K^{h}$, la dotación de capital de los hogares; $p^{k}$, el retorno del capital; $TR^{EMP}$ y $TR^{GOV}$, las transferencias provenientes de las empresas y del gobierno; y $PS^{h}$, las prestaciones sociales recibidas, que igualan lo que pagan empresas y gobierno (Sección~\ref{sec:equilibrio}). Los términos $FACTROW^{K}$ y $FACTROW^{L}$ representan los ingresos de capital y de trabajo provenientes del resto del mundo; de acuerdo con la SAM, ambos son nulos.
 
@@ -308,7 +308,7 @@ Q^{p}=a_{q}^{p}\left[\delta_{m}^{p}\left(M^{p}\right)^{\rho_{q}}+\left(1-\delta_
 \qquad \rho_{q}=\frac{\sigma_{q}-1}{\sigma_{q}},\qquad \sigma_{q}=2.0
 \]
 
-con $DD^{p}=DS^{p}$. Aquí, $Q^{p}$ es el bien compuesto; $M^{p}$, las importaciones; $p^{p}$, el precio básico del compuesto; y $pm^{p}$, el precio de importación con arancel. Los parámetros $\delta_{m}^{p}$ y $\gamma_{e}^{p}$ se obtienen de las participaciones observadas en la SAM.
+con $DD^{p}=DS^{p}$. Aquí, $Q^{p}$ es el bien compuesto; $M^{p}$, las importaciones; $p^{p}$, el precio básico del compuesto; y $pm^{p}$, el precio de importación con arancel. Los parámetros $\delta_{m}^{p}$ y $\gamma_{e}^{p}$ se obtienen de las participaciones observadas en la SAM, dados los valores de $\sigma_{q}$ y $\sigma_{t}$; la Sección~\ref{sec:sens-consumo-comercio} evalúa la incidencia de estas elasticidades en los resultados recaudatorios.
 
 \textbf{3) Absorción doméstica y vaciado del mercado compuesto.} La absorción doméstica se separa según el tipo de comprador, porque el tratamiento tributario difiere entre demanda final y uso intermedio. En unidades físicas:
 
@@ -1238,8 +1238,13 @@ El último ejercicio combina una rebaja de 2.28\% de la tasa efectiva del impues
 
 El paquete eleva la recaudación real en 0.0230 puntos del PIB inicial y el PIB real en 0.0301\%. La recaudación resulta de un efecto tasa de 0.0182 puntos ---el alza del PIT aporta 0.1267 y la rebaja del IDPC resta 0.1085---, un efecto base de 0.0067 puntos y un efecto precio de $-0.0019$ puntos, concentrado en la caída del retorno bruto del capital que constituye la base del IDPC. En la actividad, el capital utilizado crece 0.11\% por el mayor retorno neto, mientras el empleo cae 0.06\% y el desempleo sube 0.03 puntos por el desplazamiento de la curva salarial neta. La producción se recompone hacia el capital, la inversión real crece 0.51\% y el consumo real cae 0.15\%.
 
-\section{Sensibilidad a la oferta de factores}
+\section{Análisis de sensibilidad}
 \label{sec:sensibilidad}
+
+Esta sección evalúa la dependencia de los resultados recaudatorios respecto de los parámetros de comportamiento que el modelo toma de fuentes externas. La calibración a un único año base identifica los parámetros de participación una vez fijadas las elasticidades, pero no las elasticidades mismas, que provienen de la literatura empírica \cite{mansur_whalley_1984,dawkins_etal_2001}; por esa razón, son el objeto habitual del análisis de sensibilidad sistemático de los MEGC \cite{harrison_vinod_1992}. Se examinan primero las elasticidades de oferta de los factores y luego las de sustitución en el consumo y de comercio exterior.
+
+\subsection{Elasticidades de oferta de factores}
+\label{sec:sens-factores}
 
 Las elasticidades de oferta de los factores son los parámetros con menor respaldo empírico directo y los que gobiernan la respuesta de las bases tributarias, tanto en volumen como en valor real. Se evalúan los choques del IDPC, el IVA y el PIT en una grilla de doce combinaciones: tres valores de la elasticidad del empleo al salario real neto ---0.25, 0.5 y 0.862--- y cuatro de la elasticidad de los servicios de capital al retorno real neto ---0.5, 0.67, 1 y 5, correspondientes a $\psi$ igual a 2, 1.5, 1 y 0.2---. Ninguno de estos valores altera el equilibrio base, por lo que se varían sin recalibrar. Las elasticidades del empleo entre 0.25 y 0.862 y del capital entre 0.5 y 1 delimitan la región compatible con la evidencia microeconómica \cite{chetty_etal_2011,chetty_2012,hassett_hubbard_2002}; la elasticidad del capital de 5 se incluye como caso extremo, fuera de esa región.
 
@@ -1422,6 +1427,135 @@ La Tabla~\ref{tab:sens-pib} complementa el análisis con la variación del PIB r
 
 Siguiendo la práctica de reportar los resultados de un MEGC con su dependencia de los parámetros inciertos \cite{dixon_rimmer_2013}, las cifras recaudatorias centrales de la Sección~\ref{sec:simulaciones} deben leerse junto con los rangos de la Tabla~\ref{tab:sens-resumen}. En particular, la pérdida de recaudación real de la rebaja del IDPC depende de manera decisiva de la elasticidad de la oferta de capital, cuyo respaldo empírico directo para Chile es el más débil de la calibración \cite{hassett_hubbard_2002,cerda_larrain_2005}.
 
+\subsection{Elasticidades de sustitución en el consumo y de comercio exterior}
+\label{sec:sens-consumo-comercio}
+
+La elasticidad de sustitución entre los bienes de consumo del hogar, $\omega$, la elasticidad de sustitución Armington entre bienes importados y domésticos, $\sigma_{q}$, y la elasticidad de transformación CET entre exportaciones y ventas domésticas, $\sigma_{t}$, se fijan en 1.5, 2.0 y 1.5, respectivamente. A diferencia de las elasticidades de oferta de factores, estos parámetros intervienen en la calibración de los parámetros de participación $\alpha^{p}$, $\delta_{m}^{p}$, $a_{q}^{p}$, $\gamma_{e}^{p}$ y $a_{t}^{p}$, por lo que en cada punto de la grilla dichos parámetros se recalculan para que el equilibrio base siga reproduciendo la SAM. Para cada valor evaluado se verifica que el equilibrio base recalculado coincide con el vigente, y para los valores de $\omega$ se comprueba además que un choque nulo lo devuelve sin alteraciones; las desviaciones son nulas a la precisión de la solución numérica. En consecuencia, la recaudación base es idéntica en todos los puntos de la grilla, que aísla así la respuesta de la recaudación a cada medida. La grilla comprende las cuatro medidas individuales.
+
+Las elasticidades de comercio exterior se evalúan en rangos respaldados por la literatura empírica. Para $\sigma_{q}$ se consideran los valores 1.4, 2.0, 2.9 y 3.8: el límite inferior corresponde al promedio estimado para los países de ingreso alto en modelos agregados de comercio \cite{devarajan_go_robinson_2023}, y el superior, a la mediana de la elasticidad de Armington implícita en la literatura una vez corregidos los sesgos de publicación y de diseño de los estudios, dentro de un rango de 2.5 a 5.1 \cite{bajzik_etal_2020}. Para $\sigma_{t}$ se consideran los valores 1.0, 1.5 y 3.0. El promedio estimado de la elasticidad de las exportaciones para los países de ingreso alto, grupo al que pertenece Chile, es cercano a 1.4 \cite{devarajan_go_robinson_2023}, de modo que el valor calibrado se ubica en torno a ese referente y el límite inferior, por debajo de él; el límite superior se incluye como prueba de exigencia.\footnote{El promedio estimado para los países en desarrollo, de 0.6 \cite{devarajan_go_robinson_2023}, no se incluye en la grilla, porque con ese valor el equilibrio base recalculado no alcanza convergencia numérica. Como Chile se clasifica entre las economías de ingreso alto (Banco Mundial, \emph{World Bank Country and Lending Groups}, clasificación para el año fiscal 2026, \url{https://datahelpdesk.worldbank.org/knowledgebase/articles/906519}), ese promedio no es el referente pertinente para la calibración.} Ambas elasticidades se evalúan por separado y en una grilla cruzada, porque determinan conjuntamente el ajuste del tipo de cambio real que requiere el cierre externo \cite{demelo_robinson_1989}. Para $\omega$ se consideran los valores 0.5, 0.8, 1.2, 1.5 y 2.0. El valor unitario se excluye porque en él la forma CES se reduce a una Cobb--Douglas y la expresión utilizada no está definida.
+
+\textbf{1) Elasticidades de comercio exterior.} La Tabla~\ref{tab:sens-comercio} presenta el rango de los indicadores recaudatorios en el conjunto de combinaciones evaluadas. En cada una de las cuatro medidas, la variación total de la recaudación se mantiene a no más de 0.0001 puntos del PIB de su valor central, y la erosión total, a no más de 0.1 puntos porcentuales.
+
+\begin{table}[H]
+\centering
+\caption{Rango de los indicadores recaudatorios según las elasticidades de comercio exterior ($\sigma_{q}$ entre 1.4 y 3.8; $\sigma_{t}$ entre 1.0 y 3.0)}
+\label{tab:sens-comercio}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|r|r|r|r|r|r|r|}
+  \hline
+  & \multicolumn{3}{c|}{Variación total (pp del PIB)} & \multicolumn{3}{c|}{Erosión total (\%)} & Tipo de cambio \\
+  \cline{2-7}
+  Choque & Central & Mínimo & Máximo & Central & Mínimo & Máximo & real, central (\%) \\
+  \hline
+  IDPC & $-0.1354$ & $-0.1354$ & $-0.1353$ & 16.3 & 16.2 & 16.3 & $-0.02$ \\
+  \hline
+  IVA & 0.2733 & 0.2732 & 0.2733 & 39.5 & 39.5 & 39.5 & $-0.53$ \\
+  \hline
+  PIT & 0.1624 & 0.1624 & 0.1625 & 10.3 & 10.2 & 10.3 & $-0.01$ \\
+  \hline
+  Impuestos específicos & 0.0612 & 0.0612 & 0.0613 & 36.9 & 36.9 & 36.9 & $-0.15$ \\
+  \hline
+\end{tabular}%
+}
+\par\smallskip
+\begin{minipage}{\textwidth}
+\footnotesize Nota: el mínimo y el máximo se calculan sobre la grilla cruzada de doce combinaciones de $\sigma_{q}$ y $\sigma_{t}$, que incluye las variaciones por separado de cada elasticidad. La última columna reporta la variación del tipo de cambio real con las elasticidades centrales. En la rebaja del IDPC, la erosión total corresponde a la compensación de la pérdida mecánica.
+\end{minipage}
+\end{table}
+
+Este resultado es coherente con la estructura del modelo. Las elasticidades de comercio exterior operan a través del ajuste del tipo de cambio real que exige el cierre con ahorro externo fijo en divisas \cite{demelo_robinson_1989}, y ese ajuste es reducido en cada una de las medidas evaluadas, como muestra la última columna de la Tabla~\ref{tab:sens-comercio}. Ante movimientos de esa magnitud, la curvatura de las funciones Armington y CET introduce en las bases tributarias diferencias de segundo orden. Además, el IVA y los impuestos específicos gravan la demanda final sin distinguir el origen del bien, de modo que la sustitución entre bienes domésticos e importados no altera materialmente sus bases. La dirección de la respuesta es la esperada: con elasticidades menores, el ajuste cambiario requerido es algo mayor; en la rebaja del IDPC, por ejemplo, la variación del tipo de cambio real pasa de $-0.0234\%$ con $\sigma_{q}=3.8$ a $-0.0256\%$ con $\sigma_{q}=1.4$. La conclusión se refiere a las medidas evaluadas y no se extiende a instrumentos que alteren directamente los precios relativos de los bienes transables, como los aranceles, para los cuales la literatura documenta una dependencia sustantiva de los resultados respecto de estas elasticidades \cite{hertel_etal_2007}.
+
+\textbf{2) Elasticidad de sustitución en el consumo.} La Tabla~\ref{tab:sens-omega} presenta los indicadores recaudatorios para cada valor de $\omega$. El efecto tasa es prácticamente invariante a este parámetro ---su variación máxima en la grilla es inferior a 0.0005 puntos del PIB---, de modo que la dispersión de la variación total proviene de la respuesta de las bases.
+
+\begin{table}[H]
+\centering
+\caption{Indicadores recaudatorios según la elasticidad de sustitución en el consumo $\omega$ (puntos del PIB nominal inicial y porcentaje del efecto tasa)}
+\label{tab:sens-omega}
+\small
+\begin{tabular}{|l|l|r|r|r|r|r|}
+  \hline
+  & & \multicolumn{5}{c|}{Elasticidad de sustitución en el consumo ($\omega$)} \\
+  \cline{3-7}
+  Choque & Indicador & 0.5 & 0.8 & 1.2 & 1.5 & 2.0 \\
+  \hline
+  IDPC & Variación total (pp) & $-0.1363$ & $-0.1360$ & $-0.1356$ & $\mathbf{-0.1354}$ & $-0.1350$ \\
+  & Efecto base (pp) & 0.0277 & 0.0279 & 0.0282 & \textbf{0.0283} & 0.0286 \\
+  & Efecto precio (pp) & $-0.0023$ & $-0.0022$ & $-0.0021$ & $\mathbf{-0.0020}$ & $-0.0019$ \\
+  & Compensación total (\%) & 15.7 & 15.9 & 16.1 & \textbf{16.3} & 16.5 \\
+  \hline
+  IVA & Variación total (pp) & 0.2855 & 0.2818 & 0.2769 & \textbf{0.2733} & 0.2672 \\
+  & Efecto base (pp) & $-0.0772$ & $-0.0807$ & $-0.0854$ & $\mathbf{-0.0889}$ & $-0.0947$ \\
+  & Efecto precio (pp) & $-0.0891$ & $-0.0892$ & $-0.0892$ & $\mathbf{-0.0893}$ & $-0.0894$ \\
+  & Erosión total (\%) & 36.8 & 37.6 & 38.7 & \textbf{39.5} & 40.8 \\
+  \hline
+  PIT & Variación total (pp) & 0.1621 & 0.1622 & 0.1623 & \textbf{0.1624} & 0.1625 \\
+  & Efecto base (pp) & $-0.0180$ & $-0.0179$ & $-0.0178$ & $\mathbf{-0.0178}$ & $-0.0177$ \\
+  & Efecto precio (pp) & $-0.0009$ & $-0.0009$ & $-0.0008$ & $\mathbf{-0.0008}$ & $-0.0008$ \\
+  & Erosión total (\%) & 10.4 & 10.4 & 10.3 & \textbf{10.3} & 10.2 \\
+  \hline
+  Impuestos & Variación total (pp) & 0.0676 & 0.0656 & 0.0631 & \textbf{0.0612} & 0.0582 \\
+  específicos & Efecto base (pp) & $-0.0218$ & $-0.0236$ & $-0.0259$ & $\mathbf{-0.0276}$ & $-0.0304$ \\
+  & Efecto precio (pp) & $-0.0078$ & $-0.0080$ & $-0.0081$ & $\mathbf{-0.0083}$ & $-0.0084$ \\
+  & Erosión total (\%) & 30.5 & 32.5 & 35.0 & \textbf{36.9} & 40.0 \\
+  \hline
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\textwidth}
+\footnotesize Nota: en negrita, el valor calibrado $\omega=1.5$. La erosión total es $-(E^{base}+E^{precio})/E^{tasa}$; en la rebaja del IDPC corresponde a la compensación de la pérdida mecánica.
+\end{minipage}
+\end{table}
+
+\textbf{Incremento del IVA.} La variación total de la recaudación se sitúa entre 0.2672 y 0.2855 puntos del PIB inicial, en torno al valor central de 0.2733, y la erosión total, entre 36.8\% y 40.8\% del rendimiento mecánico. La amplitud de ese rango, de 0.0183 puntos del PIB, es inferior a la que produce cada una de las elasticidades de oferta de factores dentro de la región de evidencia (Tabla~\ref{tab:sens-resumen}). La dispersión proviene del efecto base, que varía entre $-0.0772$ y $-0.0947$ puntos, mientras el efecto precio permanece entre $-0.0891$ y $-0.0894$ puntos. El mecanismo es la recomposición de la canasta de consumo: como las tasas efectivas del IVA difieren entre productos, el alza encarece en mayor proporción los bienes con tasa efectiva alta, y una elasticidad de sustitución mayor desplaza una fracción más amplia del gasto hacia bienes con tasa efectiva baja o exentos \cite{atkinson_stiglitz_1980}. La recaudación del propio IVA varía entre 0.3483 y 0.3647 puntos, y es mayor cuanto menor es $\omega$.
+
+\textbf{Aumento de los impuestos específicos.} La variación total de la recaudación se sitúa entre 0.0582 y 0.0676 puntos del PIB inicial, en torno al valor central de 0.0612, y la erosión total, entre 30.5\% y 40.0\%. La recaudación del propio impuesto responde poco a $\omega$ ---varía entre 0.0931 y 0.0953 puntos---, porque el gravamen recae sobre el compuesto manufacturero, que representa 44.1\% del gasto de consumo de los hogares, y su alza eleva moderadamente el precio de comprador del agregado. La dispersión se concentra en el IVA, cuya recaudación varía entre $-0.0136$ y $-0.0074$ puntos: el encarecimiento de las manufacturas desplaza el gasto hacia bienes con menor tasa efectiva del impuesto, y ese desplazamiento es mayor cuanto mayor es $\omega$. En consecuencia, entre 86.9\% y 91.2\% del efecto base se produce en impuestos distintos del modificado.
+
+\textbf{Disminución del IDPC.} La variación total de la recaudación es prácticamente invariante a $\omega$: se sitúa entre $-0.1363$ y $-0.1350$ puntos del PIB inicial, y la compensación total de la pérdida mecánica, entre 15.7\% y 16.5\%. La rebaja modifica el retorno del capital y el ingreso disponible, pero apenas altera los precios relativos de los bienes de consumo, que es el único canal por el que opera $\omega$; las variaciones proporcionales del nivel de precios de comprador las absorbe el numerario.
+
+\textbf{Aumento del PIT.} La variación total de la recaudación se sitúa entre 0.1621 y 0.1625 puntos del PIB inicial, y la erosión total, entre 10.2\% y 10.4\%. Por la misma razón, el resultado es prácticamente invariante a $\omega$: el impuesto reduce el ingreso disponible y desplaza la oferta de trabajo, sin alterar de manera apreciable los precios relativos de la canasta de consumo.
+
+La Tabla~\ref{tab:sens-omega-elast} expresa cada valor de $\omega$ en términos de la elasticidad precio propia no compensada que implica la función CES, $\varepsilon_{pp}=-\omega+(\omega-1)\,s^{p}$, donde $s^{p}$ es la participación del bien en el gasto de consumo de los hogares \cite{femenia_2012}. Con el valor calibrado, las elasticidades implícitas se ubican entre $-1.28$ en las manufacturas y $-1.50$ en los bienes de menor participación. La evidencia para los combustibles, uno de los principales bienes gravados con impuestos específicos, sitúa la elasticidad precio media de corto y largo plazo en $-0.34$ y $-0.84$ \cite{brons_etal_2008}, y en $-0.09$ y $-0.31$ una vez corregido el sesgo de publicación \cite{havranek_etal_2012}. Como el modelo representa agregados de producto y no bienes individuales, la comparación es indicativa; aun así, sugiere que el valor calibrado de $\omega$ se ubica en la parte alta del rango plausible, en línea con lo discutido en la Sección~\ref{sec:coherencia}. Bajo esa lectura, las estimaciones centrales del aumento de la recaudación real del IVA y de los impuestos específicos son conservadoras, porque con valores menores de $\omega$ la erosión de sus bases es menor.
+
+\begin{table}[H]
+\centering
+\caption{Elasticidad precio propia no compensada implícita en la función CES, $\varepsilon_{pp}=-\omega+(\omega-1)\,s^{p}$}
+\label{tab:sens-omega-elast}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|r|r|r|r|r|r|}
+  \hline
+  & Participación & \multicolumn{5}{c|}{Elasticidad de sustitución en el consumo ($\omega$)} \\
+  \cline{3-7}
+  Bien & en el gasto (\%) & 0.5 & 0.8 & 1.2 & 1.5 & 2.0 \\
+  \hline
+  Agropecuarios, silvícolas y pesqueros & 4.5 & $-0.52$ & $-0.81$ & $-1.19$ & $\mathbf{-1.48}$ & $-1.95$ \\
+  \hline
+  Manufacturas & 44.1 & $-0.72$ & $-0.89$ & $-1.11$ & $\mathbf{-1.28}$ & $-1.56$ \\
+  \hline
+  Electricidad, gas, agua y desechos & 2.8 & $-0.51$ & $-0.81$ & $-1.19$ & $\mathbf{-1.49}$ & $-1.97$ \\
+  \hline
+  Comercio, hoteles y restaurantes & 7.2 & $-0.54$ & $-0.81$ & $-1.19$ & $\mathbf{-1.46}$ & $-1.93$ \\
+  \hline
+  Transporte, comunicaciones e información & 8.7 & $-0.54$ & $-0.82$ & $-1.18$ & $\mathbf{-1.46}$ & $-1.91$ \\
+  \hline
+  Servicios financieros & 5.2 & $-0.53$ & $-0.81$ & $-1.19$ & $\mathbf{-1.47}$ & $-1.95$ \\
+  \hline
+  Servicios inmobiliarios y de vivienda & 11.9 & $-0.56$ & $-0.82$ & $-1.18$ & $\mathbf{-1.44}$ & $-1.88$ \\
+  \hline
+  Servicios empresariales & 2.1 & $-0.51$ & $-0.80$ & $-1.20$ & $\mathbf{-1.49}$ & $-1.98$ \\
+  \hline
+  Servicios personales & 13.1 & $-0.57$ & $-0.83$ & $-1.17$ & $\mathbf{-1.43}$ & $-1.87$ \\
+  \hline
+  Administración pública & 0.2 & $-0.50$ & $-0.80$ & $-1.20$ & $\mathbf{-1.50}$ & $-2.00$ \\
+  \hline
+  Otros bienes y servicios & 0.2 & $-0.50$ & $-0.80$ & $-1.20$ & $\mathbf{-1.50}$ & $-2.00$ \\
+  \hline
+\end{tabular}%
+}
+\end{table}
+
+En síntesis, la variación total de la recaudación conserva el signo del efecto tasa en todas las combinaciones evaluadas. Los resultados recaudatorios de las cuatro medidas son robustos a las elasticidades de comercio exterior dentro del rango respaldado por la literatura. En la rebaja del IDPC y en el alza del PIT, la incidencia de $\omega$ es inferior a 0.0015 puntos del PIB. En el alza del IVA y en la de los impuestos específicos, $\omega$ desplaza la variación total dentro de un rango acotado y sin alterar su signo, por la vía del efecto base del IVA; siguiendo la práctica de reportar los resultados junto con su dependencia de los parámetros inciertos, sus cifras centrales deben leerse junto con los rangos de la Tabla~\ref{tab:sens-omega} \cite{harrison_vinod_1992,dixon_rimmer_2013}.
+
 \section{Coherencia económica de los resultados}
 \label{sec:coherencia}
 
@@ -1549,9 +1683,9 @@ En cada ejercicio, la respuesta del volumen de las bases distintas de la gravada
 
 Una ventaja de este tipo de modelos es que permiten evaluar simultáneamente los efectos de una medida sobre variables fiscales, reales, externas y laborales. A diferencia de los análisis parciales, esta perspectiva integrada hace visibles las disyuntivas entre recaudación, actividad, empleo y composición del gasto.
 
-Los resultados deben interpretarse considerando sus limitaciones. Primero, el cierre por ahorro elimina los efectos de demanda agregada, de modo que los efectos en actividad son de oferta, lo que determina que las alzas tributarias eleven la inversión. Segundo, las elasticidades de oferta de factores provienen de evidencia microeconómica internacional y, para el capital, de un margen análogo pero distinto; dentro de la región de evidencia, la pérdida de recaudación real de la rebaja del IDPC varía entre 0.1211 y 0.1428 puntos del PIB, principalmente según la elasticidad del capital, y con una oferta de capital muy elástica la compensación total de la pérdida mecánica puede alcanzar 75\%. Tercero, la respuesta del desempleo en el alza del IVA excede la banda empírica de la ley de Okun. Cuarto, la calibración supone que el consumo intermedio no paga impuestos específicos y representa el IVA no recuperable mediante un residuo agregado, en lugar de derivarlo de la estructura de exenciones y de la información del formulario 29. Quinto, el traspaso del impuesto a precios es unitario respecto del precio básico, supuesto que la literatura sobre incidencia de impuestos selectivos matiza en presencia de poder de mercado \cite{delipalla_keen_1992,benedek_etal_2020}. Sexto, la recaudación se mide en unidades de la canasta de consumo de los hogares, cuyo poder adquisitivo puede diferir del que tiene sobre la canasta de gasto del gobierno.
+Los resultados deben interpretarse considerando sus limitaciones. Primero, el cierre por ahorro elimina los efectos de demanda agregada, de modo que los efectos en actividad son de oferta, lo que determina que las alzas tributarias eleven la inversión. Segundo, las elasticidades de oferta de factores provienen de evidencia microeconómica internacional y, para el capital, de un margen análogo pero distinto; dentro de la región de evidencia, la pérdida de recaudación real de la rebaja del IDPC varía entre 0.1211 y 0.1428 puntos del PIB, principalmente según la elasticidad del capital, y con una oferta de capital muy elástica la compensación total de la pérdida mecánica puede alcanzar 75\%. Las elasticidades de sustitución en el consumo y de comercio exterior también provienen de la literatura: los resultados recaudatorios son prácticamente invariantes a las segundas, y la primera desplaza, dentro de un rango acotado y sin alterar su signo, el aumento de la recaudación real del alza del IVA y el del alza de los impuestos específicos, que varían entre 0.2672 y 0.2855 puntos del PIB y entre 0.0582 y 0.0676 puntos, respectivamente, cuando esa elasticidad se mueve entre 0.5 y 2.0. Tercero, la respuesta del desempleo en el alza del IVA excede la banda empírica de la ley de Okun. Cuarto, la calibración supone que el consumo intermedio no paga impuestos específicos y representa el IVA no recuperable mediante un residuo agregado, en lugar de derivarlo de la estructura de exenciones y de la información del formulario 29. Quinto, el traspaso del impuesto a precios es unitario respecto del precio básico, supuesto que la literatura sobre incidencia de impuestos selectivos matiza en presencia de poder de mercado \cite{delipalla_keen_1992,benedek_etal_2020}. Sexto, la recaudación se mide en unidades de la canasta de consumo de los hogares, cuyo poder adquisitivo puede diferir del que tiene sobre la canasta de gasto del gobierno.
 
-Como próximas etapas, se propone estimar con datos de la Encuesta Nacional de Empleo las elasticidades del empleo y de la participación, evaluar las medidas bajo cierres alternativos de la cuenta de capital, incorporar hogares por quintil con tasas marginales del impuesto personal por tramo y desagregar los productos gravados con impuestos selectivos. Entre las extensiones de mayor alcance se encuentran una restricción de capacidad $u_{k}\leq 1$, una versión dinámica que permita la acumulación de capital y la incorporación de rigideces o informalidad en el mercado laboral.
+Como próximas etapas, se propone estimar con datos de la Encuesta Nacional de Empleo las elasticidades del empleo y de la participación, estimar con datos de la Encuesta de Presupuestos Familiares las elasticidades precio de la demanda de los hogares, evaluar las medidas bajo cierres alternativos de la cuenta de capital, incorporar hogares por quintil con tasas marginales del impuesto personal por tramo y desagregar los productos gravados con impuestos selectivos. Entre las extensiones de mayor alcance se encuentran una restricción de capacidad $u_{k}\leq 1$, una versión dinámica que permita la acumulación de capital y la incorporación de rigideces o informalidad en el mercado laboral.
 
 \section{Disponibilidad de código}
 

@@ -1,0 +1,608 @@
+# SENSIBILIDAD A LAS ELASTICIDADES DE CONSUMO Y DE COMERCIO EXTERIOR
+```{r include=FALSE}
+# omega (CES hogares), sigma_q (Armington) y sigma_t (CET).
+# A diferencia de phi y psi, estas elasticidades entran en los parametros de
+# participacion: alpha (calibrado por gEcon), delta_m, aq, gamma_e y at (calculados
+# en R). En cada punto se recalculan alpha, delta_m, aq, gamma_e y at con las formulas
+# de gecon_chile_12_sect_23.Rmd, se resuelve la base con calibration = FALSE y se
+# verifica que siga replicando la SAM (prueba de invarianza de la base).
+# Solo entonces se aplica el choque y se descompone dR = tasa + base + precio.
+#
+# El documento contiene dos analisis:
+#   A) Consumo: elasticidad de sustitucion entre bienes de consumo (omega).
+#   B) Comercio exterior: Armington (sigma_q) y CET (sigma_t), por separado y cruzadas.
+# Ambos se evaluan por defecto. YAML: sensibilidad_consumo_comercio$parametros permite
+# restringir la corrida (por ejemplo, [omega]).
+#
+# Requiere en el entorno los objetos de gecon_chile_12_sect_23.Rmd:
+#   DS_v, E_v, M_v, Q_v, Z_v, p_base, pz_base, pm_base, pq_base, D_con_phys,
+#   pexp_idx, pdom_arm_idx, pcon_idx, p_names, get_flow_values, eq_options
+# y los de las secciones anteriores de eval_shocks.Rmd:
+#   res_base, pib_model_list, build_real_decomp, indicadores_fiscales,
+#   impuestos_propios, choques_so, tesp_shock, opts_c, tol_cie, v_cantid, dev_rel,
+#   reportar, imprimir_tabla, txt_escribir
+
+sc      <- cfg$sensibilidad_consumo_comercio
+om_cal  <- cfg$elasticidades$utilidad_hogares_omega
+sq_cal  <- cfg$elasticidades$armington_sigma_q
+st_cal  <- cfg$elasticidades$cet_sigma_t
+tol_om  <- sc$exclusion_omega_unitario %||% 0.05
+# Amplitud de la variacion total (pp del PIB) bajo la cual un resultado se considera
+# practicamente invariante a la elasticidad (solo afecta la redaccion del analisis).
+umbral_inv <- sc$umbral_invariancia_pp %||% 0.002
+eq_cal  <- if (exists("eq_options")) eq_options else
+               list(method = "Newton", global = "gline", max_iter = 20000, tol = 3e-5)
+
+# --- Parametros de comercio exterior para (sigma_q, sigma_t) ------------------------
+# Mismas formulas que la calibracion base: con precios base (pe = pd = 1, pm = 1 + tar)
+# los parametros de participacion reproducen los flujos de la SAM para cualquier sigma.
+par_comercio <- function(sq, st) {
+    rq <- (sq - 1) / sq
+    rt <- (st + 1) / st
+    ce <- (DS_v / pmax(E_v, 1e-6))^(1 / st)
+    ge <- pmax(pmin(ce / (1 + ce), 1 - 1e-6), 1e-6)
+    am <- pm_base * (M_v / pmax(DS_v, 1e-6))^(1 / sq)
+    dm <- pmax(pmin(am / (1 + am), 1 - 1e-6), 1e-6)
+    at <- (Z_v / pz_base) / (ge * E_v^rt + (1 - ge) * DS_v^rt)^(1 / rt)
+    aq <- (Q_v / p_base)  / (dm * M_v^rq + (1 - dm) * DS_v^rq)^(1 / rq)
+    c(list(sigma_q = sq, sigma_t = st),
+      get_flow_values(ge[pexp_idx],     "gamma_e", p_names[pexp_idx]),
+      get_flow_values(at[pexp_idx],     "at",      p_names[pexp_idx]),
+      get_flow_values(dm[pdom_arm_idx], "delta_m", p_names[pdom_arm_idx]),
+      get_flow_values(aq[pdom_arm_idx], "aq",      p_names[pdom_arm_idx]))
+}
+
+# Control: en los valores calibrados, par_comercio debe reproducir los parametros del modelo
+par_mod  <- get_par_values(model, silent = TRUE)
+par_chk  <- unlist(par_comercio(sq_cal, st_cal))
+desv_par <- max(abs(par_chk - as.numeric(par_mod[names(par_chk)])))
+if (!is.finite(desv_par) || desv_par > 1e-8)
+    stop(sprintf("par_comercio no reproduce la calibracion base (desvio %.2e); revisar objetos del entorno", desv_par))
+
+# --- Parametros de consumo para omega -----------------------------------------------
+# alpha se calcula analiticamente con la misma formula de gecon_chile_12_sect_23.Rmd
+# (FOC de la CES con precios de comprador de la base). Asi, todos los parametros que
+# dependen de las elasticidades se fijan explicitamente, igual que delta_m, aq,
+# gamma_e y at. gamma, betak y betal (Cobb-Douglas) no dependen de omega ni de sigma.
+par_consumo <- function(om) {
+    a   <- pq_base[pcon_idx] * D_con_phys^(1 / om)
+    a   <- a / sum(a)
+    U   <- (sum(a * D_con_phys^((om - 1) / om)))^(om / (om - 1))
+    lam <- U / sum(D_con_phys * pq_base[pcon_idx])     # FOC: dU/dD_i = lambda * pq_i
+    list(alpha = unlist(get_flow_values(a, "alpha", p_names[pcon_idx])),
+         ini   = list(U = U, lambda__CONSUMER_1 = lam))
+}
+
+# --- Base con elasticidades alternativas --------------------------------------------
+# La base se resuelve con calibration = FALSE: si los parametros son correctos, el punto
+# de la SAM es solucion y el residuo inicial debe ser ~0 (res_ini).
+recalibrar_base <- function(om, sq, st) {
+    pc <- par_consumo(om)
+    m  <- set_free_par(model, free_par = c(list(omega = om), par_comercio(sq, st)))
+    m  <- initval_calibr_par(m, pc$alpha)
+    m  <- initval_var(m, pc$ini)
+    m  <- steady_state(m, calibration = FALSE, options_list = opts_c)
+    v  <- get_ss_values(m, silent = TRUE)
+    # Invarianza de la base: cantidades y recaudacion deben coincidir con la base vigente
+    dev <- max(dev_rel(v[v_cantid], res_base[v_cantid]),
+               dev_rel(v["Tax"], res_base["Tax"]))
+    list(model = m, res = v, desvio_base = dev,
+         res_ini = pracma::Norm(m@init_residual_vector))
+}
+
+# Control: con omega calibrado, alpha analitico debe coincidir (en proporciones) con el del modelo
+a_mod <- get_par_values(model, silent = TRUE)[names(par_consumo(om_cal)$alpha)]
+desv_alpha <- max(abs(a_mod / sum(a_mod) - par_consumo(om_cal)$alpha))
+if (!is.finite(desv_alpha) || desv_alpha > 1e-8)
+    warning(sprintf("alpha analitico difiere del calibrado en omega = %.2f (desvio %.2e)", om_cal, desv_alpha))
+
+# --- Diagnostico: base y choque nulo con omega distinto del calibrado ----------------
+# res_ini ~0: la SAM es solucion con los nuevos parametros. desvio_base, desvio_nulo y
+# dTax_nulo_pp ~0: la base y un choque nulo devuelven exactamente la base vigente.
+diag_nulo <- function(om) {
+    tryCatch({
+        b  <- recalibrar_base(om, sq_cal, st_cal)
+        pn <- list(pit = as.numeric(get_par_values(b$model, silent = TRUE)["pit"]))
+        m  <- set_free_par(b$model, free_par = pn)
+        m  <- steady_state(m, calibration = FALSE, options_list = opts_c)
+        v  <- get_ss_values(m, silent = TRUE)
+        data.frame(omega = om, res_ini = b$res_ini, desvio_base = b$desvio_base,
+                   desvio_nulo = dev_rel(v[v_cantid], res_base[v_cantid]),
+                   dTax_nulo_pp = (as.numeric(v["Tax"]) - as.numeric(res_base["Tax"])) /
+                                  as.numeric(pib_model_list$PIB) * 100)
+    }, error = function(e) {
+        message(sprintf("Control de choque nulo sin solucion (omega = %.2f): %s", om, conditionMessage(e)))
+        data.frame(omega = om, res_ini = NA_real_, desvio_base = NA_real_,
+                   desvio_nulo = NA_real_, dTax_nulo_pp = NA_real_)
+    })
+}
+
+# --- Evaluacion de un choque sobre una base recalibrada -----------------------------
+choques_cc <- c(choques_so, list(TESP = tesp_shock))
+imp_rep    <- c("VAT", "TESP", "TARANCEL", "FIRMTAX", "TPROD")   # detalle por impuesto
+cols_cc    <- c("desvio_base", "dexr", "dTax_pp", "ef_tasa_pp", "ef_base_pp", "ef_precio_pp",
+                "pct_erosion", "pct_base", "pct_precio", "pct_base_otros", "resid_pp",
+                paste0("dR_", imp_rep, "_pp"))
+
+fila_choque <- function(b, om, sq, st, nombre, par_shock) {
+    vacio <- setNames(rep(NA_real_, length(cols_cc)), cols_cc)
+    res <- tryCatch({
+        if (is.null(b)) stop("la recalibracion de la base no convergio")
+        if (b$desvio_base > tol_cie)
+            stop(sprintf("la base recalibrada no replica la SAM (desvio %.1e)", b$desvio_base))
+        m   <- set_free_par(b$model, free_par = par_shock)
+        m   <- steady_state(m, calibration = FALSE, options_list = opts_c)
+        v   <- get_ss_values(m, silent = TRUE)
+        RD  <- build_real_decomp(b$model, m, b$res, v)
+        ind <- indicadores_fiscales(RD, v, impuestos_propios[[nombre]])
+        pp  <- function(x) as.numeric(x) / as.numeric(pib_model_list$PIB) * 100
+        out <- c(desvio_base = b$desvio_base,
+                 dexr        = (as.numeric(v["exr"]) / as.numeric(b$res["exr"]) - 1) * 100,
+                 ind,
+                 setNames(sapply(imp_rep, function(k) pp(RD[[k]]$dR)), paste0("dR_", imp_rep, "_pp")))
+        out[cols_cc]
+    }, error = function(e) {
+        message(sprintf("omega = %.2f, sigma_q = %.2f, sigma_t = %.2f, %s: sin solucion (%s)",
+                        om, sq, st, nombre, conditionMessage(e)))
+        vacio
+    })
+    data.frame(choque = nombre, omega = om, sigma_q = sq, sigma_t = st,
+               t(res), check.names = FALSE, row.names = NULL)
+}
+
+eval_config <- function(om, sq, st) {
+    b <- tryCatch(recalibrar_base(om, sq, st), error = function(e) {
+        message(sprintf("Recalibracion sin solucion (omega = %.2f, sigma_q = %.2f, sigma_t = %.2f): %s",
+                        om, sq, st, conditionMessage(e)))
+        NULL
+    })
+    do.call(rbind, Map(function(nm_, ps) fila_choque(b, om, sq, st, nm_, ps),
+                       names(choques_cc), choques_cc))
+}
+
+# --- Grillas: una a la vez (OAT) y cruce sigma_q x sigma_t -------------------------
+# omega = 1 es singular en la CES del .gcn (exponente omega/(omega-1)); se excluye su entorno.
+om_g <- unlist(sc$omega   %||% c(0.5, 0.8, 1.2, 1.5, 2.0))
+sq_g <- unlist(sc$sigma_q %||% c(1.4, 2.0, 2.9, 3.8))
+st_g <- unlist(sc$sigma_t %||% c(0.6, 1.0, 1.5, 3.0))
+if (any(abs(om_g - 1) < tol_om)) {
+    message("Se excluyen valores de omega en el entorno de 1: ", paste(om_g[abs(om_g - 1) < tol_om], collapse = ", "))
+    om_g <- om_g[abs(om_g - 1) >= tol_om]
+}
+stopifnot(all(sq_g > 1), all(st_g > 0))
+
+# Elasticidades a evaluar: por defecto las tres (analisis de consumo y de comercio).
+prm_cc <- intersect(unlist(sc$parametros %||% c("omega", "sigma_q", "sigma_t")),
+                    c("omega", "sigma_q", "sigma_t"))
+stopifnot(length(prm_cc) > 0)
+hay_consumo  <- "omega" %in% prm_cc
+hay_comercio <- any(c("sigma_q", "sigma_t") %in% prm_cc)
+cruce_cc     <- all(c("sigma_q", "sigma_t") %in% prm_cc)
+if (!hay_consumo)  message("El YAML excluye omega: el analisis de consumo no se evalua.")
+if (!hay_comercio) message("El YAML excluye sigma_q y sigma_t: el analisis de comercio exterior no se evalua.")
+
+# --- Control de choque nulo (antes de la grilla) ------------------------------------
+om_diag <- setdiff(om_g, om_cal)
+if (!length(om_diag)) om_diag <- c(0.5, 2.0)
+diag_nulo_tab <- do.call(rbind, lapply(om_diag, diag_nulo))
+tol_diag   <- tol_cie %||% 1e-5
+control_ok <- with(diag_nulo_tab,
+                   all(!is.na(res_ini)) && all(res_ini < sqrt(tol_diag)) &&
+                   all(desvio_base < tol_diag) && all(desvio_nulo < tol_diag) &&
+                   all(abs(dTax_nulo_pp) < tol_diag))
+
+# --- Elasticidad precio propia implicita de la CES: -omega + (omega - 1) * s_i --------
+# s_i: participacion de cada producto en el gasto de consumo de hogares de la base.
+s_con   <- (pq_base[pcon_idx] * D_con_phys) / sum(pq_base[pcon_idx] * D_con_phys)
+elast_propia <- do.call(rbind, lapply(sort(unique(c(om_g, om_cal))), function(om)
+    data.frame(producto = p_names[pcon_idx], omega = om,
+               participacion_gasto = as.numeric(s_con),
+               elasticidad_propia = as.numeric(-om + (om - 1) * s_con))))
+elast_propia_tab <- reshape(elast_propia[, c("producto", "participacion_gasto", "omega", "elasticidad_propia")],
+                            idvar = c("producto", "participacion_gasto"), timevar = "omega",
+                            direction = "wide", sep = "_om_")
+
+# --- Configuraciones ----------------------------------------------------------------
+cfg_list <- list()
+if ("omega"   %in% prm_cc) cfg_list$om <- data.frame(omega = om_g,   sigma_q = sq_cal, sigma_t = st_cal)
+if ("sigma_q" %in% prm_cc) cfg_list$sq <- data.frame(omega = om_cal, sigma_q = sq_g,   sigma_t = st_cal)
+if ("sigma_t" %in% prm_cc) cfg_list$st <- data.frame(omega = om_cal, sigma_q = sq_cal, sigma_t = st_g)
+if (cruce_cc)              cfg_list$cr <- expand.grid(omega = om_cal, sigma_q = sq_g, sigma_t = st_g)
+configs <- unique(do.call(rbind, unname(cfg_list)))
+
+sens_cc <- do.call(rbind, lapply(seq_len(nrow(configs)), function(i)
+    eval_config(configs$omega[i], configs$sigma_q[i], configs$sigma_t[i])))
+
+# Las filas con omega distinto del calibrado solo son validas si el control se cumplio
+sens_cc$valido <- ifelse(abs(sens_cc$omega - om_cal) < 1e-6 | control_ok, "si", "no")
+
+tol_g  <- 1e-6
+es_cal <- function(x, c0) abs(x - c0) < tol_g
+vista_oat <- function(param) {
+    f <- switch(param,
+        omega   = es_cal(sens_cc$sigma_q, sq_cal) & es_cal(sens_cc$sigma_t, st_cal),
+        sigma_q = es_cal(sens_cc$omega, om_cal)   & es_cal(sens_cc$sigma_t, st_cal),
+        sigma_t = es_cal(sens_cc$omega, om_cal)   & es_cal(sens_cc$sigma_q, sq_cal))
+    d <- sens_cc[f, ]
+    d[order(d$choque, d[[param]]), ]
+}
+vista_cruz <- function(indicador) {
+    d <- sens_cc[es_cal(sens_cc$omega, om_cal), ]
+    do.call(rbind, lapply(unique(d$choque), function(nm_) {
+        dd <- d[d$choque == nm_, ]
+        do.call(rbind, lapply(sort(unique(dd$sigma_q)), function(q) {
+            fila <- sapply(sort(unique(dd$sigma_t)), function(t_) {
+                x <- dd[[indicador]][es_cal(dd$sigma_q, q) & es_cal(dd$sigma_t, t_)]
+                if (length(x)) x[1] else NA_real_
+            })
+            data.frame(choque = nm_, sigma_q = q,
+                       t(setNames(fila, sprintf("st_%.2f", sort(unique(dd$sigma_t))))),
+                       check.names = FALSE, row.names = NULL)
+        }))
+    }))
+}
+
+# Amplitud del indicador central al mover una sola elasticidad (por choque, sin comparar choques)
+amplitud_cc <- do.call(rbind, lapply(prm_cc, function(prm) {
+    d <- vista_oat(prm)
+    do.call(rbind, lapply(unique(d$choque), function(nm_) {
+        x <- d$dTax_pp[d$choque == nm_]
+        e <- d$pct_erosion[d$choque == nm_]
+        data.frame(choque = nm_, parametro = prm,
+                   dTax_min = suppressWarnings(min(x, na.rm = TRUE)),
+                   dTax_max = suppressWarnings(max(x, na.rm = TRUE)),
+                   erosion_min = suppressWarnings(min(e, na.rm = TRUE)),
+                   erosion_max = suppressWarnings(max(e, na.rm = TRUE)),
+                   n_casos = sum(!is.na(x)))
+    }))
+}))
+
+# --- A) Tabla resumen de consumo: indicadores por valor de omega ---------------------
+# Filas: choque x indicador; columnas: valores de omega (misma estructura que el documento).
+indic_om <- c(dTax_pp = "Variacion total (pp)", ef_base_pp = "Efecto base (pp)",
+              ef_precio_pp = "Efecto precio (pp)", pct_erosion = "Erosion total (%)")
+tab_omega <- if (hay_consumo) {
+    d_om <- vista_oat("omega")
+    do.call(rbind, lapply(names(choques_cc), function(nm_) {
+        dd <- d_om[d_om$choque == nm_, ]
+        dd <- dd[order(dd$omega), ]
+        do.call(rbind, lapply(names(indic_om), function(k)
+            data.frame(choque = nm_, indicador = indic_om[[k]],
+                       t(setNames(dd[[k]], sprintf("om_%.1f", dd$omega))),
+                       check.names = FALSE, row.names = NULL)))
+    }))
+} else NULL
+
+# --- B) Tabla resumen de comercio: rango sobre todas las combinaciones de sigma -------
+# Incluye las variaciones por separado y la grilla cruzada, con omega en su valor calibrado.
+tab_comercio <- if (hay_comercio) {
+    d_co <- sens_cc[es_cal(sens_cc$omega, om_cal), ]
+    do.call(rbind, lapply(names(choques_cc), function(nm_) {
+        dd <- d_co[d_co$choque == nm_, ]
+        c0 <- dd[es_cal(dd$sigma_q, sq_cal) & es_cal(dd$sigma_t, st_cal), ][1, ]
+        mn <- function(x) suppressWarnings(min(x, na.rm = TRUE))
+        mx <- function(x) suppressWarnings(max(x, na.rm = TRUE))
+        data.frame(choque = nm_,
+                   dTax_central = c0$dTax_pp, dTax_min = mn(dd$dTax_pp), dTax_max = mx(dd$dTax_pp),
+                   desvio_max_pp = mx(abs(dd$dTax_pp - c0$dTax_pp)),
+                   erosion_central = c0$pct_erosion, erosion_min = mn(dd$pct_erosion),
+                   erosion_max = mx(dd$pct_erosion),
+                   dexr_central = c0$dexr, dexr_min = mn(dd$dexr), dexr_max = mx(dd$dexr),
+                   n_casos = sum(!is.na(dd$dTax_pp)), row.names = NULL)
+    }))
+} else NULL
+```
+
+# ANALISIS SENSIBILIDAD CONSUMO Y COMERCIO EXTERIOR
+```{r}
+# Archivo de resultados propio de esta seccion (YAML: archivos$resultados_sens_consumo_comercio).
+# La salida tambien se agrega al archivo general de eval_shocks.Rmd mediante reportar().
+archivo_txt_cc <- cfg$archivos$resultados_sens_consumo_comercio %||% "resultados_sens_consumo_comercio.txt"
+
+cols_resumen <- c("choque", "omega", "sigma_q", "sigma_t", "valido", "dTax_pp", "ef_tasa_pp",
+                  "ef_base_pp", "ef_precio_pp", "pct_erosion", "pct_base", "pct_precio",
+                  "dR_VAT_pp", "dR_TESP_pp", "dR_TARANCEL_pp", "dR_FIRMTAX_pp", "dR_TPROD_pp")
+
+imprimir_oat <- function(prm) {
+    for (nm_ in names(choques_cc)) {
+        d <- vista_oat(prm)
+        d <- d[d$choque == nm_, ]
+        cat(sprintf("\nChoque %s - variacion de %s (resto en valores calibrados), resumen recaudatorio:\n", nm_, prm))
+        imprimir_tabla(d[, intersect(cols_resumen, names(d))])
+        cat(sprintf("\nChoque %s - variacion de %s, detalle completo:\n", nm_, prm))
+        imprimir_tabla(d)
+    }
+}
+
+salida_cc <- reportar("SENSIBILIDAD: elasticidades de consumo (omega) y de comercio exterior (sigma_q, sigma_t)", {
+    cat(sprintf("Generado            : %s\n", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")))
+    cat(sprintf("Modelo              : %s (%s), anio base %s\n",
+                cfg$modelo$nombre, cfg$modelo$version, cfg$modelo$anio_base))
+    cat(sprintf("Calibracion vigente : omega = %.2f, sigma_q = %.2f, sigma_t = %.2f\n", om_cal, sq_cal, st_cal))
+    cat(sprintf("Elasticidades evaluadas: %s\n", paste(prm_cc, collapse = ", ")))
+    if (hay_consumo)           cat(sprintf("Grilla omega        : %s\n", paste(om_g, collapse = ", ")))
+    if ("sigma_q" %in% prm_cc) cat(sprintf("Grilla sigma_q      : %s\n", paste(sq_g, collapse = ", ")))
+    if ("sigma_t" %in% prm_cc) cat(sprintf("Grilla sigma_t      : %s\n", paste(st_g, collapse = ", ")))
+    cat("\nEn cada punto se fijan alpha, delta_m, aq, gamma_e y at para las elasticidades del punto;\n")
+    cat("desvio_base mide la distancia de esa base a la base vigente (debe ser ~0).\n")
+    cat("dexr en %; recaudacion y efectos en pp del PIB nominal base; dR_X_pp = variacion por impuesto.\n")
+    cat("dTax_pp = ef_tasa_pp + ef_base_pp + ef_precio_pp (descomposicion exacta).\n")
+    cat("pct_erosion = -(ef_base + ef_precio) / ef_tasa (%): erosion en alzas, compensacion en rebajas.\n")
+    cat("Cada choque se presenta por separado.\n\n")
+
+    cat("1) CONTROL: base y choque nulo con omega distinto del calibrado (alpha analitico).\n")
+    cat("   res_ini, desvio_base, desvio_nulo y dTax_nulo_pp deben ser ~0.\n\n")
+    imprimir_tabla(diag_nulo_tab, digits = 8)
+    if (control_ok) {
+        cat("\n   CONTROL SUPERADO: la base con omega alternativo replica la SAM y un choque nulo la\n")
+        cat("   devuelve intacta. Los resultados de omega son validos.\n\n")
+    } else {
+        cat("\n   CONTROL NO SUPERADO: con omega distinto del calibrado la base no replica la SAM o un\n")
+        cat("   choque nulo la desplaza. Las filas de omega se marcan valido = no y no deben reportarse.\n\n")
+    }
+
+    cat(strrep("=", 90), "\nA) ANALISIS DE CONSUMO: elasticidad de sustitucion entre bienes de consumo (omega)\n",
+        strrep("=", 90), "\n", sep = "")
+    if (hay_consumo) {
+        cat("\nA.1) Elasticidad precio propia implicita de la CES (no compensada): -omega + (omega - 1) * s_i\n")
+        cat("     s_i = participacion del producto en el gasto de consumo de hogares de la base.\n\n")
+        imprimir_tabla(elast_propia_tab, digits = 4)
+        cat("\nA.2) Indicadores recaudatorios por valor de omega (sigma_q y sigma_t calibrados).\n")
+        cat("     En la rebaja del IDPC, la erosion total corresponde a la compensacion de la perdida mecanica.\n\n")
+        imprimir_tabla(tab_omega, digits = 4)
+        cat("\nA.3) Detalle por choque\n")
+        imprimir_oat("omega")
+    } else {
+        cat("\n(no evaluado: omega excluido en sensibilidad_consumo_comercio$parametros)\n")
+    }
+
+    cat("\n", strrep("=", 90), "\nB) ANALISIS DE COMERCIO EXTERIOR: Armington (sigma_q) y CET (sigma_t)\n",
+        strrep("=", 90), "\n", sep = "")
+    if (hay_comercio) {
+        cat("\nB.1) Rango de los indicadores recaudatorios sobre todas las combinaciones evaluadas\n")
+        cat("     (variaciones por separado", if (cruce_cc) " y grilla cruzada" else "", "; omega calibrado).\n", sep = "")
+        cat("     desvio_max_pp = maxima distancia de la variacion total a su valor central.\n\n")
+        imprimir_tabla(tab_comercio, digits = 4)
+        for (prm in intersect(c("sigma_q", "sigma_t"), prm_cc)) {
+            cat(sprintf("\nB.2) Detalle por choque: variacion de %s\n", prm))
+            imprimir_oat(prm)
+        }
+        if (cruce_cc) {
+            cat("\nB.3) Cruce sigma_q x sigma_t (omega calibrado)\n")
+            cat("\nVariacion total de la recaudacion (dTax_pp): filas = sigma_q, columnas = sigma_t.\n")
+            imprimir_tabla(vista_cruz("dTax_pp"))
+            cat("\nErosion total (pct_erosion, % del efecto tasa): filas = sigma_q, columnas = sigma_t.\n")
+            imprimir_tabla(vista_cruz("pct_erosion"), digits = 1)
+        }
+    } else {
+        cat("\n(no evaluado: sigma_q y sigma_t excluidos en sensibilidad_consumo_comercio$parametros)\n")
+    }
+
+    cat("\nAmplitud al mover una sola elasticidad dentro de la grilla (por choque):\n")
+    imprimir_tabla(amplitud_cc)
+})
+```
+
+# REDACCION DEL ANALISIS
+```{r results='asis'}
+# Texto del analisis generado a partir de los resultados de esta corrida: las cifras se
+# actualizan solas si cambian el modelo, la grilla o la calibracion. Cada choque se
+# describe por separado y la redaccion se centra en los efectos recaudatorios.
+menos <- function(s) sub("^-", "\u2212", s)                    # signo menos tipografico
+f4 <- function(x) menos(formatC(as.numeric(x), format = "f", digits = 4))
+f2 <- function(x) menos(formatC(as.numeric(x), format = "f", digits = 2))
+f1 <- function(x) menos(formatC(as.numeric(x), format = "f", digits = 1))
+# "entre a y b" con el sufijo en ambos extremos; si coinciden a la precision mostrada, "en a"
+entre <- function(x, f = f4, suf = "") {
+    x <- as.numeric(x[!is.na(x)])
+    a <- f(min(x)); b <- f(max(x))
+    if (a == b) sprintf("en %s%s", a, suf) else sprintf("entre %s%s y %s%s", a, suf, b, suf)
+}
+lista <- function(x) if (length(x) < 2) x else paste(paste(x[-length(x)], collapse = ", "), "y", x[length(x)])
+amplitud <- function(x) { x <- x[!is.na(x)]; if (length(x) >= 2) diff(range(x)) else NA_real_ }
+
+titulo_choque <- c(IDPC = "Disminución del IDPC", IVA = "Incremento del IVA",
+                   PIT  = "Aumento del impuesto a la renta de personas",
+                   TESP = "Aumento de los impuestos específicos")
+gen_choque <- c(IDPC = "de la disminución del IDPC", IVA = "del incremento del IVA",
+                PIT  = "del aumento del impuesto a la renta de personas",
+                TESP = "del aumento de los impuestos específicos")
+nom_sigma <- c(sigma_q = "σ_q", sigma_t = "σ_t")
+# Etiquetas de producto desde el YAML (producto principal de cada sector)
+etiq_prod <- setNames(sapply(cfg$sectores, `[[`, "etiqueta"), sapply(cfg$sectores, `[[`, "producto_principal"))
+etiq_prod[["prod_otros"]] <- "Otros bienes y servicios"
+del_imp <- c(VAT = "del IVA", TESP = "de los impuestos específicos", TARANCEL = "de los aranceles",
+             FIRMTAX = "del IDPC", TPROD = "de los impuestos a la producción", PITAX = "del impuesto personal")
+etiqueta_erosion <- function(ef_tasa) {
+    if (isTRUE(ef_tasa < 0)) "la compensación total de la pérdida mecánica" else "la erosión total del rendimiento mecánico"
+}
+
+parrafos <- character(0)
+sensibles_om <- character(0); conservadoras_om <- character(0)
+agregar  <- function(...) parrafos <<- c(parrafos, paste0(...))
+
+# ---------------------------- A) Consumo ------------------------------------------
+agregar("## A) Elasticidad de sustitución en el consumo")
+if (!hay_consumo) {
+    agregar("La elasticidad de sustitución en el consumo no se evaluó en esta corrida.")
+} else if (!control_ok) {
+    agregar("El control de choque nulo no se cumplió: con valores de ω distintos del calibrado, la base no ",
+            "reproduce la SAM o un choque nulo la desplaza. Los resultados de esta sección no son válidos y no deben reportarse.")
+} else {
+    agregar("La elasticidad de sustitución entre los bienes de consumo del hogar, ω, se fija en ", f1(om_cal),
+            " y se evalúa en los valores ", lista(f1(om_g)), ". Como interviene en la calibración de los ",
+            "parámetros de participación α, en cada punto estos se recalculan para que el equilibrio base siga reproduciendo ",
+            "la SAM; el control de choque nulo confirma que la base recalculada coincide con la vigente, por lo que la grilla ",
+            "aísla la respuesta de la recaudación a cada medida. El parámetro opera a través de la recomposición de la canasta ",
+            "de consumo ante cambios en los precios relativos de comprador: como las tasas efectivas del IVA difieren entre ",
+            "productos, el traslado del gasto entre bienes altera la base del impuesto (Atkinson y Stiglitz, 1980).")
+
+    d_om <- vista_oat("omega")
+    d_om <- d_om[d_om$valido == "si", ]
+    for (nm_ in names(choques_cc)) {
+        d  <- d_om[d_om$choque == nm_ & !is.na(d_om$dTax_pp), ]
+        if (nrow(d) < 2) next
+        c0 <- d[es_cal(d$omega, om_cal), ][1, ]
+        amp_t <- amplitud(d$dTax_pp)
+        txt <- paste0("**", titulo_choque[[nm_]], ".** La variación total de la recaudación se sitúa ",
+                      entre(d$dTax_pp), " puntos del PIB inicial, en torno al valor central de ", f4(c0$dTax_pp),
+                      ", y ", etiqueta_erosion(c0$ef_tasa_pp), ", ", entre(d$pct_erosion, f1, "%"), ".")
+        if (amp_t < umbral_inv) {
+            txt <- paste0(txt, " El resultado es prácticamente invariante a ω: la amplitud de la variación total en la grilla ",
+                          "es de ", f4(amp_t), " puntos del PIB. La medida apenas altera los precios relativos de los bienes ",
+                          "de consumo, que es el canal por el que opera ω; las variaciones proporcionales del nivel de ",
+                          "precios de comprador las absorbe el numerario.")
+        } else {
+            sensibles_om <- c(sensibles_om, nm_)
+            amp_b <- amplitud(d$ef_base_pp); amp_p <- amplitud(d$ef_precio_pp)
+            txt <- paste0(txt, if (amp_b >= amp_p)
+                sprintf(" La dispersión proviene principalmente del efecto base, que varía %s puntos, mientras el efecto precio se mantiene %s puntos.",
+                        entre(d$ef_base_pp), entre(d$ef_precio_pp))
+            else
+                sprintf(" La dispersión proviene principalmente del efecto precio, que varía %s puntos, mientras el efecto base se mantiene %s puntos.",
+                        entre(d$ef_precio_pp), entre(d$ef_base_pp)))
+            # Impuesto en que se concentra la variacion y recaudacion del propio impuesto
+            amps <- sapply(imp_rep, function(k) amplitud(d[[paste0("dR_", k, "_pp")]]))
+            k1   <- names(which.max(amps))
+            txt  <- paste0(txt, sprintf(" Por impuesto, la mayor variación se concentra en la recaudación %s, que varía %s puntos.",
+                                        del_imp[[k1]], entre(d[[paste0("dR_", k1, "_pp")]])))
+            propio <- intersect(impuestos_propios[[nm_]], imp_rep)
+            if (length(propio) == 1 && propio != k1)
+                txt <- paste0(txt, sprintf(" La recaudación %s, el impuesto modificado, varía %s puntos.",
+                                           del_imp[[propio]], entre(d[[paste0("dR_", propio, "_pp")]])))
+            if (!all(is.na(d$pct_base_otros)))
+                txt <- paste0(txt, sprintf(" Entre %s%% y %s%% del efecto base se produce en impuestos distintos del modificado.",
+                                           f1(min(d$pct_base_otros, na.rm = TRUE)), f1(max(d$pct_base_otros, na.rm = TRUE))))
+            pend <- suppressWarnings(cor(d$omega, d$dTax_pp))
+            if (isTRUE(pend < 0)) {
+                conservadoras_om <- c(conservadoras_om, nm_)
+                txt <- paste0(txt, " La recaudación es mayor cuanto menor es ω, porque una menor sustitución reduce el ",
+                              "traslado del gasto hacia los bienes con menor carga tributaria efectiva.")
+            } else if (isTRUE(pend > 0)) {
+                txt <- paste0(txt, " La recaudación es mayor cuanto mayor es ω.")
+            }
+        }
+        agregar(txt)
+    }
+
+    # Elasticidades implicitas y contraste con la evidencia
+    ec  <- elast_propia[es_cal(elast_propia$omega, om_cal), ]
+    i_mx <- which.max(ec$participacion_gasto)
+    agregar("La elasticidad precio propia no compensada que implica la función CES es ε = −ω + (ω − 1)·s, donde s es la ",
+            "participación del bien en el gasto de consumo de los hogares (Femenia, 2012). Con el valor calibrado, las ",
+            "elasticidades implícitas se ubican entre ", f2(min(ec$elasticidad_propia)), " y ", f2(max(ec$elasticidad_propia)),
+            "; la del bien con mayor participación en el gasto (", tolower(etiq_prod[[ec$producto[i_mx]]]), ", ", f1(100 * ec$participacion_gasto[i_mx]),
+            "%) es ", f2(ec$elasticidad_propia[i_mx]), ". La evidencia para los combustibles, uno de los principales bienes ",
+            "gravados con impuestos específicos, sitúa la elasticidad precio media de corto y largo plazo en −0.34 y −0.84 ",
+            "(Brons et al., 2008), y en −0.09 y −0.31 una vez corregido el sesgo de publicación (Havranek, Irsova y Janda, 2012). ",
+            "Como el modelo representa agregados de producto y no bienes individuales, la comparación es indicativa.",
+            if (length(conservadoras_om))
+                paste0(" Si la elasticidad efectiva fuera menor que la calibrada, las estimaciones centrales ",
+                       paste(gen_choque[conservadoras_om], collapse = " y "),
+                       " resultarían conservadoras, porque con valores menores de ω la erosión de sus bases es menor.")
+            else "")
+}
+
+# ---------------------------- B) Comercio exterior --------------------------------
+agregar("## B) Elasticidades de comercio exterior")
+if (!hay_comercio) {
+    agregar("Las elasticidades de comercio exterior no se evaluaron en esta corrida.")
+} else {
+    agregar("La elasticidad de sustitución Armington entre bienes importados y domésticos, σ_q, y la elasticidad de ",
+            "transformación CET entre exportaciones y ventas domésticas, σ_t, se fijan en ", f1(sq_cal), " y ", f1(st_cal),
+            ". Se evalúan σ_q en ", lista(f1(sq_g)), ", y σ_t en ", lista(f1(st_g)),
+            ", por separado", if (cruce_cc) " y en una grilla cruzada" else "", ", porque ambas determinan conjuntamente ",
+            "el ajuste del tipo de cambio real que requiere el cierre con ahorro externo fijo en divisas (de Melo y Robinson, 1989). ",
+            "El rango de σ_q se apoya en el promedio estimado para los países de ingreso alto (Devarajan, Go y Robinson, 2023) y ",
+            "en la mediana de la elasticidad de Armington corregida por sesgos de publicación y de diseño (Bajzik et al., 2020); ",
+            "el de σ_t, en los promedios estimados para países de ingreso alto y en desarrollo (Devarajan, Go y Robinson, 2023).")
+    for (nm_ in names(choques_cc)) {
+        r <- tab_comercio[tab_comercio$choque == nm_, ]
+        if (!nrow(r) || is.na(r$dTax_central)) next
+        txt <- paste0("**", titulo_choque[[nm_]], ".** En las ", r$n_casos, " combinaciones evaluadas, la variación total ",
+                      "de la recaudación se sitúa ", entre(c(r$dTax_min, r$dTax_max)), " puntos del PIB inicial, en torno al ",
+                      "valor central de ", f4(r$dTax_central), ", y ", etiqueta_erosion(
+                          sens_cc$ef_tasa_pp[sens_cc$choque == nm_ & es_cal(sens_cc$omega, om_cal) &
+                                             es_cal(sens_cc$sigma_q, sq_cal) & es_cal(sens_cc$sigma_t, st_cal)][1]),
+                      ", ", entre(c(r$erosion_min, r$erosion_max), f1, "%"), ". La distancia máxima respecto del valor central es de ",
+                      f4(r$desvio_max_pp), " puntos del PIB.")
+        txt <- paste0(txt, if (r$desvio_max_pp < umbral_inv)
+            " El resultado recaudatorio es robusto a las elasticidades de comercio exterior dentro del rango evaluado."
+        else {
+            a <- amplitud_cc[amplitud_cc$choque == nm_ & amplitud_cc$parametro %in% c("sigma_q", "sigma_t"), ]
+            a$amp <- a$dTax_max - a$dTax_min
+            sprintf(" La sensibilidad proviene principalmente de %s, cuya variación por separado desplaza la recaudación en %s puntos.",
+                    nom_sigma[[a$parametro[which.max(a$amp)]]], f4(max(a$amp)))
+        })
+        agregar(txt)
+    }
+    # Mecanismo y direccion de la respuesta cambiaria
+    txt <- paste0("Este resultado se explica porque las elasticidades de comercio exterior operan a través del ajuste del ",
+                  "tipo de cambio real, que con las elasticidades centrales varía ", entre(tab_comercio$dexr_central, f2, "%"),
+                  " en las medidas evaluadas. Ante movimientos de esa magnitud, la curvatura de las funciones Armington y CET ",
+                  "introduce en las bases tributarias diferencias de segundo orden. Además, el IVA y los impuestos específicos ",
+                  "gravan la demanda final sin distinguir el origen del bien, de modo que la sustitución entre bienes domésticos ",
+                  "e importados no altera materialmente sus bases.")
+    if ("sigma_q" %in% prm_cc) {
+        d_sq <- vista_oat("sigma_q")
+        mayor_ajuste <- sapply(names(choques_cc), function(nm_) {
+            dd <- d_sq[d_sq$choque == nm_ & !is.na(d_sq$dexr), ]
+            if (nrow(dd) < 2) return(NA)
+            abs(dd$dexr[which.min(dd$sigma_q)]) > abs(dd$dexr[which.max(dd$sigma_q)])
+        })
+        if (all(mayor_ajuste, na.rm = TRUE) && any(!is.na(mayor_ajuste)))
+            txt <- paste0(txt, " La dirección de la respuesta es la esperada: con una elasticidad de Armington menor, el ",
+                          "ajuste cambiario requerido es mayor en cada una de las medidas.")
+    }
+    agregar(txt, " La conclusión se refiere a las medidas evaluadas y no se extiende a instrumentos que alteren ",
+            "directamente los precios relativos de los bienes transables, como los aranceles, para los cuales la literatura ",
+            "documenta una dependencia sustantiva de los resultados respecto de estas elasticidades (Hertel et al., 2007).")
+}
+
+# ---------------------------- Sintesis --------------------------------------------
+agregar("## Síntesis")
+d_val <- sens_cc[sens_cc$valido == "si" & !is.na(sens_cc$dTax_pp), ]
+d_val <- d_val[!is.na(d_val$ef_tasa_pp), ]
+signo_ok <- nrow(d_val) > 0 && all(sign(d_val$dTax_pp) == sign(d_val$ef_tasa_pp))
+agregar(if (signo_ok)
+            "La variación total de la recaudación conserva el signo del efecto tasa en todas las combinaciones evaluadas."
+        else
+            "En al menos una combinación evaluada, la variación total de la recaudación no conserva el signo del efecto tasa; ver el detalle por choque.",
+        if (hay_comercio && all(tab_comercio$desvio_max_pp < umbral_inv, na.rm = TRUE))
+            " Los resultados recaudatorios de las medidas evaluadas son robustos a las elasticidades de comercio exterior." else "",
+        if (hay_consumo && control_ok && length(sensibles_om))
+            paste0(" Los resultados ", paste(gen_choque[sensibles_om], collapse = " y "),
+                   " son sensibles a ω, por lo que conviene reportarlos junto con su rango (Harrison y Vinod, 1992; Dixon y Rimmer, 2013).")
+        else "")
+
+agregar("## Referencias")
+agregar("Atkinson, A. B. y Stiglitz, J. E. (1980). *Lectures on Public Economics*. McGraw-Hill.")
+agregar("Bajzik, J., Havranek, T., Irsova, Z. y Schwarz, J. (2020). Estimating the Armington elasticity: The importance of study design and publication bias. *Journal of International Economics*, 127, 103383.")
+agregar("Brons, M., Nijkamp, P., Pels, E. y Rietveld, P. (2008). A meta-analysis of the price elasticity of gasoline demand. A SUR approach. *Energy Economics*, 30(5), 2105–2122.")
+agregar("de Melo, J. y Robinson, S. (1989). Product differentiation and the treatment of foreign trade in computable general equilibrium models of small economies. *Journal of International Economics*, 27(1–2), 47–67.")
+agregar("Devarajan, S., Go, D. S. y Robinson, S. (2023). *Trade Elasticities in Aggregate Models: Estimates for 191 Countries*. World Bank, Policy Research Working Paper 10490.")
+agregar("Dixon, P. B. y Rimmer, M. T. (2013). Validation in computable general equilibrium modeling. En P. B. Dixon y D. W. Jorgenson (eds.), *Handbook of Computable General Equilibrium Modeling*, vol. 1, 1271–1330. Elsevier.")
+agregar("Femenia, F. (2012). *Functional Forms Commonly Used in CGE Models*. AGRODEP, Technical Note TN-02.")
+agregar("Harrison, G. W. y Vinod, H. D. (1992). The sensitivity analysis of applied general equilibrium models: Completely randomized factorial sampling designs. *Review of Economics and Statistics*, 74(2), 357–362.")
+agregar("Havranek, T., Irsova, Z. y Janda, K. (2012). Demand for gasoline is more price-inelastic than commonly thought. *Energy Economics*, 34(1), 201–207.")
+agregar("Hertel, T., Hummels, D., Ivanic, M. y Keeney, R. (2007). How confident can we be of CGE-based assessments of Free Trade Agreements? *Economic Modelling*, 24(4), 611–635.")
+
+# Salida en el documento (markdown) y version en texto plano para los archivos .txt
+cat(paste0(parrafos, collapse = "\n\n"), "\n")
+txt_analisis <- gsub("\\*\\*|\\*", "", sub("^## ", "", parrafos))
+txt_analisis <- unlist(lapply(txt_analisis, function(p) c(strwrap(p, width = 100), "")))
+```
+
+# ARCHIVO DE RESULTADOS DE LA SENSIBILIDAD
+```{r}
+# Archivo propio: se reescribe en cada corrida con las tablas y el analisis redactado.
+# El analisis tambien se agrega al archivo general de eval_shocks.Rmd.
+txt_escribir(c("", strrep("=", 90), "ANALISIS: sensibilidad a las elasticidades de consumo y de comercio exterior",
+               strrep("=", 90), txt_analisis))
+con_cc <- file(archivo_txt_cc, open = "w", encoding = "UTF-8")
+writeLines(c("MEGC-Chile - Sensibilidad a las elasticidades de consumo y de comercio exterior",
+             strrep("=", 90), salida_cc,
+             "", strrep("=", 90), "C) ANALISIS REDACTADO", strrep("=", 90), "", txt_analisis), con_cc)
+close(con_cc)
+cat(sprintf("Resultados de sensibilidad escritos en: %s\n", normalizePath(archivo_txt_cc, winslash = "/")))
+```

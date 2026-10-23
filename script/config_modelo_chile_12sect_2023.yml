@@ -12,6 +12,7 @@ archivos:
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_12_sect_23_auto.gcn"
   resultados_output: "../output/resultados_shocks_12sect_2023.txt"
+  resultados_sens_consumo_comercio: "../output/resultados_sens_consumo_comercio.txt"
 
 opciones_datos:
   separador_csv: ","
@@ -292,6 +293,15 @@ shocks_default:
     participacion_idpc_en_firmtax: 0.916
     fuente_chi: "IDPC devengado SII / Imp_dir empresas Banco Central, 2023"
     formula_factor: "1 + cambio_puntos_tasa * participacion_idpc_en_firmtax / tasa_nominal_base"
+
+
+sensibilidad_consumo_comercio:
+  parametros: [omega, sigma_q, sigma_t]
+  omega:   [0.5, 0.8, 1.2, 1.5, 2.0]
+  sigma_q: [1.4, 2.0, 2.9, 3.8]
+  sigma_t: [0.6, 1.0, 1.5, 3.0]
+  exclusion_omega_unitario: 0.05
+
 
 validaciones:
   verificar_balance_sam: true
