@@ -19,7 +19,7 @@ calc_pib <- function(model_obj, model_ref = NULL) {
 
     p_names <- unlist(cfg$productos)
     p_eq  <- ss_vals[paste0("p__",  p_names)]
-    pq_eq <- ss_vals[paste0("pq__", p_names)]   # precio de comprador (incluye IVA)
+    pq_eq <- ss_vals[paste0("pq__", p_names)]   # precio de comprador (incluye IVA, impuesto adicional y especificos)
 
     # Componentes del gasto a precios de mercado: GDP = C + G + I + V + X - M
     inv_adj_val <- ss_vals["inv_adj"]
@@ -32,7 +32,7 @@ calc_pib <- function(model_obj, model_ref = NULL) {
     C     <- sum(D_q * pq_eq, na.rm = TRUE)
     G_val <- sum(G_q * pq_eq, na.rm = TRUE)
     I_val <- sum(I_q * pq_eq, na.rm = TRUE) * inv_adj_val
-    V_val <- sum(V_q * p_eq,  na.rm = TRUE)          # existencias sin IVA
+    V_val <- sum(V_q * p_eq,  na.rm = TRUE)          # existencias sin impuestos sobre productos
 
     pe_eq  <- ss_vals[paste0("pe__", p_names)]
     E_vals <- ss_vals[paste0("EX__", p_names)]
@@ -65,6 +65,7 @@ calc_pib <- function(model_obj, model_ref = NULL) {
                 FIRMTAX = ss_vals["FIRMTAX"],
                 PITAX = ss_vals["PITAX"],
                 VAT = ss_vals["VAT"],
+                TADIC = ss_vals["TADIC"],
                 TPROD = ss_vals["TPROD"],
                 TESP = ss_vals["TESP"],
                 TARANCEL = ss_vals["TARANCEL"]))
@@ -93,9 +94,23 @@ pib_real_base <- pib_model_list$PIB_real
 pib_df <- data.frame(
     Componente = c("Consumo_Hog", "Consumo_Gob", "Inversion", "Var_Exist", "Exports", "Imports_(-)", "PIB_Total"),
     SAM_Base = c(sum(D_m), sum(G_m), sum(I_m), sum(V_m), sum(E_m), sum(M_m), PIB_SAM),
-    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I, 
+    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I,
                   pib_model_list$V, pib_model_list$X, pib_model_list$M, pib_base)
 )
 pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
 print(pib_df)
+
+# Recaudacion de la base frente a la SAM (incluye la separacion IVA / impuesto adicional)
+rec_df <- data.frame(
+    Impuesto  = c("VAT", "TADIC", "VAT+TADIC (fila IVA)", "TESP", "TPROD", "TARANCEL", "PITAX", "FIRMTAX", "Tax"),
+    SAM_Base  = c(VAT_sum, TADIC_sum, IVA_row_sum, Imptos_Espec_sum, Activity_Tax_sum, Arancel_sum,
+                  PITAX_v, FIRMTAX_v, Tax_v),
+    Modelo_Eq = as.numeric(c(pib_model_list$VAT, pib_model_list$TADIC,
+                             pib_model_list$VAT + pib_model_list$TADIC, pib_model_list$TESP,
+                             pib_model_list$TPROD, pib_model_list$TARANCEL, pib_model_list$PITAX,
+                             pib_model_list$FIRMTAX, pib_model_list$Tax))
+)
+rec_df$Diferencia <- round(rec_df$Modelo_Eq - rec_df$SAM_Base, 6)
+rec_df$Pct_PIB    <- round(rec_df$Modelo_Eq / pib_base * 100, 4)
+print(rec_df)
 ```

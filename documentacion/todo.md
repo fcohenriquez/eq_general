@@ -2,12 +2,13 @@
 
 | Hecho | Tarea |
 | :---: | :--- |
+| [ ] | Abrir la SAM a productos destacados (cobre, petroleo, tabaco, bebidas, etc.) |
 | [ ] | Revisar la SAM (entender mejor el sector externo  y en general el institucional) |
 | [ ] | Abrir los Impuestos, por ejemplo el impuesto a las empresas y simular el sismema de créditos. |
 | [ ] | Abrir los hogares, por ejemplo por quintiles de ingreso. |
 | [ ] | Agregar el Margen de comercio. |
-| [ ] | Dejar de gravar con IVA a los insumos.|
-| [ ] | Discutir la base imponible de FIRMTAX (ahora es el capital). El problema de esto es que las utilidades de los sectores son por definición 0 en este modelo| 
+| [✅] | Dejar de gravar con IVA a los insumos.|
+| [✅] | Discutir la base imponible de FIRMTAX (ahora es el capital). El problema de esto es que las utilidades de los sectores son por definición 0 en este modelo| 
 | [ ] | Averiguar qué pasa con las contribuciones y con el impuesto adicional| 
 | [✅] | Sensibilizar los parámetros de oferta agregada (Omega, Utilización, etc..). | 
 | [ ] | Revisar el modelamiento del sector externo. Se podrá modelar que una aprte del capital sea extranjero y reaccione ante las políticas? | 
