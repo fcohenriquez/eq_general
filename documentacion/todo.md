@@ -10,6 +10,8 @@
 | [ ] | Agregar el Margen de comercio. |
 | [ ] | Averiguar qué pasa con las contribuciones y con el impuesto adicional. El impuesto adicional se registra en cuentas nacionales como transferencias correintes del resto del mundo al gobierno central. Se debe representar también las remesas al exterior para representarlo| 
 | [ ] | Revisar el modelamiento del sector externo. Se podrá modelar que una aprte del capital sea extranjero y reaccione ante las políticas? | 
+| [ ] | Incorporar royalty a la minería del cobre | 
+| [ ] | Incorporar la informalidad y evasión |
 | [✅] | Dejar de gravar con IVA a los insumos.|
 | [✅] | Discutir la base imponible de FIRMTAX (ahora es el capital). El problema de esto es que las utilidades de los sectores son por definición 0 en este modelo| 
 | [✅] | Sensibilizar los parámetros de oferta agregada (Omega, Utilización, etc..). | 

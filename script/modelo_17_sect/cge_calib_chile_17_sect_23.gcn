@@ -14,6 +14,8 @@
 #  - Las ofertas de factores responden al retorno real NETO de impuestos directos:
 #    el trabajo, al salario neto de PIT; el capital, al retorno neto del IDPC
 #    (capital de empresas) y del PIT (capital de hogares).
+#  - Base del PIT: ingreso de los hogares antes de impuestos (BTINC) menos las
+#    transferencias del gobierno (TRGOV), que no tributan.
 # Impuestos sobre productos (cunas de precio sobre la demanda final):
 #  - IVA (t_iva), impuesto adicional ad valorem a bebidas (t_adic, misma base que
 #    el IVA) e impuestos especificos por unidad fisica (tau_e).
@@ -339,7 +341,10 @@ block GOB
         Kg[] = KD[] * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
         TADIC[] = SUM<idx_ta::Pdom>(TADIC_p<idx_ta>[]);
-        PITAX[] = pit * (pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
+        # Base del PIT: rentas del capital y del trabajo de los hogares, transferencias de
+        # empresas y prestaciones sociales. Las transferencias del gobierno (TRGOV) forman
+        # parte del ingreso (BTINC) pero no de la base imponible.
+        PITAX[] = pit * (pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
         TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
                   SUM<idx_sb::SB>(tps<idx_sb> * revenue<idx_sb>[]);
         TESP[] = SUM<te_p::Pdom>(TESP_p<te_p>[]) +

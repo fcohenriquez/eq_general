@@ -339,7 +339,11 @@ INGF_v_sam <- sum(chile_sam[cfg$cuentas_sam$instituciones$empresas, !names(chile
 BTINC_v_sam <- sum(chile_sam[cat_hogares, !names(chile_sam) %in% c("Total")])
 
 fit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cfg$cuentas_sam$instituciones$empresas] / (Kf_val + pad_floor))
-pit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares] / (BTINC_v_sam + pad_floor))
+# Base imponible del PIT: ingreso de los hogares antes de impuestos menos las
+# transferencias del gobierno (TRGOV), que no tributan (bloque GOB del .gcn).
+TRGOV_v_sam <- as.numeric(chile_sam[cat_hogares, cat_gobierno])
+BASE_PIT_v_sam <- BTINC_v_sam - TRGOV_v_sam
+pit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares] / (BASE_PIT_v_sam + pad_floor))
 INC_v_sam <- BTINC_v_sam - chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares]
 por_trgov_val <- chile_sam[cat_hogares, cat_gobierno] / (INGG_v_sam + pad_floor)
 por_tremp_val <- chile_sam[cat_hogares, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
@@ -709,6 +713,16 @@ chk_iva <- c(
 )
 print(round(chk_iva, 8))
 if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con impuestos en precios no replica la SAM; revisar chk_iva.")
+
+# --- Validacion del PIT: con TRGOV fuera de la base imponible, la recaudacion y la
+# base del equilibrio inicial deben replicar la SAM ---
+chk_pit <- c(
+    PITAX_modelo_menos_SAM    = as.numeric(ss_chk["PITAX"]) - PITAX_v,
+    base_PIT_modelo_menos_SAM = as.numeric(ss_chk["BTINC"] - ss_chk["TRGOV"]) - BASE_PIT_v_sam
+)
+print(round(chk_pit, 8))
+cat(sprintf("Tasa efectiva del PIT sobre la base imponible (BTINC - TRGOV): %.6f\n", pit_val))
+if (any(abs(chk_pit) > 1e-4)) warning("El PIT del equilibrio base no replica la SAM; revisar chk_pit.")
 
 # --- Validacion del cierre: numerario, prestaciones sociales y balanza de pagos ---
 # La balanza de pagos no es una ecuacion del modelo: la implica la ley de Walras.

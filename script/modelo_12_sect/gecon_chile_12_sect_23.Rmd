@@ -223,7 +223,11 @@ INGF_v_sam <- sum(chile_sam[cfg$cuentas_sam$instituciones$empresas, !names(chile
 BTINC_v_sam <- sum(chile_sam[cat_hogares, !names(chile_sam) %in% c("Total")])
 
 fit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cfg$cuentas_sam$instituciones$empresas] / (Kf_val + pad_floor))
-pit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares] / (BTINC_v_sam + pad_floor))
+# Base imponible del PIT: ingreso de los hogares antes de impuestos menos las
+# transferencias del gobierno (TRGOV), que no tributan (bloque GOB del .gcn).
+TRGOV_v_sam <- as.numeric(chile_sam[cat_hogares, cat_gobierno])
+BASE_PIT_v_sam <- BTINC_v_sam - TRGOV_v_sam
+pit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares] / (BASE_PIT_v_sam + pad_floor))
 INC_v_sam <- BTINC_v_sam - chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares]
 por_trgov_val <- chile_sam[cat_hogares, cat_gobierno] / (INGG_v_sam + pad_floor)
 por_tremp_val <- chile_sam[cat_hogares, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
@@ -425,10 +429,10 @@ par_flat <- unlist(list(
     get_flow_values(w_pot_calib_vals, "w_pot_calib", cat_trabajo),
     get_flow_values(Lh_vals / (l_total_data_vals + pad_floor), "par_l_h", cat_trabajo),
     get_flow_values(L_row_vals / (l_total_data_vals + pad_floor), "par_l_row", cat_trabajo),
-    
-    omega = omega_val, 
+
+    omega = omega_val,
     sigma_q = sigma_q_val, sigma_t = sigma_t_val,
-    #k_total_data = sum(K_vals) + chile_sam[cat_row, cat_capital], 
+    #k_total_data = sum(K_vals) + chile_sam[cat_row, cat_capital],
     #par_k_h = Kh_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
     #par_k_f = Kf_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
     #par_k_g = Kg_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
@@ -437,8 +441,8 @@ par_flat <- unlist(list(
     par_k_h = Kh_val / (k_used_data_val + pad_floor),
     par_k_f = Kf_val / (k_used_data_val + pad_floor),
     par_k_g = Kg_val / (k_used_data_val + pad_floor),
-    psi = psi_val, pk_pot_calib = pk_pot_calib_val,    
-    
+    psi = psi_val, pk_pot_calib = pk_pot_calib_val,
+
     por_cont = por_cont_h_val, por_sav = por_sav_h_val,
     trgov_data = TRGOV_v, por_tremp = por_tremp_val, por_tr_f_g = por_tr_f_g_val,
     por_cont_soc_f = por_cont_soc_f_val, por_cont_soc_g = por_cont_soc_g_val,
@@ -446,7 +450,7 @@ par_flat <- unlist(list(
     pit = pit_val, fit = fit_val,
     # Tasas de la base: normalizan las curvas de oferta netas de impuestos
     pit_base = pit_val, fit_base = fit_val,
-    fact_row_in_k_data = as.numeric(fact_row_in_k_data), 
+    fact_row_in_k_data = as.numeric(fact_row_in_k_data),
     fact_row_in_l_data = as.numeric(fact_row_in_l_data),
     SAVext_target = SAVext_v,
     # Numerario IPC
@@ -466,7 +470,7 @@ par_flat <- unlist(list(
     get_flow_values(c(1e-6, 1e-6), "dst_nc", p_names[pnc_idx]),
     get_flow_values(t_iva_r[pdom_idx], "t_iva", p_names[pdom_idx]),
     get_flow_values(t_iva_int_r[pdom_idx], "t_iva_int", p_names[pdom_idx]),
-    get_flow_values(tar_r, "tar_rate", p_names), 
+    get_flow_values(tar_r, "tar_rate", p_names),
     get_flow_values(rep(1, length(p_names)), "pworlde", p_names),
     get_flow_values(rep(1, length(p_names)), "pworldm", p_names),
     get_flow_values(t_pro_r, "tps", s_names),
@@ -489,7 +493,7 @@ pdom_names <- p_names[pdom_idx]
 pminp_names <- p_names[pminp_idx]
 
 calib_par_flat <- unlist(list(
-    get_flow_values(alpha_v, "alpha", p_names[pcon_idx]), 
+    get_flow_values(alpha_v, "alpha", p_names[pcon_idx]),
     get_flow_values(gamma_v, "gamma", s_names),
     get_flow_values(bk, "betak", s_names),
     get_flow_values(t(bl_mat), "betal", s_names, cat_trabajo)
@@ -513,14 +517,14 @@ var_list <- list(
 
 init_vars <- unlist(list(
     var_list,
-    
+
     get_flow_values(rep(1, length(cat_trabajo)), "w", cat_trabajo),
     get_flow_values(Lh_vals, "Lh", cat_trabajo),
     get_flow_values(l_total_data_vals, "LD", cat_trabajo),
     get_flow_values(l_force_data_vals, "LFORCE", cat_trabajo),
     get_flow_values(u_base_val, "u_rate", cat_trabajo),
     get_flow_values(t(L_mat), "L", s_names, cat_trabajo),
-    
+
     get_flow_values(rep(0, length(s_names)), "pi", s_names),
     get_flow_values(p_base, "p", p_names),
     get_flow_values(rep(1, length(p_names)), "pd", p_names),
@@ -590,6 +594,16 @@ chk_iva <- c(
 )
 print(round(chk_iva, 8))
 if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con IVA en precios no replica la SAM; revisar chk_iva.")
+
+# --- Validacion del PIT: con TRGOV fuera de la base imponible, la recaudacion y la
+# base del equilibrio inicial deben replicar la SAM ---
+chk_pit <- c(
+    PITAX_modelo_menos_SAM    = as.numeric(ss_chk["PITAX"]) - PITAX_v,
+    base_PIT_modelo_menos_SAM = as.numeric(ss_chk["BTINC"] - ss_chk["TRGOV"]) - BASE_PIT_v_sam
+)
+print(round(chk_pit, 8))
+cat(sprintf("Tasa efectiva del PIT sobre la base imponible (BTINC - TRGOV): %.6f\n", pit_val))
+if (any(abs(chk_pit) > 1e-4)) warning("El PIT del equilibrio base no replica la SAM; revisar chk_pit.")
 
 # --- Validacion del cierre: numerario, prestaciones sociales y balanza de pagos ---
 # La balanza de pagos no es una ecuacion del modelo: la implica la ley de Walras.

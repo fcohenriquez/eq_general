@@ -11,6 +11,8 @@
 #    el trabajo, al salario neto de PIT; el capital, al retorno neto del IDPC
 #    (capital de empresas) y del PIT (capital de hogares). Asi los impuestos
 #    directos e indirectos llegan a la oferta de factores por el mismo canal.
+#  - Base del PIT: ingreso de los hogares antes de impuestos (BTINC) menos las
+#    transferencias del gobierno (TRGOV), que no tributan.
 ##################################
 
 
@@ -58,7 +60,7 @@ indexsets
   S  = {'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_const',
          'Act_com_hot_rest', 'Act_trans_comu_inf', 'Act_int_fin', 'Act_inmo_viv',
          'Act_serv_emp', 'Act_serv_pers', 'Act_adm_pub'};
-         
+
   PMinP = {'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
           'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
           'prod_serv_emp', 'prod_serv_pers'};
@@ -86,7 +88,7 @@ block CONSUMER
     {
         SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
     };
-    
+
     identities
     {
         INC[] = BTINC[] - PITAX[];
@@ -309,7 +311,10 @@ block GOB
         #Kg[] = k_total_data * par_k_g;
         Kg[] = KD[] * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
-        PITAX[] = pit * (pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
+        # Base del PIT: rentas del capital y del trabajo de los hogares, transferencias de
+        # empresas y prestaciones sociales. Las transferencias del gobierno (TRGOV) forman
+        # parte del ingreso (BTINC) pero no de la base imponible.
+        PITAX[] = pit * (pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
         TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
                   SUM<idx_sb::SB>(tps<idx_sb> * revenue<idx_sb>[]);
         TESP[] = SUM<te_p::Pdom>(TESP_p<te_p>[]) +
@@ -322,9 +327,9 @@ block GOB
 
 block EQUILIBRIUM
 {
-    identities 
+    identities
     {
-       <l::LAB> LD<l>[] = SUM<idx_ea::SA>(L<idx_ea,l>[]) 
+       <l::LAB> LD<l>[] = SUM<idx_ea::SA>(L<idx_ea,l>[])
                  + SUM<idx_eb::SB>(L<idx_eb,l>[])
                  + l_total_data<l> * par_l_row<l>;
 
@@ -338,15 +343,15 @@ block EQUILIBRIUM
        <l::LAB> w<l>[] * (1 - pit) / (1 - pit_base) = CPI[] * w_pot_calib<l> * (LD<l>[] / LFORCE<l>[])^phi<l>;
 
        #<l::LAB> u_rate<l>[] = (l_force_data<l> - LD<l>[]) / l_force_data<l>;
-       
+
        <l::LAB> u_rate<l>[] = (LFORCE<l>[] - LD<l>[]) / LFORCE<l>[];
 
        <l::LAB> Lh<l>[] = LD<l>[] * par_l_h<l>;
 
         #SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
-        
+
         #Kh[] = k_total_data * par_k_h;
-        
+
         KD[]  = SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]);
 
         u_k[] = KD[] / k_total_data;
@@ -359,7 +364,7 @@ block EQUILIBRIUM
               = CPI[] * pk_pot_calib * (u_k[])^psi;
 
         Kh[]  = KD[] * par_k_h;
-        
+
         # Prestaciones sociales: los hogares reciben lo que pagan empresas y gobierno
         PSh[] = INGF[] * por_pres_soc_f + INGG[] * por_pres_soc_g;
 
