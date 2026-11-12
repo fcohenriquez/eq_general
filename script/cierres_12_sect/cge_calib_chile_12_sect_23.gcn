@@ -1,0 +1,437 @@
+##################################
+# MEGC-Chile 12 sectores, SAM 2023.
+# Cierre macro:
+#  - Numerario: IPC (CPI[] = cpi_num). El sistema es homogeneo de grado cero en
+#    precios: todo parametro nominal esta indexado a CPI (o a exr si es externo).
+#  - Inversion determinada por el ahorro: inv_adj se ajusta para que S = I.
+#  - Ahorro externo fijo en moneda extranjera: SAVext = SAVext_target * exr.
+#  - Prestaciones sociales: lo que pagan empresas y gobierno es lo que reciben
+#    los hogares (PSh endogeno), de modo que la ley de Walras se cumple.
+#  - Las ofertas de factores responden al retorno real NETO de impuestos directos:
+#    el trabajo, al salario neto de PIT; el capital, al retorno neto del IDPC
+#    (capital de empresas) y del PIT (capital de hogares). Asi los impuestos
+#    directos e indirectos llegan a la oferta de factores por el mismo canal.
+#  - Base del PIT: ingreso de los hogares antes de impuestos (BTINC) menos las
+#    transferencias del gobierno (TRGOV), que no tributan.
+#
+# Cierres alternativos (bloque CIERRE). Los valores por defecto de los
+# interruptores reproducen el cierre descrito arriba:
+#  - sw_joh = 0: inversion determinada por el ahorro (s_adj = 1, inv_adj endogeno).
+#    sw_joh = 1: cierre de Johansen (inv_adj = 1; la propension al ahorro de los
+#    hogares se ajusta mediante s_adj).
+#  - sw_g = sw_tr = 0: tasas, gasto y transferencias reales fijos; ahorro publico
+#    residual (g_adj = tr_adj = 1).
+#    sw_g = 1: ahorro publico real fijo en SAVg_target; el consumo del gobierno en
+#    volumen se ajusta mediante g_adj.
+#    sw_tr = 1: ahorro publico real fijo en SAVg_target; las transferencias reales
+#    a hogares se ajustan mediante tr_adj.
+#  - sw_g y sw_tr no pueden valer 1 simultaneamente (sistema singular).
+#  - SAVg_target debe fijarse en el ahorro publico real del equilibrio base antes
+#    de activar sw_g o sw_tr (eval_cierres_12_sect_23.Rmd).
+##################################
+
+
+
+indexsets
+{
+  LAB = {'Trabajo_1', 'Trabajo_2', 'Trabajo_3'};
+
+  P    = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+           'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+           'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
+
+
+
+  Pdom = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+           'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+           'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub'};
+
+  # Pdom_arm: productos con importaciones > 0 (excluye prod_adm_pub, cero estructural en M)
+  Pdom_arm = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+              'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+              'prod_serv_emp', 'prod_serv_pers'};
+
+  Pno_const = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+               'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
+               'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers',
+               'prod_adm_pub', 'prod_otros'};
+
+  Pcon  = {'prod_Agri', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
+            'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv', 'prod_serv_emp',
+            'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
+
+  P_Exp  = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+             'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
+             'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers'};
+
+  P_NExp = {'prod_const', 'prod_adm_pub'};
+
+  SA = {'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_com_hot_rest',
+        'Act_trans_comu_inf', 'Act_int_fin', 'Act_serv_emp',
+        'Act_serv_pers', 'Act_adm_pub'};
+
+  SB = {'Act_const', 'Act_inmo_viv'};
+
+  S  = {'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_const',
+         'Act_com_hot_rest', 'Act_trans_comu_inf', 'Act_int_fin', 'Act_inmo_viv',
+         'Act_serv_emp', 'Act_serv_pers', 'Act_adm_pub'};
+
+  PMinP = {'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
+          'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+          'prod_serv_emp', 'prod_serv_pers'};
+
+  # PdomNoC: productos domesticos salvo construccion (usados como insumo por SA y SB)
+  PdomNoC = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+             'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
+             'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub'};
+};
+
+
+block CONSUMER
+{
+    controls
+    {
+        <idx_d::Pcon> D<idx_d>[];
+    };
+
+    objective
+    {
+        U[] = (SUM<idx_c::Pcon>(alpha<idx_c> * (D<idx_c>[]^((omega - 1.0)/omega))))^(omega/(omega - 1.0));
+    };
+
+    constraints
+    {
+        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+    };
+
+    identities
+    {
+        INC[] = BTINC[] - PITAX[];
+        BTINC[] = pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
+        # s_adj = 1 salvo en el cierre de Johansen (sw_joh = 1)
+        SAV[] = INC[] * por_sav * s_adj[];
+        CS[] = INC[] * por_cont;
+        D<'prod_Min'>[] = dst_nc<'prod_Min'>;
+        D<'prod_const'>[] = dst_nc<'prod_const'>;
+    };
+
+    calibration
+    {
+        <idx_cal::Pcon> D<idx_cal>[] = dst<idx_cal> -> alpha<idx_cal>;
+    };
+};
+
+block <sa::SA> SECTORS_A {
+  controls { V<sa>[], K<sa>[],  <l::LAB> L<sa,l>[]; };
+  objective {
+    pi<sa>[] = V<sa>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sa>))*(1-tps<sa>-tes<sa>)
+              - K<sa>[]*pk[] - SUM<l::LAB>(L<sa,l>[] * w<l>[])
+              - SUM<p_no_c::Pno_const>(io<p_no_c,sa>*V<sa>[]*pint<p_no_c>[]);
+  };
+  constraints { V<sa>[] = gamma<sa>*(K<sa>[]^betak<sa>)*PROD<l::LAB>(L<sa,l>[]^betal<sa,l>); };
+  identities {
+    <p_dom::Pdom> Yap<p_dom,sa>[] = V<sa>[]*make_share<p_dom,sa>;
+    revenue<sa>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sa>[]*pz<p_rev>[]);
+    net_revenue<sa>[] = revenue<sa>[]*(1-tps<sa>-tes<sa>);
+    <p_no_cx::Pno_const> X<p_no_cx,sa>[] = io<p_no_cx,sa>*V<sa>[];
+    va_nom<sa>[] = net_revenue<sa>[] - SUM<p_no_cv::Pno_const>(io<p_no_cv,sa>*V<sa>[]*pint<p_no_cv>[]);
+  };
+  calibration {
+    V<sa>[] = vst<sa> -> gamma<sa>;
+    K<sa>[]*pk[] = va_nom<sa>[]*betak<sa> -> betak<sa>;
+   <l::LAB> L<sa,l>[] * w<l>[] = va_nom<sa>[] * betal<sa,l> -> betal<sa,l>;
+  };
+};
+
+block <sb::SB> SECTORS_B {
+  controls { V<sb>[], K<sb>[],  <l::LAB> L<sb,l>[]; };
+  objective {
+    pi<sb>[] = V<sb>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sb>))*(1-tps<sb>-tes<sb>)
+              - K<sb>[]*pk[] - SUM<l::LAB>(L<sb,l>[] * w<l>[])
+              - SUM<p_full::P>(io<p_full,sb>*V<sb>[]*pint<p_full>[]);
+  };
+  constraints { V<sb>[] = gamma<sb>*(K<sb>[]^betak<sb>)*PROD<l::LAB>(L<sb,l>[]^betal<sb,l>); };
+  identities {
+    <p_dom::Pdom> Yap<p_dom,sb>[] = V<sb>[]*make_share<p_dom,sb>;
+    revenue<sb>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sb>[]*pz<p_rev>[]);
+    net_revenue<sb>[] = revenue<sb>[]*(1-tps<sb>-tes<sb>);
+    <p_fullx::P> X<p_fullx,sb>[] = io<p_fullx,sb>*V<sb>[];
+    va_nom<sb>[] = net_revenue<sb>[] - SUM<p_fullv::P>(io<p_fullv,sb>*V<sb>[]*pint<p_fullv>[]);
+  };
+  calibration {
+    V<sb>[] = vst<sb> -> gamma<sb>;
+    K<sb>[]*pk[] = va_nom<sb>[]*betak<sb> -> betak<sb>;
+    <l::LAB> L<sb,l>[] * w<l>[] = va_nom<sb>[] * betal<sb,l> -> betal<sb,l>;
+  };
+};
+
+block <idx_e::P_Exp> EXPORTER
+{
+    controls
+    {
+        Z<idx_e>[], DS<idx_e>[], EX<idx_e>[];
+    };
+
+    objective
+    {
+        PI_CET<idx_e>[] = pe<idx_e>[] * EX<idx_e>[] + pd<idx_e>[] * DS<idx_e>[] - pz<idx_e>[] * Z<idx_e>[];
+    };
+
+    constraints
+    {
+        ( Z<idx_e>[] - at<idx_e> * ( gamma_e<idx_e> * EX<idx_e>[] ^ ((sigma_t + 1) / sigma_t) + (1.0 - gamma_e<idx_e>) * DS<idx_e>[] ^ ((sigma_t + 1) / sigma_t) ) ^ (sigma_t / (sigma_t + 1)) ) / Z0<idx_e> = 0.0;
+    };
+
+    identities
+    {
+        Z<idx_e>[] = SUM<i_sa::SA>(Yap<idx_e, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_e, i_sb>[]);
+        pe<idx_e>[] = pworlde<idx_e> * exr[];
+    };
+};
+
+block <idx_ne::P_NExp> NON_EXPORTER
+{
+    identities
+    {
+        Z<idx_ne>[] = SUM<i_sa::SA>(Yap<idx_ne, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_ne, i_sb>[]);
+        DS<idx_ne>[] = Z<idx_ne>[];
+        EX<idx_ne>[] = 0.0;
+        pe<idx_ne>[] = pworlde<idx_ne> * exr[];
+        pz<idx_ne>[] = pd<idx_ne>[];
+        PI_CET<idx_ne>[] = 0.0;
+    };
+};
+
+block PROD_OTROS {
+  identities {
+    Z<'prod_otros'>[]    = 0.0;
+    DS<'prod_otros'>[]   = 0.0;
+    EX<'prod_otros'>[]   = ex_otros_data;
+    DD<'prod_otros'>[]   = 0.0;
+    PI_CET<'prod_otros'>[] = 0.0;
+    PI_ARM<'prod_otros'>[] = 0.0;
+    pe<'prod_otros'>[]   = pworlde<'prod_otros'> * exr[];
+    pm<'prod_otros'>[]   = pworldm<'prod_otros'> * exr[] * (1.0 + tar_rate<'prod_otros'>);
+    pz<'prod_otros'>[]   = pm<'prod_otros'>[];
+    pd<'prod_otros'>[]   = pm<'prod_otros'>[];
+    p<'prod_otros'>[]    = pm<'prod_otros'>[];
+    pq<'prod_otros'>[]   = p<'prod_otros'>[];     # sin IVA
+    pint<'prod_otros'>[] = p<'prod_otros'>[];
+    Q<'prod_otros'>[]    = M<'prod_otros'>[];
+    M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'> * g_adj[]
+                          + (I_data<'prod_otros'> * inv_adj[]) + vexist<'prod_otros'>
+                          + SUM<i_aa_o::SA>(X<'prod_otros', i_aa_o>[]) + SUM<i_ab_o::SB>(X<'prod_otros', i_ab_o>[])
+                          + EX<'prod_otros'>[];
+    VAT_p<'prod_otros'>[]       = 0.0;
+    Arancel_p<'prod_otros'>[]   = tar_rate<'prod_otros'> * pworldm<'prod_otros'> * exr[] * M<'prod_otros'>[];
+    # prod_otros no paga IVA ni impuestos especificos (tau_e se define solo sobre Pdom)
+  };
+};
+
+block <idx_a::Pdom_arm> IMPORTER
+{
+    controls
+    {
+        Q<idx_a>[], DD<idx_a>[], M<idx_a>[];
+    };
+
+    objective
+    {
+        PI_ARM<idx_a>[] = p<idx_a>[] * Q<idx_a>[] - pd<idx_a>[] * DD<idx_a>[] - pm<idx_a>[] * M<idx_a>[];
+    };
+
+    constraints
+    {
+        Q<idx_a>[] = aq<idx_a> * ( delta_m<idx_a> * M<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) + (1.0 - delta_m<idx_a>) * DD<idx_a>[] ^ ((sigma_q - 1.0) / sigma_q) ) ^ (sigma_q / (sigma_q - 1.0));
+    };
+
+    identities
+    {
+        DD<idx_a>[] = DS<idx_a>[];
+        pm<idx_a>[] = pworldm<idx_a> * exr[] * (1.0 + tar_rate<idx_a>);
+    };
+};
+
+# Cero estructural: prod_adm_pub tiene M_base = 0 en la SAM.
+# Se excluye de IMPORTER (cuya FOC genera M^(-0.5) -> Inf).
+# Se reemplazan todos los controles y objetivo por identidades puras.
+block PROD_ADM_PUB_ARM
+{
+    identities
+    {
+        DD<'prod_adm_pub'>[]     = DS<'prod_adm_pub'>[];
+        M<'prod_adm_pub'>[]      = 0.0;
+        Q<'prod_adm_pub'>[]      = DD<'prod_adm_pub'>[];
+        PI_ARM<'prod_adm_pub'>[] = 0.0;
+        pm<'prod_adm_pub'>[]     = pworldm<'prod_adm_pub'> * exr[] * (1.0 + tar_rate<'prod_adm_pub'>);
+        p<'prod_adm_pub'>[]      = pd<'prod_adm_pub'>[];
+    };
+};
+
+block PRODUCTS
+{
+    identities
+    {
+        # --- IVA (Etapa 1) e impuestos especificos (Etapa 5) como cunas de precio ---
+        # pq  : precio de comprador de la demanda final (hogares, gobierno, inversion).
+        #       Incluye el especifico por unidad fisica (tau_e) y el IVA, que se calcula
+        #       sobre el precio con especifico.
+        # pint: precio de los insumos intermedios; no paga especificos (supuesto) y
+        #       t_iva_int = 0 salvo residuo de calibracion
+        #       tau_e esta en pesos base por unidad fisica y se indexa al IPC (UTM).
+        <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + tau_e<pq_i> * CPI[]) * (1 + t_iva<pq_i>);
+        <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>);
+
+        # Demanda final gravada e intermedia, en unidades fisicas (precio basico base)
+        # g_adj = 1 salvo en el cierre fiscal con gasto endogeno (sw_g = 1)
+        <fd_i::Pdom> FD<fd_i>[] = D<fd_i>[] + gg_market_data_p<fd_i> * g_adj[] + (I_data<fd_i> * inv_adj[]);
+        <xi_i::PdomNoC> XI<xi_i>[] = SUM<i_aa_x::SA>(X<xi_i, i_aa_x>[]) + SUM<i_ab_x::SB>(X<xi_i, i_ab_x>[]);
+        XI<'prod_const'>[] = SUM<i_ab_xc::SB>(X<'prod_const', i_ab_xc>[]);
+
+        <td_i::Pdom> TD_Dom<td_i>[] = FD<td_i>[] + vexist<td_i> + XI<td_i>[];
+
+        # Vaciado fisico: ni el IVA ni los especificos absorben cantidades
+        <qc_i::Pdom> Q<qc_i>[] = TD_Dom<qc_i>[];
+
+        # Recaudacion IVA: demanda final a precio con especifico, intermedios a precio basico
+        <vt_i::Pdom> VAT_p<vt_i>[] = t_iva<vt_i> * (p<vt_i>[] + tau_e<vt_i> * CPI[]) * FD<vt_i>[]
+                                   + t_iva_int<vt_i> * p<vt_i>[] * XI<vt_i>[];
+
+        # Recaudacion de especificos: monto real fijo por unidad fisica de demanda final
+        # (indexado al IPC; la recaudacion real sigue a los volumenes)
+        <te_i::Pdom> TESP_p<te_i>[] = tau_e<te_i> * CPI[] * FD<te_i>[];
+
+        <idx_ar::Pdom> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
+    };
+};
+
+block FIRM
+{
+    identities
+    {
+        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
+        SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
+        TREMP[] = INGF[] * por_tremp;
+        #Kf[] = k_total_data * par_k_f;
+        Kf[] = KD[] * par_k_f;
+        FIRMTAX[] = fit * (Kf[] * pk[]);
+    };
+};
+
+block GOB
+{
+    identities
+    {
+        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
+        # tr_adj = 1 salvo en el cierre fiscal con transferencias endogenas (sw_tr = 1)
+        TRGOV[] = trgov_data * CPI[] * tr_adj[];
+        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * g_adj[] * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
+        #Kg[] = k_total_data * par_k_g;
+        Kg[] = KD[] * par_k_g;
+        VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
+        # Base del PIT: rentas del capital y del trabajo de los hogares, transferencias de
+        # empresas y prestaciones sociales. Las transferencias del gobierno (TRGOV) forman
+        # parte del ingreso (BTINC) pero no de la base imponible.
+        PITAX[] = pit * (pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data);
+        TPROD[] = SUM<idx_sa::SA>(tps<idx_sa> * revenue<idx_sa>[]) +
+                  SUM<idx_sb::SB>(tps<idx_sb> * revenue<idx_sb>[]);
+        TESP[] = SUM<te_p::Pdom>(TESP_p<te_p>[]) +
+                 SUM<idx_sa2::SA>(tes<idx_sa2> * revenue<idx_sa2>[]) +
+                 SUM<idx_sb2::SB>(tes<idx_sb2> * revenue<idx_sb2>[]);
+        TARANCEL[] = SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
+        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[];
+    };
+};
+
+block EQUILIBRIUM
+{
+    identities
+    {
+       <l::LAB> LD<l>[] = SUM<idx_ea::SA>(L<idx_ea,l>[])
+                 + SUM<idx_eb::SB>(L<idx_eb,l>[])
+                 + l_total_data<l> * par_l_row<l>;
+
+       #<l::LAB> w<l>[] = w_pot_calib<l> * (LD<l>[] / l_force_data<l>)^phi<l>;
+
+       <l::LAB> LFORCE<l>[] = l_force_data<l> * (LD<l>[] / l_total_data<l>)^epsilon<l>;
+
+       # Curva salarial en terminos reales y netos de PIT: el salario real neto
+       # w*(1-pit)/CPI depende del empleo. Se normaliza por la tasa de la base para
+       # que la calibracion no cambie (w = 1 en la base).
+       <l::LAB> w<l>[] * (1 - pit) / (1 - pit_base) = CPI[] * w_pot_calib<l> * (LD<l>[] / LFORCE<l>[])^phi<l>;
+
+       #<l::LAB> u_rate<l>[] = (l_force_data<l> - LD<l>[]) / l_force_data<l>;
+
+       <l::LAB> u_rate<l>[] = (LFORCE<l>[] - LD<l>[]) / LFORCE<l>[];
+
+       <l::LAB> Lh<l>[] = LD<l>[] * par_l_h<l>;
+
+        #SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
+
+        #Kh[] = k_total_data * par_k_h;
+
+        KD[]  = SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]);
+
+        u_k[] = KD[] / k_total_data;
+
+        # Curva de oferta de capital (utilizacion) en terminos reales y netos de
+        # impuestos directos. Tasa efectiva sobre la renta del capital: IDPC sobre el
+        # capital de empresas y PIT sobre el capital de hogares (el del gobierno no
+        # tributa). Normalizada por la tasa de la base (pk = 1 en la base).
+        pk[] * (1 - par_k_f * fit - par_k_h * pit) / (1 - par_k_f * fit_base - par_k_h * pit_base)
+              = CPI[] * pk_pot_calib * (u_k[])^psi;
+
+        Kh[]  = KD[] * par_k_h;
+
+        # Prestaciones sociales: los hogares reciben lo que pagan empresas y gobierno
+        PSh[] = INGF[] * por_pres_soc_f + INGG[] * por_pres_soc_g;
+
+        # Indice de precios al consumidor (Laspeyres, canasta de hogares de la base)
+        # y numerario
+        CPI[] = SUM<c_cpi::Pcon>(cpi_q<c_cpi> * pq<c_cpi>[]) / cpi_den;
+        CPI[] = cpi_num;
+    }
+}
+
+block INVESTMENT
+{
+    identities
+    {
+        NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * pq<idx_nb>[]);
+
+        # Equilibrio ahorro-inversion. Con sw_joh = 0, inv_adj (indice de volumen de
+        # la inversion, base = 1) se ajusta para que la inversion iguale al ahorro
+        # total; con sw_joh = 1 se ajusta el ahorro de los hogares (bloque CIERRE).
+        TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
+
+        # Ahorro externo fijo en moneda extranjera
+        SAVext[] = SAVext_target * exr[];
+
+        SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
+    };
+}
+
+block CIERRE
+{
+    identities
+    {
+        # Regla ahorro-inversion: con sw_joh = 0 se fija s_adj = 1 (inversion
+        # determinada por el ahorro); con sw_joh = 1 se fija inv_adj = 1 (Johansen).
+        (1 - sw_joh) * (s_adj[] - 1) + sw_joh * (inv_adj[] - 1) = 0;
+
+        # Regla fiscal: con sw_g = 0 (sw_tr = 0) se fija g_adj = 1 (tr_adj = 1); con
+        # sw_g = 1 (sw_tr = 1) se fija el ahorro publico real y g_adj (tr_adj) se ajusta.
+        (1 - sw_g)  * (g_adj[]  - 1) + sw_g  * (SAVg[] - SAVg_target * CPI[]) = 0;
+        (1 - sw_tr) * (tr_adj[] - 1) + sw_tr * (SAVg[] - SAVg_target * CPI[]) = 0;
+    };
+
+    calibration
+    {
+        # Valores por defecto: cierre vigente. SAVg_target solo opera si sw_g = 1 o
+        # sw_tr = 1 y debe fijarse en el ahorro publico real de la base.
+        sw_joh = 0;
+        sw_g = 0;
+        sw_tr = 0;
+        SAVg_target = 0;
+    };
+}

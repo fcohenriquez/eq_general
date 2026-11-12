@@ -1,0 +1,103 @@
+MEGC-Chile - Evaluacion de cierres alternativos
+Generado: 2026-11-11 16:39:12 -03
+Modelo  : CGE Chile (12sect_2023), anio base 2023
+
+==========================================================================================
+CIERRES ALTERNATIVOS: replica del equilibrio base
+==========================================================================================
+Cada cierre se resuelve sin choque desde el equilibrio base calibrado con el cierre vigente.
+desvio_rel_max = maximo desvio relativo de las variables respecto de la base (tolerancia 1e-05).
+Los indices de ajuste (s_adj, g_adj, tr_adj, inv_adj) deben valer 1.
+
+Reglas:
+  sw_joh = 0: inversion determinada por el ahorro; 1: Johansen (inversion real fija, ahorro de hogares endogeno).
+  sw_g   = 1: ahorro publico real fijo; el consumo del gobierno en volumen se ajusta (g_adj).
+  sw_tr  = 1: ahorro publico real fijo; las transferencias reales a hogares se ajustan (tr_adj).
+  sw_g = sw_tr = 0: tasas, gasto y transferencias reales fijos; ahorro publico residual.
+
+cierre                      sw_joh   sw_g   sw_tr   desvio_rel_max   s_adj   g_adj   tr_adj   inv_adj  replica_base 
+-------------------------  -------  -----  ------  ---------------  ------  ------  -------  --------  -------------
+vigente                          0      0       0                0       1       1        1         1  TRUE         
+johansen                         1      0       0                0       1       1        1         1  TRUE         
+gasto_endogeno                   0      1       0                0       1       1        1         1  TRUE         
+transferencias_endogenas         0      0       1                0       1       1        1         1  TRUE         
+johansen_gasto_endogeno          1      1       0                0       1       1        1         1  TRUE         
+
+==========================================================================================
+CIERRES ALTERNATIVOS: choque IVA
+==========================================================================================
+Recaudacion y efectos en pp del PIB nominal base; actividad en %.
+dTax_pp     = variacion total de la recaudacion = ef_tasa_pp + ef_base_pp + ef_precio_pp.
+pct_erosion = -(ef_base + ef_precio) / ef_tasa (%).
+dSAVg_pp    = variacion del ahorro publico (~0 en los cierres con ahorro publico real fijo).
+dTRGOV_pp, dG_pp = variacion de las transferencias y del gasto del gobierno (destino de la recaudacion).
+d_brecha_BdP debe ser ~0 (ley de Walras).
+
+Recaudacion:
+cierre                      dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp
+-------------------------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------
+vigente                      0.2731       0.4515      -0.0890        -0.0894       39.5055    19.7066      19.7989          42.1877          0
+johansen                     0.2752       0.4515      -0.0867        -0.0896       39.0477    19.2127      19.8350          42.0619          0
+gasto_endogeno               0.2439       0.4509      -0.1144        -0.0926       45.9090    25.3740      20.5350          37.8512          0
+transferencias_endogenas     0.2787       0.4515      -0.0830        -0.0898       38.2827    18.3911      19.8916          41.6978          0
+johansen_gasto_endogeno      0.2400       0.4509      -0.1186        -0.0923       46.7669    26.3067      20.4602          38.2117          0
+
+Uso de la recaudacion y ajuste del cierre:
+cierre                      dSAVg_pp   dTRGOV_pp       dG_pp      s_adj      g_adj     tr_adj    inv_adj   d_brecha_BdP
+-------------------------  ---------  ----------  ----------  ---------  ---------  ---------  ---------  -------------
+vigente                     0.267339    0.000000   -0.071145   1.000000   1.000000   1.000000   1.003885      -0.010178
+johansen                    0.268214    0.000000   -0.070486   0.970762   1.000000   1.000000   1.000000      -0.010253
+gasto_endogeno              0.000000    0.000000    0.168258   1.000000   1.014981   1.000000   0.992328      -0.011724
+transferencias_endogenas    0.000000    0.271126   -0.069454   1.000000   1.000000   1.333605   0.993920      -0.010369
+johansen_gasto_endogeno     0.000000    0.000000    0.165427   1.057154   1.014886   1.000000   1.000000      -0.011569
+
+Actividad (%):
+cierre                      dPIB_real   dC_real   dI_real   dG_real
+-------------------------  ----------  --------  --------  --------
+vigente                       -0.3466   -0.7297    0.3885    0.0000
+johansen                      -0.3443   -0.5693    0.0000    0.0000
+gasto_endogeno                -0.3707   -0.6825   -0.7672    1.4981
+transferencias_endogenas      -0.3408   -0.3182   -0.6080    0.0000
+johansen_gasto_endogeno       -0.3749   -0.9966    0.0000    1.4886
+
+==========================================================================================
+CIERRES ALTERNATIVOS: choque IDPC
+==========================================================================================
+Recaudacion y efectos en pp del PIB nominal base; actividad en %.
+dTax_pp     = variacion total de la recaudacion = ef_tasa_pp + ef_base_pp + ef_precio_pp.
+pct_erosion = -(ef_base + ef_precio) / ef_tasa (%).
+dSAVg_pp    = variacion del ahorro publico (~0 en los cierres con ahorro publico real fijo).
+dTRGOV_pp, dG_pp = variacion de las transferencias y del gasto del gobierno (destino de la recaudacion).
+d_brecha_BdP debe ser ~0 (ley de Walras).
+
+Recaudacion:
+cierre                      dTax_pp   ef_tasa_pp   ef_base_pp   ef_precio_pp   pct_erosion   pct_base   pct_precio   pct_base_otros   resid_pp
+-------------------------  --------  -----------  -----------  -------------  ------------  ---------  -----------  ---------------  ---------
+vigente                     -0.1354      -0.1617       0.0283        -0.0020       16.2833    17.5296      -1.2463          64.3057          0
+johansen                    -0.1336      -0.1617       0.0303        -0.0022       17.3950    18.7270      -1.3320          66.9356          0
+gasto_endogeno              -0.1236      -0.1617       0.0388        -0.0007       23.5629    23.9764      -0.4134          71.1820          0
+transferencias_endogenas    -0.1377      -0.1617       0.0259        -0.0018       14.8555    15.9960      -1.1404          60.3813          0
+johansen_gasto_endogeno     -0.1195      -0.1617       0.0433        -0.0010       26.1199    26.7541      -0.6342          74.8007          0
+
+Uso de la recaudacion y ajuste del cierre:
+cierre                       dSAVg_pp   dTRGOV_pp       dG_pp      s_adj      g_adj     tr_adj    inv_adj   d_brecha_BdP
+-------------------------  ----------  ----------  ----------  ---------  ---------  ---------  ---------  -------------
+vigente                     -0.111688    0.000000    0.005279   1.000000   1.000000   1.000000   1.003374       0.001848
+johansen                    -0.110932    0.000000    0.005848   0.974812   1.000000   1.000000   1.000000       0.001783
+gasto_endogeno               0.000000    0.000000   -0.095105   1.000000   0.993742   1.000000   1.008205       0.002498
+transferencias_endogenas     0.000000   -0.113262    0.004575   1.000000   1.000000   0.860637   1.007536       0.001929
+johansen_gasto_endogeno      0.000000    0.000000   -0.092101   0.939318   0.993844   1.000000   1.000000       0.002331
+
+Actividad (%):
+cierre                      dPIB_real   dC_real   dI_real   dG_real
+-------------------------  ----------  --------  --------  --------
+vigente                        0.1358    0.0885    0.3374    0.0000
+johansen                       0.1378    0.2278    0.0000    0.0000
+gasto_endogeno                 0.1459    0.0687    0.8205   -0.6258
+transferencias_endogenas       0.1334   -0.0834    0.7536    0.0000
+johansen_gasto_endogeno        0.1505    0.4046    0.0000   -0.6156
+
+==========================================================================================
+CIERRES ALTERNATIVOS: errores de solucion
+==========================================================================================
+Sin errores.
