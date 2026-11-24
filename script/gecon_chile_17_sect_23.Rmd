@@ -1,5 +1,5 @@
 ---
-title: "CGE Chile - 12 Sectores - Calibración 2023"
+title: "CGE Chile - 17 Sectores - Calibración 2023"
 output: html_document
 ---
 
@@ -11,7 +11,8 @@ library(yaml)
 rm(list = ls())
 
 # Load configuration
-cfg <- yaml::read_yaml("config_modelo_chile_12sect_2023.yml")
+cfg <- yaml::read_yaml("config_modelo_chile_17sect_2023.yml")
+`%||%` <- function(a, b) if (is.null(a)) b else a
 ```
 
 
@@ -22,7 +23,8 @@ cfg <- yaml::read_yaml("config_modelo_chile_12sect_2023.yml")
 
 ```{r sam_load}
 # Load SAM using path from config
-chile_sam_raw <- read.csv(cfg$archivos$sam, check.names = FALSE, stringsAsFactors = FALSE)
+chile_sam_raw <- read.csv(cfg$archivos$sam, check.names = FALSE, stringsAsFactors = FALSE,
+                          fileEncoding = "UTF-8-BOM")
 
 # Clean names and data
 if (cfg$opciones_datos$limpiar_espacios_nombres) {
@@ -46,9 +48,25 @@ s_names <- sapply(cfg$sectores, function(x) x$id)
 p_names <- unlist(cfg$productos)
 
 # Verification
-missing_cols <- s_names[!s_names %in% colnames(chile_sam)]
+missing_cols <- c(s_names, p_names)[!c(s_names, p_names) %in% colnames(chile_sam)]
 if (length(missing_cols) > 0) {
     stop(paste("Error: columnas faltantes:", paste(missing_cols, collapse = ", ")))
+}
+missing_rows <- c(s_names, p_names)[!c(s_names, p_names) %in% rownames(chile_sam)]
+if (length(missing_rows) > 0) {
+    stop(paste("Error: filas faltantes:", paste(missing_rows, collapse = ", ")))
+}
+
+# Balance de la SAM: total de fila = total de columna en cada cuenta
+if (isTRUE(cfg$validaciones$verificar_balance_sam)) {
+    cuentas <- setdiff(rownames(chile_sam), "Total")
+    desbalance <- rowSums(chile_sam[cuentas, cuentas]) - colSums(chile_sam[cuentas, cuentas])
+    tol_sam <- cfg$validaciones$tolerancia_balance_sam %||% 1e-3
+    cat(sprintf("Desbalance maximo de la SAM (fila - columna): %.2e\n", max(abs(desbalance))))
+    if (any(abs(desbalance) > tol_sam)) {
+        warning("Cuentas de la SAM desbalanceadas: ",
+                paste(names(desbalance)[abs(desbalance) > tol_sam], collapse = ", "))
+    }
 }
 
 X_matrix <- as.matrix(chile_sam[p_names, s_names])
@@ -61,6 +79,8 @@ prod_const_name <- cfg$tratamiento_ceros_estructurales$producto_construccion
 
 dropped_x <- X_matrix[prod_const_name, sa_names_config]
 X_matrix[prod_const_name, sa_names_config] <- 0
+cat(sprintf("Demanda intermedia de construccion trasladada al capital (sectores SA): %.4f\n",
+            sum(dropped_x)))
 
 pad_floor <- cfg$opciones_datos$piso_numerico
 V_sector_vals <- pmax(rowSums(make_matrix), cfg$opciones_datos$piso_actividad)
@@ -84,43 +104,140 @@ M_m <- as.numeric(chile_sam[cat_row, p_names])
 names(M_m) <- p_names
 E_m <- as.numeric(chile_sam[p_names, cat_row])
 names(E_m) <- p_names
+names(D_m) <- names(G_m) <- names(I_m) <- names(V_m) <- p_names
 
 X_sum <- rowSums(X_matrix)
 IVA_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
 Ar_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
+names(IVA_m) <- names(Ar_m) <- p_names
+```
 
-# --- IVA como cuna de precio (Etapa 1) --------------------------------------
+## 1.1 Consistencia de conjuntos: YAML, SAM y .gcn
+
+```{r conjuntos_check}
+cj <- cfg$conjuntos_gcn
+gcn_path <- cfg$archivos$gcn %||% "../script/cge_calib_chile_17_sect_23.gcn"
+
+# Conjuntos implicados por el YAML (misma regla que se usa mas abajo)
+sets_yaml <- list(
+    P         = p_names,
+    Pdom      = cj$Pdom$incluir,
+    Pdom_arm  = setdiff(cj$Pdom$incluir, cj$Pdom_arm$excluir_manual),
+    Pno_const = setdiff(p_names, cj$Pno_const$excluir_manual),
+    Pcon      = setdiff(p_names, cj$Pcon$excluir_manual),
+    P_Exp     = setdiff(p_names, cj$P_Exp$excluir_manual),
+    P_NExp    = cj$P_NExp$incluir,
+    SA        = cj$SA$incluir,
+    SB        = cj$SB$incluir,
+    S         = s_names,
+    PMinP     = cj$PMinP$incluir,
+    PdomNoC   = setdiff(cj$Pdom$incluir, prod_const_name)
+)
+
+# Estructura de la SAM: cada conjunto debe ser compatible con los ceros estructurales
+tol_z <- 1e-6
+chk_estr <- c(
+    Pdom_arm_con_M_positivo   = all(M_m[sets_yaml$Pdom_arm] > tol_z),
+    excluidos_arm_con_M_cero  = all(abs(M_m[setdiff(sets_yaml$Pdom, sets_yaml$Pdom_arm)]) < tol_z),
+    P_Exp_con_X_positivo      = all(E_m[sets_yaml$P_Exp] > tol_z),
+    P_NExp_con_X_cero         = all(abs(E_m[sets_yaml$P_NExp]) < tol_z),
+    Pcon_con_C_positivo       = all(D_m[sets_yaml$Pcon] > tol_z),
+    PNC_con_C_cero            = all(abs(D_m[cj$PNC$incluir]) < tol_z),
+    PNC_complemento_de_Pcon   = setequal(cj$PNC$incluir, setdiff(p_names, sets_yaml$Pcon)),
+    SA_SB_particion_de_S      = setequal(c(sets_yaml$SA, sets_yaml$SB), s_names) &&
+                                length(intersect(sets_yaml$SA, sets_yaml$SB)) == 0,
+    SB_usan_construccion      = all(X_matrix[prod_const_name, sets_yaml$SB] > tol_z)
+)
+print(chk_estr)
+if (!all(chk_estr)) warning("Los conjuntos del YAML no calzan con la estructura de la SAM: ",
+                            paste(names(chk_estr)[!chk_estr], collapse = ", "))
+
+# Conjuntos declarados en el .gcn (indexsets) frente al YAML
+if (isTRUE(cfg$validaciones$verificar_conjuntos_gcn) && file.exists(gcn_path)) {
+    gcn_txt <- paste(sub("#.*$", "", readLines(gcn_path, warn = FALSE)), collapse = " ")
+    gcn_set <- function(nm) {
+        m <- regmatches(gcn_txt, regexpr(paste0("\\b", nm, "\\s*=\\s*\\{[^}]*\\}"), gcn_txt))
+        if (length(m) == 0) return(NULL)
+        el <- regmatches(m, gregexpr("'[^']+'", m))[[1]]
+        gsub("'", "", el)
+    }
+    dif_sets <- sapply(names(sets_yaml), function(nm) {
+        g <- gcn_set(nm)
+        if (is.null(g)) return("no declarado en el .gcn")
+        if (setequal(g, sets_yaml[[nm]])) "ok" else
+            paste0("solo YAML: {", paste(setdiff(sets_yaml[[nm]], g), collapse = ","),
+                   "}  solo GCN: {", paste(setdiff(g, sets_yaml[[nm]]), collapse = ","), "}")
+    })
+    print(data.frame(conjunto = names(dif_sets), estado = unname(dif_sets)), row.names = FALSE)
+    pnc_en_gcn <- sapply(cj$PNC$incluir, function(p)
+        grepl(paste0("D<'", p, "'>\\[\\]\\s*=\\s*dst_nc<'", p, "'>"), gcn_txt))
+    if (any(dif_sets != "ok") || !all(pnc_en_gcn)) {
+        stop("Los conjuntos del .gcn no coinciden con el YAML (ver tabla). PNC sin identidad en CONSUMER: ",
+             paste(names(pnc_en_gcn)[!pnc_en_gcn], collapse = ", "))
+    }
+}
+```
+
+## 1.2 Impuestos sobre productos
+
+```{r impuestos_productos}
+# --- IVA e impuesto adicional como cunas de precio ----------------------------
 # Toda la fila IVA de la SAM se asigna a la demanda final gravada (hogares,
-# gobierno, inversion). La tasa se expresa SIN impuesto: pq = p * (1 + t_iva).
-# Si la tasa implicita supera el tope (tasa legal), el exceso se asigna como
-# residuo transitorio al uso intermedio del producto (t_iva_int). En la Etapa 2
-# ese residuo se reemplazara por IVA no recuperable por sector (F29).
-t_cap <- if (!is.null(cfg$iva$tasa_max_demanda_final)) cfg$iva$tasa_max_demanda_final else 0.19
+# gobierno, inversion). La tasa se expresa SIN impuesto: pq = p * (1 + t_iva + t_adic).
+# Si la tasa implicita supera el tope (tasa legal), el exceso se asigna:
+#  - en los productos de 'impuesto_adicional$productos' (bebidas), a un impuesto
+#    adicional ad valorem sobre la demanda final con la misma base que el IVA (t_adic);
+#  - en el resto, como residuo transitorio al uso intermedio del producto (t_iva_int).
+t_cap   <- cfg$iva$tasa_max_demanda_final %||% 0.19
+p_adic  <- unlist(cfg$impuesto_adicional$productos)
+if (length(p_adic) && !all(p_adic %in% p_names)) stop("impuesto_adicional$productos con nombres no validos")
+es_adic <- p_names %in% p_adic
+
 FD_m    <- D_m + G_m + I_m                       # demanda final gravada, precios de comprador
 FD_pos  <- pmax(FD_m, 0)
+
+# Regla general (productos sin impuesto adicional)
 IVA_fd  <- pmin(IVA_m, FD_pos * t_cap / (1 + t_cap))
-IVA_int <- IVA_m - IVA_fd
-t_iva_r     <- ifelse(FD_pos - IVA_fd > 1e-9, IVA_fd / (FD_pos - IVA_fd), 0)
+ADIC_fd <- rep(0, length(p_names))
+# Productos con impuesto adicional: base imponible comun B = FD - (IVA + adicional)
+B_adic  <- FD_pos - IVA_m
+if (any(es_adic & B_adic <= 1e-9)) stop("Base imponible no positiva en: ",
+                                        paste(p_names[es_adic & B_adic <= 1e-9], collapse = ", "))
+t_tot_adic <- ifelse(es_adic, IVA_m / pmax(B_adic, 1e-9), 0)
+IVA_fd[es_adic]  <- (pmin(t_tot_adic, t_cap) * B_adic)[es_adic]
+ADIC_fd[es_adic] <- (pmax(t_tot_adic - t_cap, 0) * B_adic)[es_adic]
+IVA_int <- IVA_m - IVA_fd - ADIC_fd
+
+base_fd     <- FD_pos - IVA_fd - ADIC_fd           # demanda final a precio con especifico
+t_iva_r     <- ifelse(base_fd > 1e-9, IVA_fd  / base_fd, 0)
+t_adic_r    <- ifelse(base_fd > 1e-9, ADIC_fd / base_fd, 0)
 t_iva_int_r <- ifelse(X_sum - IVA_int > 1e-9, IVA_int / (X_sum - IVA_int), 0)
-names(t_iva_r) <- names(t_iva_int_r) <- names(IVA_fd) <- names(IVA_int) <- p_names
+names(t_iva_r) <- names(t_adic_r) <- names(t_iva_int_r) <- p_names
+names(IVA_fd) <- names(ADIC_fd) <- names(IVA_int) <- p_names
 if (any(IVA_int > 1e-6 & X_sum - IVA_int <= 1e-9)) {
     stop("IVA residual sin base intermedia suficiente en: ",
-         paste(p_names[IVA_int > 1e-6 & X_sum - IVA_int <= 1e-9], collapse = ", "))
+         paste(p_names[IVA_int > 1e-6 & X_sum - IVA_int <= 1e-9], collapse = ", "),
+         ". Considere incluir el producto en impuesto_adicional$productos.")
 }
-t_iva_r["prod_otros"] <- 0; t_iva_int_r["prod_otros"] <- 0
+t_iva_r["prod_otros"] <- 0; t_adic_r["prod_otros"] <- 0; t_iva_int_r["prod_otros"] <- 0
 
 diag_iva <- data.frame(
     producto   = p_names,
-    IVA        = round(IVA_m, 1),
+    IVA_SAM    = round(IVA_m, 1),
     DF_gravada = round(FD_m, 1),
     t_iva      = round(t_iva_r, 4),
+    t_adic     = round(t_adic_r, 4),
     IVA_resid_intermedio = round(IVA_int, 1),
     t_iva_int  = round(t_iva_int_r, 4)
 )
-cat("\nDiagnostico calibracion IVA (Etapa 1, tope =", t_cap, "):\n")
+cat("\nDiagnostico calibracion IVA e impuesto adicional (tope IVA =", t_cap, "):\n")
 print(diag_iva, row.names = FALSE)
-cat(sprintf("Participacion del IVA asignada a demanda final: %.2f%%\n",
+cat(sprintf("Participacion de la fila IVA asignada a IVA de demanda final: %.2f%%\n",
             100 * sum(IVA_fd) / sum(IVA_m)))
+cat(sprintf("Participacion de la fila IVA asignada a impuesto adicional  : %.2f%%\n",
+            100 * sum(ADIC_fd) / sum(IVA_m)))
+cat(sprintf("Participacion de la fila IVA asignada a uso intermedio      : %.2f%%\n",
+            100 * sum(IVA_int) / sum(IVA_m)))
 # ---------------------------------------------------------------------------
 tar_r <- Ar_m / pmax(M_m, cfg$opciones_datos$piso_importaciones)
 
@@ -183,7 +300,6 @@ pnc_names_config <- cfg$conjuntos_gcn$PNC$incluir
 pnc_idx      <- which(p_names %in% pnc_names_config)
 
 pexp_names_config <- setdiff(p_names, cfg$conjuntos_gcn$P_Exp$excluir_manual)
-# Also filter by actual exports if needed, but here we follow the manual exclusion
 pexp_idx     <- which(p_names %in% pexp_names_config)
 
 pnexp_names_config <- cfg$conjuntos_gcn$P_NExp$incluir
@@ -212,7 +328,7 @@ get_flow_values <- function(vals, name, idx1 = NULL, idx2 = NULL) {
 ## 2. Creación del Modelo gEcon
 
 ```{r model_gen}
-model <- make_model("../script/cge_calib_chile_12_sect_23.gcn")
+model <- make_model(gcn_path)
 
 pshdata <- chile_sam[cat_hogares, cfg$cuentas_sam$impuestos$prestaciones_sociales]
 fact_row_in_k_data <- 0
@@ -245,11 +361,13 @@ PITAX_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_
 FIRMTAX_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cfg$cuentas_sam$instituciones$empresas])
 TREMP_v <- INGF_v * por_tremp_val
 TRGOV_v <- INGG_v * por_trgov_val
-VAT_sum <- sum(as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names]))
+IVA_row_sum <- sum(as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names]))
+TADIC_sum <- sum(ADIC_fd)                  # impuesto adicional a bebidas (fila IVA de la SAM)
+VAT_sum <- IVA_row_sum - TADIC_sum         # IVA propiamente tal
 Arancel_sum <- sum(as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names]))
 Activity_Tax_sum <- sum(as.numeric(chile_sam[cat_impprod, s_names]))
 Imptos_Espec_sum <- sum(as.numeric(chile_sam[cat_impesp, colnames(chile_sam) != "Total"]))
-Tax_v <- VAT_sum + PITAX_v + FIRMTAX_v + Activity_Tax_sum + Arancel_sum + Imptos_Espec_sum
+Tax_v <- VAT_sum + TADIC_sum + PITAX_v + FIRMTAX_v + Activity_Tax_sum + Arancel_sum + Imptos_Espec_sum
 
 INC_v <- BTINC_v - PITAX_v
 CS_h_v <- INC_v * por_cont_h_val
@@ -269,7 +387,7 @@ cat(sprintf("Prestaciones sociales pagadas - recibidas (base): %.6f\n", chk_pres
 stopifnot(abs(chk_pres_soc) < 1e-4)
 
 # Numerario: IPC (valor configurable para la prueba de homogeneidad)
-cpi_num_val <- if (!is.null(cfg$cierre_macro$valor_numerario)) cfg$cierre_macro$valor_numerario else 1.0
+cpi_num_val <- cfg$cierre_macro$valor_numerario %||% 1.0
 
 sigma_q_val <- cfg$elasticidades$armington_sigma_q
 sigma_t_val <- cfg$elasticidades$cet_sigma_t
@@ -296,13 +414,13 @@ arm_ratio <- pm_base * (M_v / pmax(DS_v, 1e-6))^(1/sigma_q_val)
 delta_m_v <- arm_ratio / (1 + arm_ratio)
 delta_m_v <- pmax(pmin(delta_m_v, 1 - 1e-6), 1e-6)
 
-# Absorcion domestica valorada SIN IVA (el IVA ahora es cuna de precio)
-TD_Dom_initial <- as.numeric((D_m + G_m + I_m - IVA_fd) + V_m + (rowSums(X_matrix) - IVA_int))
+# Absorcion domestica valorada SIN IVA ni impuesto adicional (cunas de precio)
+TD_Dom_initial <- as.numeric((D_m + G_m + I_m - IVA_fd - ADIC_fd) + V_m + (rowSums(X_matrix) - IVA_int))
 names(TD_Dom_initial) <- p_names
 ImpEsp_p_v <- as.numeric(chile_sam[cat_impesp, p_names])
-IVA_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
+names(ImpEsp_p_v) <- p_names
 Ar_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
-Q_v <- TD_Dom_initial - ImpEsp_p_v   # oferta a precio basico: TD_comprador - IVA - TESP
+Q_v <- TD_Dom_initial - ImpEsp_p_v   # oferta a precio basico: TD_comprador - IVA - TADIC - TESP
 Q_v["prod_otros"] <- M_v["prod_otros"]
 
 p_base  <- (DS_v + pm_base * M_v) / pmax(Q_v, 1e-6)
@@ -313,14 +431,14 @@ pz_base["prod_otros"]  <- pm_base["prod_otros"]
 # prod_adm_pub: sin importaciones -> precio compuesto = precio domestico (p = pd = pz)
 p_base["prod_adm_pub"] <- DS_v["prod_adm_pub"] / pmax(Q_v["prod_adm_pub"], 1e-6)
 
-# --- Impuestos especificos como impuesto por unidad fisica (Etapa 5) ----------
+# --- Impuestos especificos como impuesto por unidad fisica ---------------------
 # Supuesto: el consumo intermedio, las existencias y las exportaciones no pagan
 # especificos; todo el especifico de la SAM recae sobre la demanda final (hogares,
 # gobierno, inversion) del producto, con un monto tau_e por unidad fisica:
-#     pq = (p + tau_e) * (1 + t_iva)        [IVA sobre el precio con especifico]
+#     pq = (p + tau_e) * (1 + t_iva + t_adic)   [ad valorem sobre el precio con especifico]
 # Como FD_fisica = FD_neto / (p + tau_e) y TESP = tau_e * FD_fisica, resulta
-#     tau_e = p_base * TESP / (FD_neto - TESP),   FD_neto = FD_comprador - IVA_fd
-FD_neto <- FD_m - IVA_fd
+#     tau_e = p_base * TESP / (FD_neto - TESP),   FD_neto = FD_comprador - IVA_fd - ADIC_fd
+FD_neto <- FD_m - IVA_fd - ADIC_fd
 den_e   <- FD_neto - ImpEsp_p_v
 if (any(ImpEsp_p_v > 0 & den_e <= 1e-9)) {
     stop("El impuesto especifico excede la demanda final neta de IVA en: ",
@@ -337,7 +455,7 @@ print(data.frame(producto = p_names, TESP = round(ImpEsp_p_v, 1),
       row.names = FALSE)
 
 # Precios de comprador (demanda final) e insumo intermedio en el ano base
-pq_base   <- (p_base + tau_e_v) * (1 + t_iva_r)
+pq_base   <- (p_base + tau_e_v) * (1 + t_iva_r + t_adic_r)
 pint_base <- p_base * (1 + t_iva_int_r)
 
 at_v <- (Z_v / pz_base) / (gamma_e_v * E_v^rho_t_val + (1 - gamma_e_v) * DS_v^rho_t_val)^(1/rho_t_val)
@@ -401,8 +519,7 @@ eps_val <- cfg$elasticidades$participacion_epsilon
 # instalada es KTOT = KD_base / u_k_base, con u_k_base tomado del YAML (IMCE).
 k_used_data_val <- sum(K_vals) + chile_sam[cat_row, cat_capital]
 stopifnot(abs(chile_sam[cat_row, cat_capital]) < 1e-9)   # ver nota sobre fuga a row
-uk_base_val <- cfg$cierre_macro$utilizacion_capital_base
-if (is.null(uk_base_val)) uk_base_val <- 1.0
+uk_base_val <- cfg$cierre_macro$utilizacion_capital_base %||% 1.0
 stopifnot(is.numeric(uk_base_val), length(uk_base_val) == 1,
           uk_base_val > 0, uk_base_val <= 1)
 k_total_data_val <- k_used_data_val / uk_base_val
@@ -432,10 +549,6 @@ par_flat <- unlist(list(
 
     omega = omega_val,
     sigma_q = sigma_q_val, sigma_t = sigma_t_val,
-    #k_total_data = sum(K_vals) + chile_sam[cat_row, cat_capital],
-    #par_k_h = Kh_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
-    #par_k_f = Kf_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
-    #par_k_g = Kg_val / (sum(K_vals) + chile_sam[cat_row, cat_capital] + pad_floor),
     k_total_data = k_total_data_val,
     # participaciones sobre el capital UTILIZADO (Kx = KD * par_k_x suman KD)
     par_k_h = Kh_val / (k_used_data_val + pad_floor),
@@ -462,13 +575,14 @@ par_flat <- unlist(list(
     get_flow_values(at_v[pexp_idx], "at", p_names[pexp_idx]),
     # Z0: valor fisico base de Z para escalar la restriccion CET (reduce residuo absoluto)
     get_flow_values(Z0_v[pexp_idx], "Z0", p_names[pexp_idx]),
-    # delta_m y aq: solo para Pdom_arm (11 productos con M_base > 0)
-    # prod_adm_pub (indice 12) usa bloque PROD_ADM_PUB_ARM con M=0, sin Armington CES
+    # delta_m y aq: solo para Pdom_arm (productos con M_base > 0)
+    # prod_adm_pub usa el bloque PROD_ADM_PUB_ARM con M = 0, sin Armington CES
     get_flow_values(delta_m_v[pdom_arm_idx], "delta_m", p_names[pdom_arm_idx]),
     get_flow_values(aq_v[pdom_arm_idx], "aq", p_names[pdom_arm_idx]),
     get_flow_values(D_con_phys, "dst", p_names[pcon_idx]),
-    get_flow_values(c(1e-6, 1e-6), "dst_nc", p_names[pnc_idx]),
+    get_flow_values(rep(1e-6, length(pnc_idx)), "dst_nc", p_names[pnc_idx]),
     get_flow_values(t_iva_r[pdom_idx], "t_iva", p_names[pdom_idx]),
+    get_flow_values(t_adic_r[pdom_idx], "t_adic", p_names[pdom_idx]),
     get_flow_values(t_iva_int_r[pdom_idx], "t_iva_int", p_names[pdom_idx]),
     get_flow_values(tar_r, "tar_rate", p_names),
     get_flow_values(rep(1, length(p_names)), "pworlde", p_names),
@@ -509,7 +623,8 @@ var_list <- list(
     NOM_I_BASE = sum(I_m),
     TOTAL_INVEST = Nominal_I_Total,
     inv_adj = 1.0, CPI = cpi_num_val,
-    VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
+    VAT = VAT_sum, TADIC = TADIC_sum, Tax = Tax_v, TPROD = Activity_Tax_sum,
+    TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
     KD = k_used_data_val, u_k = uk_base_val,
     U = U_val, lambda__CONSUMER_1 = lambda_val
@@ -548,7 +663,7 @@ init_vars <- unlist(list(
       get_flow_values(DD_init, "DD", p_names) },
     get_flow_values(rep(0, length(p_names)), "PI_CET", p_names),
     get_flow_values(rep(0, length(p_names)), "PI_ARM", p_names),
-    # TD_Dom es fisico y ya no incluye la cuna del especifico: TD_Dom = Q (= Q_v / p_base)
+    # TD_Dom es fisico y no incluye la cuna del especifico: TD_Dom = Q (= Q_v / p_base)
     get_flow_values(as.numeric(((TD_Dom_initial - ImpEsp_p_v) / p_base)[pdom_idx]), "TD_Dom", pdom_names),
     get_flow_values(as.numeric(((D_m + G_m + I_m) / pq_base)[pdom_idx]), "FD", pdom_names),
     get_flow_values(as.numeric((rowSums(X_matrix) / pint_base)[pdom_idx]), "XI", pdom_names),
@@ -566,7 +681,9 @@ init_vars <- unlist(list(
     get_flow_values(X_matrix[, sb_idx, drop=FALSE] / pint_base, "X", p_names, sb_names),
     get_flow_values(VA_nom[sa_idx], "va_nom", s_names[sa_idx]),
     get_flow_values(VA_nom[sb_idx], "va_nom", s_names[sb_idx]),
-    get_flow_values(IVA_v, "VAT_p", p_names),
+    # IVA propiamente tal (demanda final + residuo intermedio) e impuesto adicional
+    get_flow_values(IVA_fd + IVA_int, "VAT_p", p_names),
+    get_flow_values(ADIC_fd[pdom_idx], "TADIC_p", pdom_names),
     get_flow_values(ImpEsp_p_v[pdom_idx], "TESP_p", pdom_names),
     get_flow_values(Ar_v, "Arancel_p", p_names),
     get_flow_values(  -pz_base[pexp_idx] * Z0_v[pexp_idx],  "lambda__EXPORTER_1",  p_names[pexp_idx])
@@ -583,17 +700,19 @@ model <- steady_state(model, calibration = TRUE, options_list = eq_options)
 cat("Norma residuos iniciales:", pracma::Norm(model@init_residual_vector), "\n")
 cat("Norma residuos finales:", pracma::Norm(model@residual_vector), "\n")
 
-# --- Validacion Etapa 1 del IVA: el equilibrio base debe replicar la SAM ---
+# --- Validacion de los impuestos sobre productos: el equilibrio base debe replicar la SAM ---
 ss_chk <- get_ss_values(model, silent = TRUE)
 chk_iva <- c(
-    VAT_modelo_menos_SAM = as.numeric(ss_chk["VAT"]) - VAT_sum,
-    TESP_modelo_menos_SAM = as.numeric(ss_chk["TESP"]) - Imptos_Espec_sum,
-    C_nominal_menos_SAM  = sum(ss_chk[paste0("D__", p_names[pcon_idx])] *
-                               ss_chk[paste0("pq__", p_names[pcon_idx])]) - sum(D_m[pcon_idx]),
-    max_abs_pq_menos_base = max(abs(ss_chk[paste0("pq__", p_names)] - pq_base))
+    VAT_modelo_menos_SAM   = as.numeric(ss_chk["VAT"]) - VAT_sum,
+    TADIC_modelo_menos_SAM = as.numeric(ss_chk["TADIC"]) - TADIC_sum,
+    VAT_TADIC_menos_fila_IVA = as.numeric(ss_chk["VAT"] + ss_chk["TADIC"]) - IVA_row_sum,
+    TESP_modelo_menos_SAM  = as.numeric(ss_chk["TESP"]) - Imptos_Espec_sum,
+    C_nominal_menos_SAM    = sum(ss_chk[paste0("D__", p_names[pcon_idx])] *
+                                 ss_chk[paste0("pq__", p_names[pcon_idx])]) - sum(D_m[pcon_idx]),
+    max_abs_pq_menos_base  = max(abs(ss_chk[paste0("pq__", p_names)] - pq_base))
 )
 print(round(chk_iva, 8))
-if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con IVA en precios no replica la SAM; revisar chk_iva.")
+if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con impuestos en precios no replica la SAM; revisar chk_iva.")
 
 # --- Validacion del PIT: con TRGOV fuera de la base imponible, la recaudacion y la
 # base del equilibrio inicial deben replicar la SAM ---
@@ -643,8 +762,3 @@ tryCatch({
   cat("No se pudo extraer model@equations directamente.\n")
 })
 ```
-
-
-
-
-

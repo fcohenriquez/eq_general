@@ -8,9 +8,9 @@ output: html_document
 # Archivo de resultados (texto plano)
 ```{r}
 # Todo lo que se imprime en las secciones de ANALISIS se escribe tambien en este archivo.
-# Nombre configurable en el YAML (archivos: resultados_shocks_txt); ruta relativa al .Rmd.
+# Nombre configurable en el YAML (archivos: resultados_output); ruta relativa al .Rmd.
 `%||%` <- function(a, b) if (is.null(a)) b else a
-archivo_txt <- cfg$archivos$resultados_output %||% "resultados_shocks_12sect_2023.txt"
+archivo_txt <- cfg$archivos$resultados_output %||% "resultados_shocks_17sect_2023.txt"
 
 txt_escribir <- function(lineas, nuevo = FALSE) {
     con <- file(archivo_txt, open = if (nuevo) "w" else "a", encoding = "UTF-8")
@@ -53,6 +53,7 @@ txt_escribir(c(
     sprintf("Generado            : %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
     sprintf("Modelo              : %s (%s), anio base %s",
             cfg$modelo$nombre, cfg$modelo$version, cfg$modelo$anio_base),
+    sprintf("Sectores / productos: %d / %d", length(cfg$sectores), length(cfg$productos)),
     "",
     "Cierre macroeconomico:",
     sprintf("  numerario                : %s", fmt_lista(cm$numerario)),
@@ -69,11 +70,12 @@ txt_escribir(c(
     sprintf("  omega / sigma_q / sigma_t : %s / %s / %s",
             fmt_lista(el$utilidad_hogares_omega), fmt_lista(el$armington_sigma_q),
             fmt_lista(el$cet_sigma_t)),
-    sprintf("  wage_curve_eta           : %s", fmt_lista(el$wage_curve_eta)),
-    sprintf("  informalidad             : %s", fmt_lista(el$informalidad)),
     sprintf("  wage_curve_phi           : %s", fmt_lista(el$wage_curve_phi)),
     sprintf("  capital_curve_psi        : %s", fmt_lista(el$capital_curve_psi)),
     sprintf("  participacion_epsilon    : %s", fmt_lista(el$participacion_epsilon)),
+    "",
+    "Impuestos sobre productos:",
+    sprintf("  impuesto adicional (TADIC): %s", fmt_lista(cfg$impuesto_adicional$productos)),
     "",
     "Criterio fiscal: el impacto recaudatorio es la variacion total de la recaudacion,",
     "  dR = efecto tasa + efecto base + efecto precio (pp del PIB nominal base).",
@@ -85,7 +87,7 @@ txt_escribir(c(
 # Parametros
 ```{r}
 vars_to_compare <- c(
-    "Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
+    "Tax", "FIRMTAX", "PITAX", "VAT", "TADIC", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
     paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)),
     "pk", "exr", "CPI", "PSh", "inv_adj", "U",
     paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo)),
@@ -133,7 +135,10 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     gv <- function(res, nms) { v <- as.numeric(res[nms]); v }
 
     pn <- unlist(cfg$productos)
-    sn <- gsub("prod_", "Act_", pn)
+    # Actividades tomadas del YAML: con 17 sectores los nombres de actividad no se
+    # derivan de los productos (p. ej. Act_Combustibles produce diesel, gasolinas y
+    # otros combustibles).
+    sn <- sapply(cfg$sectores, `[[`, "id")
     ct <- unlist(cfg$cuentas_sam$factores$trabajo)
 
     # IPC (numerario): los especificos son montos reales indexados, tau_e * IPC
@@ -157,6 +162,17 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     tv_s  <- as.numeric(par_s[paste0("tau_e__", pn_vat)])
     D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b + tv_b * cpi_b, p_s + tv_s * cpi_s, FD_b, FD_s),
                         decomp3(ti_b, ti_s, p_b, p_s, XI_b, XI_s))
+
+    # ---------------- TADIC (impuesto adicional ad valorem a bebidas) ----------------
+    # R = t_adic * (p + tau_e * IPC) * FD: misma base que el IVA de la demanda final.
+    pn_ad  <- pn[paste0("t_adic__", pn) %in% names(par_b)]
+    pa_b   <- gv(res_base , paste0("p__",  pn_ad)); pa_s  <- gv(res_shock, paste0("p__",  pn_ad))
+    FDa_b  <- gv(res_base , paste0("FD__", pn_ad)); FDa_s <- gv(res_shock, paste0("FD__", pn_ad))
+    ta_b   <- as.numeric(par_b[paste0("t_adic__", pn_ad)])
+    ta_s   <- as.numeric(par_s[paste0("t_adic__", pn_ad)])
+    tva_b  <- as.numeric(par_b[paste0("tau_e__", pn_ad)])
+    tva_s  <- as.numeric(par_s[paste0("tau_e__", pn_ad)])
+    D_TADIC <- decomp3(ta_b, ta_s, pa_b + tva_b * cpi_b, pa_s + tva_s * cpi_s, FDa_b, FDa_s)
 
     # ---------------- FIRMTAX ----------------
     # P = retorno bruto pk relativo al IPC. Si el choque no altera fit ni pit,
@@ -239,7 +255,7 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     QM_s   <- pwm * M_s
     D_TAR  <- decomp3(tar, tar, rep(exr_b,length(pn_tar)), rep(exr_s,length(pn_tar)), QM_b, QM_s)
 
-    list(VAT=D_VAT, FIRMTAX=D_FIRM, PITAX=D_PIT, TPROD=D_TPROD, TESP=D_TESP, TARANCEL=D_TAR)
+    list(VAT=D_VAT, TADIC=D_TADIC, FIRMTAX=D_FIRM, PITAX=D_PIT, TPROD=D_TPROD, TESP=D_TESP, TARANCEL=D_TAR)
 }
 
 print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NULL, model_shock = NULL) {
@@ -268,8 +284,6 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     var_i_nom <- (p_shock_list$I / p_base_list$I - 1) * 100
     var_x_nom <- (p_shock_list$X / p_base_list$X - 1) * 100
     var_m_nom <- (p_shock_list$M / p_base_list$M - 1) * 100
-
-    # Unemployment impact is now a vector, handled in the printing section below
 
     cat(sprintf("PIB Nominal Base:     %.2f \n", p_base_list$PIB))
     cat(sprintf("PIB Nominal Shock:    %.2f \n", p_shock_list$PIB))
@@ -339,6 +353,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     ct   <- sub("^u_rate__", "", cat_trabajo)
     LD_b <- sapply(ct, function(l) gv(res_base,  paste0("LD__", l)))
     LD_s <- sapply(ct, function(l) gv(res_shock, paste0("LD__", l)))
+    u_agg_b <- NA_real_; u_agg_s <- NA_real_
     if (!any(is.na(LD_b)) && abs(var_pib_real) > 1e-8) {
         LF_b <- LD_b / (1 - as.numeric(u_base[cat_trabajo]))
         LF_s <- LD_s / (1 - as.numeric(u_shock[cat_trabajo]))
@@ -359,7 +374,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
                     (1 - u_agg_b) * (eta_L - eta_LF)))
     }
 
-     # --- VA real a costo de factores vs PIB real (gasto) ---
+     # --- Diagnostico de consistencia: VA real a costo de factores vs PIB real (gasto) ---
     if (!is.null(res_base) && !is.null(res_shock)) {
         vn  <- grep("^V__Act_", names(res_base), value = TRUE)
         van <- sub("^V__", "va_nom__", vn)
@@ -372,13 +387,16 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
             VA_s <- sum(va_b / V_b * V_s)            # VA real: coef. VA/producto fijo
             var_va <- (VA_s / VA_b - 1) * 100
             var_go <- (sum(V_s) / sum(V_b) - 1) * 100
+            # Control: remuneracion de factores de la base (pk = w = 1)
+            KL_b <- sum(res_base[grep("^K__Act_", names(res_base))]) +
+                    sum(res_base[grep("^L__Act_", names(res_base))])
 
             PIB_b   <- p_base_list$PIB_real
             var_ind <- ((var_pib_real/100) * PIB_b - (var_va/100) * VA_b) / (PIB_b - VA_b) * 100
-            okun_va <- if (abs(var_va) > 1e-8) -(u_agg_s - u_agg_b) * 100 / var_va else NA
+            okun_va <- if (abs(var_va) > 1e-8 && !is.na(u_agg_b)) -(u_agg_s - u_agg_b) * 100 / var_va else NA
 
             cat("\n  VA real (costo de factores) vs PIB real (gasto):\n")
-            cat(sprintf("     Suma VA base (control ~ K+L = 249319.5) : %12.2f\n", VA_b))
+            cat(sprintf("     Suma VA base (control K+L = %10.1f)  : %12.2f\n", KL_b, VA_b))
             cat(sprintf("     Cambio producto bruto real (V)          : %8.4f %%\n", var_go))
             cat(sprintf("     Cambio VA real                          : %8.4f %%\n", var_va))
             cat(sprintf("     Cambio PIB real                         : %8.4f %%\n", var_pib_real))
@@ -390,8 +408,9 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     # --- Impacto Fiscal como % del PIB nominal base ---
     pib_nom_base <- p_base_list$PIB
 
-    tax_vars <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL")
-    tax_labels <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ", "Prod. Tax ", "Spec. Tax ", "Tariffs   ")
+    tax_vars <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TADIC", "TPROD", "TESP", "TARANCEL")
+    tax_labels <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ", "Imp.Adic. ",
+                    "Prod. Tax ", "Spec. Tax ", "Tariffs   ")
 
     cat("\n  Recaudación Fiscal (% del PIB nominal base):\n")
     cat(sprintf("     %-12s  %10s  %10s  %10s\n", "Variable", "Base (%PIB)", "Shock(%PIB)", "Δ (pp PIB)"))
@@ -420,7 +439,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     # --- Descomposicion del impacto recaudatorio: dR = Ef.Tasa + Ef.Base + Ef.Precio ---
     if (!is.null(res_base) && !is.null(res_shock)) {
         RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
-        nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL")
+        nombres <- c("VAT", "TADIC", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL")
         pp <- function(x) x / pib_nom_base * 100
 
         cat("  Descomposición del impacto recaudatorio (pp PIB base): ΔR = Ef.Tasa + Ef.Base + Ef.Precio\n")
@@ -467,6 +486,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
 calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {
     # Clasificar variables: precios vs montos nominales
     price_vars <- c(paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)), "pk", "exr")
+    vars <- vars[vars %in% names(res_base)]
 
     comp <- data.frame(
         Variable = vars,
@@ -535,6 +555,7 @@ reportar("SHOCK 1: Disminucion de 1 punto en la tasa IDPC (FIRMTAX)", {
 # 1. Definir el shock: tasa legal 19% -> 20%.
 # Las tasas efectivas SIN impuesto (t_iva, t_iva_int) se escalan por 20/19,
 # lo que supone eficiencia de recaudacion constante. prod_otros no tiene IVA.
+# El impuesto adicional a bebidas (t_adic) no se modifica.
 fac_iva  <- cfg$shocks_default$iva$factor
 par_all  <- get_par_values(model, silent = TRUE)
 iva_pars <- grep("^t_iva(_int)?__", names(par_all), value = TRUE)
@@ -565,15 +586,17 @@ pib_shock_vat_real <- pib_shock_vat_list$PIB_real
 
 comp_vat <- calc_tax_impact(res_base, res_shock_vat, pib_base, pib_real_base, pib_shock_vat_list, vars_to_compare)
 
-# Traspaso a precios de comprador: dln(pq) / dln(1 + t_iva), por producto
+# Traspaso a precios de comprador: dln(pq) / dln(1 + t_iva + t_adic), por producto
 pn_iva <- sub("^t_iva__", "", grep("^t_iva__", names(par_all), value = TRUE))
 par_sv <- get_par_values(model_shock_vat, silent = TRUE)
+cuna_ad <- function(pr) as.numeric(1 + pr[paste0("t_iva__", pn_iva)] + pr[paste0("t_adic__", pn_iva)])
 traspaso <- data.frame(
     producto = pn_iva,
     t_base   = as.numeric(par_all[paste0("t_iva__", pn_iva)]),
+    t_adic   = as.numeric(par_all[paste0("t_adic__", pn_iva)]),
     dln_pq   = log(res_shock_vat[paste0("pq__", pn_iva)] / res_base[paste0("pq__", pn_iva)]),
     dln_p    = log(res_shock_vat[paste0("p__",  pn_iva)] / res_base[paste0("p__",  pn_iva)]),
-    dln_1mt  = log((1 + par_sv[paste0("t_iva__", pn_iva)]) / (1 + par_all[paste0("t_iva__", pn_iva)]))
+    dln_1mt  = log(cuna_ad(par_sv) / cuna_ad(par_all))
 )
 traspaso$traspaso <- ifelse(abs(traspaso$dln_1mt) > 1e-10, traspaso$dln_pq / traspaso$dln_1mt, NA)
 
@@ -581,7 +604,7 @@ reportar("SHOCK 2: Aumento de la tasa legal de IVA 19% -> 20%", {
     cat(sprintf("Factor sobre t_iva y t_iva_int: %.6f  (%d parametros)\n\n", fac_iva, length(iva_pars)))
     print_macro_impact("Aumento IVA 19% -> 20%", pib_model_list, pib_shock_vat_list, model, model_shock_vat)
     imprimir_tabla(comp_vat)
-    cat("\nTraspaso a precios de comprador: dln(pq) / dln(1 + t_iva)\n")
+    cat("\nTraspaso a precios de comprador: dln(pq) / dln(1 + t_iva + t_adic)\n")
     imprimir_tabla(traspaso)
 })
 ```
@@ -594,7 +617,7 @@ reportar("SHOCK 2: Aumento de la tasa legal de IVA 19% -> 20%", {
 ```{r include=FALSE}
 # 1. Definir el shock (Aumento del 10% en la tasa de PIT)
 pit_base <- get_par_values(model, silent = TRUE)["pit"]
-pit_shock <- as.numeric(pit_base) * 1.10
+pit_shock <- as.numeric(pit_base) * cfg$shocks_default$pit$factor
 
 # 2. Aplicar el shock usando set_free_par
 model_shock_pit <- set_free_par(model, free_par = list(pit = pit_shock))
@@ -624,10 +647,18 @@ reportar("SHOCK 3: Aumento de 10% en la carga efectiva de PIT", {
 # SHOCK: Incremento de impuestos específicos (por unidad física, solo demanda final)
 ```{r include=FALSE}
 # 1. Definir el shock: tau_e sube en el factor configurado (por defecto +10%).
-# Los productos con tau_e = 0 permanecen en cero.
+# Si el YAML lista productos (shocks_default$tesp$productos), el factor se aplica
+# solo a ellos; si no, a todos los productos con tau_e > 0. Los productos con
+# tau_e = 0 permanecen en cero.
 fac_esp   <- cfg$shocks_default$tesp$factor
 par_all_e <- get_par_values(model, silent = TRUE)
 esp_pars  <- grep("^tau_e__", names(par_all_e), value = TRUE)
+prod_esp_sel <- unlist(cfg$shocks_default$tesp$productos)
+if (length(prod_esp_sel)) {
+    if (!all(paste0("tau_e__", prod_esp_sel) %in% esp_pars))
+        stop("shocks_default$tesp$productos contiene productos sin parametro tau_e")
+    esp_pars <- paste0("tau_e__", prod_esp_sel)
+}
 tesp_shock <- as.list(as.numeric(par_all_e[esp_pars]) * fac_esp)
 names(tesp_shock) <- esp_pars
 
@@ -646,23 +677,24 @@ pib_shock_tesp_list <- calc_pib(model_shock_tesp, model_ref = model)
 ```{r}
 comp_tesp <- calc_tax_impact(res_base, res_shock_tesp, pib_base, pib_real_base, pib_shock_tesp_list, vars_to_compare)
 
-# Traspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva)), por producto con tau_e > 0
+# Traspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva + t_adic)), por producto con tau_e > 0
 pn_e   <- sub("^tau_e__", "", esp_pars[as.numeric(par_all_e[esp_pars]) > 0])
 par_st <- get_par_values(model_shock_tesp, silent = TRUE)
-dtau   <- as.numeric(par_st[paste0("tau_e__", pn_e)]) - as.numeric(par_all_e[paste0("tau_e__", pn_e)])
+dtau_e <- as.numeric(par_st[paste0("tau_e__", pn_e)]) - as.numeric(par_all_e[paste0("tau_e__", pn_e)])
 tr_esp <- data.frame(
     producto = pn_e,
     dpq      = as.numeric(res_shock_tesp[paste0("pq__", pn_e)] - res_base[paste0("pq__", pn_e)]),
     dp       = as.numeric(res_shock_tesp[paste0("p__",  pn_e)] - res_base[paste0("p__",  pn_e)]),
-    dtau_iva = dtau * (1 + as.numeric(par_all_e[paste0("t_iva__", pn_e)]))
+    dtau_iva = dtau_e * (1 + as.numeric(par_all_e[paste0("t_iva__", pn_e)]) +
+                             as.numeric(par_all_e[paste0("t_adic__", pn_e)]))
 )
 tr_esp$traspaso <- tr_esp$dpq / tr_esp$dtau_iva
 
 reportar("SHOCK 4: Aumento de impuestos especificos (por unidad fisica, demanda final)", {
-    cat(sprintf("Factor sobre tau_e: %.6f  (%d productos con tau_e > 0)\n\n", fac_esp, length(pn_e)))
+    cat(sprintf("Factor sobre tau_e: %.6f  (productos: %s)\n\n", fac_esp, paste(pn_e, collapse = ", ")))
     print_macro_impact("Aumento impuestos específicos", pib_model_list, pib_shock_tesp_list, model, model_shock_tesp)
     imprimir_tabla(comp_tesp)
-    cat("\nTraspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva))\n")
+    cat("\nTraspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva + t_adic))\n")
     imprimir_tabla(tr_esp)
 })
 ```
@@ -719,7 +751,7 @@ nm_ss <- names(res_base)
 ct_   <- unlist(cfg$cuentas_sam$factores$trabajo)
 v_precios <- intersect(c(grep("^(p|pq|pint|pz|pd|pe|pm)__", nm_ss, value = TRUE),
                          paste0("w__", ct_), "pk", "exr", "CPI"), nm_ss)
-v_nominal <- intersect(c("Tax", "VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL",
+v_nominal <- intersect(c("Tax", "VAT", "TADIC", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL",
                          "INC", "BTINC", "INGG", "INGF", "SAV", "SAVf", "SAVg", "SAVext",
                          "TOTAL_INVEST", "NOM_I_BASE", "TRGOV", "PSh"), nm_ss)
 v_cantid  <- intersect(c(grep("^(V|D|Q|M|EX|DS|Z|FD|XI)__", nm_ss, value = TRUE),

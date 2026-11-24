@@ -10,7 +10,7 @@ modelo:
   descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 17 actividades y 21 productos."
 
 archivos:
-  sam: "../data/sam_2023_17sect_sinmg_trab.csv"
+  sam: "../data/sam_2023_17sect_sinmg_trab_casen.csv"
   gcn: "../script/cge_calib_chile_17_sect_23.gcn"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_17_sect_23_auto.gcn"
