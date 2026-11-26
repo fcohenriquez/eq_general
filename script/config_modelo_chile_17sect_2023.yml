@@ -12,7 +12,12 @@ modelo:
 archivos:
   # SAM con el bloque institucional conciliado con las cuentas por sector institucional,
   # la balanza de pagos y la recaudacion del SII (sector externo desagregado e Imp_adic).
-  sam: "../data/sam_2023_17sect_sinmg_trab_inst_cft.csv"
+  # Version '_tesp': los impuestos especificos que gravan las importaciones de tabaco,
+  # diesel y gasolinas (988,98 miles de millones) se reclasifican de la fila Arancel a la
+  # fila Imptos_Espec, con el ajuste correspondiente en la columna de ingresos del
+  # gobierno. Conciliacion con el SII 2023 (miles de millones): tabaco 1.092,7 / 1.092,4;
+  # gasolinas 1.827,0 / 1.837,1; diesel neto de recuperaciones 809,1 / 759,8.
+  sam: "../data/sam_2023_17sect_sinmg_trab_inst_cft_tesp.csv"
   gcn: "../script/cge_calib_chile_17_sect_23.gcn"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_17_sect_23_auto.gcn"
@@ -208,6 +213,16 @@ conjuntos_gcn:
       - "prod_Crudo"
       - "prod_Min_resto"
       - "prod_const"
+  # Nidos de la utilidad CES anidada (ver utilidad_hogares). Presto = Pcon menos el
+  # nido unitario y Pcomb.
+  Pcomb:
+    descripcion: "Nido de combustibles de la utilidad de los hogares"
+    incluir:
+      - "prod_Diesel"
+      - "prod_Gasolinas"
+      - "prod_Otros_comb"
+  Presto:
+    regla: "Pcon_menos_nido_unitario_y_Pcomb"
   P_Exp:
     regla: "productos_con_exportaciones_positivas"
     excluir_manual:
@@ -279,8 +294,36 @@ tratamiento_ceros_estructurales:
   fijar_sin_armington_importado:
     - "prod_adm_pub"
 
+# Utilidad de los hogares: CES anidada en forma de participaciones calibradas
+# (Keller, 1976; Perroni y Rutherford, 1995; Rutherford, 1995). El nivel superior
+# combina tres compuestos con elasticidad sigma_superior: el bien del nido unitario
+# (tabaco), el nido de combustibles (Pcomb, elasticidad sigma_combustibles) y el resto
+# del consumo (Presto, elasticidad utilidad_hogares_omega). Los parametros de
+# participacion son participaciones en el gasto de la base, de modo que el equilibrio
+# base reproduce la SAM para cualquier valor de las elasticidades y estas pueden
+# variarse sin recalibrar.
+# Elasticidad precio propia no compensada de un bien i del nido n:
+#   e_ii = -sigma_n (1 - s_i|n) - sigma_sup s_i|n (1 - S_n) - s_i
+# (s_i|n: participacion en el nido; S_n: del nido en el gasto; s_i: del bien en el gasto).
+utilidad_hogares:
+  especificacion: "ces_anidada"
+  nido_unitario: "prod_Tabaco"
+  nido_combustibles: "Pcomb"
+
 elasticidades:
+  # Elasticidad de sustitucion dentro del nido del resto del consumo (Presto).
   utilidad_hogares_omega: 1.5
+  # Nivel superior. Con 0.4, la elasticidad precio propia del tabaco es -0.41, dentro
+  # del rango estimado para America Latina y el Caribe (-0.31 corto plazo, -0.43 largo
+  # plazo; Guindon et al., 2016) y cercana al valor de -0.4 de los paises de ingreso
+  # alto (IARC, 2011).
+  utilidad_sigma_superior: 0.4
+  # Nido de combustibles. Con 0.2 (y sigma_superior = 0.4), las elasticidades precio
+  # propias son -0.33 en gasolinas, -0.23 en diesel y -0.26 en otros combustibles,
+  # dentro del rango de la evidencia metaanalitica para la gasolina (-0.09 corto plazo,
+  # -0.31 largo plazo corregidas por sesgo de publicacion, Havranek et al., 2012; -0.34
+  # corto plazo, Brons et al., 2008).
+  utilidad_sigma_combustibles: 0.2
   armington_sigma_q: 2.0
   cet_sigma_t: 1.5
   # Oferta de factores (curvas en terminos reales y netos de impuestos directos).
@@ -332,7 +375,10 @@ cierre_macro:
 # choques: subconjunto de IVA, IDPC, PIT, TESP (definidos en shocks_default).
 cierres_alternativos:
   choques: ["IVA", "IDPC"]
-  tolerancia_replica: 1.0e-5
+  # La calibracion base se resuelve con tol = 3e-5 (gecon_chile_17_sect_23.Rmd); al
+  # resolver de nuevo sin choque, las variables se mueven del orden de 2e-5 en terminos
+  # relativos aunque el cierre sea el mismo. La tolerancia de la replica debe ser mayor.
+  tolerancia_replica: 1.0e-4
   cierres:
     vigente:
       inversion: "determinada_por_ahorro"
@@ -393,22 +439,49 @@ impuesto_adicional:
     - "prod_Beb_alc"
     - "prod_Beb_noalc"
 
-# Especificacion de impuestos especificos: impuesto por unidad fisica que pagan solo
-# hogares, gobierno e inversion. Consumo intermedio, existencias y exportaciones no lo
-# pagan (supuesto). El IVA se calcula sobre el precio con especifico.
-# En la SAM de 17 sectores recaen en prod_Tabaco, prod_Diesel, prod_Gasolinas y
-# prod_Otros_comb.
+# Especificacion de impuestos especificos: impuesto por unidad fisica (tau_e, indexado
+# al IPC) que paga la demanda final (hogares, gobierno, inversion) y, en los productos
+# de 'productos_uso_intermedio', tambien el uso intermedio con el monto kappa_e * tau_e.
+# Existencias y exportaciones no lo pagan. El IVA de la demanda final se calcula sobre el
+# precio con especifico.
+#     pq   = (p + tau_e * IPC) * (1 + t_iva + t_adic)
+#     pint = p * (1 + t_iva_int) + kappa_e * tau_e * IPC
+#     TESP = tau_e * IPC * (FD + kappa_e * XI)
+# En la SAM recaen en prod_Tabaco, prod_Diesel, prod_Gasolinas y prod_Otros_comb (en este
+# ultimo, el impuesto a los vehiculos a gas licuado, 4,1 miles de millones).
+# - El especifico de los combustibles grava la primera venta o importacion, cualquiera sea
+#   el uso (Ley 18.502, art. 6); el del tabaco grava cigarrillos y tabaco elaborado (DL
+#   828), por lo que su uso intermedio (hoja de tabaco) no lo paga.
+# - recuperacion_uso_intermedio: fraccion del impuesto bruto que se recupera; recae solo
+#   sobre el uso intermedio y determina kappa_e mediante
+#       (1 - kappa_e) * XI = rho * (FD + XI).
+#   Diesel: credito especial (art. 7, Ley 18.502) y recuperacion del transporte de carga
+#   (Ley 19.764). SII 2023 (miles de millones): impuesto bruto 1.553,5 (nacional 639,5 e
+#   importado 914,0); credito especial 697,7 y recuperacion del transporte de carga 96,0:
+#   rho = (697,7 + 96,0) / 1.553,5 = 0,5109 (Serie de Ingresos Tributarios Anuales
+#   Consolidados 2009-2025).
 tesp:
-  especificacion: "unitario_demanda_final"
+  especificacion: "unitario_demanda_final_y_uso_intermedio"
+  productos_uso_intermedio:
+    - "prod_Diesel"
+    - "prod_Gasolinas"
+    - "prod_Otros_comb"
+  recuperacion_uso_intermedio:
+    prod_Diesel: 0.5109
 
 shocks_default:
   tesp:
-    descripcion: "Aumento de 10% en el impuesto especifico por unidad fisica (tau_e)"
+    descripcion: "Aumento de 10% en el impuesto especifico por unidad fisica (tau_e) del diesel y las gasolinas"
     tipo: "multiplicativo"
     factor: 1.10
     # Productos a los que se aplica el factor. Vacio o ausente: todos los productos
     # con tau_e > 0 (prod_Tabaco, prod_Diesel, prod_Gasolinas, prod_Otros_comb).
-    productos: []
+    # Se excluye prod_Otros_comb: su especifico (4,1 miles de millones) corresponde al
+    # impuesto anual a los vehiculos a gas licuado, no a un impuesto por unidad de
+    # combustible de la Ley 18.502 (art. 6).
+    productos:
+      - "prod_Diesel"
+      - "prod_Gasolinas"
   iva:
     descripcion: "Alza de la tasa legal de IVA de 19% a 20% (tasas efectivas sin impuesto x 20/19)"
     tipo: "multiplicativo"
@@ -427,12 +500,29 @@ shocks_default:
     formula_factor: "1 + cambio_puntos_tasa * participacion_idpc_en_firmtax / tasa_nominal_base"
 
 
+# Sensibilidad de consumo y comercio exterior (sens_consumo_comercio.Rmd). Con la
+# utilidad anidada, omega es la elasticidad del nido del resto del consumo; sigma_sup,
+# la del nivel superior (tabaco, combustibles y resto), y sigma_comb, la del nido de
+# combustibles. Como los parametros de participacion de la utilidad no dependen de las
+# elasticidades, estas se varian sin recalibrar; delta_m, aq, gamma_e y at se recalculan
+# para cada (sigma_q, sigma_t).
+#   sigma_sup: 0.3 y 0.5 llevan la elasticidad del tabaco a -0.31 y -0.50 (corto y
+#              largo plazo en America Latina y el Caribe, -0.31 y -0.43; Guindon et al., 2016).
+#   sigma_comb: 0.1 y 0.3 (con sigma_sup = 0.4) llevan la de las gasolinas a -0.29 y
+#              -0.37, y la del diesel a -0.14 y -0.32 (Havranek et al., 2012; Brons et al., 2008).
+#   exclusion_omega_unitario: se excluyen de las tres grillas de la utilidad los valores a
+#              menos de esta distancia de 1 (CES singular).
+#   umbral_invariancia_pp: amplitud de la variacion total (pp del PIB) bajo la cual la
+#              redaccion considera el resultado invariante a la elasticidad.
 sensibilidad_consumo_comercio:
-  parametros: [omega, sigma_q, sigma_t]
-  omega:   [0.5, 0.8, 1.2, 1.5, 2.0]
-  sigma_q: [1.4, 2.0, 2.9, 3.8]
-  sigma_t: [0.6, 1.0, 1.5, 3.0]
+  parametros: [omega, sigma_sup, sigma_comb, sigma_q, sigma_t]
+  omega:      [0.5, 0.8, 1.2, 1.5, 2.0]
+  sigma_sup:  [0.3, 0.4, 0.5]
+  sigma_comb: [0.1, 0.2, 0.3]
+  sigma_q:    [1.4, 2.0, 2.9, 3.8]
+  sigma_t:    [0.6, 1.0, 1.5, 3.0]
   exclusion_omega_unitario: 0.05
+  umbral_invariancia_pp: 0.002
 
 
 validaciones:
@@ -443,3 +533,6 @@ validaciones:
   verificar_productos_y_sectores_en_sam: true
   verificar_conjuntos_gcn: true
   advertir_flujos_negativos: true
+  # Arancel general (6%): una tasa efectiva mayor sugiere impuestos especificos
+  # registrados en la fila de aranceles de la SAM.
+  tasa_maxima_arancel: 0.06

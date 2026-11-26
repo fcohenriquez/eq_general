@@ -9,6 +9,8 @@
 | [ ] | Abrir los hogares, por ejemplo por quintiles de ingreso. |
 | [ ] | Agregar el Margen de comercio. |
 | [ ] | Implementar mecanismo de crédito en los impuestos a la renta |
+| [ ] | Estimar elasticidad de la recaudación al precio del cobre como un tipo de shock |
+| [ ] | Generar capitales específicos a ciertos sectores |
 | [✅] | Revisar la SAM (entender mejor el sector externo  y en general el institucional) |
 | [✅] | Averiguar qué pasa con las contribuciones y con el impuesto adicional. El impuesto adicional se registra en cuentas nacionales como transferencias correintes del resto del mundo al gobierno central. Se debe representar también las remesas al exterior para representarlo| 
 | [✅] | Revisar el modelamiento del sector externo. Se podrá modelar que una parte del capital sea extranjero y reaccione ante las políticas? | 

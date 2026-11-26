@@ -18,9 +18,11 @@ vigente; cada cierre alternativo debe reproducirlo sin choque.
 
 Choques disponibles (cierres_alternativos$choques en el YAML): IVA, IDPC, PIT y
 TESP. El choque de IVA multiplica t_iva y t_iva_int, y no altera el impuesto
-adicional a las bebidas (t_adic). Ademas de la descomposicion total, se reporta la
-variacion de la recaudacion por instrumento, incluidos el impuesto adicional a las
-bebidas (TADIC) y el Impuesto Adicional de la LIR (TIA).
+adicional a las bebidas (t_adic). El choque TESP se aplica a los productos de
+shocks_default$tesp$productos (por defecto, los combustibles). Ademas de la
+descomposicion total, se reporta la variacion de la recaudacion por instrumento,
+incluidos el impuesto adicional a las bebidas (TADIC) y el Impuesto Adicional de
+la LIR (TIA).
 -->
 
 # Preparacion
@@ -119,14 +121,18 @@ reglas_fis <- c("ahorro_publico_residual", "gasto_endogeno", "transferencias_end
 par_b0  <- get_par_values(model, silent = TRUE)
 cfg_fit <- cfg$shocks_default$fit
 iva_pars <- grep("^t_iva(_int)?__", names(par_b0), value = TRUE)
+# Especificos: productos de shocks_default$tesp$productos (todos los tau_e si esta vacio)
+ep_all <- grep("^tau_e__", names(par_b0), value = TRUE)
+ep_sel <- unlist(cfg$shocks_default$tesp$productos)
+ep     <- if (length(ep_sel)) paste0("tau_e__", ep_sel) else ep_all
+if (!all(ep %in% ep_all)) stop("shocks_default$tesp$productos contiene productos sin parametro tau_e")
 choques_def <- list(
     IVA  = setNames(as.list(as.numeric(par_b0[iva_pars]) * cfg$shocks_default$iva$factor), iva_pars),
     IDPC = list(fit = as.numeric(par_b0["fit"]) *
                     (1 + cfg_fit$cambio_puntos_tasa * cfg_fit$participacion_idpc_en_firmtax /
                          cfg_fit$tasa_nominal_base)),
     PIT  = list(pit = as.numeric(par_b0["pit"]) * cfg$shocks_default$pit$factor),
-    TESP = { ep <- grep("^tau_e__", names(par_b0), value = TRUE)
-             setNames(as.list(as.numeric(par_b0[ep]) * cfg$shocks_default$tesp$factor), ep) }
+    TESP = setNames(as.list(as.numeric(par_b0[ep]) * cfg$shocks_default$tesp$factor), ep)
 )
 impuestos_propios_c <- list(IVA = "VAT", IDPC = "FIRMTAX", PIT = "PITAX", TESP = "TESP")
 no_def <- setdiff(choques_cierre, names(choques_def))

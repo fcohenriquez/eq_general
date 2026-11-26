@@ -69,15 +69,23 @@ txt_escribir(c(
     sprintf("  tasa_desempleo_base      : %s", fmt_lista(cm$tasa_desempleo_base)),
     "",
     "Elasticidades:",
-    sprintf("  omega / sigma_q / sigma_t : %s / %s / %s",
-            fmt_lista(el$utilidad_hogares_omega), fmt_lista(el$armington_sigma_q),
-            fmt_lista(el$cet_sigma_t)),
+    sprintf("  utilidad de los hogares  : %s (nido unitario: %s; nido de combustibles: %s)",
+            fmt_lista(cfg$utilidad_hogares$especificacion), fmt_lista(cfg$utilidad_hogares$nido_unitario),
+            fmt_lista(cfg$conjuntos_gcn$Pcomb$incluir)),
+    sprintf("  sigma_superior / sigma_combustibles / omega (resto) : %s / %s / %s",
+            fmt_lista(el$utilidad_sigma_superior), fmt_lista(el$utilidad_sigma_combustibles),
+            fmt_lista(el$utilidad_hogares_omega)),
+    sprintf("  sigma_q / sigma_t        : %s / %s",
+            fmt_lista(el$armington_sigma_q), fmt_lista(el$cet_sigma_t)),
     sprintf("  wage_curve_phi           : %s", fmt_lista(el$wage_curve_phi)),
     sprintf("  capital_curve_psi        : %s", fmt_lista(el$capital_curve_psi)),
     sprintf("  participacion_epsilon    : %s", fmt_lista(el$participacion_epsilon)),
     "",
     "Impuestos sobre productos:",
     sprintf("  impuesto adicional (TADIC): %s", fmt_lista(cfg$impuesto_adicional$productos)),
+    sprintf("  especificos (TESP)        : %s; uso intermedio gravado: %s; recuperacion: %s",
+            fmt_lista(cfg$tesp$especificacion), fmt_lista(cfg$tesp$productos_uso_intermedio),
+            fmt_lista(cfg$tesp$recuperacion_uso_intermedio)),
     "  Impuesto Adicional de la LIR (TIA): t_ia * rentas pagadas al resto del mundo",
     "",
     "Criterio fiscal: el impacto recaudatorio es la variacion total de la recaudacion,",
@@ -221,15 +229,23 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     Qrev_s  <- rev_s / pzdef_s
     D_TPROD <- decomp3(tps, tps, pzdef_b, pzdef_s, Qrev_b, Qrev_s)
 
-    # ---------------- TESP (impuesto por unidad fisica sobre demanda final) ----------------
-    # Parte por producto: R = tau_e * IPC * FD. Con P = IPC = 1 (numerario), el efecto
-    # precio es nulo por construccion y la recaudacion sigue a los volumenes.
+    # ---------------- TESP (impuesto por unidad fisica) ----------------
+    # Parte por producto: R = tau_e * IPC * (FD + kappa_e * XI). La base fisica incluye
+    # el uso intermedio gravado (kappa_e > 0 en los combustibles). Con P = IPC = 1
+    # (numerario), el efecto precio es nulo por construccion y la recaudacion sigue a
+    # los volumenes.
     pn_esp <- pn[paste0("tau_e__", pn) %in% names(par_b)]
     tau_b  <- as.numeric(par_b[paste0("tau_e__", pn_esp)])
     tau_s  <- as.numeric(par_s[paste0("tau_e__", pn_esp)])
+    kap_e  <- paste0("kappa_e__", pn_esp)
+    kap_b  <- ifelse(kap_e %in% names(par_b), as.numeric(par_b[kap_e]), 0)
     FDe_b  <- gv(res_base , paste0("FD__", pn_esp))
     FDe_s  <- gv(res_shock, paste0("FD__", pn_esp))
-    D_TESP_p <- decomp3(tau_b, tau_s, rep(cpi_b, length(pn_esp)), rep(cpi_s, length(pn_esp)), FDe_b, FDe_s)
+    XIe_b  <- gv(res_base , paste0("XI__", pn_esp))
+    XIe_s  <- gv(res_shock, paste0("XI__", pn_esp))
+    Qe_b   <- FDe_b + kap_b * ifelse(is.na(XIe_b), 0, XIe_b)
+    Qe_s   <- FDe_s + kap_b * ifelse(is.na(XIe_s), 0, XIe_s)
+    D_TESP_p <- decomp3(tau_b, tau_s, rep(cpi_b, length(pn_esp)), rep(cpi_s, length(pn_esp)), Qe_b, Qe_s)
 
     # Parte sectorial (tes__Act_*): es cero en la SAM 2023; se mantiene por completitud
     sn_tesp <- sn[paste0("tes__", sn) %in% names(par_b)]
@@ -661,12 +677,13 @@ reportar("SHOCK 3: Aumento de 10% en la carga efectiva de PIT", {
 })
 ```
 
-# SHOCK: Incremento de impuestos específicos (por unidad física, solo demanda final)
+# SHOCK: Incremento de impuestos específicos (por unidad física)
 ```{r include=FALSE}
 # 1. Definir el shock: tau_e sube en el factor configurado (por defecto +10%).
 # Si el YAML lista productos (shocks_default$tesp$productos), el factor se aplica
-# solo a ellos; si no, a todos los productos con tau_e > 0. Los productos con
-# tau_e = 0 permanecen en cero.
+# solo a ellos (por defecto, los combustibles); si no, a todos los productos con
+# tau_e > 0. Los productos con tau_e = 0 permanecen en cero. Como el uso intermedio
+# paga kappa_e * tau_e, el choque eleva tambien el precio de los insumos (pint).
 fac_esp   <- cfg$shocks_default$tesp$factor
 par_all_e <- get_par_values(model, silent = TRUE)
 esp_pars  <- grep("^tau_e__", names(par_all_e), value = TRUE)
@@ -694,24 +711,34 @@ pib_shock_tesp_list <- calc_pib(model_shock_tesp, model_ref = model)
 ```{r}
 comp_tesp <- calc_tax_impact(res_base, res_shock_tesp, pib_base, pib_real_base, pib_shock_tesp_list, vars_to_compare)
 
-# Traspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva + t_adic)), por producto con tau_e > 0
+# Traspaso por producto chocado:
+#  - demanda final : dpq   / (d tau_e * (1 + t_iva + t_adic))
+#  - uso intermedio: dpint / (kappa_e * d tau_e)   (NA si el uso intermedio no paga)
 pn_e   <- sub("^tau_e__", "", esp_pars[as.numeric(par_all_e[esp_pars]) > 0])
 par_st <- get_par_values(model_shock_tesp, silent = TRUE)
 dtau_e <- as.numeric(par_st[paste0("tau_e__", pn_e)]) - as.numeric(par_all_e[paste0("tau_e__", pn_e)])
+kap_pe <- as.numeric(par_all_e[paste0("kappa_e__", pn_e)])
 tr_esp <- data.frame(
     producto = pn_e,
+    kappa_e  = kap_pe,
     dpq      = as.numeric(res_shock_tesp[paste0("pq__", pn_e)] - res_base[paste0("pq__", pn_e)]),
+    dpint    = as.numeric(res_shock_tesp[paste0("pint__", pn_e)] - res_base[paste0("pint__", pn_e)]),
     dp       = as.numeric(res_shock_tesp[paste0("p__",  pn_e)] - res_base[paste0("p__",  pn_e)]),
     dtau_iva = dtau_e * (1 + as.numeric(par_all_e[paste0("t_iva__", pn_e)]) +
-                             as.numeric(par_all_e[paste0("t_adic__", pn_e)]))
+                             as.numeric(par_all_e[paste0("t_adic__", pn_e)])),
+    dFD_pct  = as.numeric(res_shock_tesp[paste0("FD__", pn_e)] / res_base[paste0("FD__", pn_e)] - 1) * 100,
+    dXI_pct  = as.numeric(res_shock_tesp[paste0("XI__", pn_e)] / res_base[paste0("XI__", pn_e)] - 1) * 100
 )
-tr_esp$traspaso <- tr_esp$dpq / tr_esp$dtau_iva
+tr_esp$traspaso_DF  <- tr_esp$dpq / tr_esp$dtau_iva
+tr_esp$traspaso_int <- ifelse(tr_esp$kappa_e > 0, tr_esp$dpint / (tr_esp$kappa_e * dtau_e), NA)
 
-reportar("SHOCK 4: Aumento de impuestos especificos (por unidad fisica, demanda final)", {
+reportar(sprintf("SHOCK 4: Aumento de %.0f%% en el impuesto especifico por unidad fisica (%s)",
+                 (fac_esp - 1) * 100, paste(pn_e, collapse = ", ")), {
     cat(sprintf("Factor sobre tau_e: %.6f  (productos: %s)\n\n", fac_esp, paste(pn_e, collapse = ", ")))
     print_macro_impact("Aumento impuestos específicos", pib_model_list, pib_shock_tesp_list, model, model_shock_tesp)
     imprimir_tabla(comp_tesp)
-    cat("\nTraspaso a precio de comprador: dpq / (d tau_e * (1 + t_iva + t_adic))\n")
+    cat("\nTraspaso por producto: demanda final dpq / (d tau_e * (1 + t_iva + t_adic));\n")
+    cat("uso intermedio dpint / (kappa_e * d tau_e). dFD_pct y dXI_pct: variacion de la base fisica (%).\n")
     imprimir_tabla(tr_esp)
 })
 ```
@@ -773,7 +800,8 @@ v_nominal <- intersect(c("Tax", "VAT", "TADIC", "FIRMTAX", "PITAX", "TPROD", "TE
                          "TOTAL_INVEST", "NOM_I_BASE", "TRGOV", "PSh", "TIA",
                          "TREMP", "TRFG", "ROWF", "YROWF", "REMH", "LROWP", "RNROW"), nm_ss)
 v_cantid  <- intersect(c(grep("^(V|D|Q|M|EX|DS|Z|FD|XI)__", nm_ss, value = TRUE),
-                         paste0("LD__", ct_), paste0("u_rate__", ct_), "KD", "u_k", "inv_adj"), nm_ss)
+                         paste0("LD__", ct_), paste0("u_rate__", ct_), "KD", "u_k", "inv_adj",
+                         "s_adj", "g_adj", "tr_adj"), nm_ss)
 
 hom <- tryCatch({
     m_hom <- set_free_par(model, free_par = list(cpi_num = cpi_num_base * k_hom))
@@ -1035,6 +1063,47 @@ reportar("SENSIBILIDAD: elasticidades de oferta de factores", {
     cat("central = calibracion vigente (NA si no esta en la grilla).\n")
     cat("amplitud_solo_X = max - min al mover solo la elasticidad X, con la otra en su valor calibrado.\n\n")
     imprimir_tabla(resumen_so)
+})
+```
+
+# SENSIBILIDAD A LAS ELASTICIDADES DE LA UTILIDAD (CHOQUE DE ESPECIFICOS)
+```{r include=FALSE}
+# Con la utilidad en forma de participaciones calibradas, las elasticidades se varian
+# sin recalibrar: el equilibrio base no cambia. La grilla combina sigma_superior y
+# sigma_combustibles (YAML: sensibilidad_consumo_comercio).
+scc <- cfg$sensibilidad_consumo_comercio
+grid_u <- expand.grid(sigma_sup  = unlist(scc$sigma_sup  %||% c(0.3, 0.4, 0.5)),
+                      sigma_comb = unlist(scc$sigma_comb %||% c(0.1, 0.2, 0.3)))
+sens_util <- do.call(rbind, lapply(seq_len(nrow(grid_u)), function(i) {
+    su <- grid_u$sigma_sup[i]; sc <- grid_u$sigma_comb[i]
+    vacio <- c(dPIB_real = NA, dTax_pp = NA, ef_tasa_pp = NA, ef_base_pp = NA, ef_precio_pp = NA,
+               pct_erosion = NA, pct_base = NA, pct_precio = NA, pct_base_otros = NA, resid_pp = NA,
+               dTESP_pp = NA)
+    r <- tryCatch({
+        m   <- set_free_par(model, free_par = c(list(sigma_sup = su, sigma_comb = sc), tesp_shock))
+        m   <- steady_state(m, calibration = FALSE, options_list = opts_c)
+        v   <- get_ss_values(m, silent = TRUE)
+        lst <- calc_pib(m, model_ref = model)
+        RD  <- build_real_decomp(model, m, res_base, v)
+        ind <- indicadores_fiscales(RD, v, "TESP")
+        c(dPIB_real = unname(as.numeric(lst$PIB_real / pib_model_list$PIB_real - 1) * 100),
+          ind,
+          dTESP_pp  = unname(as.numeric(v["TESP"] - res_base["TESP"]) / as.numeric(pib_model_list$PIB) * 100))
+    }, error = function(e) {
+        message(sprintf("sigma_sup = %.2f, sigma_comb = %.2f: sin solucion (%s)", su, sc, conditionMessage(e)))
+        vacio
+    })
+    data.frame(sigma_sup = su, sigma_comb = sc, t(r[names(vacio)]), check.names = FALSE, row.names = NULL)
+}))
+```
+
+# ANALISIS SENSIBILIDAD UTILIDAD
+```{r}
+reportar("SENSIBILIDAD: elasticidades de la utilidad anidada (choque de especificos)", {
+    cat("sigma_sup  = elasticidad de sustitucion del nivel superior (tabaco, combustibles, resto).\n")
+    cat("sigma_comb = elasticidad de sustitucion dentro del nido de combustibles.\n")
+    cat("dTESP_pp   = variacion de la recaudacion de especificos (pp del PIB base).\n\n")
+    imprimir_tabla(sens_util)
 })
 ```
 

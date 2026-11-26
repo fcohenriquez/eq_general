@@ -16,9 +16,22 @@
 #    (capital de empresas) y del PIT (capital de hogares).
 #  - Base del PIT: ingreso de los hogares antes de impuestos (BTINC) menos las
 #    transferencias del gobierno (TRGOV), que no tributan.
-# Impuestos sobre productos (cunas de precio sobre la demanda final):
-#  - IVA (t_iva), impuesto adicional ad valorem a bebidas (t_adic, misma base que
-#    el IVA) e impuestos especificos por unidad fisica (tau_e).
+# Consumo de los hogares: utilidad CES anidada en forma de participaciones
+# calibradas (Rutherford, 1995). El nivel superior (sigma_sup) combina tres
+# compuestos: tabaco (nido de un solo bien), combustibles (nido Pcomb, sigma_comb)
+# y resto del consumo (nido Presto, omega). Los parametros th son participaciones
+# en el gasto de la base y dst las cantidades de la base, de modo que el equilibrio
+# base reproduce la SAM para cualquier valor de las elasticidades.
+# Impuestos sobre productos (cunas de precio):
+#  - IVA (t_iva) e impuesto adicional ad valorem a bebidas (t_adic, misma base que
+#    el IVA) sobre la demanda final.
+#  - Impuestos especificos por unidad fisica (tau_e), indexados al IPC: los paga la
+#    demanda final y, con el factor kappa_e, el uso intermedio. kappa_e = 0 en los
+#    productos cuyo uso intermedio no paga el impuesto (tabaco); kappa_e = 1 si lo
+#    paga integro (gasolinas); 0 < kappa_e < 1 si una parte se recupera (diesel:
+#    credito especial y recuperacion del transporte de carga).
+#  - Los especificos que gravan las importaciones de tabaco y combustibles se
+#    registran en la cuenta de especificos de la SAM, no en la de aranceles.
 # Sector externo e instituciones (SAM 2023 conciliada con las cuentas por sector
 # institucional, la balanza de pagos y la recaudacion del SII):
 #  - Las empresas reciben la renta de la inversion directa en el exterior (YROWF),
@@ -34,6 +47,21 @@
 #    hogares reciben la fraccion par_l_h.
 #  - RNROW resume los pagos netos de ingreso primario y secundario al resto del
 #    mundo; la balanza de pagos (ley de Walras) es SAVext = M - X + RNROW.
+#
+# Cierres alternativos (bloque CIERRE). Los valores por defecto de los
+# interruptores reproducen el cierre descrito arriba:
+#  - sw_joh = 0: inversion determinada por el ahorro (s_adj = 1, inv_adj endogeno).
+#    sw_joh = 1: cierre de Johansen (inv_adj = 1; la propension al ahorro de los
+#    hogares se ajusta mediante s_adj).
+#  - sw_g = sw_tr = 0: tasas, gasto y transferencias reales fijos; ahorro publico
+#    residual (g_adj = tr_adj = 1).
+#    sw_g = 1: ahorro publico real fijo en SAVg_target; el consumo del gobierno en
+#    volumen se ajusta mediante g_adj.
+#    sw_tr = 1: ahorro publico real fijo en SAVg_target; las transferencias reales
+#    a hogares se ajustan mediante tr_adj.
+#  - sw_g y sw_tr no pueden valer 1 simultaneamente (sistema singular).
+#  - SAVg_target debe fijarse en el ahorro publico real del equilibrio base antes
+#    de activar sw_g o sw_tr (eval_cierres_17_sect_23.Rmd).
 ##################################
 
 
@@ -67,12 +95,20 @@ indexsets
                'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
                'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
 
-  # Pcon: productos en la utilidad CES de los hogares (excluye cobre, crudo,
-  # resto de la mineria y construccion, sin consumo de hogares en la SAM)
+  # Pcon: productos en la utilidad de los hogares (excluye cobre, crudo, resto de la
+  # mineria y construccion, sin consumo de hogares en la SAM)
   Pcon  = {'prod_Agri', 'prod_Beb_alc', 'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel',
             'prod_Gasolinas', 'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas',
             'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
             'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
+
+  # Nidos de la utilidad CES anidada. Pcon = {prod_Tabaco} + Pcomb + Presto.
+  Pcomb  = {'prod_Diesel', 'prod_Gasolinas', 'prod_Otros_comb'};
+
+  Presto = {'prod_Agri', 'prod_Beb_alc', 'prod_Beb_noalc', 'prod_Manu_resto',
+            'prod_elect_agua_gas', 'prod_com_hot_rest', 'prod_trans_comu_inf',
+            'prod_int_fin', 'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers',
+            'prod_adm_pub', 'prod_otros'};
 
   P_Exp  = {'prod_Agri', 'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc',
              'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas',
@@ -118,7 +154,15 @@ block CONSUMER
 
     objective
     {
-        U[] = (SUM<idx_c::Pcon>(alpha<idx_c> * (D<idx_c>[]^((omega - 1.0)/omega))))^(omega/(omega - 1.0));
+        # CES anidada en forma de participaciones calibradas. En la base, cada
+        # cociente D/dst vale 1 y U = u_bar (gasto de consumo de la base).
+        #   nivel superior : sigma_sup  (tabaco, combustibles, resto)
+        #   combustibles   : sigma_comb (diesel, gasolinas, otros combustibles)
+        #   resto          : omega
+        U[] = u_bar * ( th_tab * (D<'prod_Tabaco'>[] / dst<'prod_Tabaco'>)^((sigma_sup - 1.0)/sigma_sup)
+                      + th_comb * (SUM<ic::Pcomb>(th<ic> * (D<ic>[] / dst<ic>)^((sigma_comb - 1.0)/sigma_comb)))^(((sigma_sup - 1.0)/sigma_sup) / ((sigma_comb - 1.0)/sigma_comb))
+                      + th_resto * (SUM<ir::Presto>(th<ir> * (D<ir>[] / dst<ir>)^((omega - 1.0)/omega)))^(((sigma_sup - 1.0)/sigma_sup) / ((omega - 1.0)/omega))
+                      )^(sigma_sup/(sigma_sup - 1.0));
     };
 
     constraints
@@ -130,7 +174,8 @@ block CONSUMER
     {
         INC[] = BTINC[] - PITAX[];
         BTINC[] = pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
-        SAV[] = INC[] * por_sav;
+        # s_adj = 1 salvo en el cierre de Johansen (sw_joh = 1)
+        SAV[] = INC[] * por_sav * s_adj[];
         CS[] = INC[] * por_cont;
         # Remesas de los hogares al resto del mundo: proporcion del ingreso disponible
         REMH[] = INC[] * por_rem;
@@ -139,11 +184,6 @@ block CONSUMER
         D<'prod_Crudo'>[]     = dst_nc<'prod_Crudo'>;
         D<'prod_Min_resto'>[] = dst_nc<'prod_Min_resto'>;
         D<'prod_const'>[]     = dst_nc<'prod_const'>;
-    };
-
-    calibration
-    {
-        <idx_cal::Pcon> D<idx_cal>[] = dst<idx_cal> -> alpha<idx_cal>;
     };
 };
 
@@ -244,14 +284,14 @@ block PROD_OTROS {
     pq<'prod_otros'>[]   = p<'prod_otros'>[];     # sin IVA
     pint<'prod_otros'>[] = p<'prod_otros'>[];
     Q<'prod_otros'>[]    = M<'prod_otros'>[];
-    M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'>
+    M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'> * g_adj[]
                           + (I_data<'prod_otros'> * inv_adj[]) + vexist<'prod_otros'>
                           + SUM<i_aa_o::SA>(X<'prod_otros', i_aa_o>[]) + SUM<i_ab_o::SB>(X<'prod_otros', i_ab_o>[])
                           + EX<'prod_otros'>[];
     VAT_p<'prod_otros'>[]       = 0.0;
     Arancel_p<'prod_otros'>[]   = tar_rate<'prod_otros'> * pworldm<'prod_otros'> * exr[] * M<'prod_otros'>[];
-    # prod_otros no paga IVA, impuesto adicional ni especificos (t_adic y tau_e se
-    # definen solo sobre Pdom)
+    # prod_otros no paga IVA, impuesto adicional ni especificos (t_adic, tau_e y
+    # kappa_e se definen solo sobre Pdom)
   };
 };
 
@@ -304,14 +344,16 @@ block PRODUCTS
         #       Incluye el especifico por unidad fisica (tau_e), el IVA (t_iva) y el
         #       impuesto adicional ad valorem a bebidas (t_adic); ambos ad valorem se
         #       calculan sobre el precio con especifico (misma base imponible).
-        # pint: precio de los insumos intermedios; no paga especificos ni impuesto
-        #       adicional (supuesto) y t_iva_int = 0 salvo residuo de calibracion.
+        # pint: precio de los insumos intermedios. Incluye la parte del especifico que
+        #       paga el uso intermedio (kappa_e * tau_e); no paga impuesto adicional, y
+        #       t_iva_int = 0 salvo residuo de calibracion.
         #       tau_e esta en pesos base por unidad fisica y se indexa al IPC (UTM).
         <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + tau_e<pq_i> * CPI[]) * (1 + t_iva<pq_i> + t_adic<pq_i>);
-        <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>);
+        <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>) + kappa_e<pi_i> * tau_e<pi_i> * CPI[];
 
         # Demanda final gravada e intermedia, en unidades fisicas (precio basico base)
-        <fd_i::Pdom> FD<fd_i>[] = D<fd_i>[] + gg_market_data_p<fd_i> + (I_data<fd_i> * inv_adj[]);
+        # g_adj = 1 salvo en el cierre fiscal con gasto endogeno (sw_g = 1)
+        <fd_i::Pdom> FD<fd_i>[] = D<fd_i>[] + gg_market_data_p<fd_i> * g_adj[] + (I_data<fd_i> * inv_adj[]);
         <xi_i::PdomNoC> XI<xi_i>[] = SUM<i_aa_x::SA>(X<xi_i, i_aa_x>[]) + SUM<i_ab_x::SB>(X<xi_i, i_ab_x>[]);
         XI<'prod_const'>[] = SUM<i_ab_xc::SB>(X<'prod_const', i_ab_xc>[]);
 
@@ -329,8 +371,9 @@ block PRODUCTS
         <ta_i::Pdom> TADIC_p<ta_i>[] = t_adic<ta_i> * (p<ta_i>[] + tau_e<ta_i> * CPI[]) * FD<ta_i>[];
 
         # Recaudacion de especificos: monto real fijo por unidad fisica de demanda final
-        # (indexado al IPC; la recaudacion real sigue a los volumenes)
-        <te_i::Pdom> TESP_p<te_i>[] = tau_e<te_i> * CPI[] * FD<te_i>[];
+        # y, con el factor kappa_e, de uso intermedio (indexado al IPC; la recaudacion
+        # real sigue a los volumenes)
+        <te_i::Pdom> TESP_p<te_i>[] = tau_e<te_i> * CPI[] * (FD<te_i>[] + kappa_e<te_i> * XI<te_i>[]);
 
         <idx_ar::Pdom> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
     };
@@ -360,8 +403,9 @@ block GOB
     identities
     {
         INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + TRFG[];
-        TRGOV[] = trgov_data * CPI[];
-        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
+        # tr_adj = 1 salvo en el cierre fiscal con transferencias endogenas (sw_tr = 1)
+        TRGOV[] = trgov_data * CPI[] * tr_adj[];
+        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * g_adj[] * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
         Kg[] = KD[] * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
         TADIC[] = SUM<idx_ta::Pdom>(TADIC_p<idx_ta>[]);
@@ -432,8 +476,9 @@ block INVESTMENT
     {
         NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * pq<idx_nb>[]);
 
-        # Inversion determinada por el ahorro: inv_adj (indice de volumen de la
-        # inversion, base = 1) se ajusta para que la inversion iguale al ahorro total.
+        # Equilibrio ahorro-inversion. Con sw_joh = 0, inv_adj (indice de volumen de
+        # la inversion, base = 1) se ajusta para que la inversion iguale al ahorro
+        # total; con sw_joh = 1 se ajusta el ahorro de los hogares (bloque CIERRE).
         TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
 
         # Ahorro externo fijo en moneda extranjera
@@ -444,5 +489,30 @@ block INVESTMENT
         RNROW[] = ROWF[] + LROWP[] + REMH[] - TIA[] - YROWF[];
 
         SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
+    };
+}
+
+block CIERRE
+{
+    identities
+    {
+        # Regla ahorro-inversion: con sw_joh = 0 se fija s_adj = 1 (inversion
+        # determinada por el ahorro); con sw_joh = 1 se fija inv_adj = 1 (Johansen).
+        (1 - sw_joh) * (s_adj[] - 1) + sw_joh * (inv_adj[] - 1) = 0;
+
+        # Regla fiscal: con sw_g = 0 (sw_tr = 0) se fija g_adj = 1 (tr_adj = 1); con
+        # sw_g = 1 (sw_tr = 1) se fija el ahorro publico real y g_adj (tr_adj) se ajusta.
+        (1 - sw_g)  * (g_adj[]  - 1) + sw_g  * (SAVg[] - SAVg_target * CPI[]) = 0;
+        (1 - sw_tr) * (tr_adj[] - 1) + sw_tr * (SAVg[] - SAVg_target * CPI[]) = 0;
+    };
+
+    calibration
+    {
+        # Valores por defecto: cierre vigente. SAVg_target solo opera si sw_g = 1 o
+        # sw_tr = 1 y debe fijarse en el ahorro publico real de la base.
+        sw_joh = 0;
+        sw_g = 0;
+        sw_tr = 0;
+        SAVg_target = 0;
     };
 }

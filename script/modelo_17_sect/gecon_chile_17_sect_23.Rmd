@@ -127,13 +127,19 @@ names(IVA_m) <- names(Ar_m) <- p_names
 cj <- cfg$conjuntos_gcn
 gcn_path <- cfg$archivos$gcn %||% "../script/cge_calib_chile_17_sect_23.gcn"
 
+# Nidos de la utilidad de los hogares
+p_tab_nido <- cfg$utilidad_hogares$nido_unitario %||% "prod_Tabaco"
+pcon_yaml  <- setdiff(p_names, cj$Pcon$excluir_manual)
+
 # Conjuntos implicados por el YAML (misma regla que se usa mas abajo)
 sets_yaml <- list(
     P         = p_names,
     Pdom      = cj$Pdom$incluir,
     Pdom_arm  = setdiff(cj$Pdom$incluir, cj$Pdom_arm$excluir_manual),
     Pno_const = setdiff(p_names, cj$Pno_const$excluir_manual),
-    Pcon      = setdiff(p_names, cj$Pcon$excluir_manual),
+    Pcon      = pcon_yaml,
+    Pcomb     = unlist(cj$Pcomb$incluir),
+    Presto    = setdiff(pcon_yaml, c(p_tab_nido, unlist(cj$Pcomb$incluir))),
     P_Exp     = setdiff(p_names, cj$P_Exp$excluir_manual),
     P_NExp    = cj$P_NExp$incluir,
     SA        = cj$SA$incluir,
@@ -155,7 +161,12 @@ chk_estr <- c(
     PNC_complemento_de_Pcon   = setequal(cj$PNC$incluir, setdiff(p_names, sets_yaml$Pcon)),
     SA_SB_particion_de_S      = setequal(c(sets_yaml$SA, sets_yaml$SB), s_names) &&
                                 length(intersect(sets_yaml$SA, sets_yaml$SB)) == 0,
-    SB_usan_construccion      = all(X_matrix[prod_const_name, sets_yaml$SB] > tol_z)
+    SB_usan_construccion      = all(X_matrix[prod_const_name, sets_yaml$SB] > tol_z),
+    # Nidos: {nido unitario}, Pcomb y Presto forman una particion de Pcon
+    nidos_particion_de_Pcon   = p_tab_nido %in% sets_yaml$Pcon &&
+                                all(sets_yaml$Pcomb %in% sets_yaml$Pcon) &&
+                                !(p_tab_nido %in% sets_yaml$Pcomb) &&
+                                setequal(c(p_tab_nido, sets_yaml$Pcomb, sets_yaml$Presto), sets_yaml$Pcon)
 )
 print(chk_estr)
 if (!all(chk_estr)) warning("Los conjuntos del YAML no calzan con la estructura de la SAM: ",
@@ -180,9 +191,11 @@ if (isTRUE(cfg$validaciones$verificar_conjuntos_gcn) && file.exists(gcn_path)) {
     print(data.frame(conjunto = names(dif_sets), estado = unname(dif_sets)), row.names = FALSE)
     pnc_en_gcn <- sapply(cj$PNC$incluir, function(p)
         grepl(paste0("D<'", p, "'>\\[\\]\\s*=\\s*dst_nc<'", p, "'>"), gcn_txt))
-    if (any(dif_sets != "ok") || !all(pnc_en_gcn)) {
+    tab_en_gcn <- grepl(paste0("D<'", p_tab_nido, "'>\\[\\]\\s*/\\s*dst<'", p_tab_nido, "'>"), gcn_txt)
+    if (any(dif_sets != "ok") || !all(pnc_en_gcn) || !tab_en_gcn) {
         stop("Los conjuntos del .gcn no coinciden con el YAML (ver tabla). PNC sin identidad en CONSUMER: ",
-             paste(names(pnc_en_gcn)[!pnc_en_gcn], collapse = ", "))
+             paste(names(pnc_en_gcn)[!pnc_en_gcn], collapse = ", "),
+             if (!tab_en_gcn) paste0(". El nido unitario de la utilidad del .gcn no es ", p_tab_nido) else "")
     }
 }
 ```
@@ -220,6 +233,8 @@ IVA_int <- IVA_m - IVA_fd - ADIC_fd
 base_fd     <- FD_pos - IVA_fd - ADIC_fd           # demanda final a precio con especifico
 t_iva_r     <- ifelse(base_fd > 1e-9, IVA_fd  / base_fd, 0)
 t_adic_r    <- ifelse(base_fd > 1e-9, ADIC_fd / base_fd, 0)
+# Tasa provisoria del residuo intermedio; en los productos cuyo uso intermedio paga
+# especifico se recalcula sobre el precio basico una vez calibrado tau_e (seccion 2).
 t_iva_int_r <- ifelse(X_sum - IVA_int > 1e-9, IVA_int / (X_sum - IVA_int), 0)
 names(t_iva_r) <- names(t_adic_r) <- names(t_iva_int_r) <- p_names
 names(IVA_fd) <- names(ADIC_fd) <- names(IVA_int) <- p_names
@@ -249,6 +264,15 @@ cat(sprintf("Participacion de la fila IVA asignada a uso intermedio      : %.2f%
             100 * sum(IVA_int) / sum(IVA_m)))
 # ---------------------------------------------------------------------------
 tar_r <- Ar_m / pmax(M_m, cfg$opciones_datos$piso_importaciones)
+
+# Aranceles: una tasa efectiva superior al arancel general sugiere impuestos
+# especificos registrados en la fila de aranceles (deben estar en Imptos_Espec).
+tar_max <- cfg$validaciones$tasa_maxima_arancel %||% 0.06
+if (any(tar_r > tar_max + 1e-6)) {
+    warning(sprintf("Tasa arancelaria efectiva mayor que %.1f%% en: %s. Revise si la fila de aranceles incluye impuestos especificos.",
+                    100 * tar_max, paste(sprintf("%s (%.1f%%)", p_names[tar_r > tar_max + 1e-6],
+                                                 100 * tar_r[tar_r > tar_max + 1e-6]), collapse = ", ")))
+}
 
 D_v <- D_m
 
@@ -331,7 +355,14 @@ sb_idx       <- which(s_names %in% sb_names_config)
 pminp_names_config <- cfg$conjuntos_gcn$PMinP$incluir
 pminp_idx    <- which(p_names %in% pminp_names_config)
 
-omega_val <- cfg$elasticidades$utilidad_hogares_omega
+# Elasticidades de la utilidad CES anidada
+omega_val      <- cfg$elasticidades$utilidad_hogares_omega
+sigma_sup_val  <- cfg$elasticidades$utilidad_sigma_superior
+sigma_comb_val <- cfg$elasticidades$utilidad_sigma_combustibles
+if (is.null(sigma_sup_val) || is.null(sigma_comb_val))
+    stop("Faltan elasticidades$utilidad_sigma_superior o elasticidades$utilidad_sigma_combustibles en el YAML")
+if (any(abs(c(omega_val, sigma_sup_val, sigma_comb_val) - 1) < 1e-8))
+    stop("Las elasticidades de la CES no pueden valer 1 (caso Cobb-Douglas no implementado)")
 
 get_flow_values <- function(vals, name, idx1 = NULL, idx2 = NULL) {
     res <- as.list(as.numeric(vals))
@@ -456,12 +487,15 @@ DS_v["prod_otros"] <- 0
 
 cet_ratio <- (DS_v / pmax(E_v, 1e-6))^(1/sigma_t_val)
 gamma_e_v <- cet_ratio / (1 + cet_ratio)
-gamma_e_v <- pmax(pmin(gamma_e_v, 1 - 1e-6), 1e-6)
+# Cota numerica de los parametros de participacion: 1e-12 (y no 1e-6) para que no se
+# recorten con elasticidades bajas; con sigma_t = 0.6, gamma_e de prod_serv_pers es
+# 1 - 9e-7 (DS/E = 4.222) y un recorte en 1 - 1e-6 impide replicar la SAM.
+gamma_e_v <- pmax(pmin(gamma_e_v, 1 - 1e-12), 1e-12)
 
 pm_base <- 1.0 * (1.0 + tar_r)
 arm_ratio <- pm_base * (M_v / pmax(DS_v, 1e-6))^(1/sigma_q_val)
 delta_m_v <- arm_ratio / (1 + arm_ratio)
-delta_m_v <- pmax(pmin(delta_m_v, 1 - 1e-6), 1e-6)
+delta_m_v <- pmax(pmin(delta_m_v, 1 - 1e-12), 1e-12)
 
 # Absorcion domestica valorada SIN IVA ni impuesto adicional (cunas de precio)
 TD_Dom_initial <- as.numeric((D_m + G_m + I_m - IVA_fd - ADIC_fd) + V_m + (rowSums(X_matrix) - IVA_int))
@@ -479,33 +513,102 @@ p_base["prod_otros"]   <- pm_base["prod_otros"]
 pz_base["prod_otros"]  <- pm_base["prod_otros"]
 # prod_adm_pub: sin importaciones -> precio compuesto = precio domestico (p = pd = pz)
 p_base["prod_adm_pub"] <- DS_v["prod_adm_pub"] / pmax(Q_v["prod_adm_pub"], 1e-6)
+names(p_base) <- names(pz_base) <- p_names
 
 # --- Impuestos especificos como impuesto por unidad fisica ---------------------
-# Supuesto: el consumo intermedio, las existencias y las exportaciones no pagan
-# especificos; todo el especifico de la SAM recae sobre la demanda final (hogares,
-# gobierno, inversion) del producto, con un monto tau_e por unidad fisica:
-#     pq = (p + tau_e) * (1 + t_iva + t_adic)   [ad valorem sobre el precio con especifico]
-# Como FD_fisica = FD_neto / (p + tau_e) y TESP = tau_e * FD_fisica, resulta
-#     tau_e = p_base * TESP / (FD_neto - TESP),   FD_neto = FD_comprador - IVA_fd - ADIC_fd
-FD_neto <- FD_m - IVA_fd - ADIC_fd
-den_e   <- FD_neto - ImpEsp_p_v
-if (any(ImpEsp_p_v > 0 & den_e <= 1e-9)) {
-    stop("El impuesto especifico excede la demanda final neta de IVA en: ",
-         paste(p_names[ImpEsp_p_v > 0 & den_e <= 1e-9], collapse = ", "))
+# Pagan el especifico la demanda final (hogares, gobierno, inversion) y, en los
+# productos de tesp$productos_uso_intermedio, el uso intermedio con el monto
+# kappa_e * tau_e por unidad. Existencias y exportaciones no lo pagan.
+#     pq   = (p + tau_e) * (1 + t_iva + t_adic)
+#     pint = p * (1 + t_iva_int) + kappa_e * tau_e
+#     TESP = tau_e * (FD + kappa_e * XI)
+# Con FD = FD_neto / (p + tau_e) y XI = XI_neto / (p + kappa_e * tau_e), donde FD_neto y
+# XI_neto son los valores de la SAM netos de IVA e impuesto adicional, tau_e resuelve
+#     tau_e * FD_neto / (p + tau_e) + kappa_e * tau_e * XI_neto / (p + kappa_e * tau_e) = TESP_SAM.
+# kappa_e resulta de la fraccion recuperada rho del impuesto bruto, que recae solo en el
+# uso intermedio: (1 - kappa_e) * XI = rho * (FD + XI). Sin recuperacion, kappa_e = 1;
+# en los productos cuyo uso intermedio no paga el impuesto, kappa_e = 0 y
+#     tau_e = p * TESP / (FD_neto - TESP).
+p_te_int <- unlist(cfg$tesp$productos_uso_intermedio)
+if (length(p_te_int) && !all(p_te_int %in% pdom_names_config))
+    stop("tesp$productos_uso_intermedio contiene productos fuera de Pdom")
+rho_rec <- setNames(rep(0, length(p_names)), p_names)
+rr_cfg  <- cfg$tesp$recuperacion_uso_intermedio
+if (length(rr_cfg)) {
+    if (!all(names(rr_cfg) %in% p_te_int))
+        stop("tesp$recuperacion_uso_intermedio contiene productos que no estan en productos_uso_intermedio")
+    rho_rec[names(rr_cfg)] <- unlist(rr_cfg)
 }
-tau_e_v <- ifelse(ImpEsp_p_v > 0, p_base * ImpEsp_p_v / pmax(den_e, 1e-9), 0)
-names(tau_e_v) <- p_names
-tau_e_v["prod_otros"] <- 0
 
-cat("\nDiagnostico impuestos especificos (por unidad fisica, solo demanda final):\n")
-print(data.frame(producto = p_names, TESP = round(ImpEsp_p_v, 1),
-                 DF_neta_IVA = round(FD_neto, 1), tau_e = round(tau_e_v, 5),
-                 equiv_advalorem = round(ifelse(ImpEsp_p_v > 0, ImpEsp_p_v / pmax(den_e, 1e-9), 0), 4))[ImpEsp_p_v > 0, ],
-      row.names = FALSE)
+FD_neto <- FD_m - IVA_fd - ADIC_fd
+XI_neto <- X_sum - IVA_int
+names(FD_neto) <- names(XI_neto) <- p_names
+
+tau_e_v   <- setNames(rep(0, length(p_names)), p_names)
+kappa_e_v <- setNames(rep(0, length(p_names)), p_names)
+resolver_tau <- function(Tp, A, B, pb, kap) {
+    f <- function(t) t * A / (pb + t) + kap * t * B / (pb + kap * t) - Tp
+    up <- 1e6 * pb
+    if (f(up) <= 0) return(NA_real_)
+    uniroot(f, c(0, up), tol = 1e-13 * pb, maxiter = 1000)$root
+}
+for (pp in p_names[ImpEsp_p_v > 1e-9 & p_names %in% pdom_names_config]) {
+    Tp <- ImpEsp_p_v[pp]; A <- FD_neto[pp]; B <- XI_neto[pp]; pb <- p_base[pp]
+    if (!(pp %in% p_te_int)) {
+        if (A - Tp <= 1e-9) stop("El impuesto especifico excede la demanda final neta de IVA en ", pp,
+                                 ". Considere incluirlo en tesp$productos_uso_intermedio.")
+        tau_e_v[pp] <- pb * Tp / (A - Tp)
+        next
+    }
+    kap <- 1
+    for (it in 1:500) {
+        tau <- resolver_tau(Tp, A, B, pb, kap)
+        if (is.na(tau)) stop("El impuesto especifico excede la absorcion interna gravada en ", pp)
+        Fp <- A / (pb + tau); Xp <- B / (pb + kap * tau)
+        kap_n <- 1 - rho_rec[pp] * (Fp + Xp) / Xp
+        if (kap_n <= 0) stop("La recuperacion del especifico supera el impuesto bruto del uso intermedio en ", pp)
+        conv <- abs(kap_n - kap) < 1e-13
+        kap <- kap_n
+        if (conv) break
+    }
+    tau_e_v[pp]   <- resolver_tau(Tp, A, B, pb, kap)
+    kappa_e_v[pp] <- kap
+}
+tau_e_v["prod_otros"] <- 0; kappa_e_v["prod_otros"] <- 0
+
+# Base fisica y recaudacion por componente en el ano base
+FD_fis_e   <- ifelse(tau_e_v > 0, FD_neto / (p_base + tau_e_v), 0)
+XI_fis_e   <- ifelse(tau_e_v > 0, XI_neto / (p_base + kappa_e_v * tau_e_v), 0)
+TESP_fd_v  <- tau_e_v * FD_fis_e
+TESP_int_v <- kappa_e_v * tau_e_v * XI_fis_e
+TESP_rec_v <- (1 - kappa_e_v) * tau_e_v * XI_fis_e * (names(tau_e_v) %in% p_te_int)
+
+# Residuo de IVA intermedio sobre el precio basico: VAT_int = t_iva_int * p * XI, con
+# p * XI = XI_neto - TESP_int (el uso intermedio paga especifico en p_te_int).
+t_iva_int_r <- ifelse(XI_neto - TESP_int_v > 1e-9, IVA_int / (XI_neto - TESP_int_v), 0)
+names(t_iva_int_r) <- p_names
+t_iva_int_r["prod_otros"] <- 0
+
+cat("\nDiagnostico impuestos especificos (por unidad fisica; demanda final y uso intermedio):\n")
+sel_e <- tau_e_v > 0
+print(data.frame(
+    producto        = p_names[sel_e],
+    TESP_SAM        = round(ImpEsp_p_v[sel_e], 1),
+    TESP_DF         = round(TESP_fd_v[sel_e], 1),
+    TESP_intermedio = round(TESP_int_v[sel_e], 1),
+    bruto           = round((TESP_fd_v + TESP_int_v + TESP_rec_v)[sel_e], 1),
+    recuperado      = round(TESP_rec_v[sel_e], 1),
+    tau_e           = round(tau_e_v[sel_e], 5),
+    kappa_e         = round(kappa_e_v[sel_e], 4),
+    carga_DF        = round((tau_e_v / (p_base + tau_e_v))[sel_e], 4),
+    carga_int       = round((kappa_e_v * tau_e_v / (p_base + kappa_e_v * tau_e_v))[sel_e], 4),
+    t_iva_int       = round(t_iva_int_r[sel_e], 4)), row.names = FALSE)
+cat("carga_DF / carga_int: especifico como fraccion del precio sin IVA en la demanda final y en el uso intermedio.\n")
 
 # Precios de comprador (demanda final) e insumo intermedio en el ano base
 pq_base   <- (p_base + tau_e_v) * (1 + t_iva_r + t_adic_r)
-pint_base <- p_base * (1 + t_iva_int_r)
+pint_base <- p_base * (1 + t_iva_int_r) + kappa_e_v * tau_e_v
+names(pq_base) <- names(pint_base) <- p_names
 
 at_v <- (Z_v / pz_base) / (gamma_e_v * E_v^rho_t_val + (1 - gamma_e_v) * DS_v^rho_t_val)^(1/rho_t_val)
 aq_v <- (Q_v / p_base) / (delta_m_v * M_v^rho_q_val + (1 - delta_m_v) * DS_v^rho_q_val)^(1/rho_q_val)
@@ -517,10 +620,43 @@ X_phys <- sweep(X_matrix, 1, pint_base, "/")
 D_phys <- D_v / pq_base
 
 D_con_phys <- D_phys[pcon_idx]
-alpha_v_unsc <- pq_base[pcon_idx] * (D_con_phys)^(1/omega_val)   # FOC CES con precio de comprador
-alpha_v <- alpha_v_unsc / (sum(alpha_v_unsc) + pad_floor)
-U_val <- (sum(alpha_v * D_con_phys^((omega_val - 1)/omega_val)))^(omega_val/(omega_val - 1))
-lambda_val <- U_val / (sum(D_con_phys * pq_base[pcon_idx]) + pad_floor)
+names(D_con_phys) <- p_names[pcon_idx]
+
+# --- Utilidad CES anidada en forma de participaciones calibradas ---------------
+# U = u_bar * [ th_tab * (D_tab/dst_tab)^r0
+#             + th_comb  * (sum_c th_c (D_c/dst_c)^rc)^(r0/rc)
+#             + th_resto * (sum_r th_r (D_r/dst_r)^rr)^(r0/rr) ]^(1/r0)
+# con r = (sigma - 1)/sigma. th son participaciones en el gasto de la base y dst las
+# cantidades de la base (Rutherford, 1995). En la base U = u_bar = gasto de consumo y
+# el multiplicador de la restriccion presupuestaria vale U / gasto = 1.
+p_comb  <- sets_yaml$Pcomb
+p_resto <- sets_yaml$Presto
+gasto_c <- D_con_phys * pq_base[pcon_idx]
+names(gasto_c) <- p_names[pcon_idx]
+E_c     <- sum(gasto_c)
+th_tab_val   <- as.numeric(gasto_c[p_tab_nido]) / E_c
+th_comb_val  <- sum(gasto_c[p_comb]) / E_c
+th_resto_val <- sum(gasto_c[p_resto]) / E_c
+th_comb_v    <- gasto_c[p_comb]  / sum(gasto_c[p_comb])
+th_resto_v   <- gasto_c[p_resto] / sum(gasto_c[p_resto])
+U_val      <- E_c
+lambda_val <- 1
+
+# Elasticidades precio propias no compensadas implicitas en la base:
+# e_ii = -sigma_n (1 - s_i|n) - sigma_sup s_i|n (1 - S_n) - s_i
+nido_c  <- ifelse(names(gasto_c) == p_tab_nido, "tabaco",
+                  ifelse(names(gasto_c) %in% p_comb, "combustibles", "resto"))
+gasto_n <- tapply(gasto_c, nido_c, sum)
+s_i     <- gasto_c / E_c
+s_in    <- gasto_c / gasto_n[nido_c]
+S_n     <- gasto_n[nido_c] / E_c
+sig_n   <- c(tabaco = sigma_sup_val, combustibles = sigma_comb_val, resto = omega_val)[nido_c]
+e_ii    <- -sig_n * (1 - s_in) - sigma_sup_val * s_in * (1 - S_n) - s_i
+cat(sprintf("\nUtilidad CES anidada: sigma_superior = %.2f, sigma_combustibles = %.2f, omega (resto) = %.2f\n",
+            sigma_sup_val, sigma_comb_val, omega_val))
+print(data.frame(producto = names(gasto_c), nido = nido_c,
+                 part_gasto_pct = round(100 * s_i, 3), part_nido = round(s_in, 4),
+                 elast_precio_propia = round(e_ii, 3)), row.names = FALSE)
 
 # IPC (Laspeyres): canasta fisica de consumo de hogares de la base; vale 1 en la base
 cpi_den_val <- sum(D_con_phys * pq_base[pcon_idx])
@@ -614,7 +750,12 @@ par_flat <- unlist(list(
     get_flow_values(L_row_vals / (l_total_data_vals + pad_floor), "par_l_row", cat_trabajo),
     get_flow_values(L_out_vals / (l_total_data_vals + pad_floor), "par_l_out", cat_trabajo),
 
-    omega = omega_val,
+    # Utilidad CES anidada (participaciones calibradas)
+    omega = omega_val, sigma_sup = sigma_sup_val, sigma_comb = sigma_comb_val,
+    u_bar = U_val, th_tab = th_tab_val, th_comb = th_comb_val, th_resto = th_resto_val,
+    get_flow_values(th_comb_v,  "th", p_comb),
+    get_flow_values(th_resto_v, "th", p_resto),
+
     sigma_q = sigma_q_val, sigma_t = sigma_t_val,
     k_total_data = k_total_data_val,
     # participaciones sobre el capital UTILIZADO (Kx = KD * par_k_x suman KD)
@@ -636,6 +777,10 @@ par_flat <- unlist(list(
     SAVext_target = SAVext_v,
     # Numerario IPC
     cpi_den = cpi_den_val, cpi_num = cpi_num_val,
+    # Bloque CIERRE: la calibracion se hace siempre con el cierre vigente
+    # (inversion determinada por el ahorro y ahorro publico residual). SAVg_target
+    # solo opera con sw_g = 1 o sw_tr = 1 (eval_cierres_17_sect_23.Rmd).
+    sw_joh = 0, sw_g = 0, sw_tr = 0, SAVg_target = SAVg_v,
     get_flow_values(D_con_phys, "cpi_q", p_names[pcon_idx]),
     get_flow_values(io_matrix[pnoconst_idx, sa_idx, drop=FALSE], "io", p_names[pnoconst_idx], s_names[sa_idx]),
     get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
@@ -647,6 +792,7 @@ par_flat <- unlist(list(
     # prod_adm_pub usa el bloque PROD_ADM_PUB_ARM con M = 0, sin Armington CES
     get_flow_values(delta_m_v[pdom_arm_idx], "delta_m", p_names[pdom_arm_idx]),
     get_flow_values(aq_v[pdom_arm_idx], "aq", p_names[pdom_arm_idx]),
+    # dst: cantidades fisicas de consumo de la base (normalizan la utilidad anidada)
     get_flow_values(D_con_phys, "dst", p_names[pcon_idx]),
     get_flow_values(rep(1e-6, length(pnc_idx)), "dst_nc", p_names[pnc_idx]),
     get_flow_values(t_iva_r[pdom_idx], "t_iva", p_names[pdom_idx]),
@@ -662,6 +808,7 @@ par_flat <- unlist(list(
     get_flow_values(I_m / pq_base, "I_data", p_names),
     get_flow_values(V_m / p_base, "vexist", p_names),
     get_flow_values(tau_e_v[pdom_idx], "tau_e", p_names[pdom_idx]),
+    get_flow_values(kappa_e_v[pdom_idx], "kappa_e", p_names[pdom_idx]),
     get_flow_values(make_share[pdom_idx, ], "make_share", p_names[pdom_idx], s_names),
     ex_otros_data = as.numeric(E_m["prod_otros"])
 ))
@@ -674,8 +821,9 @@ pnoconst_names <- p_names[pnoconst_idx]
 pdom_names <- p_names[pdom_idx]
 pminp_names <- p_names[pminp_idx]
 
+# La utilidad no tiene parametros calibrados por gEcon: sus participaciones se
+# calculan arriba y replican la SAM por construccion.
 calib_par_flat <- unlist(list(
-    get_flow_values(alpha_v, "alpha", p_names[pcon_idx]),
     get_flow_values(gamma_v, "gamma", s_names),
     get_flow_values(bk, "betak", s_names),
     get_flow_values(t(bl_mat), "betal", s_names, cat_trabajo)
@@ -694,6 +842,8 @@ var_list <- list(
     NOM_I_BASE = sum(I_m),
     TOTAL_INVEST = Nominal_I_Total,
     inv_adj = 1.0, CPI = cpi_num_val,
+    # Indices de ajuste del bloque CIERRE (valen 1 en el cierre vigente)
+    s_adj = 1.0, g_adj = 1.0, tr_adj = 1.0,
     VAT = VAT_sum, TADIC = TADIC_sum, Tax = Tax_v, TPROD = Activity_Tax_sum,
     TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
@@ -773,14 +923,24 @@ cat("Norma residuos finales:", pracma::Norm(model@residual_vector), "\n")
 
 # --- Validacion de los impuestos sobre productos: el equilibrio base debe replicar la SAM ---
 ss_chk <- get_ss_values(model, silent = TRUE)
+pe_chk <- p_names[tau_e_v > 0]
 chk_iva <- c(
     VAT_modelo_menos_SAM   = as.numeric(ss_chk["VAT"]) - VAT_sum,
     TADIC_modelo_menos_SAM = as.numeric(ss_chk["TADIC"]) - TADIC_sum,
     VAT_TADIC_menos_fila_IVA = as.numeric(ss_chk["VAT"] + ss_chk["TADIC"]) - IVA_row_sum,
     TESP_modelo_menos_SAM  = as.numeric(ss_chk["TESP"]) - Imptos_Espec_sum,
+    # Parte del especifico que paga el uso intermedio
+    TESP_int_modelo_menos_calib = sum(tau_e_v[pe_chk] * kappa_e_v[pe_chk] *
+                                      ss_chk[paste0("XI__", pe_chk)] * as.numeric(ss_chk["CPI"])) -
+                                  sum(TESP_int_v[pe_chk]),
+    TARANCEL_modelo_menos_SAM = as.numeric(ss_chk["TARANCEL"]) - Arancel_sum,
     C_nominal_menos_SAM    = sum(ss_chk[paste0("D__", p_names[pcon_idx])] *
                                  ss_chk[paste0("pq__", p_names[pcon_idx])]) - sum(D_m[pcon_idx]),
-    max_abs_pq_menos_base  = max(abs(ss_chk[paste0("pq__", p_names)] - pq_base))
+    max_abs_pq_menos_base  = max(abs(ss_chk[paste0("pq__", p_names)] - pq_base)),
+    max_abs_pint_menos_base = max(abs(ss_chk[paste0("pint__", p_names)] - pint_base)),
+    # Utilidad anidada: el consumo de la base debe coincidir con dst y U con u_bar
+    max_rel_D_menos_dst    = max(abs(ss_chk[paste0("D__", p_names[pcon_idx])] / D_con_phys - 1)),
+    U_menos_u_bar          = as.numeric(ss_chk["U"]) / U_val - 1
 )
 print(round(chk_iva, 8))
 if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con impuestos en precios no replica la SAM; revisar chk_iva.")
@@ -824,7 +984,11 @@ chk_cierre <- c(
     PSh_menos_SAM       = as.numeric(ss_chk["PSh"]) - as.numeric(pshdata),
     BdP_SAVext_menos_M_X_RNROW = as.numeric(ss_chk["SAVext"]) - (M_mod - X_mod + as.numeric(ss_chk["RNROW"])),
     inv_adj_menos_1     = as.numeric(ss_chk["inv_adj"]) - 1,
-    exr_menos_1         = as.numeric(ss_chk["exr"]) - 1
+    exr_menos_1         = as.numeric(ss_chk["exr"]) - 1,
+    # Indices de ajuste del bloque CIERRE: deben valer 1 con el cierre vigente
+    s_adj_menos_1       = as.numeric(ss_chk["s_adj"]) - 1,
+    g_adj_menos_1       = as.numeric(ss_chk["g_adj"]) - 1,
+    tr_adj_menos_1      = as.numeric(ss_chk["tr_adj"]) - 1
 )
 print(round(chk_cierre, 8))
 if (any(abs(chk_cierre) > 1e-3)) warning("El equilibrio base no reproduce el cierre esperado; revisar chk_cierre.")
