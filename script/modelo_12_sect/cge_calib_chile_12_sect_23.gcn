@@ -13,6 +13,36 @@
 #    directos e indirectos llegan a la oferta de factores por el mismo canal.
 #  - Base del PIT: ingreso de los hogares antes de impuestos (BTINC) menos las
 #    transferencias del gobierno (TRGOV), que no tributan.
+#
+# Sector externo e instituciones (SAM 2023 conciliada con las cuentas por sector
+# institucional, la balanza de pagos y la recaudacion del SII):
+#  - Las empresas reciben la renta de la inversion directa en el exterior (YROWF),
+#    fija en moneda extranjera.
+#  - Las rentas que distribuyen las empresas (a hogares TREMP, al gobierno TRFG y al
+#    resto del mundo ROWF) son proporciones del ingreso de las empresas neto del
+#    IDPC (BASEF) cuando sw_dist = 1, o del ingreso bruto cuando sw_dist = 0.
+#  - El Impuesto Adicional (TIA) grava las rentas pagadas al resto del mundo con
+#    una tasa efectiva t_ia; lo paga el resto del mundo y forma parte de Tax.
+#  - Los hogares remesan al exterior una proporcion de su ingreso disponible (REMH).
+#  - Una fraccion de las remuneraciones se paga a no residentes (par_l_out); los
+#    hogares reciben la fraccion par_l_h.
+#  - RNROW resume los pagos netos de ingreso primario y secundario al resto del
+#    mundo; la balanza de pagos (ley de Walras) es SAVext = M - X + RNROW.
+#
+# Cierres alternativos (bloque CIERRE). Los valores por defecto de los
+# interruptores reproducen el cierre descrito arriba:
+#  - sw_joh = 0: inversion determinada por el ahorro (s_adj = 1, inv_adj endogeno).
+#    sw_joh = 1: cierre de Johansen (inv_adj = 1; la propension al ahorro de los
+#    hogares se ajusta mediante s_adj).
+#  - sw_g = sw_tr = 0: tasas, gasto y transferencias reales fijos; ahorro publico
+#    residual (g_adj = tr_adj = 1).
+#    sw_g = 1: ahorro publico real fijo en SAVg_target; el consumo del gobierno en
+#    volumen se ajusta mediante g_adj.
+#    sw_tr = 1: ahorro publico real fijo en SAVg_target; las transferencias reales
+#    a hogares se ajustan mediante tr_adj.
+#  - sw_g y sw_tr no pueden valer 1 simultaneamente (sistema singular).
+#  - SAVg_target debe fijarse en el ahorro publico real del equilibrio base antes
+#    de activar sw_g o sw_tr (eval_cierres_12_sect_23.Rmd).
 ##################################
 
 
@@ -86,15 +116,18 @@ block CONSUMER
 
     constraints
     {
-        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] + REMH[] = INC[];
     };
 
     identities
     {
         INC[] = BTINC[] - PITAX[];
         BTINC[] = pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
-        SAV[] = INC[] * por_sav;
+        # s_adj = 1 salvo en el cierre de Johansen (sw_joh = 1)
+        SAV[] = INC[] * por_sav * s_adj[];
         CS[] = INC[] * por_cont;
+        # Remesas de los hogares al resto del mundo: proporcion del ingreso disponible
+        REMH[] = INC[] * por_rem;
         D<'prod_Min'>[] = dst_nc<'prod_Min'>;
         D<'prod_const'>[] = dst_nc<'prod_const'>;
     };
@@ -202,7 +235,7 @@ block PROD_OTROS {
     pq<'prod_otros'>[]   = p<'prod_otros'>[];     # sin IVA
     pint<'prod_otros'>[] = p<'prod_otros'>[];
     Q<'prod_otros'>[]    = M<'prod_otros'>[];
-    M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'>
+    M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'> * g_adj[]
                           + (I_data<'prod_otros'> * inv_adj[]) + vexist<'prod_otros'>
                           + SUM<i_aa_o::SA>(X<'prod_otros', i_aa_o>[]) + SUM<i_ab_o::SB>(X<'prod_otros', i_ab_o>[])
                           + EX<'prod_otros'>[];
@@ -267,7 +300,8 @@ block PRODUCTS
         <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>);
 
         # Demanda final gravada e intermedia, en unidades fisicas (precio basico base)
-        <fd_i::Pdom> FD<fd_i>[] = D<fd_i>[] + gg_market_data_p<fd_i> + (I_data<fd_i> * inv_adj[]);
+        # g_adj = 1 salvo en el cierre fiscal con gasto endogeno (sw_g = 1)
+        <fd_i::Pdom> FD<fd_i>[] = D<fd_i>[] + gg_market_data_p<fd_i> * g_adj[] + (I_data<fd_i> * inv_adj[]);
         <xi_i::PdomNoC> XI<xi_i>[] = SUM<i_aa_x::SA>(X<xi_i, i_aa_x>[]) + SUM<i_ab_x::SB>(X<xi_i, i_ab_x>[]);
         XI<'prod_const'>[] = SUM<i_ab_xc::SB>(X<'prod_const', i_ab_xc>[]);
 
@@ -292,9 +326,16 @@ block FIRM
 {
     identities
     {
-        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
-        SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
-        TREMP[] = INGF[] * por_tremp;
+        # Ingreso de las empresas: renta del capital, contribuciones recibidas y renta
+        # de la inversion directa en el exterior (fija en moneda extranjera)
+        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f + YROWF[];
+        YROWF[] = yrowf_data * exr[];
+        # Base de las rentas distribuidas: ingreso neto del IDPC (sw_dist = 1) o bruto (sw_dist = 0)
+        BASEF[] = INGF[] - sw_dist * FIRMTAX[];
+        TREMP[] = BASEF[] * por_tremp;
+        TRFG[]  = BASEF[] * por_tr_f_g;
+        ROWF[]  = BASEF[] * por_rowf;
+        SAVf[] = INGF[] - TREMP[] - TRFG[] - ROWF[] - INGF[] * por_pres_soc_f - FIRMTAX[];
         #Kf[] = k_total_data * par_k_f;
         Kf[] = KD[] * par_k_f;
         FIRMTAX[] = fit * (Kf[] * pk[]);
@@ -305,9 +346,10 @@ block GOB
 {
     identities
     {
-        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
-        TRGOV[] = trgov_data * CPI[];
-        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
+        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + TRFG[];
+        # tr_adj = 1 salvo en el cierre fiscal con transferencias endogenas (sw_tr = 1)
+        TRGOV[] = trgov_data * CPI[] * tr_adj[];
+        SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * g_adj[] * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
         #Kg[] = k_total_data * par_k_g;
         Kg[] = KD[] * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
@@ -321,7 +363,9 @@ block GOB
                  SUM<idx_sa2::SA>(tes<idx_sa2> * revenue<idx_sa2>[]) +
                  SUM<idx_sb2::SB>(tes<idx_sb2> * revenue<idx_sb2>[]);
         TARANCEL[] = SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
-        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[];
+        # Impuesto Adicional: tasa efectiva sobre las rentas pagadas al resto del mundo
+        TIA[] = t_ia * ROWF[];
+        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[] + TIA[];
     };
 };
 
@@ -347,6 +391,9 @@ block EQUILIBRIUM
        <l::LAB> u_rate<l>[] = (LFORCE<l>[] - LD<l>[]) / LFORCE<l>[];
 
        <l::LAB> Lh<l>[] = LD<l>[] * par_l_h<l>;
+
+       # Remuneraciones pagadas a no residentes
+       LROWP[] = SUM<l_o::LAB>(w<l_o>[] * LD<l_o>[] * par_l_out<l_o>);
 
         #SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
 
@@ -381,13 +428,43 @@ block INVESTMENT
     {
         NOM_I_BASE[] = SUM<idx_nb::P>(I_data<idx_nb> * pq<idx_nb>[]);
 
-        # Inversion determinada por el ahorro: inv_adj (indice de volumen de la
-        # inversion, base = 1) se ajusta para que la inversion iguale al ahorro total.
+        # Equilibrio ahorro-inversion. Con sw_joh = 0, inv_adj (indice de volumen de
+        # la inversion, base = 1) se ajusta para que la inversion iguale al ahorro
+        # total; con sw_joh = 1 se ajusta el ahorro de los hogares (bloque CIERRE).
         TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
 
         # Ahorro externo fijo en moneda extranjera
         SAVext[] = SAVext_target * exr[];
 
+        # Pagos netos de ingreso primario y secundario al resto del mundo. La balanza
+        # de pagos (implicada por la ley de Walras) es SAVext = M - X + RNROW.
+        RNROW[] = ROWF[] + LROWP[] + REMH[] - TIA[] - YROWF[];
+
         SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
+    };
+}
+
+block CIERRE
+{
+    identities
+    {
+        # Regla ahorro-inversion: con sw_joh = 0 se fija s_adj = 1 (inversion
+        # determinada por el ahorro); con sw_joh = 1 se fija inv_adj = 1 (Johansen).
+        (1 - sw_joh) * (s_adj[] - 1) + sw_joh * (inv_adj[] - 1) = 0;
+
+        # Regla fiscal: con sw_g = 0 (sw_tr = 0) se fija g_adj = 1 (tr_adj = 1); con
+        # sw_g = 1 (sw_tr = 1) se fija el ahorro publico real y g_adj (tr_adj) se ajusta.
+        (1 - sw_g)  * (g_adj[]  - 1) + sw_g  * (SAVg[] - SAVg_target * CPI[]) = 0;
+        (1 - sw_tr) * (tr_adj[] - 1) + sw_tr * (SAVg[] - SAVg_target * CPI[]) = 0;
+    };
+
+    calibration
+    {
+        # Valores por defecto: cierre vigente. SAVg_target solo opera si sw_g = 1 o
+        # sw_tr = 1 y debe fijarse en el ahorro publico real de la base.
+        sw_joh = 0;
+        sw_g = 0;
+        sw_tr = 0;
+        SAVg_target = 0;
     };
 }

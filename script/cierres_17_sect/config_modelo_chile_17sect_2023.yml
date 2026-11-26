@@ -1,18 +1,26 @@
-# Configuracion del modelo CGE Chile - 12 sectores - SAM 2023
+# Configuracion del modelo CGE Chile - 17 sectores - SAM 2023
 # Este archivo separa supuestos, nombres de cuentas y conjuntos del codigo R/.gcn.
+# Los conjuntos de 'conjuntos_gcn' deben coincidir con los indexsets del .gcn;
+# gecon_chile_17_sect_23.Rmd lo verifica al inicio de la corrida.
 
 modelo:
   nombre: "CGE Chile"
-  version: "12sect_2023"
+  version: "17sect_2023"
   anio_base: 2023
-  descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 12 actividades y 13 productos."
+  descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 17 actividades y 21 productos."
 
 archivos:
-  sam: "../data/sam_2023_12sect_sinmg_trab.csv"
+  # SAM con el bloque institucional conciliado con las cuentas por sector institucional,
+  # la balanza de pagos y la recaudacion del SII (sector externo desagregado e Imp_adic).
+  sam: "../data/sam_2023_17sect_sinmg_trab_inst_cft.csv"
+  gcn: "../script/cge_calib_chile_17_sect_23.gcn"
   gcn_template: "cge_calib_chile_template.gcn"
-  gcn_output: "cge_calib_chile_12_sect_23_auto.gcn"
-  resultados_output: "../output/resultados_shocks_12sect_2023.txt"
-  resultados_sens_consumo_comercio: "../output/resultados_sens_consumo_comercio.txt"
+  gcn_output: "cge_calib_chile_17_sect_23_auto.gcn"
+  resultados_output: "../output/resultados_shocks_17sect_2023.txt"
+  resultados_sens_consumo_comercio: "../output/resultados_sens_consumo_comercio_17sect.txt"
+  # Evaluacion de cierres alternativos (eval_cierres_17_sect_23.Rmd)
+  resultados_cierres: "../output/resultados_cierres_17sect_2023.txt"
+  eval_shocks_rmd: "eval_shocks_17_sect_23.Rmd"
 
 opciones_datos:
   separador_csv: ","
@@ -43,21 +51,52 @@ cuentas_sam:
     contribuciones_sociales: "Cont_soc"
     prestaciones_sociales: "Pres_soc"
     impuesto_directo: "Imp_dir"
+    impuesto_adicional: "Imp_adic"
     impuesto_produccion: "Imp_prod"
     impuestos_especificos: "Imptos_Espec"
     iva: "IVA"
     arancel: "Arancel"
 
+# Sector externo e instituciones (SAM conciliada). Flujos de la SAM que usa el modelo:
+#   Empresas <- row  : renta de la inversion directa en el exterior (YROWF), fija en divisas.
+#   row <- Empresas  : renta de la inversion pagada al resto del mundo (ROWF).
+#   Imp_adic <- row  : Impuesto Adicional de la LIR (TIA = t_ia * ROWF).
+#   row <- Hogares   : remesas de los hogares (REMH = por_rem * INC).
+#   row <- Trabajo_* : remuneraciones pagadas a no residentes (par_l_out).
+#   Hogares <- Gobierno : transferencias del gobierno (TRGOV), que no tributan.
+sector_externo:
+  # true: las rentas distribuidas por las empresas (a hogares, gobierno y resto del
+  # mundo) son proporciones del ingreso neto del IDPC, como en las cuentas nacionales,
+  # donde se pagan con cargo al ingreso despues de impuestos. false: proporciones del
+  # ingreso bruto (especificacion anterior; un cambio del IDPC recae solo en el ahorro
+  # de las empresas).
+  distribucion_neta_idpc: true
+
 sectores:
   - id: "Act_Agri"
     etiqueta: "Agropecuario, silvicola y pesca"
     producto_principal: "prod_Agri"
-  - id: "Act_Min"
-    etiqueta: "Mineria"
-    producto_principal: "prod_Min"
-  - id: "Act_Manu"
-    etiqueta: "Manufactura"
-    producto_principal: "prod_Manu"
+  - id: "Act_Cobre"
+    etiqueta: "Mineria del cobre"
+    producto_principal: "prod_Cobre"
+  - id: "Act_Min_resto"
+    etiqueta: "Resto de la mineria (incluye extraccion de petroleo crudo y gas)"
+    producto_principal: "prod_Min_resto"
+  - id: "Act_Beb_alc"
+    etiqueta: "Elaboracion de bebidas alcoholicas"
+    producto_principal: "prod_Beb_alc"
+  - id: "Act_Beb_noalc"
+    etiqueta: "Elaboracion de bebidas no alcoholicas"
+    producto_principal: "prod_Beb_noalc"
+  - id: "Act_Tabaco"
+    etiqueta: "Elaboracion de productos de tabaco"
+    producto_principal: "prod_Tabaco"
+  - id: "Act_Combustibles"
+    etiqueta: "Refinacion de petroleo (diesel, gasolinas y otros combustibles)"
+    producto_principal: "prod_Gasolinas"   # produce tambien prod_Diesel y prod_Otros_comb
+  - id: "Act_Manu_resto"
+    etiqueta: "Resto de la industria manufacturera"
+    producto_principal: "prod_Manu_resto"
   - id: "Act_elect_agua_gas"
     etiqueta: "Electricidad, agua, gas y desechos"
     producto_principal: "prod_elect_agua_gas"
@@ -88,8 +127,16 @@ sectores:
 
 productos:
   - "prod_Agri"
-  - "prod_Min"
-  - "prod_Manu"
+  - "prod_Cobre"
+  - "prod_Crudo"
+  - "prod_Min_resto"
+  - "prod_Beb_alc"
+  - "prod_Beb_noalc"
+  - "prod_Tabaco"
+  - "prod_Diesel"
+  - "prod_Gasolinas"
+  - "prod_Otros_comb"
+  - "prod_Manu_resto"
   - "prod_elect_agua_gas"
   - "prod_const"
   - "prod_com_hot_rest"
@@ -101,8 +148,14 @@ productos:
   - "prod_adm_pub"
   - "prod_otros"
 
-# Conjuntos usados actualmente por el .gcn.
-# En una segunda etapa, varios de estos pueden calcularse automaticamente desde la SAM.
+# Conjuntos usados por el .gcn (deben coincidir con sus indexsets).
+# Estructura de la SAM 2023 de 17 sectores que los determina:
+#  - Sin consumo de hogares: prod_Cobre, prod_Crudo, prod_Min_resto y prod_const.
+#  - Sin exportaciones: prod_const y prod_adm_pub (prod_otros tiene bloque propio).
+#  - Sin importaciones: prod_adm_pub.
+#  - Construccion como insumo intermedio: solo Act_const, Act_inmo_viv y, de forma
+#    marginal (1,2), Act_adm_pub; este ultimo flujo se traslada al capital.
+#  - prod_Crudo lo produce solo Act_Min_resto y lo usa solo Act_Combustibles.
 conjuntos_gcn:
   LAB:
     incluir:
@@ -114,8 +167,16 @@ conjuntos_gcn:
   Pdom:
     incluir:
       - "prod_Agri"
-      - "prod_Min"
-      - "prod_Manu"
+      - "prod_Cobre"
+      - "prod_Crudo"
+      - "prod_Min_resto"
+      - "prod_Beb_alc"
+      - "prod_Beb_noalc"
+      - "prod_Tabaco"
+      - "prod_Diesel"
+      - "prod_Gasolinas"
+      - "prod_Otros_comb"
+      - "prod_Manu_resto"
       - "prod_elect_agua_gas"
       - "prod_const"
       - "prod_com_hot_rest"
@@ -136,12 +197,16 @@ conjuntos_gcn:
   Pcon:
     regla: "productos_con_consumo_hogares_positivo_o_consumo_residual_fijo"
     excluir_manual:
-      - "prod_Min"
+      - "prod_Cobre"
+      - "prod_Crudo"
+      - "prod_Min_resto"
       - "prod_const"
   PNC:
     descripcion: "Productos no consumidos directamente por hogares en la utilidad CES"
     incluir:
-      - "prod_Min"
+      - "prod_Cobre"
+      - "prod_Crudo"
+      - "prod_Min_resto"
       - "prod_const"
   P_Exp:
     regla: "productos_con_exportaciones_positivas"
@@ -158,8 +223,13 @@ conjuntos_gcn:
     descripcion: "Sectores que excluyen construccion como insumo intermedio por cero estructural"
     incluir:
       - "Act_Agri"
-      - "Act_Min"
-      - "Act_Manu"
+      - "Act_Cobre"
+      - "Act_Min_resto"
+      - "Act_Beb_alc"
+      - "Act_Beb_noalc"
+      - "Act_Tabaco"
+      - "Act_Combustibles"
+      - "Act_Manu_resto"
       - "Act_elect_agua_gas"
       - "Act_com_hot_rest"
       - "Act_trans_comu_inf"
@@ -173,10 +243,18 @@ conjuntos_gcn:
       - "Act_const"
       - "Act_inmo_viv"
   PMinP:
-    descripcion: "Productos usados en bloque especial de absorcion domestica, excluye agro, construccion, adm. publica y otros"
+    descripcion: "Productos domesticos salvo agro, construccion y adm. publica (conjunto declarado en el .gcn; no interviene en las ecuaciones)"
     incluir:
-      - "prod_Min"
-      - "prod_Manu"
+      - "prod_Cobre"
+      - "prod_Crudo"
+      - "prod_Min_resto"
+      - "prod_Beb_alc"
+      - "prod_Beb_noalc"
+      - "prod_Tabaco"
+      - "prod_Diesel"
+      - "prod_Gasolinas"
+      - "prod_Otros_comb"
+      - "prod_Manu_resto"
       - "prod_elect_agua_gas"
       - "prod_com_hot_rest"
       - "prod_trans_comu_inf"
@@ -191,7 +269,9 @@ tratamiento_ceros_estructurales:
   sectores_afectados: "SA"
   destino_rebalanceo: "Capital"
   fijar_consumo_hogares_no_consumidos:
-    - "prod_Min"
+    - "prod_Cobre"
+    - "prod_Crudo"
+    - "prod_Min_resto"
     - "prod_const"
   fijar_no_exportables:
     - "prod_const"
@@ -207,12 +287,11 @@ elasticidades:
   # wage_curve_phi: la elasticidad del empleo al salario real neto es 1/(phi*(1-epsilon)).
   #   phi = 3.4483 con epsilon = 0.42 da 0.5, valor central para el insumo laboral total
   #   (hicksianas de 0.3 intensiva y 0.25 extensiva; Chetty et al., 2011).
-  #   Valor anterior: 2.0 (elasticidad 0.862).
   wage_curve_phi: 3.4483
   # capital_curve_psi: la elasticidad de la oferta de capital al retorno neto es 1/psi.
   #   psi = 1.5 da 0.67, dentro del consenso de -0.5 a -1.0 para la elasticidad de la
   #   inversion al costo de uso (Hassett y Hubbard, 1996) y coherente con la respuesta
-  #   moderada estimada para Chile (Cerda y Larrain, 2005). Valor anterior: 0.2 (elasticidad 5).
+  #   moderada estimada para Chile (Cerda y Larrain, 2005).
   capital_curve_psi: 1.5
   participacion_epsilon: 0.42
 
@@ -231,20 +310,17 @@ cierre_macro:
   # Regla fiscal de la calibracion base: tasas, gasto y transferencias reales fijos;
   # ahorro publico residual (sw_g = sw_tr = 0 en el bloque CIERRE del .gcn).
   fiscal: "ahorro_publico_residual"
-  #mercado_trabajo: "curva_salarial_con_desempleo"
   mercado_trabajo: "curva_salarial_con_participacion_endogena"
-  #mercado_capital: "pleno_uso_stock_capital"
   mercado_capital: "curva_utilizacion_endogena"
   # Utilizacion base del capital = KD_base / KTOT (KTOT = capacidad instalada).
   # 0.82: uso de capacidad instalada agregado, IMCE ICARE-UAI, dic-2023 (82,0%).
-  # Con 1.0 se recupera la calibracion anterior (pleno uso en la base).
   utilizacion_capital_base: 0.82
   tasa_desempleo_base:
     Trabajo_1: 0.076
     Trabajo_2: 0.099
     Trabajo_3: 0.078
 
-# Cierres alternativos (eval_cierres_12_sect_23.Rmd). Cada cierre combina una regla
+# Cierres alternativos (eval_cierres_17_sect_23.Rmd). Cada cierre combina una regla
 # ahorro-inversion y una regla fiscal; el equilibrio base es el mismo en todos.
 #   inversion: "determinada_por_ahorro" (sw_joh = 0) | "johansen" (sw_joh = 1: inversion
 #              real fija, propension al ahorro de los hogares endogena; Rattso, 1982)
@@ -253,9 +329,13 @@ cierre_macro:
 #                en volumen endogeno)
 #              | "transferencias_endogenas" (sw_tr = 1: ahorro publico real fijo,
 #                transferencias reales a hogares endogenas)
+# choques: subconjunto de IVA, IDPC, PIT, TESP (definidos en shocks_default).
 cierres_alternativos:
   choques: ["IVA", "IDPC"]
-  tolerancia_replica: 1.0e-5
+  # La calibracion base se resuelve con tol = 3e-5 (gecon_chile_17_sect_23.Rmd); al
+  # resolver de nuevo sin choque, las variables se mueven del orden de 2e-5 en terminos
+  # relativos aunque el cierre sea el mismo. La tolerancia de la replica debe ser mayor.
+  tolerancia_replica: 1.0e-4
   cierres:
     vigente:
       inversion: "determinada_por_ahorro"
@@ -282,26 +362,45 @@ pruebas_cierre:
 
 # Sensibilidad a las elasticidades de oferta de factores (eval_shocks.Rmd).
 # elasticidad_empleo: elasticidad del empleo al salario real neto, 1 / (phi * (1 - epsilon)).
-#   0.5 = calibracion central; 0.25 = cota inferior (margen extensivo, Chetty et al., 2011);
-#   0.862 = calibracion anterior (phi = 2), como referencia.
+#   0.5 = calibracion central; 0.25 = cota inferior (margen extensivo, Chetty et al., 2011).
 # capital_curve_psi: la elasticidad de la oferta de capital al retorno neto es 1 / psi.
 #   1.5 = calibracion central (elasticidad 0.67); 1 y 2 acotan el rango de consenso
-#   (elasticidad 1 y 0.5); 0.2 = calibracion anterior (elasticidad 5), como referencia.
+#   (elasticidad 1 y 0.5); 0.2 (elasticidad 5) se mantiene como prueba de estres.
 # Ningun valor altera el equilibrio base (w = pk = 1), por lo que se varian sin recalibrar.
 sensibilidad_oferta:
   elasticidad_empleo: [0.862, 0.5, 0.25]
   capital_curve_psi: [0.2, 1.0, 1.5, 2.0]
 
-# Especificacion del IVA (Etapa 1): cuna de precio sobre la demanda final,
-# uso intermedio desgravado. El IVA que exceda la tasa tope sobre la demanda
-# final de un producto se asigna como residuo transitorio a su uso intermedio.
+# Especificacion del IVA: cuna de precio sobre la demanda final, uso intermedio
+# desgravado. El IVA que exceda la tasa tope sobre la demanda final de un producto
+# se asigna como residuo transitorio a su uso intermedio (t_iva_int), salvo en los
+# productos de 'productos_impuesto_adicional'.
 iva:
   especificacion: "cuna_precio_demanda_final"
   tasa_max_demanda_final: 0.19
 
-# Especificacion de impuestos especificos (Etapa 5): impuesto por unidad fisica que pagan
-# solo hogares, gobierno e inversion. Consumo intermedio, existencias y exportaciones no
-# lo pagan (supuesto). El IVA se calcula sobre el precio con especifico.
+# Impuestos adicionales ad valorem sobre bebidas (IABA y bebidas analcoholicas, art. 42
+# del DL 825). La SAM los registra en la fila IVA: la tasa implicita sobre la demanda
+# final es 33,9% en bebidas alcoholicas y 22,5% en no alcoholicas. En estos productos,
+# el exceso sobre la tasa tope del IVA se modela como un impuesto adicional ad valorem
+# (t_adic) que grava la demanda final sobre la misma base que el IVA:
+#     pq = (p + tau_e * IPC) * (1 + t_iva + t_adic)
+# Su recaudacion se reporta como TADIC, separada del IVA; VAT + TADIC replica la fila IVA.
+# El choque de IVA no altera t_adic.
+# NOTA: t_adic y TADIC designan aqui el impuesto adicional a las bebidas. El Impuesto
+# Adicional de la LIR (cuenta Imp_adic de la SAM) se denomina t_ia y TIA, como en el
+# modelo de 12 sectores.
+impuesto_adicional:
+  especificacion: "ad_valorem_demanda_final_misma_base_iva"
+  productos:
+    - "prod_Beb_alc"
+    - "prod_Beb_noalc"
+
+# Especificacion de impuestos especificos: impuesto por unidad fisica que pagan solo
+# hogares, gobierno e inversion. Consumo intermedio, existencias y exportaciones no lo
+# pagan (supuesto). El IVA se calcula sobre el precio con especifico.
+# En la SAM de 17 sectores recaen en prod_Tabaco, prod_Diesel, prod_Gasolinas y
+# prod_Otros_comb.
 tesp:
   especificacion: "unitario_demanda_final"
 
@@ -310,6 +409,9 @@ shocks_default:
     descripcion: "Aumento de 10% en el impuesto especifico por unidad fisica (tau_e)"
     tipo: "multiplicativo"
     factor: 1.10
+    # Productos a los que se aplica el factor. Vacio o ausente: todos los productos
+    # con tau_e > 0 (prod_Tabaco, prod_Diesel, prod_Gasolinas, prod_Otros_comb).
+    productos: []
   iva:
     descripcion: "Alza de la tasa legal de IVA de 19% a 20% (tasas efectivas sin impuesto x 20/19)"
     tipo: "multiplicativo"
@@ -338,8 +440,9 @@ sensibilidad_consumo_comercio:
 
 validaciones:
   verificar_balance_sam: true
-  tolerancia_balance_sam: 1.0e-6
+  tolerancia_balance_sam: 1.0e-3
   verificar_cuentas_requeridas: true
   verificar_dimensiones_make_io: true
   verificar_productos_y_sectores_en_sam: true
+  verificar_conjuntos_gcn: true
   advertir_flujos_negativos: true

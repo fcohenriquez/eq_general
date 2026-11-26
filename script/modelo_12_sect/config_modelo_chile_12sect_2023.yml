@@ -8,7 +8,9 @@ modelo:
   descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 12 actividades y 13 productos."
 
 archivos:
-  sam: "../data/sam_2023_12sect_sinmg_trab.csv"
+  # SAM con el bloque institucional conciliado con las cuentas por sector institucional,
+  # la balanza de pagos y la recaudacion del SII (sector externo desagregado e Imp_adic).
+  sam: "../data/sam_2023_12sect_sinmg_trab_inst_cft.csv"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_12_sect_23_auto.gcn"
   resultados_output: "../output/resultados_shocks_12sect_2023.txt"
@@ -43,10 +45,26 @@ cuentas_sam:
     contribuciones_sociales: "Cont_soc"
     prestaciones_sociales: "Pres_soc"
     impuesto_directo: "Imp_dir"
+    impuesto_adicional: "Imp_adic"
     impuesto_produccion: "Imp_prod"
     impuestos_especificos: "Imptos_Espec"
     iva: "IVA"
     arancel: "Arancel"
+
+# Sector externo e instituciones (SAM conciliada). Flujos de la SAM que usa el modelo:
+#   Empresas <- row  : renta de la inversion directa en el exterior (YROWF), fija en divisas.
+#   row <- Empresas  : renta de la inversion pagada al resto del mundo (ROWF).
+#   Imp_adic <- row  : Impuesto Adicional (TIA = t_ia * ROWF).
+#   row <- Hogares   : remesas de los hogares (REMH = por_rem * INC).
+#   row <- Trabajo_* : remuneraciones pagadas a no residentes (par_l_out).
+#   Hogares <- Gobierno : transferencias del gobierno (TRGOV), que no tributan.
+sector_externo:
+  # true: las rentas distribuidas por las empresas (a hogares, gobierno y resto del
+  # mundo) son proporciones del ingreso neto del IDPC, como en las cuentas nacionales,
+  # donde se pagan con cargo al ingreso despues de impuestos. false: proporciones del
+  # ingreso bruto (especificacion anterior; un cambio del IDPC recae solo en el ahorro
+  # de las empresas).
+  distribucion_neta_idpc: true
 
 sectores:
   - id: "Act_Agri"
@@ -226,7 +244,11 @@ cierre_macro:
   ahorro_externo: "fijo en moneda extranjera"
   # Inversion determinada por el ahorro: el volumen de inversion se ajusta para que
   # la inversion iguale al ahorro total (hogares, empresas, gobierno y externo).
+  # Es el cierre de la calibracion base (sw_joh = 0 en el bloque CIERRE del .gcn).
   inversion: "determinada_por_ahorro"
+  # Regla fiscal de la calibracion base: tasas, gasto y transferencias reales fijos;
+  # ahorro publico residual (sw_g = sw_tr = 0 en el bloque CIERRE del .gcn).
+  fiscal: "ahorro_publico_residual"
   #mercado_trabajo: "curva_salarial_con_desempleo"
   mercado_trabajo: "curva_salarial_con_participacion_endogena"
   #mercado_capital: "pleno_uso_stock_capital"
@@ -239,6 +261,35 @@ cierre_macro:
     Trabajo_1: 0.076
     Trabajo_2: 0.099
     Trabajo_3: 0.078
+
+# Cierres alternativos (eval_cierres_12_sect_23.Rmd). Cada cierre combina una regla
+# ahorro-inversion y una regla fiscal; el equilibrio base es el mismo en todos.
+#   inversion: "determinada_por_ahorro" (sw_joh = 0) | "johansen" (sw_joh = 1: inversion
+#              real fija, propension al ahorro de los hogares endogena; Rattso, 1982)
+#   fiscal:    "ahorro_publico_residual" (sw_g = sw_tr = 0)
+#              | "gasto_endogeno" (sw_g = 1: ahorro publico real fijo, consumo del gobierno
+#                en volumen endogeno)
+#              | "transferencias_endogenas" (sw_tr = 1: ahorro publico real fijo,
+#                transferencias reales a hogares endogenas)
+cierres_alternativos:
+  choques: ["IVA", "IDPC"]
+  tolerancia_replica: 1.0e-5
+  cierres:
+    vigente:
+      inversion: "determinada_por_ahorro"
+      fiscal: "ahorro_publico_residual"
+    johansen:
+      inversion: "johansen"
+      fiscal: "ahorro_publico_residual"
+    gasto_endogeno:
+      inversion: "determinada_por_ahorro"
+      fiscal: "gasto_endogeno"
+    transferencias_endogenas:
+      inversion: "determinada_por_ahorro"
+      fiscal: "transferencias_endogenas"
+    johansen_gasto_endogeno:
+      inversion: "johansen"
+      fiscal: "gasto_endogeno"
 
 # Pruebas de consistencia del cierre (eval_shocks.Rmd)
 pruebas_cierre:
@@ -305,7 +356,8 @@ sensibilidad_consumo_comercio:
 
 validaciones:
   verificar_balance_sam: true
-  tolerancia_balance_sam: 1.0e-6
+  # La SAM de 12 sectores tiene un desbalance de redondeo de 3e-5 (miles de millones).
+  tolerancia_balance_sam: 1.0e-4
   verificar_cuentas_requeridas: true
   verificar_dimensiones_make_io: true
   verificar_productos_y_sectores_en_sam: true

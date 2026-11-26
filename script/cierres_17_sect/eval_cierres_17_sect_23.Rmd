@@ -1,0 +1,303 @@
+---
+title: "Evaluacion de cierres alternativos - 17 sectores"
+author: "fh"
+date: "2026-11-25"
+output: html_document
+---
+
+<!--
+Requiere haber ejecutado, en la misma sesion, gecon_chile_17_sect_23.Rmd y
+calculo_pib_17_sect_23.Rmd (model, cfg, res_base, pib_model_list, calc_pib).
+No requiere eval_shocks_17_sect_23.Rmd: si sus funciones de descomposicion
+(build_real_decomp, indicadores_fiscales) no estan en memoria, se cargan desde
+ese archivo sin ejecutar sus choques.
+
+Los cierres se activan con los interruptores del bloque CIERRE del .gcn
+(sw_joh, sw_g, sw_tr). El equilibrio base se calibra siempre con el cierre
+vigente; cada cierre alternativo debe reproducirlo sin choque.
+
+Choques disponibles (cierres_alternativos$choques en el YAML): IVA, IDPC, PIT y
+TESP. El choque de IVA multiplica t_iva y t_iva_int, y no altera el impuesto
+adicional a las bebidas (t_adic). Ademas de la descomposicion total, se reporta la
+variacion de la recaudacion por instrumento, incluidos el impuesto adicional a las
+bebidas (TADIC) y el Impuesto Adicional de la LIR (TIA).
+-->
+
+# Preparacion
+```{r include=FALSE}
+`%||%` <- function(a, b) if (is.null(a)) b else a
+
+# --- Requisitos de gecon_chile y calculo_pib ---------------------------------
+faltan <- c("cfg", "model", "res_base", "pib_model_list", "calc_pib")[
+    !sapply(c("cfg", "model", "res_base", "pib_model_list", "calc_pib"), exists)]
+if (length(faltan))
+    stop("Faltan objetos en memoria: ", paste(faltan, collapse = ", "),
+         ". Ejecute antes gecon_chile_17_sect_23.Rmd y calculo_pib_17_sect_23.Rmd.")
+
+# --- Funciones de descomposicion de eval_shocks_17_sect_23.Rmd ----------------
+# Se extraen solo las definiciones de funciones; los choques no se ejecutan.
+fun_req <- c("decomp3", "sum_decomp", "build_real_decomp")
+if (!all(sapply(fun_req, exists))) {
+    rmd_shocks <- cfg$archivos$eval_shocks_rmd %||% "eval_shocks_17_sect_23.Rmd"
+    if (!file.exists(rmd_shocks)) stop("No se encuentra ", rmd_shocks, " para cargar las funciones de descomposicion.")
+    tmp_r <- tempfile(fileext = ".R")
+    knitr::purl(rmd_shocks, output = tmp_r, quiet = TRUE, documentation = 0)
+    for (e in parse(tmp_r)) {
+        es_def <- is.call(e) && as.character(e[[1]]) %in% c("<-", "=") &&
+                  is.name(e[[2]]) && as.character(e[[2]]) %in% fun_req &&
+                  is.call(e[[3]]) && identical(e[[3]][[1]], as.name("function"))
+        if (es_def) eval(e, envir = globalenv())
+    }
+    no_cargadas <- fun_req[!sapply(fun_req, exists)]
+    if (length(no_cargadas)) stop("No se pudieron cargar: ", paste(no_cargadas, collapse = ", "))
+}
+
+# --- Indicadores fiscales (misma definicion que eval_shocks) -----------------
+indicadores_cierre <- function(RD, v, propios) {
+    pp    <- function(x) unname(as.numeric(x) / as.numeric(pib_model_list$PIB) * 100)
+    suma  <- function(campo, imp = names(RD)) sum(sapply(RD[imp], `[[`, campo))
+    ef_t  <- pp(suma("ef_tasa"))
+    ef_b  <- pp(suma("ef_cantidad"))
+    ef_bp <- pp(suma("ef_cantidad", intersect(propios, names(RD))))
+    ef_p  <- pp(suma("ef_precio"))
+    dR    <- pp(as.numeric(v["Tax"]) - as.numeric(res_base["Tax"]))
+    pct   <- function(x) if (abs(ef_t) > 1e-10) -x / ef_t * 100 else NA_real_
+    c(dTax_pp        = dR,
+      ef_tasa_pp     = ef_t,
+      ef_base_pp     = ef_b,
+      ef_precio_pp   = ef_p,
+      pct_erosion    = pct(ef_b + ef_p),
+      pct_base       = pct(ef_b),
+      pct_precio     = pct(ef_p),
+      pct_base_otros = if (abs(ef_b) > 1e-10) (ef_b - ef_bp) / ef_b * 100 else NA_real_,
+      resid_pp       = dR - (ef_t + ef_b + ef_p))
+}
+
+# --- Archivo de resultados propio de esta evaluacion -------------------------
+archivo_cierres <- cfg$archivos$resultados_cierres %||% "../output/resultados_cierres_17sect_2023.txt"
+escribir_c <- function(lineas, nuevo = FALSE) {
+    con <- file(archivo_cierres, open = if (nuevo) "w" else "a", encoding = "UTF-8")
+    on.exit(close(con))
+    writeLines(lineas, con)
+}
+reportar_c <- function(titulo, expr) {
+    old <- options(width = 250); on.exit(options(old))
+    out <- capture.output(expr)
+    cat(out, sep = "\n")
+    escribir_c(c("", strrep("=", 90), titulo, strrep("=", 90), out))
+    invisible(out)
+}
+tabla_c <- function(df, digits = 4) {
+    if (is.null(df) || NROW(df) == 0) { cat("(tabla vacia)\n"); return(invisible(df)) }
+    cat(knitr::kable(as.data.frame(df), format = "simple", digits = digits, row.names = FALSE), sep = "\n")
+    invisible(df)
+}
+escribir_c(c("MEGC-Chile - Evaluacion de cierres alternativos",
+             sprintf("Generado: %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
+             sprintf("Modelo  : %s (%s), anio base %s", cfg$modelo$nombre, cfg$modelo$version, cfg$modelo$anio_base),
+             sprintf("SAM     : %s", cfg$archivos$sam)),
+           nuevo = TRUE)
+```
+
+# Definicion de cierres y choques
+```{r include=FALSE}
+cierres_def <- cfg$cierres_alternativos$cierres %||% list(
+    vigente                  = list(inversion = "determinada_por_ahorro", fiscal = "ahorro_publico_residual"),
+    johansen                 = list(inversion = "johansen",               fiscal = "ahorro_publico_residual"),
+    gasto_endogeno           = list(inversion = "determinada_por_ahorro", fiscal = "gasto_endogeno"),
+    transferencias_endogenas = list(inversion = "determinada_por_ahorro", fiscal = "transferencias_endogenas"),
+    johansen_gasto_endogeno  = list(inversion = "johansen",               fiscal = "gasto_endogeno")
+)
+choques_cierre <- unlist(cfg$cierres_alternativos$choques %||% c("IVA", "IDPC"))
+tol_rep <- cfg$cierres_alternativos$tolerancia_replica %||% 1e-5
+opts_cie <- list(xscalm = "auto", max_iter = 10000, tol = 1e-5)
+
+reglas_inv <- c(determinada_por_ahorro = 0, johansen = 1)
+reglas_fis <- c("ahorro_publico_residual", "gasto_endogeno", "transferencias_endogenas")
+
+# Choques (definidos desde el YAML, como en eval_shocks)
+par_b0  <- get_par_values(model, silent = TRUE)
+cfg_fit <- cfg$shocks_default$fit
+iva_pars <- grep("^t_iva(_int)?__", names(par_b0), value = TRUE)
+choques_def <- list(
+    IVA  = setNames(as.list(as.numeric(par_b0[iva_pars]) * cfg$shocks_default$iva$factor), iva_pars),
+    IDPC = list(fit = as.numeric(par_b0["fit"]) *
+                    (1 + cfg_fit$cambio_puntos_tasa * cfg_fit$participacion_idpc_en_firmtax /
+                         cfg_fit$tasa_nominal_base)),
+    PIT  = list(pit = as.numeric(par_b0["pit"]) * cfg$shocks_default$pit$factor),
+    TESP = { ep <- grep("^tau_e__", names(par_b0), value = TRUE)
+             setNames(as.list(as.numeric(par_b0[ep]) * cfg$shocks_default$tesp$factor), ep) }
+)
+impuestos_propios_c <- list(IVA = "VAT", IDPC = "FIRMTAX", PIT = "PITAX", TESP = "TESP")
+no_def <- setdiff(choques_cierre, names(choques_def))
+if (length(no_def)) stop("Choques no definidos: ", paste(no_def, collapse = ", "))
+
+# Instrumentos para la variacion de la recaudacion por impuesto (pp del PIB base)
+imp_cierre <- intersect(c("VAT", "TADIC", "FIRMTAX", "PITAX", "TIA", "TPROD", "TESP", "TARANCEL"),
+                        names(res_base))
+
+# Ahorro publico real de la base (IPC = numerario): objetivo de las reglas fiscales
+savg_target_base <- as.numeric(res_base["SAVg"] / res_base["CPI"])
+
+par_cierre <- function(def) {
+    if (!def$inversion %in% names(reglas_inv)) stop("Regla de inversion no reconocida: ", def$inversion)
+    if (!def$fiscal %in% reglas_fis)           stop("Regla fiscal no reconocida: ", def$fiscal)
+    list(sw_joh      = unname(reglas_inv[def$inversion]),
+         sw_g        = as.numeric(def$fiscal == "gasto_endogeno"),
+         sw_tr       = as.numeric(def$fiscal == "transferencias_endogenas"),
+         SAVg_target = savg_target_base)
+}
+
+# Balanza de pagos: SAVext - (M - X + RNROW) debe mantener la brecha de redondeo de
+# la base. RNROW son los pagos netos de ingreso primario y secundario al resto del mundo.
+brecha_bdp_c <- function(m, lst) {
+    v <- get_ss_values(m, silent = TRUE)
+    as.numeric(v["SAVext"]) - (lst$M - lst$X + as.numeric(v["RNROW"]))
+}
+gap_b_c <- brecha_bdp_c(model, pib_model_list)
+
+# Resuelve partiendo del equilibrio base. Si Newton no converge con el choque
+# completo, aplica el choque por etapas (continuacion), usando cada solucion
+# como valor inicial de la siguiente.
+resolver <- function(par_fijos, par_shock = list(), etapas = c(0.25, 0.5, 0.75, 1)) {
+    intento <- function(frac_vec) {
+        m <- set_free_par(model, free_par = par_fijos)
+        for (i in seq_along(frac_vec)) {
+            s <- frac_vec[i]
+            if (i > 1) m <- initval_var(m, as.list(get_ss_values(m, silent = TRUE)))
+            ps <- if (length(par_shock)) {
+                setNames(lapply(names(par_shock), function(k)
+                    as.numeric(par_b0[k]) + s * (as.numeric(par_shock[[k]]) - as.numeric(par_b0[k]))),
+                    names(par_shock))
+            } else list()
+            if (length(ps)) m <- set_free_par(m, free_par = ps)
+            m <- steady_state(m, calibration = FALSE, options_list = opts_cie)
+            rv <- m@residual_vector
+            if (!length(rv) || any(!is.finite(rv)) || max(abs(rv)) > 10 * opts_cie$tol)
+                stop(sprintf("sin convergencia en la etapa %.2f (max |residuo| = %.3g)", s,
+                             if (length(rv)) max(abs(rv)) else NA))
+        }
+        m
+    }
+    tryCatch(intento(1), error = function(e) intento(etapas))
+}
+
+# Registro de errores: se reportan en el archivo en vez de quedar ocultos
+errores_c <- character(0)
+registrar_error <- function(contexto, e) {
+    msg <- sprintf("%s: %s", contexto, conditionMessage(e))
+    errores_c <<- c(errores_c, msg)
+    warning(msg, call. = FALSE)
+}
+```
+
+# Replica del equilibrio base bajo cada cierre
+```{r include=FALSE}
+# Sin choque, cada cierre debe reproducir el equilibrio base (y por tanto la SAM):
+# los indices de ajuste valen 1 y ninguna variable cambia.
+replica <- do.call(rbind, lapply(names(cierres_def), function(nm_) {
+    pc <- par_cierre(cierres_def[[nm_]])
+    r <- tryCatch({
+        m <- resolver(pc)
+        v <- get_ss_values(m, silent = TRUE)
+        comunes <- intersect(names(res_base), names(v))
+        c(desvio_rel_max = max(abs(v[comunes] - res_base[comunes]) / pmax(abs(res_base[comunes]), 1)),
+          s_adj = as.numeric(v["s_adj"]), g_adj = as.numeric(v["g_adj"]),
+          tr_adj = as.numeric(v["tr_adj"]), inv_adj = as.numeric(v["inv_adj"]))
+    }, error = function(e) {
+        registrar_error(sprintf("Replica, cierre %s", nm_), e)
+        c(desvio_rel_max = NA, s_adj = NA, g_adj = NA, tr_adj = NA, inv_adj = NA)
+    })
+    data.frame(cierre = nm_, t(unlist(pc[c("sw_joh", "sw_g", "sw_tr")])), t(r),
+               check.names = FALSE, row.names = NULL)
+}))
+replica$replica_base <- !is.na(replica$desvio_rel_max) & replica$desvio_rel_max < tol_rep
+```
+
+# Choques bajo cierres alternativos
+```{r include=FALSE}
+pib_b <- as.numeric(pib_model_list$PIB)
+
+eval_cierre <- function(nm_cierre, nm_choque) {
+    pc <- par_cierre(cierres_def[[nm_cierre]])
+    vacio <- c(dTax_pp = NA, ef_tasa_pp = NA, ef_base_pp = NA, ef_precio_pp = NA,
+               pct_erosion = NA, pct_base = NA, pct_precio = NA, pct_base_otros = NA,
+               resid_pp = NA, dSAVg_pp = NA, dTRGOV_pp = NA, dG_pp = NA,
+               dPIB_real = NA, dC_real = NA, dI_real = NA, dG_real = NA,
+               s_adj = NA, g_adj = NA, tr_adj = NA, inv_adj = NA, d_brecha_BdP = NA,
+               setNames(rep(NA_real_, length(imp_cierre)), paste0("d", imp_cierre, "_pp")))
+    res <- tryCatch({
+        m   <- resolver(pc, choques_def[[nm_choque]])
+        v   <- get_ss_values(m, silent = TRUE)
+        lst <- calc_pib(m, model_ref = model)
+        RD  <- build_real_decomp(model, m, res_base, v)
+        ind <- indicadores_cierre(RD, v, impuestos_propios_c[[nm_choque]])
+        pp  <- function(x) as.numeric(x) / pib_b * 100
+        pct <- function(a, b) (as.numeric(a) / as.numeric(b) - 1) * 100
+        c(ind,
+          dSAVg_pp     = pp(v["SAVg"]  - res_base["SAVg"]),
+          dTRGOV_pp    = pp(v["TRGOV"] - res_base["TRGOV"]),
+          dG_pp        = pp(lst$G - pib_model_list$G),
+          dPIB_real    = pct(lst$PIB_real, pib_model_list$PIB_real),
+          dC_real      = pct(lst$C_real,   pib_model_list$C_real),
+          dI_real      = pct(lst$I_real,   pib_model_list$I_real),
+          dG_real      = pct(lst$G_real,   pib_model_list$G_real),
+          s_adj        = as.numeric(v["s_adj"]),
+          g_adj        = as.numeric(v["g_adj"]),
+          tr_adj       = as.numeric(v["tr_adj"]),
+          inv_adj      = as.numeric(v["inv_adj"]),
+          d_brecha_BdP = brecha_bdp_c(m, lst) - gap_b_c,
+          setNames(pp(v[imp_cierre] - res_base[imp_cierre]), paste0("d", imp_cierre, "_pp")))
+    }, error = function(e) {
+        registrar_error(sprintf("Cierre %s, choque %s", nm_cierre, nm_choque), e)
+        vacio
+    })
+    data.frame(choque = nm_choque, cierre = nm_cierre, t(res[names(vacio)]),
+               check.names = FALSE, row.names = NULL)
+}
+
+res_cierres <- lapply(setNames(choques_cierre, choques_cierre), function(ch)
+    do.call(rbind, lapply(names(cierres_def), function(ci) eval_cierre(ci, ch))))
+```
+
+# ANALISIS CIERRES ALTERNATIVOS
+```{r}
+reportar_c("CIERRES ALTERNATIVOS: replica del equilibrio base", {
+    cat("Cada cierre se resuelve sin choque desde el equilibrio base calibrado con el cierre vigente.\n")
+    cat(sprintf("desvio_rel_max = maximo desvio relativo de las variables respecto de la base (tolerancia %.0e).\n", tol_rep))
+    cat("Los indices de ajuste (s_adj, g_adj, tr_adj, inv_adj) deben valer 1.\n\n")
+    cat("Reglas:\n")
+    cat("  sw_joh = 0: inversion determinada por el ahorro; 1: Johansen (inversion real fija, ahorro de hogares endogeno).\n")
+    cat("  sw_g   = 1: ahorro publico real fijo; el consumo del gobierno en volumen se ajusta (g_adj).\n")
+    cat("  sw_tr  = 1: ahorro publico real fijo; las transferencias reales a hogares se ajustan (tr_adj).\n")
+    cat("  sw_g = sw_tr = 0: tasas, gasto y transferencias reales fijos; ahorro publico residual.\n\n")
+    tabla_c(replica, digits = 8)
+})
+
+for (ch in names(res_cierres)) {
+    reportar_c(sprintf("CIERRES ALTERNATIVOS: choque %s", ch), {
+        cat("Recaudacion y efectos en pp del PIB nominal base; actividad en %.\n")
+        cat("dTax_pp     = variacion total de la recaudacion = ef_tasa_pp + ef_base_pp + ef_precio_pp.\n")
+        cat("pct_erosion = -(ef_base + ef_precio) / ef_tasa (%).\n")
+        cat("dSAVg_pp    = variacion del ahorro publico (~0 en los cierres con ahorro publico real fijo).\n")
+        cat("dTRGOV_pp, dG_pp = variacion de las transferencias y del gasto del gobierno (destino de la recaudacion).\n")
+        cat("d_brecha_BdP debe ser ~0 (ley de Walras).\n\n")
+        d <- res_cierres[[ch]]
+        cat("Recaudacion:\n")
+        tabla_c(d[, c("cierre", "dTax_pp", "ef_tasa_pp", "ef_base_pp", "ef_precio_pp",
+                      "pct_erosion", "pct_base", "pct_precio", "pct_base_otros", "resid_pp")])
+        cat("\nVariacion de la recaudacion por instrumento (pp del PIB base):\n")
+        tabla_c(d[, c("cierre", paste0("d", imp_cierre, "_pp"))])
+        cat("\nUso de la recaudacion y ajuste del cierre:\n")
+        tabla_c(d[, c("cierre", "dSAVg_pp", "dTRGOV_pp", "dG_pp",
+                      "s_adj", "g_adj", "tr_adj", "inv_adj", "d_brecha_BdP")], digits = 6)
+        cat("\nActividad (%):\n")
+        tabla_c(d[, c("cierre", "dPIB_real", "dC_real", "dI_real", "dG_real")])
+    })
+}
+
+reportar_c("CIERRES ALTERNATIVOS: errores de solucion", {
+    if (length(errores_c)) cat(errores_c, sep = "\n") else cat("Sin errores.\n")
+})
+cat(sprintf("Resultados escritos en: %s\n", normalizePath(archivo_cierres, winslash = "/", mustWork = FALSE)))
+```

@@ -19,6 +19,21 @@
 # Impuestos sobre productos (cunas de precio sobre la demanda final):
 #  - IVA (t_iva), impuesto adicional ad valorem a bebidas (t_adic, misma base que
 #    el IVA) e impuestos especificos por unidad fisica (tau_e).
+# Sector externo e instituciones (SAM 2023 conciliada con las cuentas por sector
+# institucional, la balanza de pagos y la recaudacion del SII):
+#  - Las empresas reciben la renta de la inversion directa en el exterior (YROWF),
+#    fija en moneda extranjera.
+#  - Las rentas que distribuyen las empresas (a hogares TREMP, al gobierno TRFG y al
+#    resto del mundo ROWF) son proporciones del ingreso de las empresas neto del
+#    IDPC (BASEF) cuando sw_dist = 1, o del ingreso bruto cuando sw_dist = 0.
+#  - El Impuesto Adicional de la LIR (TIA) grava las rentas pagadas al resto del
+#    mundo con una tasa efectiva t_ia; lo paga el resto del mundo y forma parte de
+#    Tax. (TADIC es el impuesto adicional a bebidas, distinto del anterior.)
+#  - Los hogares remesan al exterior una proporcion de su ingreso disponible (REMH).
+#  - Una fraccion de las remuneraciones se paga a no residentes (par_l_out); los
+#    hogares reciben la fraccion par_l_h.
+#  - RNROW resume los pagos netos de ingreso primario y secundario al resto del
+#    mundo; la balanza de pagos (ley de Walras) es SAVext = M - X + RNROW.
 ##################################
 
 
@@ -108,7 +123,7 @@ block CONSUMER
 
     constraints
     {
-        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] + REMH[] = INC[];
     };
 
     identities
@@ -117,6 +132,8 @@ block CONSUMER
         BTINC[] = pk[] * Kh[] + SUM<l::LAB>(w<l>[] * Lh<l>[]) + TRGOV[] + TREMP[] + PSh[] + fact_row_in_k_data + fact_row_in_l_data;
         SAV[] = INC[] * por_sav;
         CS[] = INC[] * por_cont;
+        # Remesas de los hogares al resto del mundo: proporcion del ingreso disponible
+        REMH[] = INC[] * por_rem;
         # Productos sin consumo de hogares en la SAM (conjunto PNC del YAML)
         D<'prod_Cobre'>[]     = dst_nc<'prod_Cobre'>;
         D<'prod_Crudo'>[]     = dst_nc<'prod_Crudo'>;
@@ -323,9 +340,16 @@ block FIRM
 {
     identities
     {
-        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
-        SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
-        TREMP[] = INGF[] * por_tremp;
+        # Ingreso de las empresas: renta del capital, contribuciones recibidas y renta
+        # de la inversion directa en el exterior (fija en moneda extranjera)
+        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f + YROWF[];
+        YROWF[] = yrowf_data * exr[];
+        # Base de las rentas distribuidas: ingreso neto del IDPC (sw_dist = 1) o bruto (sw_dist = 0)
+        BASEF[] = INGF[] - sw_dist * FIRMTAX[];
+        TREMP[] = BASEF[] * por_tremp;
+        TRFG[]  = BASEF[] * por_tr_f_g;
+        ROWF[]  = BASEF[] * por_rowf;
+        SAVf[] = INGF[] - TREMP[] - TRFG[] - ROWF[] - INGF[] * por_pres_soc_f - FIRMTAX[];
         Kf[] = KD[] * par_k_f;
         FIRMTAX[] = fit * (Kf[] * pk[]);
     };
@@ -335,7 +359,7 @@ block GOB
 {
     identities
     {
-        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
+        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + TRFG[];
         TRGOV[] = trgov_data * CPI[];
         SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
         Kg[] = KD[] * par_k_g;
@@ -351,7 +375,9 @@ block GOB
                  SUM<idx_sa2::SA>(tes<idx_sa2> * revenue<idx_sa2>[]) +
                  SUM<idx_sb2::SB>(tes<idx_sb2> * revenue<idx_sb2>[]);
         TARANCEL[] = SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
-        Tax[] = VAT[] + TADIC[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[];
+        # Impuesto Adicional de la LIR: tasa efectiva sobre las rentas pagadas al resto del mundo
+        TIA[] = t_ia * ROWF[];
+        Tax[] = VAT[] + TADIC[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[] + TIA[];
     };
 };
 
@@ -373,6 +399,9 @@ block EQUILIBRIUM
        <l::LAB> u_rate<l>[] = (LFORCE<l>[] - LD<l>[]) / LFORCE<l>[];
 
        <l::LAB> Lh<l>[] = LD<l>[] * par_l_h<l>;
+
+       # Remuneraciones pagadas a no residentes
+       LROWP[] = SUM<l_o::LAB>(w<l_o>[] * LD<l_o>[] * par_l_out<l_o>);
 
         KD[]  = SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]);
 
@@ -409,6 +438,10 @@ block INVESTMENT
 
         # Ahorro externo fijo en moneda extranjera
         SAVext[] = SAVext_target * exr[];
+
+        # Pagos netos de ingreso primario y secundario al resto del mundo. La balanza
+        # de pagos (implicada por la ley de Walras) es SAVext = M - X + RNROW.
+        RNROW[] = ROWF[] + LROWP[] + REMH[] - TIA[] - YROWF[];
 
         SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
     };

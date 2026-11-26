@@ -10,7 +10,9 @@ modelo:
   descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 17 actividades y 21 productos."
 
 archivos:
-  sam: "../data/sam_2023_17sect_sinmg_trab_casen.csv"
+  # SAM con el bloque institucional conciliado con las cuentas por sector institucional,
+  # la balanza de pagos y la recaudacion del SII (sector externo desagregado e Imp_adic).
+  sam: "../data/sam_2023_17sect_sinmg_trab_inst_cft.csv"
   gcn: "../script/cge_calib_chile_17_sect_23.gcn"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_17_sect_23_auto.gcn"
@@ -46,10 +48,26 @@ cuentas_sam:
     contribuciones_sociales: "Cont_soc"
     prestaciones_sociales: "Pres_soc"
     impuesto_directo: "Imp_dir"
+    impuesto_adicional: "Imp_adic"
     impuesto_produccion: "Imp_prod"
     impuestos_especificos: "Imptos_Espec"
     iva: "IVA"
     arancel: "Arancel"
+
+# Sector externo e instituciones (SAM conciliada). Flujos de la SAM que usa el modelo:
+#   Empresas <- row  : renta de la inversion directa en el exterior (YROWF), fija en divisas.
+#   row <- Empresas  : renta de la inversion pagada al resto del mundo (ROWF).
+#   Imp_adic <- row  : Impuesto Adicional de la LIR (TIA = t_ia * ROWF).
+#   row <- Hogares   : remesas de los hogares (REMH = por_rem * INC).
+#   row <- Trabajo_* : remuneraciones pagadas a no residentes (par_l_out).
+#   Hogares <- Gobierno : transferencias del gobierno (TRGOV), que no tributan.
+sector_externo:
+  # true: las rentas distribuidas por las empresas (a hogares, gobierno y resto del
+  # mundo) son proporciones del ingreso neto del IDPC, como en las cuentas nacionales,
+  # donde se pagan con cargo al ingreso despues de impuestos. false: proporciones del
+  # ingreso bruto (especificacion anterior; un cambio del IDPC recae solo en el ahorro
+  # de las empresas).
+  distribucion_neta_idpc: true
 
 sectores:
   - id: "Act_Agri"
@@ -329,6 +347,9 @@ iva:
 #     pq = (p + tau_e * IPC) * (1 + t_iva + t_adic)
 # Su recaudacion se reporta como TADIC, separada del IVA; VAT + TADIC replica la fila IVA.
 # El choque de IVA no altera t_adic.
+# NOTA: t_adic y TADIC designan aqui el impuesto adicional a las bebidas. El Impuesto
+# Adicional de la LIR (cuenta Imp_adic de la SAM) se denomina t_ia y TIA, como en el
+# modelo de 12 sectores.
 impuesto_adicional:
   especificacion: "ad_valorem_demanda_final_misma_base_iva"
   productos:

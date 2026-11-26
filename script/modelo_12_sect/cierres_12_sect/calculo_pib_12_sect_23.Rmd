@@ -1,0 +1,117 @@
+---
+title: "calculo pib"
+author: "fh"
+date: "2026-04-01"
+output: html_document
+---
+
+# Cálculo del PIB
+
+```{r}
+#Función para calcular el PIB
+calc_pib <- function(model_obj, model_ref = NULL) {
+    # model_ref: modelo base cuyos precios se usan para valorar el PIB real
+    # (Laspeyres). Si es NULL se usan los precios del propio modelo, lo que solo
+    # es correcto para el escenario base.
+    ss_vals  <- get_ss_values(model_obj, silent = TRUE)
+    par_vals <- get_par_values(model_obj, silent = TRUE)
+    ss_ref   <- if (is.null(model_ref)) ss_vals else get_ss_values(model_ref, silent = TRUE)
+
+    p_names <- unlist(cfg$productos)
+    p_eq  <- ss_vals[paste0("p__",  p_names)]
+    pq_eq <- ss_vals[paste0("pq__", p_names)]   # precio de comprador (incluye IVA)
+
+    # Componentes del gasto a precios de mercado: GDP = C + G + I + V + X - M
+    inv_adj_val <- ss_vals["inv_adj"]
+    if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
+    # g_adj: indice de volumen del consumo del gobierno (1 salvo en el cierre fiscal
+    # con gasto endogeno)
+    g_adj_val <- ss_vals["g_adj"]
+    if (length(g_adj_val) == 0 || is.na(g_adj_val)) g_adj_val <- 1.0
+    D_q <- ss_vals[paste0("D__", p_names)]
+    G_q <- par_vals[paste0("gg_market_data_p__", p_names)] * as.numeric(g_adj_val)
+    I_q <- par_vals[paste0("I_data__", p_names)]
+    V_q <- par_vals[paste0("vexist__", p_names)]
+
+    C     <- sum(D_q * pq_eq, na.rm = TRUE)
+    G_val <- sum(G_q * pq_eq, na.rm = TRUE)
+    I_val <- sum(I_q * pq_eq, na.rm = TRUE) * inv_adj_val
+    V_val <- sum(V_q * p_eq,  na.rm = TRUE)          # existencias sin IVA
+
+    pe_eq  <- ss_vals[paste0("pe__", p_names)]
+    E_vals <- ss_vals[paste0("EX__", p_names)]
+    X_val  <- sum(E_vals * pe_eq, na.rm = TRUE)
+
+    # Importaciones a precio CIF (pworldm * exr), sin aranceles
+    pwm_eq  <- par_vals[paste0("pworldm__", p_names)]
+    exr_val <- ss_vals["exr"]
+    M_vals  <- ss_vals[paste0("M__", p_names)]
+    M_val   <- sum(M_vals * pwm_eq * exr_val, na.rm = TRUE)
+
+    # PIB real: cantidades del escenario valoradas a precios del modelo de referencia
+    pq_ref  <- ss_ref[paste0("pq__", p_names)]
+    p_ref   <- ss_ref[paste0("p__",  p_names)]
+    pe_ref  <- ss_ref[paste0("pe__", p_names)]
+    exr_ref <- ss_ref["exr"]
+    C_real <- sum(D_q * pq_ref, na.rm = TRUE)
+    G_real <- sum(G_q * pq_ref, na.rm = TRUE)
+    I_real <- sum(I_q * pq_ref, na.rm = TRUE) * inv_adj_val
+    V_real <- sum(V_q * p_ref,  na.rm = TRUE)
+    X_real <- sum(E_vals * pe_ref, na.rm = TRUE)
+    M_real <- sum(M_vals * pwm_eq * exr_ref, na.rm = TRUE)
+
+    return(list(C=C, G=G_val, I=I_val, V=V_val, X=X_val, M=M_val,
+                PIB = C + G_val + I_val + V_val + X_val - M_val,
+                C_real=C_real, G_real=G_real, I_real=I_real, V_real=V_real, X_real=X_real, M_real=M_real,
+                PIB_real = C_real + G_real + I_real + V_real + X_real - M_real,
+                u_rate = ss_vals[paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo))],
+                Tax = ss_vals["Tax"],
+                FIRMTAX = ss_vals["FIRMTAX"],
+                PITAX = ss_vals["PITAX"],
+                VAT = ss_vals["VAT"],
+                TPROD = ss_vals["TPROD"],
+                TESP = ss_vals["TESP"],
+                TARANCEL = ss_vals["TARANCEL"],
+                TIA = ss_vals["TIA"],
+                # Pagos netos de ingreso primario y secundario al resto del mundo
+                RNROW = ss_vals["RNROW"]))
+}
+```
+
+```{r}
+# Cálculo y Descomposición del PIB (Enfoque del Gasto)
+PIB_SAM <- sum(D_m) + sum(G_m) + sum(I_m) + sum(V_m) + sum(E_m) - sum(M_m)
+cat("\nDescomposición del PIB (Enfoque del Gasto) - Valores SAM:\n")
+cat("Consumo Hogares (C):       ", round(sum(D_m), 2), "\n")
+cat("Consumo Gobierno (G):      ", round(sum(G_m), 2), "\n")
+cat("Inversión (I):             ", round(sum(I_m), 2), "\n")
+cat("Var. Existencias (V):      ", round(sum(V_m), 2), "\n")
+cat("Exportaciones (X):         ", round(sum(E_m), 2), "\n")
+cat("Importaciones (M) (-):     ", round(sum(M_m), 2), "\n")
+cat("--------------------------------------------------\n")
+cat("PIB Total:                 ", round(PIB_SAM, 2), "\n\n")
+
+# Resultados base
+res_base <- get_ss_values(model)
+pib_model_list <- calc_pib(model)
+pib_base <- pib_model_list$PIB
+pib_real_base <- pib_model_list$PIB_real
+
+pib_df <- data.frame(
+    Componente = c("Consumo_Hog", "Consumo_Gob", "Inversion", "Var_Exist", "Exports", "Imports_(-)", "PIB_Total"),
+    SAM_Base = c(sum(D_m), sum(G_m), sum(I_m), sum(V_m), sum(E_m), sum(M_m), PIB_SAM),
+    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I,
+                  pib_model_list$V, pib_model_list$X, pib_model_list$M, pib_base)
+)
+pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
+print(pib_df)
+
+# Cuenta corriente de la base: SAVext = M - X + RNROW (ley de Walras)
+cat(sprintf("\nCuenta corriente (ahorro externo) de la base: %.2f = M - X (%.2f) + pagos netos al RM (%.2f)\n",
+            as.numeric(res_base["SAVext"]), pib_model_list$M - pib_model_list$X, as.numeric(pib_model_list$RNROW)))
+
+# Cierre vigente en el equilibrio base: los indices de ajuste del bloque CIERRE valen 1
+chk_adj <- res_base[intersect(c("s_adj", "g_adj", "tr_adj", "inv_adj"), names(res_base))] - 1
+print(round(chk_adj, 8))
+if (any(abs(chk_adj) > 1e-4)) warning("Los indices de ajuste del cierre no valen 1 en la base; revisar sw_joh, sw_g, sw_tr.")
+```

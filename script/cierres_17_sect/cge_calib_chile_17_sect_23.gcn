@@ -1,5 +1,9 @@
 ##################################
-# MEGC-Chile 12 sectores, SAM 2023.
+# MEGC-Chile 17 sectores, SAM 2023.
+# Desagregacion respecto de la estructura base: la mineria se separa en cobre y
+# resto (con petroleo crudo como producto propio); la manufactura se separa en
+# bebidas alcoholicas, bebidas no alcoholicas, tabaco, combustibles (diesel,
+# gasolinas y otros combustibles) y resto de la manufactura.
 # Cierre macro:
 #  - Numerario: IPC (CPI[] = cpi_num). El sistema es homogeneo de grado cero en
 #    precios: todo parametro nominal esta indexado a CPI (o a exr si es externo).
@@ -9,10 +13,27 @@
 #    los hogares (PSh endogeno), de modo que la ley de Walras se cumple.
 #  - Las ofertas de factores responden al retorno real NETO de impuestos directos:
 #    el trabajo, al salario neto de PIT; el capital, al retorno neto del IDPC
-#    (capital de empresas) y del PIT (capital de hogares). Asi los impuestos
-#    directos e indirectos llegan a la oferta de factores por el mismo canal.
+#    (capital de empresas) y del PIT (capital de hogares).
 #  - Base del PIT: ingreso de los hogares antes de impuestos (BTINC) menos las
 #    transferencias del gobierno (TRGOV), que no tributan.
+# Impuestos sobre productos (cunas de precio sobre la demanda final):
+#  - IVA (t_iva), impuesto adicional ad valorem a bebidas (t_adic, misma base que
+#    el IVA) e impuestos especificos por unidad fisica (tau_e).
+# Sector externo e instituciones (SAM 2023 conciliada con las cuentas por sector
+# institucional, la balanza de pagos y la recaudacion del SII):
+#  - Las empresas reciben la renta de la inversion directa en el exterior (YROWF),
+#    fija en moneda extranjera.
+#  - Las rentas que distribuyen las empresas (a hogares TREMP, al gobierno TRFG y al
+#    resto del mundo ROWF) son proporciones del ingreso de las empresas neto del
+#    IDPC (BASEF) cuando sw_dist = 1, o del ingreso bruto cuando sw_dist = 0.
+#  - El Impuesto Adicional de la LIR (TIA) grava las rentas pagadas al resto del
+#    mundo con una tasa efectiva t_ia; lo paga el resto del mundo y forma parte de
+#    Tax. (TADIC es el impuesto adicional a bebidas, distinto del anterior.)
+#  - Los hogares remesan al exterior una proporcion de su ingreso disponible (REMH).
+#  - Una fraccion de las remuneraciones se paga a no residentes (par_l_out); los
+#    hogares reciben la fraccion par_l_h.
+#  - RNROW resume los pagos netos de ingreso primario y secundario al resto del
+#    mundo; la balanza de pagos (ley de Walras) es SAVext = M - X + RNROW.
 #
 # Cierres alternativos (bloque CIERRE). Los valores por defecto de los
 # interruptores reproducen el cierre descrito arriba:
@@ -27,7 +48,7 @@
 #    a hogares se ajustan mediante tr_adj.
 #  - sw_g y sw_tr no pueden valer 1 simultaneamente (sistema singular).
 #  - SAVg_target debe fijarse en el ahorro publico real del equilibrio base antes
-#    de activar sw_g o sw_tr (eval_cierres_12_sect_23.Rmd).
+#    de activar sw_g o sw_tr (eval_cierres_17_sect_23.Rmd).
 ##################################
 
 
@@ -36,52 +57,68 @@ indexsets
 {
   LAB = {'Trabajo_1', 'Trabajo_2', 'Trabajo_3'};
 
-  P    = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+  P    = {'prod_Agri', 'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc',
+           'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas',
+           'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas', 'prod_const',
            'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
            'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
 
-
-
-  Pdom = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+  Pdom = {'prod_Agri', 'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc',
+           'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas',
+           'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas', 'prod_const',
            'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
            'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub'};
 
   # Pdom_arm: productos con importaciones > 0 (excluye prod_adm_pub, cero estructural en M)
-  Pdom_arm = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_const',
+  Pdom_arm = {'prod_Agri', 'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc',
+              'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas',
+              'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas', 'prod_const',
               'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
               'prod_serv_emp', 'prod_serv_pers'};
 
-  Pno_const = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
-               'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
-               'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers',
-               'prod_adm_pub', 'prod_otros'};
+  Pno_const = {'prod_Agri', 'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc',
+               'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas',
+               'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas',
+               'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+               'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
 
-  Pcon  = {'prod_Agri', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
-            'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv', 'prod_serv_emp',
-            'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
+  # Pcon: productos en la utilidad CES de los hogares (excluye cobre, crudo,
+  # resto de la mineria y construccion, sin consumo de hogares en la SAM)
+  Pcon  = {'prod_Agri', 'prod_Beb_alc', 'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel',
+            'prod_Gasolinas', 'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas',
+            'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+            'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub', 'prod_otros'};
 
-  P_Exp  = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+  P_Exp  = {'prod_Agri', 'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc',
+             'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas',
+             'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas',
              'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
              'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers'};
 
   P_NExp = {'prod_const', 'prod_adm_pub'};
 
-  SA = {'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_com_hot_rest',
-        'Act_trans_comu_inf', 'Act_int_fin', 'Act_serv_emp',
+  SA = {'Act_Agri', 'Act_Cobre', 'Act_Min_resto', 'Act_Beb_alc', 'Act_Beb_noalc',
+        'Act_Tabaco', 'Act_Combustibles', 'Act_Manu_resto', 'Act_elect_agua_gas',
+        'Act_com_hot_rest', 'Act_trans_comu_inf', 'Act_int_fin', 'Act_serv_emp',
         'Act_serv_pers', 'Act_adm_pub'};
 
   SB = {'Act_const', 'Act_inmo_viv'};
 
-  S  = {'Act_Agri', 'Act_Min', 'Act_Manu', 'Act_elect_agua_gas', 'Act_const',
-         'Act_com_hot_rest', 'Act_trans_comu_inf', 'Act_int_fin', 'Act_inmo_viv',
-         'Act_serv_emp', 'Act_serv_pers', 'Act_adm_pub'};
+  S  = {'Act_Agri', 'Act_Cobre', 'Act_Min_resto', 'Act_Beb_alc', 'Act_Beb_noalc',
+         'Act_Tabaco', 'Act_Combustibles', 'Act_Manu_resto', 'Act_elect_agua_gas',
+         'Act_const', 'Act_com_hot_rest', 'Act_trans_comu_inf', 'Act_int_fin',
+         'Act_inmo_viv', 'Act_serv_emp', 'Act_serv_pers', 'Act_adm_pub'};
 
-  PMinP = {'prod_Min', 'prod_Manu', 'prod_elect_agua_gas', 'prod_com_hot_rest',
-          'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
-          'prod_serv_emp', 'prod_serv_pers'};
+  PMinP = {'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc', 'prod_Beb_noalc',
+           'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas', 'prod_Otros_comb',
+           'prod_Manu_resto', 'prod_elect_agua_gas', 'prod_com_hot_rest',
+           'prod_trans_comu_inf', 'prod_int_fin', 'prod_inmo_viv',
+           'prod_serv_emp', 'prod_serv_pers'};
 
   # PdomNoC: productos domesticos salvo construccion (usados como insumo por SA y SB)
-  PdomNoC = {'prod_Agri', 'prod_Min', 'prod_Manu', 'prod_elect_agua_gas',
+  PdomNoC = {'prod_Agri', 'prod_Cobre', 'prod_Crudo', 'prod_Min_resto', 'prod_Beb_alc',
+             'prod_Beb_noalc', 'prod_Tabaco', 'prod_Diesel', 'prod_Gasolinas',
+             'prod_Otros_comb', 'prod_Manu_resto', 'prod_elect_agua_gas',
              'prod_com_hot_rest', 'prod_trans_comu_inf', 'prod_int_fin',
              'prod_inmo_viv', 'prod_serv_emp', 'prod_serv_pers', 'prod_adm_pub'};
 };
@@ -101,7 +138,7 @@ block CONSUMER
 
     constraints
     {
-        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] = INC[];
+        SUM<idx_i_1::Pcon>(pq<idx_i_1>[] * D<idx_i_1>[]) + SAV[] + CS[] + REMH[] = INC[];
     };
 
     identities
@@ -111,8 +148,13 @@ block CONSUMER
         # s_adj = 1 salvo en el cierre de Johansen (sw_joh = 1)
         SAV[] = INC[] * por_sav * s_adj[];
         CS[] = INC[] * por_cont;
-        D<'prod_Min'>[] = dst_nc<'prod_Min'>;
-        D<'prod_const'>[] = dst_nc<'prod_const'>;
+        # Remesas de los hogares al resto del mundo: proporcion del ingreso disponible
+        REMH[] = INC[] * por_rem;
+        # Productos sin consumo de hogares en la SAM (conjunto PNC del YAML)
+        D<'prod_Cobre'>[]     = dst_nc<'prod_Cobre'>;
+        D<'prod_Crudo'>[]     = dst_nc<'prod_Crudo'>;
+        D<'prod_Min_resto'>[] = dst_nc<'prod_Min_resto'>;
+        D<'prod_const'>[]     = dst_nc<'prod_const'>;
     };
 
     calibration
@@ -224,7 +266,8 @@ block PROD_OTROS {
                           + EX<'prod_otros'>[];
     VAT_p<'prod_otros'>[]       = 0.0;
     Arancel_p<'prod_otros'>[]   = tar_rate<'prod_otros'> * pworldm<'prod_otros'> * exr[] * M<'prod_otros'>[];
-    # prod_otros no paga IVA ni impuestos especificos (tau_e se define solo sobre Pdom)
+    # prod_otros no paga IVA, impuesto adicional ni especificos (t_adic y tau_e se
+    # definen solo sobre Pdom)
   };
 };
 
@@ -272,14 +315,15 @@ block PRODUCTS
 {
     identities
     {
-        # --- IVA (Etapa 1) e impuestos especificos (Etapa 5) como cunas de precio ---
+        # --- IVA, impuesto adicional e impuestos especificos como cunas de precio ---
         # pq  : precio de comprador de la demanda final (hogares, gobierno, inversion).
-        #       Incluye el especifico por unidad fisica (tau_e) y el IVA, que se calcula
-        #       sobre el precio con especifico.
-        # pint: precio de los insumos intermedios; no paga especificos (supuesto) y
-        #       t_iva_int = 0 salvo residuo de calibracion
+        #       Incluye el especifico por unidad fisica (tau_e), el IVA (t_iva) y el
+        #       impuesto adicional ad valorem a bebidas (t_adic); ambos ad valorem se
+        #       calculan sobre el precio con especifico (misma base imponible).
+        # pint: precio de los insumos intermedios; no paga especificos ni impuesto
+        #       adicional (supuesto) y t_iva_int = 0 salvo residuo de calibracion.
         #       tau_e esta en pesos base por unidad fisica y se indexa al IPC (UTM).
-        <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + tau_e<pq_i> * CPI[]) * (1 + t_iva<pq_i>);
+        <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + tau_e<pq_i> * CPI[]) * (1 + t_iva<pq_i> + t_adic<pq_i>);
         <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>);
 
         # Demanda final gravada e intermedia, en unidades fisicas (precio basico base)
@@ -297,6 +341,10 @@ block PRODUCTS
         <vt_i::Pdom> VAT_p<vt_i>[] = t_iva<vt_i> * (p<vt_i>[] + tau_e<vt_i> * CPI[]) * FD<vt_i>[]
                                    + t_iva_int<vt_i> * p<vt_i>[] * XI<vt_i>[];
 
+        # Recaudacion del impuesto adicional ad valorem (IABA y bebidas analcoholicas):
+        # misma base que el IVA de la demanda final
+        <ta_i::Pdom> TADIC_p<ta_i>[] = t_adic<ta_i> * (p<ta_i>[] + tau_e<ta_i> * CPI[]) * FD<ta_i>[];
+
         # Recaudacion de especificos: monto real fijo por unidad fisica de demanda final
         # (indexado al IPC; la recaudacion real sigue a los volumenes)
         <te_i::Pdom> TESP_p<te_i>[] = tau_e<te_i> * CPI[] * FD<te_i>[];
@@ -309,10 +357,16 @@ block FIRM
 {
     identities
     {
-        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f;
-        SAVf[] = INGF[] - TREMP[] - INGF[] * por_pres_soc_f - FIRMTAX[] - INGF[] * por_tr_f_g;
-        TREMP[] = INGF[] * por_tremp;
-        #Kf[] = k_total_data * par_k_f;
+        # Ingreso de las empresas: renta del capital, contribuciones recibidas y renta
+        # de la inversion directa en el exterior (fija en moneda extranjera)
+        INGF[] = Kf[] * pk[] + CS[] * por_cont_soc_f + YROWF[];
+        YROWF[] = yrowf_data * exr[];
+        # Base de las rentas distribuidas: ingreso neto del IDPC (sw_dist = 1) o bruto (sw_dist = 0)
+        BASEF[] = INGF[] - sw_dist * FIRMTAX[];
+        TREMP[] = BASEF[] * por_tremp;
+        TRFG[]  = BASEF[] * por_tr_f_g;
+        ROWF[]  = BASEF[] * por_rowf;
+        SAVf[] = INGF[] - TREMP[] - TRFG[] - ROWF[] - INGF[] * por_pres_soc_f - FIRMTAX[];
         Kf[] = KD[] * par_k_f;
         FIRMTAX[] = fit * (Kf[] * pk[]);
     };
@@ -322,13 +376,13 @@ block GOB
 {
     identities
     {
-        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + INGF[] * por_tr_f_g;
+        INGG[] = Kg[] * pk[] + CS[] * por_cont_soc_g + Tax[] + TRFG[];
         # tr_adj = 1 salvo en el cierre fiscal con transferencias endogenas (sw_tr = 1)
         TRGOV[] = trgov_data * CPI[] * tr_adj[];
         SAVg[] = INGG[] - (SUM<idx_p::P>(gg_market_data_p<idx_p> * g_adj[] * pq<idx_p>[]) + TRGOV[] + INGG[] * por_pres_soc_g);
-        #Kg[] = k_total_data * par_k_g;
         Kg[] = KD[] * par_k_g;
         VAT[] = SUM<idx_v::P>(VAT_p<idx_v>[]);
+        TADIC[] = SUM<idx_ta::Pdom>(TADIC_p<idx_ta>[]);
         # Base del PIT: rentas del capital y del trabajo de los hogares, transferencias de
         # empresas y prestaciones sociales. Las transferencias del gobierno (TRGOV) forman
         # parte del ingreso (BTINC) pero no de la base imponible.
@@ -339,7 +393,9 @@ block GOB
                  SUM<idx_sa2::SA>(tes<idx_sa2> * revenue<idx_sa2>[]) +
                  SUM<idx_sb2::SB>(tes<idx_sb2> * revenue<idx_sb2>[]);
         TARANCEL[] = SUM<idx_p2::P>(Arancel_p<idx_p2>[]);
-        Tax[] = VAT[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[];
+        # Impuesto Adicional de la LIR: tasa efectiva sobre las rentas pagadas al resto del mundo
+        TIA[] = t_ia * ROWF[];
+        Tax[] = VAT[] + TADIC[] + PITAX[] + FIRMTAX[] + TPROD[] + TESP[] + TARANCEL[] + TIA[];
     };
 };
 
@@ -351,8 +407,6 @@ block EQUILIBRIUM
                  + SUM<idx_eb::SB>(L<idx_eb,l>[])
                  + l_total_data<l> * par_l_row<l>;
 
-       #<l::LAB> w<l>[] = w_pot_calib<l> * (LD<l>[] / l_force_data<l>)^phi<l>;
-
        <l::LAB> LFORCE<l>[] = l_force_data<l> * (LD<l>[] / l_total_data<l>)^epsilon<l>;
 
        # Curva salarial en terminos reales y netos de PIT: el salario real neto
@@ -360,15 +414,12 @@ block EQUILIBRIUM
        # que la calibracion no cambie (w = 1 en la base).
        <l::LAB> w<l>[] * (1 - pit) / (1 - pit_base) = CPI[] * w_pot_calib<l> * (LD<l>[] / LFORCE<l>[])^phi<l>;
 
-       #<l::LAB> u_rate<l>[] = (l_force_data<l> - LD<l>[]) / l_force_data<l>;
-
        <l::LAB> u_rate<l>[] = (LFORCE<l>[] - LD<l>[]) / LFORCE<l>[];
 
        <l::LAB> Lh<l>[] = LD<l>[] * par_l_h<l>;
 
-        #SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]) = k_total_data;
-
-        #Kh[] = k_total_data * par_k_h;
+       # Remuneraciones pagadas a no residentes
+       LROWP[] = SUM<l_o::LAB>(w<l_o>[] * LD<l_o>[] * par_l_out<l_o>);
 
         KD[]  = SUM<idx_ka::SA>(K<idx_ka>[]) + SUM<idx_kb::SB>(K<idx_kb>[]);
 
@@ -406,6 +457,10 @@ block INVESTMENT
 
         # Ahorro externo fijo en moneda extranjera
         SAVext[] = SAVext_target * exr[];
+
+        # Pagos netos de ingreso primario y secundario al resto del mundo. La balanza
+        # de pagos (implicada por la ley de Walras) es SAVext = M - X + RNROW.
+        RNROW[] = ROWF[] + LROWP[] + REMH[] - TIA[] - YROWF[];
 
         SAV[] + SAVf[] + SAVg[] + SAVext[] = TOTAL_INVEST[];
     };

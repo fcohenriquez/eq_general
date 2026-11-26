@@ -10,12 +10,17 @@ modelo:
   descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 17 actividades y 21 productos."
 
 archivos:
-  sam: "../data/sam_2023_17sect_sinmg_trab_casen.csv"
+  # SAM con el bloque institucional conciliado con las cuentas por sector institucional,
+  # la balanza de pagos y la recaudacion del SII (sector externo desagregado e Imp_adic).
+  sam: "../data/sam_2023_17sect_sinmg_trab_inst_cft.csv"
   gcn: "../script/cge_calib_chile_17_sect_23.gcn"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_17_sect_23_auto.gcn"
   resultados_output: "../output/resultados_shocks_17sect_2023.txt"
   resultados_sens_consumo_comercio: "../output/resultados_sens_consumo_comercio_17sect.txt"
+  # Evaluacion de cierres alternativos (eval_cierres_17_sect_23.Rmd)
+  resultados_cierres: "../output/resultados_cierres_17sect_2023.txt"
+  eval_shocks_rmd: "eval_shocks_17_sect_23.Rmd"
 
 opciones_datos:
   separador_csv: ","
@@ -46,10 +51,26 @@ cuentas_sam:
     contribuciones_sociales: "Cont_soc"
     prestaciones_sociales: "Pres_soc"
     impuesto_directo: "Imp_dir"
+    impuesto_adicional: "Imp_adic"
     impuesto_produccion: "Imp_prod"
     impuestos_especificos: "Imptos_Espec"
     iva: "IVA"
     arancel: "Arancel"
+
+# Sector externo e instituciones (SAM conciliada). Flujos de la SAM que usa el modelo:
+#   Empresas <- row  : renta de la inversion directa en el exterior (YROWF), fija en divisas.
+#   row <- Empresas  : renta de la inversion pagada al resto del mundo (ROWF).
+#   Imp_adic <- row  : Impuesto Adicional de la LIR (TIA = t_ia * ROWF).
+#   row <- Hogares   : remesas de los hogares (REMH = por_rem * INC).
+#   row <- Trabajo_* : remuneraciones pagadas a no residentes (par_l_out).
+#   Hogares <- Gobierno : transferencias del gobierno (TRGOV), que no tributan.
+sector_externo:
+  # true: las rentas distribuidas por las empresas (a hogares, gobierno y resto del
+  # mundo) son proporciones del ingreso neto del IDPC, como en las cuentas nacionales,
+  # donde se pagan con cargo al ingreso despues de impuestos. false: proporciones del
+  # ingreso bruto (especificacion anterior; un cambio del IDPC recae solo en el ahorro
+  # de las empresas).
+  distribucion_neta_idpc: true
 
 sectores:
   - id: "Act_Agri"
@@ -284,7 +305,11 @@ cierre_macro:
   ahorro_externo: "fijo en moneda extranjera"
   # Inversion determinada por el ahorro: el volumen de inversion se ajusta para que
   # la inversion iguale al ahorro total (hogares, empresas, gobierno y externo).
+  # Es el cierre de la calibracion base (sw_joh = 0 en el bloque CIERRE del .gcn).
   inversion: "determinada_por_ahorro"
+  # Regla fiscal de la calibracion base: tasas, gasto y transferencias reales fijos;
+  # ahorro publico residual (sw_g = sw_tr = 0 en el bloque CIERRE del .gcn).
+  fiscal: "ahorro_publico_residual"
   mercado_trabajo: "curva_salarial_con_participacion_endogena"
   mercado_capital: "curva_utilizacion_endogena"
   # Utilizacion base del capital = KD_base / KTOT (KTOT = capacidad instalada).
@@ -294,6 +319,36 @@ cierre_macro:
     Trabajo_1: 0.076
     Trabajo_2: 0.099
     Trabajo_3: 0.078
+
+# Cierres alternativos (eval_cierres_17_sect_23.Rmd). Cada cierre combina una regla
+# ahorro-inversion y una regla fiscal; el equilibrio base es el mismo en todos.
+#   inversion: "determinada_por_ahorro" (sw_joh = 0) | "johansen" (sw_joh = 1: inversion
+#              real fija, propension al ahorro de los hogares endogena; Rattso, 1982)
+#   fiscal:    "ahorro_publico_residual" (sw_g = sw_tr = 0)
+#              | "gasto_endogeno" (sw_g = 1: ahorro publico real fijo, consumo del gobierno
+#                en volumen endogeno)
+#              | "transferencias_endogenas" (sw_tr = 1: ahorro publico real fijo,
+#                transferencias reales a hogares endogenas)
+# choques: subconjunto de IVA, IDPC, PIT, TESP (definidos en shocks_default).
+cierres_alternativos:
+  choques: ["IVA", "IDPC"]
+  tolerancia_replica: 1.0e-5
+  cierres:
+    vigente:
+      inversion: "determinada_por_ahorro"
+      fiscal: "ahorro_publico_residual"
+    johansen:
+      inversion: "johansen"
+      fiscal: "ahorro_publico_residual"
+    gasto_endogeno:
+      inversion: "determinada_por_ahorro"
+      fiscal: "gasto_endogeno"
+    transferencias_endogenas:
+      inversion: "determinada_por_ahorro"
+      fiscal: "transferencias_endogenas"
+    johansen_gasto_endogeno:
+      inversion: "johansen"
+      fiscal: "gasto_endogeno"
 
 # Pruebas de consistencia del cierre (eval_shocks.Rmd)
 pruebas_cierre:
@@ -329,6 +384,9 @@ iva:
 #     pq = (p + tau_e * IPC) * (1 + t_iva + t_adic)
 # Su recaudacion se reporta como TADIC, separada del IVA; VAT + TADIC replica la fila IVA.
 # El choque de IVA no altera t_adic.
+# NOTA: t_adic y TADIC designan aqui el impuesto adicional a las bebidas. El Impuesto
+# Adicional de la LIR (cuenta Imp_adic de la SAM) se denomina t_ia y TIA, como en el
+# modelo de 12 sectores.
 impuesto_adicional:
   especificacion: "ad_valorem_demanda_final_misma_base_iva"
   productos:

@@ -24,8 +24,12 @@ calc_pib <- function(model_obj, model_ref = NULL) {
     # Componentes del gasto a precios de mercado: GDP = C + G + I + V + X - M
     inv_adj_val <- ss_vals["inv_adj"]
     if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
+    # g_adj: indice de volumen del consumo del gobierno (1 salvo en el cierre fiscal
+    # con gasto endogeno)
+    g_adj_val <- ss_vals["g_adj"]
+    if (length(g_adj_val) == 0 || is.na(g_adj_val)) g_adj_val <- 1.0
     D_q <- ss_vals[paste0("D__", p_names)]
-    G_q <- par_vals[paste0("gg_market_data_p__", p_names)]
+    G_q <- par_vals[paste0("gg_market_data_p__", p_names)] * as.numeric(g_adj_val)
     I_q <- par_vals[paste0("I_data__", p_names)]
     V_q <- par_vals[paste0("vexist__", p_names)]
 
@@ -67,7 +71,10 @@ calc_pib <- function(model_obj, model_ref = NULL) {
                 VAT = ss_vals["VAT"],
                 TPROD = ss_vals["TPROD"],
                 TESP = ss_vals["TESP"],
-                TARANCEL = ss_vals["TARANCEL"]))
+                TARANCEL = ss_vals["TARANCEL"],
+                TIA = ss_vals["TIA"],
+                # Pagos netos de ingreso primario y secundario al resto del mundo
+                RNROW = ss_vals["RNROW"]))
 }
 ```
 
@@ -93,9 +100,18 @@ pib_real_base <- pib_model_list$PIB_real
 pib_df <- data.frame(
     Componente = c("Consumo_Hog", "Consumo_Gob", "Inversion", "Var_Exist", "Exports", "Imports_(-)", "PIB_Total"),
     SAM_Base = c(sum(D_m), sum(G_m), sum(I_m), sum(V_m), sum(E_m), sum(M_m), PIB_SAM),
-    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I, 
+    Modelo_Eq = c(pib_model_list$C, pib_model_list$G, pib_model_list$I,
                   pib_model_list$V, pib_model_list$X, pib_model_list$M, pib_base)
 )
 pib_df$Diferencia <- round(pib_df$Modelo_Eq - pib_df$SAM_Base, 6)
 print(pib_df)
+
+# Cuenta corriente de la base: SAVext = M - X + RNROW (ley de Walras)
+cat(sprintf("\nCuenta corriente (ahorro externo) de la base: %.2f = M - X (%.2f) + pagos netos al RM (%.2f)\n",
+            as.numeric(res_base["SAVext"]), pib_model_list$M - pib_model_list$X, as.numeric(pib_model_list$RNROW)))
+
+# Cierre vigente en el equilibrio base: los indices de ajuste del bloque CIERRE valen 1
+chk_adj <- res_base[intersect(c("s_adj", "g_adj", "tr_adj", "inv_adj"), names(res_base))] - 1
+print(round(chk_adj, 8))
+if (any(abs(chk_adj) > 1e-4)) warning("Los indices de ajuste del cierre no valen 1 en la base; revisar sw_joh, sw_g, sw_tr.")
 ```

@@ -53,6 +53,7 @@ txt_escribir(c(
     sprintf("Generado            : %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
     sprintf("Modelo              : %s (%s), anio base %s",
             cfg$modelo$nombre, cfg$modelo$version, cfg$modelo$anio_base),
+    sprintf("SAM                 : %s", cfg$archivos$sam),
     "",
     "Cierre macroeconomico:",
     sprintf("  numerario                : %s", fmt_lista(cm$numerario)),
@@ -64,6 +65,7 @@ txt_escribir(c(
     sprintf("  mercado_capital          : %s", fmt_lista(cm$mercado_capital)),
     sprintf("  utilizacion_capital_base : %s", fmt_lista(cm$utilizacion_capital_base)),
     sprintf("  tasa_desempleo_base      : %s", fmt_lista(cm$tasa_desempleo_base)),
+    sprintf("  distribucion_neta_idpc   : %s", fmt_lista(cfg$sector_externo$distribucion_neta_idpc)),
     "",
     "Elasticidades:",
     sprintf("  omega / sigma_q / sigma_t : %s / %s / %s",
@@ -85,7 +87,8 @@ txt_escribir(c(
 # Parametros
 ```{r}
 vars_to_compare <- c(
-    "Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
+    "Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "TIA", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
+    "ROWF", "REMH", "RNROW",
     paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)),
     "pk", "exr", "CPI", "PSh", "inv_adj", "U",
     paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo)),
@@ -239,7 +242,15 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     QM_s   <- pwm * M_s
     D_TAR  <- decomp3(tar, tar, rep(exr_b,length(pn_tar)), rep(exr_s,length(pn_tar)), QM_b, QM_s)
 
-    list(VAT=D_VAT, FIRMTAX=D_FIRM, PITAX=D_PIT, TPROD=D_TPROD, TESP=D_TESP, TARANCEL=D_TAR)
+    # ---------------- TIA (Impuesto Adicional) ----------------
+    # R = t_ia * ROWF. ROWF son las rentas pagadas al resto del mundo, en pesos
+    # deflactados por el IPC (numerario): P = 1 y Q = ROWF, de modo que el efecto
+    # base recoge la variacion real de las rentas remesadas.
+    tia_b  <- as.numeric(par_b["t_ia"]); tia_s <- as.numeric(par_s["t_ia"])
+    rowf_b <- as.numeric(gv(res_base ,"ROWF")); rowf_s <- as.numeric(gv(res_shock,"ROWF"))
+    D_TIA <- decomp3(tia_b, tia_s, rep(1,1), rep(1,1), rowf_b, rowf_s)
+
+    list(VAT=D_VAT, FIRMTAX=D_FIRM, PITAX=D_PIT, TPROD=D_TPROD, TESP=D_TESP, TARANCEL=D_TAR, TIA=D_TIA)
 }
 
 print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NULL, model_shock = NULL) {
@@ -296,6 +307,11 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
         "     Bal.Com Base: %10.2f   Shock: %10.2f   Δ: %10.2f\n",
         p_base_list$X - p_base_list$M, p_shock_list$X - p_shock_list$M,
         (p_shock_list$X - p_shock_list$M) - (p_base_list$X - p_base_list$M)
+    ))
+    cat(sprintf(
+        "     Pagos netos al RM Base: %10.2f   Shock: %10.2f   Δ: %10.2f\n",
+        as.numeric(p_base_list$RNROW), as.numeric(p_shock_list$RNROW),
+        as.numeric(p_shock_list$RNROW) - as.numeric(p_base_list$RNROW)
     ))
 
     cat("\n  Mercado Laboral:\n")
@@ -390,8 +406,8 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     # --- Impacto Fiscal como % del PIB nominal base ---
     pib_nom_base <- p_base_list$PIB
 
-    tax_vars <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL")
-    tax_labels <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ", "Prod. Tax ", "Spec. Tax ", "Tariffs   ")
+    tax_vars <- c("Tax", "FIRMTAX", "PITAX", "VAT", "TPROD", "TESP", "TARANCEL", "TIA")
+    tax_labels <- c("Tax Total ", "FirmTax   ", "PITax     ", "VAT       ", "Prod. Tax ", "Spec. Tax ", "Tariffs   ", "Adic. Tax ")
 
     cat("\n  Recaudación Fiscal (% del PIB nominal base):\n")
     cat(sprintf("     %-12s  %10s  %10s  %10s\n", "Variable", "Base (%PIB)", "Shock(%PIB)", "Δ (pp PIB)"))
@@ -420,7 +436,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
     # --- Descomposicion del impacto recaudatorio: dR = Ef.Tasa + Ef.Base + Ef.Precio ---
     if (!is.null(res_base) && !is.null(res_shock)) {
         RD <- build_real_decomp(model_base, model_shock, res_base, res_shock)
-        nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL")
+        nombres <- c("VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL", "TIA")
         pp <- function(x) x / pib_nom_base * 100
 
         cat("  Descomposición del impacto recaudatorio (pp PIB base): ΔR = Ef.Tasa + Ef.Base + Ef.Precio\n")
@@ -719,9 +735,10 @@ nm_ss <- names(res_base)
 ct_   <- unlist(cfg$cuentas_sam$factores$trabajo)
 v_precios <- intersect(c(grep("^(p|pq|pint|pz|pd|pe|pm)__", nm_ss, value = TRUE),
                          paste0("w__", ct_), "pk", "exr", "CPI"), nm_ss)
-v_nominal <- intersect(c("Tax", "VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL",
+v_nominal <- intersect(c("Tax", "VAT", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL", "TIA",
                          "INC", "BTINC", "INGG", "INGF", "SAV", "SAVf", "SAVg", "SAVext",
-                         "TOTAL_INVEST", "NOM_I_BASE", "TRGOV", "PSh"), nm_ss)
+                         "TOTAL_INVEST", "NOM_I_BASE", "TRGOV", "PSh",
+                         "TREMP", "TRFG", "ROWF", "YROWF", "REMH", "LROWP", "RNROW"), nm_ss)
 v_cantid  <- intersect(c(grep("^(V|D|Q|M|EX|DS|Z|FD|XI)__", nm_ss, value = TRUE),
                          paste0("LD__", ct_), paste0("u_rate__", ct_), "KD", "u_k", "inv_adj"), nm_ss)
 
@@ -743,9 +760,13 @@ hom$cumple <- !is.na(hom$desvio_max) & hom$desvio_max < tol_cie
 
 # --- Prueba 2: balanza de pagos (ley de Walras) ----------------------------------
 # La balanza de pagos no es una ecuacion del modelo: se cumple si todos los flujos
-# estan cerrados. SAVext debe igualar M (CIF) - X; la brecha de la base es redondeo
-# de la SAM y debe mantenerse en cada choque.
-brecha_bdp <- function(m, lst) as.numeric(get_ss_values(m, silent = TRUE)["SAVext"]) - (lst$M - lst$X)
+# estan cerrados. SAVext debe igualar M (CIF) - X + RNROW (pagos netos de ingreso
+# primario y secundario al resto del mundo); la brecha de la base es redondeo de la
+# SAM y debe mantenerse en cada choque.
+brecha_bdp <- function(m, lst) {
+    v <- get_ss_values(m, silent = TRUE)
+    as.numeric(v["SAVext"]) - (lst$M - lst$X + as.numeric(v["RNROW"]))
+}
 gap_b <- brecha_bdp(model, pib_model_list)
 
 # --- Indicadores fiscales del articulo (pp del PIB nominal base) -----------------
@@ -818,7 +839,7 @@ reportar("PRUEBAS DE CONSISTENCIA DEL CIERRE", {
     cat(sprintf("1) Homogeneidad de grado cero: numerario x %.2f. Desvio relativo maximo (tolerancia %.0e).\n\n",
                 k_hom, tol_cie))
     imprimir_tabla(hom, digits = 10)
-    cat(sprintf("\n2) Balanza de pagos: brecha base SAVext - (M - X) = %.4f (redondeo de la SAM).\n", gap_b))
+    cat(sprintf("\n2) Balanza de pagos: brecha base SAVext - (M - X + RNROW) = %.4f (redondeo de la SAM).\n", gap_b))
     cat("   d_brecha_BdP debe ser ~0 en cada choque.\n\n")
     cat("3) Resumen de choques (PIB e inversion en %; recaudacion y efectos en pp del PIB base).\n")
     cat("   dTax_pp        = variacion total de la recaudacion real: indicador central.\n")

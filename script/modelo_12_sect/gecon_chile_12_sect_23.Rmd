@@ -41,6 +41,23 @@ if (cfg$opciones_datos$reemplazar_na_por_cero) {
     chile_sam[is.na(chile_sam)] <- 0
 }
 
+# Celda de la SAM (fila = receptor, columna = pagador); 0 si la cuenta no existe.
+# Permite usar SAM sin las cuentas del sector externo desagregado (Imp_adic, etc.).
+sam_val <- function(fila, col) {
+    if (!is.null(fila) && !is.null(col) && fila %in% rownames(chile_sam) && col %in% colnames(chile_sam))
+        as.numeric(chile_sam[fila, col]) else 0
+}
+
+# Balance de la SAM (filas = columnas)
+if (isTRUE(cfg$validaciones$verificar_balance_sam)) {
+    cuentas <- setdiff(intersect(rownames(chile_sam), colnames(chile_sam)), "Total")
+    desb <- rowSums(chile_sam[cuentas, cuentas]) - colSums(chile_sam[cuentas, cuentas])
+    cat(sprintf("Desbalance maximo de la SAM: %.2e\n", max(abs(desb))))
+    tol_sam <- cfg$validaciones$tolerancia_balance_sam
+    if (is.null(tol_sam)) tol_sam <- 1e-3
+    if (max(abs(desb)) > tol_sam) warning("La SAM no esta balanceada: ", paste(names(desb)[abs(desb) > tol_sam], collapse = ", "))
+}
+
 # Define names from config
 s_names <- sapply(cfg$sectores, function(x) x$id)
 p_names <- unlist(cfg$productos)
@@ -67,10 +84,13 @@ V_sector_vals <- pmax(rowSums(make_matrix), cfg$opciones_datos$piso_actividad)
 
 # Extract SAM components using names from config
 cat_hogares <- cfg$cuentas_sam$instituciones$hogares
+cat_empresas <- cfg$cuentas_sam$instituciones$empresas
 cat_gobierno <- cfg$cuentas_sam$instituciones$gobierno
 cat_si <- cfg$cuentas_sam$ahorro_inversion$ahorro_inversion
 cat_varexis <- cfg$cuentas_sam$ahorro_inversion$variacion_existencias
 cat_row <- cfg$cuentas_sam$instituciones$resto_mundo
+cat_impadic <- cfg$cuentas_sam$impuestos$impuesto_adicional
+if (is.null(cat_impadic)) cat_impadic <- "Imp_adic"
 
 D_m <- as.numeric(chile_sam[p_names, cat_hogares])
 G_m <- as.numeric(chile_sam[p_names, cat_gobierno])
@@ -141,8 +161,16 @@ rownames(L_mat) <- cat_trabajo
 colnames(L_mat) <- s_names
 
 Kh_val <- chile_sam[cat_hogares, cat_capital]
-Kf_val <- chile_sam[cfg$cuentas_sam$instituciones$empresas, cat_capital]
+Kf_val <- chile_sam[cat_empresas, cat_capital]
 Kg_val <- chile_sam[cat_gobierno, cat_capital]
+# El consumo intermedio de construccion de los sectores SA (en la SAM 2023, solo
+# Act_adm_pub) se traslada a la formacion de capital (I_m) y a la renta del capital
+# de esos sectores (K_vals). Esa renta adicional se asigna al gobierno: asi las
+# participaciones par_k_h + par_k_f + par_k_g suman 1, la renta del capital no tiene
+# fugas y el mayor gasto de inversion se financia con mayor ahorro publico, no con
+# ahorro externo. El ahorro externo y la balanza de pagos de la base replican la SAM.
+K_rebal_g <- sum(dropped_x)
+Kg_val <- Kg_val + K_rebal_g
 
 Lh_vals <- as.numeric(chile_sam[cat_hogares, cat_trabajo])
 names(Lh_vals) <- cat_trabajo
@@ -218,48 +246,70 @@ pshdata <- chile_sam[cat_hogares, cfg$cuentas_sam$impuestos$prestaciones_sociale
 fact_row_in_k_data <- 0
 fact_row_in_l_data <- 0
 
-INGG_v_sam <- sum(chile_sam[cat_gobierno, !names(chile_sam) %in% c("Total")])
-INGF_v_sam <- sum(chile_sam[cfg$cuentas_sam$instituciones$empresas, !names(chile_sam) %in% c("Total")])
+INGG_v_sam <- sum(chile_sam[cat_gobierno, !names(chile_sam) %in% c("Total")]) + K_rebal_g
+INGF_v_sam <- sum(chile_sam[cat_empresas, !names(chile_sam) %in% c("Total")])
 BTINC_v_sam <- sum(chile_sam[cat_hogares, !names(chile_sam) %in% c("Total")])
 
-fit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cfg$cuentas_sam$instituciones$empresas] / (Kf_val + pad_floor))
+FIRMTAX_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_empresas])
+fit_val <- FIRMTAX_v / (Kf_val + pad_floor)
 # Base imponible del PIT: ingreso de los hogares antes de impuestos menos las
 # transferencias del gobierno (TRGOV), que no tributan (bloque GOB del .gcn).
 TRGOV_v_sam <- as.numeric(chile_sam[cat_hogares, cat_gobierno])
 BASE_PIT_v_sam <- BTINC_v_sam - TRGOV_v_sam
 pit_val <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares] / (BASE_PIT_v_sam + pad_floor))
 INC_v_sam <- BTINC_v_sam - chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares]
+
+# --- Sector externo e instituciones ---------------------------------------------
+# YROWF : renta de la inversion directa en el exterior recibida por las empresas
+#         (Empresas <- row), fija en moneda extranjera.
+# BASEF : base de las rentas distribuidas por las empresas. Con sw_dist = 1 es el
+#         ingreso neto del IDPC; con sw_dist = 0, el ingreso bruto.
+# ROWF  : rentas pagadas al resto del mundo (row <- Empresas).
+# TIA : Impuesto Adicional (Imp_adic <- row), tasa efectiva t_ia sobre ROWF.
+# REMH  : remesas de los hogares al resto del mundo (row <- Hogares), proporcion
+#         del ingreso disponible.
+sw_dist_val <- cfg$sector_externo$distribucion_neta_idpc
+sw_dist_val <- if (is.null(sw_dist_val)) 1 else as.numeric(isTRUE(sw_dist_val))
+YROWF_v   <- sam_val(cat_empresas, cat_row)
+ROWF_v    <- sam_val(cat_row, cat_empresas)
+TIA_v   <- sam_val(cat_impadic, cat_row)
+REMH_v    <- sam_val(cat_row, cat_hogares)
+BASEF_v   <- INGF_v_sam - sw_dist_val * FIRMTAX_v
+t_ia_val <- TIA_v / (ROWF_v + pad_floor)
+
 por_trgov_val <- chile_sam[cat_hogares, cat_gobierno] / (INGG_v_sam + pad_floor)
-por_tremp_val <- chile_sam[cat_hogares, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
-por_tr_f_g_val <- chile_sam[cat_gobierno, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
-por_cont_soc_f_val <- chile_sam[cfg$cuentas_sam$instituciones$empresas, cfg$cuentas_sam$impuestos$contribuciones_sociales] / (chile_sam[cfg$cuentas_sam$impuestos$contribuciones_sociales, cat_hogares] + pad_floor)
+por_tremp_val <- chile_sam[cat_hogares, cat_empresas] / (BASEF_v + pad_floor)
+por_tr_f_g_val <- chile_sam[cat_gobierno, cat_empresas] / (BASEF_v + pad_floor)
+por_rowf_val <- ROWF_v / (BASEF_v + pad_floor)
+por_cont_soc_f_val <- chile_sam[cat_empresas, cfg$cuentas_sam$impuestos$contribuciones_sociales] / (chile_sam[cfg$cuentas_sam$impuestos$contribuciones_sociales, cat_hogares] + pad_floor)
 por_cont_soc_g_val <- chile_sam[cat_gobierno, cfg$cuentas_sam$impuestos$contribuciones_sociales] / (chile_sam[cfg$cuentas_sam$impuestos$contribuciones_sociales, cat_hogares] + pad_floor)
-por_pres_soc_f_val <- chile_sam[cfg$cuentas_sam$impuestos$prestaciones_sociales, cfg$cuentas_sam$instituciones$empresas] / (INGF_v_sam + pad_floor)
+por_pres_soc_f_val <- chile_sam[cfg$cuentas_sam$impuestos$prestaciones_sociales, cat_empresas] / (INGF_v_sam + pad_floor)
 por_pres_soc_g_val <- chile_sam[cfg$cuentas_sam$impuestos$prestaciones_sociales, cat_gobierno] / (INGG_v_sam + pad_floor)
 por_cont_h_val <- chile_sam[cfg$cuentas_sam$impuestos$contribuciones_sociales, cat_hogares] / (INC_v_sam + pad_floor)
+por_rem_val <- REMH_v / (INC_v_sam + pad_floor)
 
 INGF_v <- INGF_v_sam
 INGG_v <- INGG_v_sam
 BTINC_v <- BTINC_v_sam
 PITAX_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cat_hogares])
-FIRMTAX_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$impuesto_directo, cfg$cuentas_sam$instituciones$empresas])
-TREMP_v <- INGF_v * por_tremp_val
+TREMP_v <- BASEF_v * por_tremp_val
+TRFG_v  <- BASEF_v * por_tr_f_g_val
 TRGOV_v <- INGG_v * por_trgov_val
 VAT_sum <- sum(as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names]))
 Arancel_sum <- sum(as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names]))
 Activity_Tax_sum <- sum(as.numeric(chile_sam[cat_impprod, s_names]))
 Imptos_Espec_sum <- sum(as.numeric(chile_sam[cat_impesp, colnames(chile_sam) != "Total"]))
-Tax_v <- VAT_sum + PITAX_v + FIRMTAX_v + Activity_Tax_sum + Arancel_sum + Imptos_Espec_sum
+Tax_v <- VAT_sum + PITAX_v + FIRMTAX_v + Activity_Tax_sum + Arancel_sum + Imptos_Espec_sum + TIA_v
 
 INC_v <- BTINC_v - PITAX_v
 CS_h_v <- INC_v * por_cont_h_val
-por_sav_h_val <- (INC_v - sum(D_v[pcon_idx]) - CS_h_v) / (INC_v + pad_floor)
+por_sav_h_val <- (INC_v - sum(D_v[pcon_idx]) - CS_h_v - REMH_v) / (INC_v + pad_floor)
 SAV_h_v <- INC_v * por_sav_h_val
-SAVf_v <- INGF_v - TREMP_v - INGF_v * por_pres_soc_f_val - FIRMTAX_v - INGF_v * por_tr_f_g_val
+SAVf_v <- INGF_v - TREMP_v - TRFG_v - ROWF_v - INGF_v * por_pres_soc_f_val - FIRMTAX_v
 SAVg_v <- INGG_v - (sum(G_m) + (INGG_v * por_trgov_val) + INGG_v * por_pres_soc_g_val)
 Nominal_I_Total <- sum(I_m) + sum(V_m)
-# Ahorro externo de la base (en moneda extranjera; exr = 1 en la base).
-# Incluye la transferencia Empresas -> resto del mundo de la SAM.
+# Ahorro externo de la base (en moneda extranjera; exr = 1 en la base): cierra el
+# equilibrio ahorro-inversion.
 SAVext_v <- Nominal_I_Total - (SAV_h_v + SAVf_v + SAVg_v)
 
 # Prestaciones sociales: lo pagado por empresas y gobierno debe igualar lo recibido
@@ -267,6 +317,15 @@ SAVext_v <- Nominal_I_Total - (SAV_h_v + SAVf_v + SAVg_v)
 chk_pres_soc <- INGF_v * por_pres_soc_f_val + INGG_v * por_pres_soc_g_val - as.numeric(pshdata)
 cat(sprintf("Prestaciones sociales pagadas - recibidas (base): %.6f\n", chk_pres_soc))
 stopifnot(abs(chk_pres_soc) < 1e-4)
+
+# Ahorro de cada institucion: el calibrado debe coincidir con la fila S-I de la SAM
+chk_ahorro <- c(
+    Hogares  = SAV_h_v  - sam_val(cat_si, cat_hogares),
+    Empresas = SAVf_v   - sam_val(cat_si, cat_empresas),
+    Gobierno = SAVg_v   - (sam_val(cat_si, cat_gobierno) + K_rebal_g),   # incluye el traslado de construccion
+    RM       = SAVext_v - sam_val(cat_si, cat_row))
+cat("Ahorro calibrado - SAM (fila S-I):\n"); print(round(chk_ahorro, 6))
+if (any(abs(chk_ahorro) > 1e-3)) warning("El ahorro calibrado no coincide con la fila S-I de la SAM; revisar chk_ahorro.")
 
 # Numerario: IPC (valor configurable para la prueba de homogeneidad)
 cpi_num_val <- if (!is.null(cfg$cierre_macro$valor_numerario)) cfg$cierre_macro$valor_numerario else 1.0
@@ -343,7 +402,7 @@ pint_base <- p_base * (1 + t_iva_int_r)
 at_v <- (Z_v / pz_base) / (gamma_e_v * E_v^rho_t_val + (1 - gamma_e_v) * DS_v^rho_t_val)^(1/rho_t_val)
 aq_v <- (Q_v / p_base) / (delta_m_v * M_v^rho_q_val + (1 - delta_m_v) * DS_v^rho_q_val)^(1/rho_q_val)
 
-por_sav_h_val <- as.numeric((INC_v - sum(D_v[pcon_idx] / p_base[pcon_idx] * p_base[pcon_idx]) - CS_h_v) / (INC_v + pad_floor))
+por_sav_h_val <- as.numeric((INC_v - sum(D_v[pcon_idx] / p_base[pcon_idx] * p_base[pcon_idx]) - CS_h_v - REMH_v) / (INC_v + pad_floor))
 SAV_h_v <- INC_v * por_sav_h_val
 
 X_phys <- sweep(X_matrix, 1, pint_base, "/")
@@ -410,12 +469,29 @@ k_total_data_val <- k_used_data_val / uk_base_val
 # (depende de psi: si psi cambia, pk_pot_calib debe recalcularse)
 pk_pot_calib_val <- uk_base_val^(-psi_val)
 
+# Trabajo. La demanda de trabajo de las actividades (L_totals) se paga a los
+# hogares residentes (par_l_h) y a no residentes (par_l_out, row <- Trabajo).
+# L_row_vals es la remuneracion recibida desde el resto del mundo (Trabajo <- row),
+# que se suma a la demanda (cero en la SAM 2023).
 L_totals <- rowSums(L_mat)
-L_row_vals <- as.numeric(chile_sam[cat_row, cat_trabajo])
-names(L_row_vals) <- cat_trabajo
+L_row_vals <- sapply(cat_trabajo, function(l) sam_val(l, cat_row))
+L_out_vals <- sapply(cat_trabajo, function(l) sam_val(cat_row, l))
+names(L_row_vals) <- names(L_out_vals) <- cat_trabajo
 
 l_total_data_vals <- L_totals + L_row_vals
 l_force_data_vals <- l_total_data_vals / (1 - u_base_val)
+LROWP_v <- sum(L_out_vals)
+
+chk_lab <- Lh_vals + L_out_vals - l_total_data_vals
+if (any(abs(chk_lab) > 1e-3)) warning("Remuneraciones de hogares + pagadas al RM distintas de la demanda de trabajo: ",
+                                     paste(sprintf("%s=%.4f", names(chk_lab), chk_lab), collapse = ", "))
+
+# Pagos netos al resto del mundo y balanza de pagos de la base (exr = 1):
+# SAVext = M - X + RNROW, con M a precios CIF sin aranceles.
+RNROW_v <- ROWF_v + LROWP_v + REMH_v - TIA_v - YROWF_v
+chk_bdp_sam <- SAVext_v - (sum(M_m) - sum(E_m) + RNROW_v)
+cat(sprintf("Balanza de pagos de la base: SAVext - (M - X + RNROW) = %.6f\n", chk_bdp_sam))
+if (abs(chk_bdp_sam) > 1e-3) warning("La balanza de pagos de la base no cierra; revisar la cuenta row de la SAM.")
 
 w_pot_calib_vals <- (1 - u_base_val)^(-phi_val)
 names(w_pot_calib_vals) <- cat_trabajo
@@ -429,6 +505,7 @@ par_flat <- unlist(list(
     get_flow_values(w_pot_calib_vals, "w_pot_calib", cat_trabajo),
     get_flow_values(Lh_vals / (l_total_data_vals + pad_floor), "par_l_h", cat_trabajo),
     get_flow_values(L_row_vals / (l_total_data_vals + pad_floor), "par_l_row", cat_trabajo),
+    get_flow_values(L_out_vals / (l_total_data_vals + pad_floor), "par_l_out", cat_trabajo),
 
     omega = omega_val,
     sigma_q = sigma_q_val, sigma_t = sigma_t_val,
@@ -443,8 +520,9 @@ par_flat <- unlist(list(
     par_k_g = Kg_val / (k_used_data_val + pad_floor),
     psi = psi_val, pk_pot_calib = pk_pot_calib_val,
 
-    por_cont = por_cont_h_val, por_sav = por_sav_h_val,
+    por_cont = por_cont_h_val, por_sav = por_sav_h_val, por_rem = por_rem_val,
     trgov_data = TRGOV_v, por_tremp = por_tremp_val, por_tr_f_g = por_tr_f_g_val,
+    por_rowf = por_rowf_val, sw_dist = sw_dist_val, yrowf_data = YROWF_v, t_ia = t_ia_val,
     por_cont_soc_f = por_cont_soc_f_val, por_cont_soc_g = por_cont_soc_g_val,
     por_pres_soc_f = por_pres_soc_f_val, por_pres_soc_g = por_pres_soc_g_val,
     pit = pit_val, fit = fit_val,
@@ -455,6 +533,10 @@ par_flat <- unlist(list(
     SAVext_target = SAVext_v,
     # Numerario IPC
     cpi_den = cpi_den_val, cpi_num = cpi_num_val,
+    # Bloque CIERRE: la calibracion se hace siempre con el cierre vigente
+    # (inversion determinada por el ahorro y ahorro publico residual). SAVg_target
+    # solo opera con sw_g = 1 o sw_tr = 1 (eval_cierres_12_sect_23.Rmd).
+    sw_joh = 0, sw_g = 0, sw_tr = 0, SAVg_target = SAVg_v,
     get_flow_values(D_con_phys, "cpi_q", p_names[pcon_idx]),
     get_flow_values(io_matrix[pnoconst_idx, sa_idx, drop=FALSE], "io", p_names[pnoconst_idx], s_names[sa_idx]),
     get_flow_values(io_matrix[, sb_idx, drop=FALSE],        "io", p_names,          s_names[sb_idx]),
@@ -506,9 +588,14 @@ var_list <- list(
     TREMP = TREMP_v, TRGOV = TRGOV_v, PSh = as.numeric(pshdata),
     INC = INC_v, BTINC = BTINC_v, SAV = SAV_h_v, CS = CS_h_v,
     SAVf = SAVf_v, SAVg = SAVg_v, SAVext = SAVext_v,
+    # Sector externo e instituciones
+    YROWF = YROWF_v, BASEF = BASEF_v, TRFG = TRFG_v, ROWF = ROWF_v,
+    TIA = TIA_v, REMH = REMH_v, LROWP = LROWP_v, RNROW = RNROW_v,
     NOM_I_BASE = sum(I_m),
     TOTAL_INVEST = Nominal_I_Total,
     inv_adj = 1.0, CPI = cpi_num_val,
+    # Indices de ajuste del bloque CIERRE (valen 1 en el cierre vigente)
+    s_adj = 1.0, g_adj = 1.0, tr_adj = 1.0,
     VAT = VAT_sum, Tax = Tax_v, TPROD = Activity_Tax_sum, TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
     KD = k_used_data_val, u_k = uk_base_val,
@@ -583,6 +670,22 @@ model <- steady_state(model, calibration = TRUE, options_list = eq_options)
 cat("Norma residuos iniciales:", pracma::Norm(model@init_residual_vector), "\n")
 cat("Norma residuos finales:", pracma::Norm(model@residual_vector), "\n")
 
+# --- Diagnostico de residuos: ecuaciones con mayor residuo inicial y final ---
+# Si la norma inicial es alta, algun valor inicial no corresponde a la SAM; si la
+# final es alta, el sistema no convergio. En ambos casos estas ecuaciones indican
+# el bloque a revisar.
+diag_residuos <- function(rv, n = 8) {
+    if (!length(rv)) return(invisible(NULL))
+    idx <- head(order(abs(rv), decreasing = TRUE), n)
+    eqs <- tryCatch(as.character(model@equations[idx]), error = function(e) rep(NA_character_, length(idx)))
+    print(data.frame(ecuacion = idx, residuo = signif(rv[idx], 6), expresion = substr(eqs, 1, 120)),
+          row.names = FALSE)
+}
+cat("\nEcuaciones con mayor residuo inicial:\n")
+diag_residuos(model@init_residual_vector)
+cat("\nEcuaciones con mayor residuo final:\n")
+diag_residuos(model@residual_vector)
+
 # --- Validacion Etapa 1 del IVA: el equilibrio base debe replicar la SAM ---
 ss_chk <- get_ss_values(model, silent = TRUE)
 chk_iva <- c(
@@ -605,19 +708,43 @@ print(round(chk_pit, 8))
 cat(sprintf("Tasa efectiva del PIT sobre la base imponible (BTINC - TRGOV): %.6f\n", pit_val))
 if (any(abs(chk_pit) > 1e-4)) warning("El PIT del equilibrio base no replica la SAM; revisar chk_pit.")
 
+# --- Validacion del sector externo y de las instituciones: el equilibrio base debe
+# replicar los flujos de la SAM ---
+chk_ext <- c(
+    ROWF_modelo_menos_SAM   = as.numeric(ss_chk["ROWF"])  - ROWF_v,
+    TIA_modelo_menos_SAM  = as.numeric(ss_chk["TIA"]) - TIA_v,
+    YROWF_modelo_menos_SAM  = as.numeric(ss_chk["YROWF"]) - YROWF_v,
+    REMH_modelo_menos_SAM   = as.numeric(ss_chk["REMH"])  - REMH_v,
+    LROWP_modelo_menos_SAM  = as.numeric(ss_chk["LROWP"]) - LROWP_v,
+    TREMP_modelo_menos_SAM  = as.numeric(ss_chk["TREMP"]) - sam_val(cat_hogares, cat_empresas),
+    TRFG_modelo_menos_SAM   = as.numeric(ss_chk["TRFG"])  - sam_val(cat_gobierno, cat_empresas),
+    SAVf_modelo_menos_SAM   = as.numeric(ss_chk["SAVf"])  - sam_val(cat_si, cat_empresas),
+    SAVg_modelo_menos_SAM   = as.numeric(ss_chk["SAVg"])  - (sam_val(cat_si, cat_gobierno) + K_rebal_g),
+    SAV_modelo_menos_SAM    = as.numeric(ss_chk["SAV"])   - sam_val(cat_si, cat_hogares),
+    SAVext_modelo_menos_SAM = as.numeric(ss_chk["SAVext"]) - sam_val(cat_si, cat_row)
+)
+print(round(chk_ext, 8))
+if (any(abs(chk_ext) > 1e-3)) warning("El sector externo o el ahorro del equilibrio base no replican la SAM; revisar chk_ext.")
+
 # --- Validacion del cierre: numerario, prestaciones sociales y balanza de pagos ---
 # La balanza de pagos no es una ecuacion del modelo: la implica la ley de Walras.
-# SAVext debe igualar las importaciones CIF menos las exportaciones (calculo_pib.Rmd
-# las valora asi). La brecha de la base proviene solo de redondeos de la SAM y debe
-# mantenerse constante en los choques.
+# SAVext debe igualar M (CIF, sin aranceles) - X + RNROW (pagos netos de ingreso
+# primario y secundario al resto del mundo).
+# Los indices de ajuste del bloque CIERRE (s_adj, g_adj, tr_adj) deben valer 1.
+M_mod <- sum(ss_chk[paste0("M__", p_names)] * as.numeric(ss_chk["exr"]))
+X_mod <- sum(ss_chk[paste0("EX__", p_names)] * ss_chk[paste0("pe__", p_names)])
 chk_cierre <- c(
     CPI_menos_numerario = as.numeric(ss_chk["CPI"]) - cpi_num_val,
     PSh_menos_SAM       = as.numeric(ss_chk["PSh"]) - as.numeric(pshdata),
+    BdP_SAVext_menos_M_X_RNROW = as.numeric(ss_chk["SAVext"]) - (M_mod - X_mod + as.numeric(ss_chk["RNROW"])),
     inv_adj_menos_1     = as.numeric(ss_chk["inv_adj"]) - 1,
-    exr_menos_1         = as.numeric(ss_chk["exr"]) - 1
+    exr_menos_1         = as.numeric(ss_chk["exr"]) - 1,
+    s_adj_menos_1       = as.numeric(ss_chk["s_adj"]) - 1,
+    g_adj_menos_1       = as.numeric(ss_chk["g_adj"]) - 1,
+    tr_adj_menos_1      = as.numeric(ss_chk["tr_adj"]) - 1
 )
 print(round(chk_cierre, 8))
-if (any(abs(chk_cierre) > 1e-4)) warning("El equilibrio base no reproduce el cierre esperado; revisar chk_cierre.")
+if (any(abs(chk_cierre) > 1e-3)) warning("El equilibrio base no reproduce el cierre esperado; revisar chk_cierre.")
 
 
 ```

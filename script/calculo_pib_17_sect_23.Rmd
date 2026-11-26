@@ -24,8 +24,12 @@ calc_pib <- function(model_obj, model_ref = NULL) {
     # Componentes del gasto a precios de mercado: GDP = C + G + I + V + X - M
     inv_adj_val <- ss_vals["inv_adj"]
     if (is.na(inv_adj_val) || length(inv_adj_val) == 0) inv_adj_val <- 1.0
+    # g_adj: indice de volumen del consumo del gobierno (1 salvo en el cierre fiscal
+    # con gasto endogeno)
+    g_adj_val <- ss_vals["g_adj"]
+    if (length(g_adj_val) == 0 || is.na(g_adj_val)) g_adj_val <- 1.0
     D_q <- ss_vals[paste0("D__", p_names)]
-    G_q <- par_vals[paste0("gg_market_data_p__", p_names)]
+    G_q <- par_vals[paste0("gg_market_data_p__", p_names)] * as.numeric(g_adj_val)
     I_q <- par_vals[paste0("I_data__", p_names)]
     V_q <- par_vals[paste0("vexist__", p_names)]
 
@@ -68,7 +72,11 @@ calc_pib <- function(model_obj, model_ref = NULL) {
                 TADIC = ss_vals["TADIC"],
                 TPROD = ss_vals["TPROD"],
                 TESP = ss_vals["TESP"],
-                TARANCEL = ss_vals["TARANCEL"]))
+                TARANCEL = ss_vals["TARANCEL"],
+                # Impuesto Adicional de la LIR y pagos netos de ingreso primario y
+                # secundario al resto del mundo
+                TIA = ss_vals["TIA"],
+                RNROW = ss_vals["RNROW"]))
 }
 ```
 
@@ -102,15 +110,24 @@ print(pib_df)
 
 # Recaudacion de la base frente a la SAM (incluye la separacion IVA / impuesto adicional)
 rec_df <- data.frame(
-    Impuesto  = c("VAT", "TADIC", "VAT+TADIC (fila IVA)", "TESP", "TPROD", "TARANCEL", "PITAX", "FIRMTAX", "Tax"),
+    Impuesto  = c("VAT", "TADIC", "VAT+TADIC (fila IVA)", "TESP", "TPROD", "TARANCEL", "PITAX", "FIRMTAX", "TIA", "Tax"),
     SAM_Base  = c(VAT_sum, TADIC_sum, IVA_row_sum, Imptos_Espec_sum, Activity_Tax_sum, Arancel_sum,
-                  PITAX_v, FIRMTAX_v, Tax_v),
+                  PITAX_v, FIRMTAX_v, TIA_v, Tax_v),
     Modelo_Eq = as.numeric(c(pib_model_list$VAT, pib_model_list$TADIC,
                              pib_model_list$VAT + pib_model_list$TADIC, pib_model_list$TESP,
                              pib_model_list$TPROD, pib_model_list$TARANCEL, pib_model_list$PITAX,
-                             pib_model_list$FIRMTAX, pib_model_list$Tax))
+                             pib_model_list$FIRMTAX, pib_model_list$TIA, pib_model_list$Tax))
 )
 rec_df$Diferencia <- round(rec_df$Modelo_Eq - rec_df$SAM_Base, 6)
 rec_df$Pct_PIB    <- round(rec_df$Modelo_Eq / pib_base * 100, 4)
 print(rec_df)
+
+# Cuenta corriente (ahorro externo) de la base: SAVext = M - X + RNROW (ley de Walras)
+cat(sprintf("\nCuenta corriente (ahorro externo) de la base: %.2f = M - X (%.2f) + pagos netos al RM (%.2f)\n",
+            as.numeric(res_base["SAVext"]), pib_model_list$M - pib_model_list$X, as.numeric(pib_model_list$RNROW)))
+
+# Cierre vigente en el equilibrio base: los indices de ajuste del bloque CIERRE valen 1
+chk_adj <- res_base[intersect(c("s_adj", "g_adj", "tr_adj", "inv_adj"), names(res_base))] - 1
+print(round(chk_adj, 8))
+if (any(abs(chk_adj) > 1e-4)) warning("Los indices de ajuste del cierre no valen 1 en la base; revisar sw_joh, sw_g, sw_tr.")
 ```
