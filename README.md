@@ -1,46 +1,58 @@
 # eq_general
 
-Modelo de equilibrio general para evaluar impuestos en Chile.
+Modelo de equilibrio general computable (MEGC-Chile) para la evaluación de políticas tributarias en Chile.
 
-## Principales Características del Modelo
+## Principales características del modelo
 
-El modelo es un sistema de Equilibrio General Computable (CGE) desarrollado con el framework **gEcon** en R, diseñado específicamente para el análisis de política fiscal y shocks tributarios.
+Modelo de equilibrio general computable estático, desarrollado con el framework **gEcon** en R y calibrado con una Matriz de Contabilidad Social (SAM) de Chile para 2023, con 17 actividades productivas. Está orientado a la estimación de los efectos recaudatorios de cambios tributarios.
 
-### 1. Estructura Económica y Desagregación
-*   **Sectores y Productos:** El modelo cuenta con 12 sectores productivos y 13 productos (incluyendo *Otros bienes y servicios*), calibrados para la economía chilena con datos de 2023. Los productos asociados a cada sector incluyen: Productos agropecuario-silvícola y pesca, Minerales, Productos manufacturados, Electricidad, gas, agua y gestión de desechos, Construcción, Servicios de comercio, hoteles y restaurantes, Servicios de transporte, comunicaciones e información, Servicios financieros, Inmobiliarios y de vivienda, Servicios empresariales, Servicios personales, Servicios de la administración pública, y Otros bienes y servicios.
-*   **Producción:** Utiliza una estructura anidada. El Valor Agregado se genera mediante una función **Cobb-Douglas** que combina Capital y tres tipos de Trabajo (Trabajo_1, Trabajo_2, Trabajo_3), mientras que los insumos intermedios siguen una relación de coeficientes fijos (**Leontief**).
-*   **Comercio Exterior:** 
-    *   **Exportaciones:** Función **CET** (Constant Elasticity of Transformation) para la asignación de la producción entre mercado interno y externo.
-    *   **Importaciones:** Función de agregación **Armington** para combinar bienes domésticos e importados.
+### 1. Estructura económica
 
-### 2. Mercado de Factores
-*   **Trabajo:** Desagregado en tres tipos (Trabajo_1, Trabajo_2 y Trabajo_3). Cada categoría incluye una **Curva de Salarios** independiente que vincula el nivel salarial con su respectiva tasa de utilización, permitiendo modelar el desempleo por tipo de calificación de forma endógena.
-*   **Capital:** El stock total de capital instalado (`KTOT`) es fijo, pero su **utilización es endógena**: la demanda de capital `KD` (suma de la demanda sectorial) determina una tasa de uso `u_k = KD / KTOT`, y el precio de arriendo del capital sigue una curva creciente `pk = pk_pot_calib · u_k^ψ` (ψ = `capital_curve_psi`). Esto habilita **capacidad ociosa endógena**: `Kf`, `Kg` y `Kh` (capital remunerado a empresas, gobierno y hogares) escalan proporcionalmente con `KD` en lugar de ser paramétricos, por lo que shocks tributarios (p. ej. FIRMTAX) ahora tienen un efecto cantidad no nulo además del efecto precio.
+* **Producción:** el valor agregado se genera mediante una función **Cobb-Douglas** de capital y tres tipos de trabajo; los insumos intermedios siguen coeficientes fijos (**Leontief**).
+* **Margen de comercio:** el servicio de comercio se registra en una cuenta propia, demandada con coeficientes fijos según el uso de cada producto.
+* **Consumo de los hogares:** función de utilidad **CES anidada**.
+* **Comercio exterior:** función **CET** para las exportaciones y agregación **Armington** para las importaciones.
 
-### 3. Sistema Tributario
-El modelo detalla múltiples instrumentos fiscales para evaluar cambios en la recaudación y sus efectos de transmisión:
-*   **Impuesto a las Empresas (FIT):** Sobre las utilidades corporativas.
-*   **Impuesto a las Personas (PIT):** Sobre el ingreso de los hogares.
-*   **IVA:** Impuesto al valor agregado sobre el consumo.
-*   **Impuestos Específicos** Sobre la demanda final de determinados bienes.
-*   **Impuestos a la Producción (TPROD):** Gravamen ad-valorem sobre el ingreso bruto de los sectores productivos.
+### 2. Mercado de factores
 
-### 4. Cierres Macroeconómicos (Closures)
-*   **Sector Externo:** Tipo de cambio flexible (endógeno) con ahorro externo fijo.
-*   **Inversión-Ahorro:** Cierre determinado por el ahorro (Savings-driven), donde la inversión privada responde a los cambios en el ahorro de hogares y empresas mediante una función con elasticidad de ajuste.
+* **Trabajo:** tres tipos según nivel educacional, cada uno con una **curva salarial** y una fuerza de trabajo endógena, lo que permite modelar el desempleo de forma endógena.
+* **Capital:** stock instalado fijo con **utilización endógena**; el precio del capital responde a la tasa de uso, de modo que los cambios tributarios afectan tanto los precios como las bases imponibles.
+
+### 3. Sistema tributario
+
+* Impuesto de primera categoría.
+* Impuesto a las personas.
+* IVA, modelado como cuña de precio sobre la demanda final, con el uso intermedio desgravado.
+* Impuesto adicional a bebidas alcohólicas y analcohólicas.
+* Impuestos específicos por unidad física a tabaco y combustibles.
+* Impuestos a la producción.
+* Aranceles.
+* Impuesto Adicional de la Ley sobre Impuesto a la Renta.
+
+### 4. Cierres macroeconómicos
+
+* **Numerario:** IPC.
+* **Sector externo:** tipo de cambio real endógeno y ahorro externo fijo.
+* **Ahorro-inversión:** inversión determinada por el ahorro.
+* **Regla fiscal:** ahorro público residual.
+* **Cierres alternativos:** Johansen, gasto público endógeno y transferencias endógenas a hogares.
 
 ---
 
-El modelo utiliza **gEcon** montado en R. En este link está su documentación: https://gecon.r-forge.r-project.org/
+El modelo utiliza **gEcon** montado en R. Su documentación se encuentra en: https://gecon.r-forge.r-project.org/
 
-### Archivos Principales
-*   **`script/cge_calib_chile_12_sect_23.gcn`**: Definición del modelo en lenguaje gEcon.
-*   **`script/gecon_chile_12_sect_23.Rmd`**: Calibración y resolución del estado estacionario inicial.
-*   **`script/calculo_pib.Rmd`**: Estimación del PIB y variables de actividad a partir de la solución.
-*   **`script/eval_shocks.Rmd`**: Evaluación de medidas tributarias y simulaciones de política.
+### Archivos principales
 
-### Estado actual y trabajo en curso
-*   La reforma del IVA (cuña de precio, intermedios desgravados) y de los impuestos específicos (por unidad física, sólo demanda final) ya está implementada y la calibración base replica exactamente la SAM 2023.
-*   Pendiente (extensión futura): desagregación de hogares por quintil de ingreso (CASEN 2022, EPF/INE, tasas efectivas de IIRPF de SII) para evaluar incidencia distributiva.
+* **`script/cge_calib_chile_17_sect_23.gcn`**: definición del modelo en lenguaje gEcon.
+* **`script/config_modelo_chile_17sect_2023.yml`**: configuración del modelo.
+* **`script/gecon_chile_17_sect_23.Rmd`**: calibración y resolución del equilibrio base.
+* **`script/eval_shocks_17_sect_23.Rmd`**: evaluación de medidas tributarias.
+* **`script/eval_cierres_17_sect_23.Rmd`**: evaluación bajo cierres alternativos.
+* **`script/sens_consumo_comercio.Rmd`**: análisis de sensibilidad a las elasticidades de consumo y comercio exterior.
+* **`script/calculo_pib_17_sect_23.Rmd`**: estimación del PIB a partir de la solución.
 
+### Trabajo en curso
 
+* Descripción más detallada de los impuestos a la renta, incluida la separación por régimen tributario y el sistema de créditos de los impuestos finales.
+* Desagregación de hogares por quintil de ingreso para evaluar la incidencia distributiva.
+* Modelamiento del royalty a la minería del cobre.
