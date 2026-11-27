@@ -1,9 +1,28 @@
 ##################################
-# MEGC-Chile 17 sectores, SAM 2023.
+# MEGC-Chile 17 sectores, SAM 2023, con margen de comercio separado.
 # Desagregacion respecto de la estructura base: la mineria se separa en cobre y
 # resto (con petroleo crudo como producto propio); la manufactura se separa en
 # bebidas alcoholicas, bebidas no alcoholicas, tabaco, combustibles (diesel,
 # gasolinas y otros combustibles) y resto de la manufactura.
+#
+# Margen de comercio (cuenta Margen_com de la SAM). El servicio de comercio que
+# presta Act_com_hot_rest se registra como un servicio propio y no como produccion
+# de los bienes que comercializa (Lofgren, Harris y Robinson, 2002; Decaluwe et
+# al., 2013):
+#  - Oferta: Act_com_hot_rest produce el servicio de margen con la participacion
+#    mshare_mg (cero en las demas actividades), a precio pmg.
+#  - Demanda: cada unidad fisica de un producto requiere mu_i unidades de margen en
+#    el uso intermedio, mu_f en la demanda final (hogares, gobierno, inversion) y
+#    mu_e en las exportaciones (cuadros 24 y 25 de los COU 2023 del BCCh).
+#  - Precios: pq  = (p + mu_f*pmg + tau_e*IPC) * (1 + t_iva + t_adic)
+#             pint = (p + mu_i*pmg) * (1 + t_iva_int) + kappa_e*tau_e*IPC
+#             pe   = pworlde*exr - mu_e*pmg   (precio productor de las exportaciones)
+#    La base del IVA incluye el margen, como en el precio de comprador de las
+#    cuentas nacionales (oferta a precio de usuario = precio productor + margen + IVA).
+#  - Las existencias no pagan margen (cero en el cuadro 25).
+#  - pworlde > 1 en la base: las exportaciones se miden a valor productor (FOB menos
+#    margen), de modo que pe = 1 en la base y el valor FOB es pworlde*exr*EX.
+#
 # Cierre macro:
 #  - Numerario: IPC (CPI[] = cpi_num). El sistema es homogeneo de grado cero en
 #    precios: todo parametro nominal esta indexado a CPI (o a exr si es externo).
@@ -46,7 +65,8 @@
 #  - Una fraccion de las remuneraciones se paga a no residentes (par_l_out); los
 #    hogares reciben la fraccion par_l_h.
 #  - RNROW resume los pagos netos de ingreso primario y secundario al resto del
-#    mundo; la balanza de pagos (ley de Walras) es SAVext = M - X + RNROW.
+#    mundo; la balanza de pagos (ley de Walras) es SAVext = M - X + RNROW, con X a
+#    valor FOB (pworlde*exr*EX).
 #
 # Cierres alternativos (bloque CIERRE). Los valores por defecto de los
 # interruptores reproducen el cierre descrito arriba:
@@ -187,17 +207,19 @@ block CONSUMER
     };
 };
 
+# Actividades. El ingreso incluye el servicio de margen de comercio (pmg *
+# mshare_mg), que solo produce Act_com_hot_rest (mshare_mg = 0 en las demas).
 block <sa::SA> SECTORS_A {
   controls { V<sa>[], K<sa>[],  <l::LAB> L<sa,l>[]; };
   objective {
-    pi<sa>[] = V<sa>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sa>))*(1-tps<sa>-tes<sa>)
+    pi<sa>[] = V<sa>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sa>) + pmg[]*mshare_mg<sa>)*(1-tps<sa>-tes<sa>)
               - K<sa>[]*pk[] - SUM<l::LAB>(L<sa,l>[] * w<l>[])
               - SUM<p_no_c::Pno_const>(io<p_no_c,sa>*V<sa>[]*pint<p_no_c>[]);
   };
   constraints { V<sa>[] = gamma<sa>*(K<sa>[]^betak<sa>)*PROD<l::LAB>(L<sa,l>[]^betal<sa,l>); };
   identities {
     <p_dom::Pdom> Yap<p_dom,sa>[] = V<sa>[]*make_share<p_dom,sa>;
-    revenue<sa>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sa>[]*pz<p_rev>[]);
+    revenue<sa>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sa>[]*pz<p_rev>[]) + V<sa>[]*mshare_mg<sa>*pmg[];
     net_revenue<sa>[] = revenue<sa>[]*(1-tps<sa>-tes<sa>);
     <p_no_cx::Pno_const> X<p_no_cx,sa>[] = io<p_no_cx,sa>*V<sa>[];
     va_nom<sa>[] = net_revenue<sa>[] - SUM<p_no_cv::Pno_const>(io<p_no_cv,sa>*V<sa>[]*pint<p_no_cv>[]);
@@ -212,14 +234,14 @@ block <sa::SA> SECTORS_A {
 block <sb::SB> SECTORS_B {
   controls { V<sb>[], K<sb>[],  <l::LAB> L<sb,l>[]; };
   objective {
-    pi<sb>[] = V<sb>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sb>))*(1-tps<sb>-tes<sb>)
+    pi<sb>[] = V<sb>[]*(SUM<p::Pdom>(pz<p>[]*make_share<p,sb>) + pmg[]*mshare_mg<sb>)*(1-tps<sb>-tes<sb>)
               - K<sb>[]*pk[] - SUM<l::LAB>(L<sb,l>[] * w<l>[])
               - SUM<p_full::P>(io<p_full,sb>*V<sb>[]*pint<p_full>[]);
   };
   constraints { V<sb>[] = gamma<sb>*(K<sb>[]^betak<sb>)*PROD<l::LAB>(L<sb,l>[]^betal<sb,l>); };
   identities {
     <p_dom::Pdom> Yap<p_dom,sb>[] = V<sb>[]*make_share<p_dom,sb>;
-    revenue<sb>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sb>[]*pz<p_rev>[]);
+    revenue<sb>[]     = SUM<p_rev::Pdom>(Yap<p_rev,sb>[]*pz<p_rev>[]) + V<sb>[]*mshare_mg<sb>*pmg[];
     net_revenue<sb>[] = revenue<sb>[]*(1-tps<sb>-tes<sb>);
     <p_fullx::P> X<p_fullx,sb>[] = io<p_fullx,sb>*V<sb>[];
     va_nom<sb>[] = net_revenue<sb>[] - SUM<p_fullv::P>(io<p_fullv,sb>*V<sb>[]*pint<p_fullv>[]);
@@ -251,7 +273,8 @@ block <idx_e::P_Exp> EXPORTER
     identities
     {
         Z<idx_e>[] = SUM<i_sa::SA>(Yap<idx_e, i_sa>[]) + SUM<i_sb::SB>(Yap<idx_e, i_sb>[]);
-        pe<idx_e>[] = pworlde<idx_e> * exr[];
+        # Precio productor de las exportaciones: FOB menos el margen de comercio
+        pe<idx_e>[] = pworlde<idx_e> * exr[] - mu_e<idx_e> * pmg[];
     };
 };
 
@@ -281,7 +304,7 @@ block PROD_OTROS {
     pz<'prod_otros'>[]   = pm<'prod_otros'>[];
     pd<'prod_otros'>[]   = pm<'prod_otros'>[];
     p<'prod_otros'>[]    = pm<'prod_otros'>[];
-    pq<'prod_otros'>[]   = p<'prod_otros'>[];     # sin IVA
+    pq<'prod_otros'>[]   = p<'prod_otros'>[];     # sin IVA ni margen
     pint<'prod_otros'>[] = p<'prod_otros'>[];
     Q<'prod_otros'>[]    = M<'prod_otros'>[];
     M<'prod_otros'>[]    = D<'prod_otros'>[] + gg_market_data_p<'prod_otros'> * g_adj[]
@@ -290,8 +313,8 @@ block PROD_OTROS {
                           + EX<'prod_otros'>[];
     VAT_p<'prod_otros'>[]       = 0.0;
     Arancel_p<'prod_otros'>[]   = tar_rate<'prod_otros'> * pworldm<'prod_otros'> * exr[] * M<'prod_otros'>[];
-    # prod_otros no paga IVA, impuesto adicional ni especificos (t_adic, tau_e y
-    # kappa_e se definen solo sobre Pdom)
+    # prod_otros no paga IVA, impuesto adicional, especificos ni margen (t_adic, tau_e,
+    # kappa_e, mu_i y mu_f se definen solo sobre Pdom)
   };
 };
 
@@ -339,17 +362,20 @@ block PRODUCTS
 {
     identities
     {
-        # --- IVA, impuesto adicional e impuestos especificos como cunas de precio ---
+        # --- Margen de comercio, IVA, impuesto adicional y especificos como cunas de precio ---
+        # p   : precio del compuesto Armington (basico + arancel), sin margen.
         # pq  : precio de comprador de la demanda final (hogares, gobierno, inversion).
-        #       Incluye el especifico por unidad fisica (tau_e), el IVA (t_iva) y el
-        #       impuesto adicional ad valorem a bebidas (t_adic); ambos ad valorem se
-        #       calculan sobre el precio con especifico (misma base imponible).
-        # pint: precio de los insumos intermedios. Incluye la parte del especifico que
-        #       paga el uso intermedio (kappa_e * tau_e); no paga impuesto adicional, y
-        #       t_iva_int = 0 salvo residuo de calibracion.
+        #       Incluye el margen de comercio (mu_f * pmg), el especifico por unidad
+        #       fisica (tau_e), el IVA (t_iva) y el impuesto adicional ad valorem a
+        #       bebidas (t_adic); ambos ad valorem se calculan sobre el precio con margen
+        #       y especifico (misma base imponible).
+        # pint: precio de los insumos intermedios. Incluye el margen del uso intermedio
+        #       (mu_i * pmg) y la parte del especifico que paga el uso intermedio
+        #       (kappa_e * tau_e); no paga impuesto adicional, y t_iva_int = 0 salvo
+        #       residuo de calibracion.
         #       tau_e esta en pesos base por unidad fisica y se indexa al IPC (UTM).
-        <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + tau_e<pq_i> * CPI[]) * (1 + t_iva<pq_i> + t_adic<pq_i>);
-        <pi_i::Pdom> pint<pi_i>[] = p<pi_i>[] * (1 + t_iva_int<pi_i>) + kappa_e<pi_i> * tau_e<pi_i> * CPI[];
+        <pq_i::Pdom> pq<pq_i>[]   = (p<pq_i>[] + mu_f<pq_i> * pmg[] + tau_e<pq_i> * CPI[]) * (1 + t_iva<pq_i> + t_adic<pq_i>);
+        <pi_i::Pdom> pint<pi_i>[] = (p<pi_i>[] + mu_i<pi_i> * pmg[]) * (1 + t_iva_int<pi_i>) + kappa_e<pi_i> * tau_e<pi_i> * CPI[];
 
         # Demanda final gravada e intermedia, en unidades fisicas (precio basico base)
         # g_adj = 1 salvo en el cierre fiscal con gasto endogeno (sw_g = 1)
@@ -359,16 +385,17 @@ block PRODUCTS
 
         <td_i::Pdom> TD_Dom<td_i>[] = FD<td_i>[] + vexist<td_i> + XI<td_i>[];
 
-        # Vaciado fisico: ni el IVA ni los especificos absorben cantidades
+        # Vaciado fisico: ni el margen, ni el IVA, ni los especificos absorben cantidades
         <qc_i::Pdom> Q<qc_i>[] = TD_Dom<qc_i>[];
 
-        # Recaudacion IVA: demanda final a precio con especifico, intermedios a precio basico
-        <vt_i::Pdom> VAT_p<vt_i>[] = t_iva<vt_i> * (p<vt_i>[] + tau_e<vt_i> * CPI[]) * FD<vt_i>[]
-                                   + t_iva_int<vt_i> * p<vt_i>[] * XI<vt_i>[];
+        # Recaudacion IVA: demanda final a precio con margen y especifico; intermedios a
+        # precio con margen
+        <vt_i::Pdom> VAT_p<vt_i>[] = t_iva<vt_i> * (p<vt_i>[] + mu_f<vt_i> * pmg[] + tau_e<vt_i> * CPI[]) * FD<vt_i>[]
+                                   + t_iva_int<vt_i> * (p<vt_i>[] + mu_i<vt_i> * pmg[]) * XI<vt_i>[];
 
         # Recaudacion del impuesto adicional ad valorem (IABA y bebidas analcoholicas):
         # misma base que el IVA de la demanda final
-        <ta_i::Pdom> TADIC_p<ta_i>[] = t_adic<ta_i> * (p<ta_i>[] + tau_e<ta_i> * CPI[]) * FD<ta_i>[];
+        <ta_i::Pdom> TADIC_p<ta_i>[] = t_adic<ta_i> * (p<ta_i>[] + mu_f<ta_i> * pmg[] + tau_e<ta_i> * CPI[]) * FD<ta_i>[];
 
         # Recaudacion de especificos: monto real fijo por unidad fisica de demanda final
         # y, con el factor kappa_e, de uso intermedio (indexado al IPC; la recaudacion
@@ -376,6 +403,20 @@ block PRODUCTS
         <te_i::Pdom> TESP_p<te_i>[] = tau_e<te_i> * CPI[] * (FD<te_i>[] + kappa_e<te_i> * XI<te_i>[]);
 
         <idx_ar::Pdom> Arancel_p<idx_ar>[] = tar_rate<idx_ar> * pworldm<idx_ar> * exr[] * M<idx_ar>[];
+    };
+};
+
+block MARGEN
+{
+    identities
+    {
+        # Demanda de servicio de margen: coeficientes fijos por unidad fisica de uso
+        # intermedio, de demanda final y de exportaciones (Lofgren et al., 2002)
+        QMG[] = SUM<mg_c::Pdom>(mu_i<mg_c> * XI<mg_c>[] + mu_f<mg_c> * FD<mg_c>[])
+              + SUM<mg_e::P_Exp>(mu_e<mg_e> * EX<mg_e>[]);
+
+        # Vaciado del mercado del servicio de margen: determina pmg
+        SUM<mg_sa::SA>(V<mg_sa>[] * mshare_mg<mg_sa>) + SUM<mg_sb::SB>(V<mg_sb>[] * mshare_mg<mg_sb>) = QMG[];
     };
 };
 
@@ -479,6 +520,7 @@ block INVESTMENT
         # Equilibrio ahorro-inversion. Con sw_joh = 0, inv_adj (indice de volumen de
         # la inversion, base = 1) se ajusta para que la inversion iguale al ahorro
         # total; con sw_joh = 1 se ajusta el ahorro de los hogares (bloque CIERRE).
+        # Las existencias no pagan margen: se valoran a p.
         TOTAL_INVEST[] = NOM_I_BASE[] * inv_adj[] + SUM<p_v::P>(vexist<p_v> * p<p_v>[]);
 
         # Ahorro externo fijo en moneda extranjera

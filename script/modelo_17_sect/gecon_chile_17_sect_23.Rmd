@@ -53,13 +53,14 @@ sam_val <- function(fila, col) {
 # Define names from config
 s_names <- sapply(cfg$sectores, function(x) x$id)
 p_names <- unlist(cfg$productos)
+cat_mg  <- cfg$cuentas_sam$margen %||% "Margen_com"
 
 # Verification
-missing_cols <- c(s_names, p_names)[!c(s_names, p_names) %in% colnames(chile_sam)]
+missing_cols <- c(s_names, p_names, cat_mg)[!c(s_names, p_names, cat_mg) %in% colnames(chile_sam)]
 if (length(missing_cols) > 0) {
     stop(paste("Error: columnas faltantes:", paste(missing_cols, collapse = ", ")))
 }
-missing_rows <- c(s_names, p_names)[!c(s_names, p_names) %in% rownames(chile_sam)]
+missing_rows <- c(s_names, p_names, cat_mg)[!c(s_names, p_names, cat_mg) %in% rownames(chile_sam)]
 if (length(missing_rows) > 0) {
     stop(paste("Error: filas faltantes:", paste(missing_rows, collapse = ", ")))
 }
@@ -79,6 +80,48 @@ if (isTRUE(cfg$validaciones$verificar_balance_sam)) {
 X_matrix <- as.matrix(chile_sam[p_names, s_names])
 make_matrix <- as.matrix(chile_sam[s_names, p_names])
 
+# --- Margen de comercio --------------------------------------------------------
+# Oferta: fila Act_* <- columna Margen_com (produccion del servicio de margen).
+# Demanda: fila Margen_com <- columnas prod_* (margen pagado por cada producto), con
+# la distribucion por tipo de uso del archivo de margenes (cuadros 24 y 25 del BCCh).
+mg_make <- sapply(s_names, function(s) sam_val(s, cat_mg))
+names(mg_make) <- s_names
+mg_prod_sam <- sapply(p_names, function(p) sam_val(cat_mg, p))
+names(mg_prod_sam) <- p_names
+
+mgc <- cfg$margen_comercio
+mg_tab <- read.csv(cfg$archivos$margenes, check.names = FALSE, stringsAsFactors = FALSE,
+                   fileEncoding = "UTF-8-BOM", row.names = 1)
+if (!all(rownames(mg_tab) %in% p_names))
+    stop("El archivo de margenes contiene productos que no estan en la SAM: ",
+         paste(setdiff(rownames(mg_tab), p_names), collapse = ", "))
+col_mg <- function(cols) {
+    v <- setNames(rep(0, length(p_names)), p_names)
+    cols <- unlist(cols)
+    if (!all(cols %in% colnames(mg_tab))) stop("Columnas faltantes en el archivo de margenes: ",
+                                               paste(setdiff(cols, colnames(mg_tab)), collapse = ", "))
+    v[rownames(mg_tab)] <- rowSums(as.matrix(mg_tab[, cols, drop = FALSE]))
+    v
+}
+MF_v <- col_mg(mgc$columnas_demanda_final %||% c("hogares", "gobierno", "inversion"))
+MI_v <- col_mg(mgc$columna_intermedio %||% "intermedio")
+ME_v <- col_mg(mgc$columna_exportaciones %||% "exportaciones")
+MV_v <- col_mg(mgc$columna_existencias %||% "var_exis")
+
+# Consistencia: total por producto del archivo = fila Margen_com de la SAM, y oferta = demanda
+tol_mg <- mgc$tolerancia_total %||% 1e-3
+dif_mg <- (MF_v + MI_v + ME_v + MV_v) - mg_prod_sam
+if (any(abs(dif_mg) > tol_mg)) stop("El archivo de margenes no coincide con la fila ", cat_mg, " de la SAM en: ",
+                                    paste(names(dif_mg)[abs(dif_mg) > tol_mg], collapse = ", "))
+if (abs(sum(mg_make) - sum(mg_prod_sam)) > tol_mg) stop("Oferta y demanda de margen distintas en la SAM")
+if (any(abs(MV_v) > tol_mg)) stop("El modelo supone existencias sin margen; el archivo registra margen en var_exis")
+if (mg_prod_sam["prod_otros"] > tol_mg) stop("prod_otros no admite margen en el .gcn")
+cat(sprintf("Margen de comercio total: %.1f (intermedio %.1f; demanda final %.1f; exportaciones %.1f)\n",
+            sum(mg_prod_sam), sum(MI_v), sum(MF_v), sum(ME_v)))
+cat("Actividades que producen el servicio de margen:\n")
+print(round(mg_make[mg_make > 0], 3))
+# ---------------------------------------------------------------------------
+
 # Zero out construction intermediate demand for SA sectors early, but save it to rebalance K
 sa_names_config <- cfg$conjuntos_gcn$SA$incluir
 sa_idx <- which(s_names %in% sa_names_config)
@@ -90,7 +133,8 @@ cat(sprintf("Demanda intermedia de construccion trasladada al capital (sectores 
             sum(dropped_x)))
 
 pad_floor <- cfg$opciones_datos$piso_numerico
-V_sector_vals <- pmax(rowSums(make_matrix), cfg$opciones_datos$piso_actividad)
+# Produccion de cada actividad: productos mas servicio de margen
+V_sector_vals <- pmax(rowSums(make_matrix) + mg_make, cfg$opciones_datos$piso_actividad)
 
 # Extract SAM components using names from config
 cat_hogares <- cfg$cuentas_sam$instituciones$hogares
@@ -119,6 +163,13 @@ X_sum <- rowSums(X_matrix)
 IVA_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$iva, p_names])
 Ar_m <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
 names(IVA_m) <- names(Ar_m) <- p_names
+
+# El margen de cada uso no puede superar el uso a precios de comprador
+chk_mg_uso <- c(intermedio    = any(MI_v > X_sum + tol_mg),
+                demanda_final = any(MF_v > D_m + G_m + I_m + tol_mg),
+                exportaciones = any(ME_v > E_m + tol_mg))
+if (any(chk_mg_uso)) stop("Margen mayor que el uso a precios de comprador en: ",
+                          paste(names(chk_mg_uso)[chk_mg_uso], collapse = ", "))
 ```
 
 ## 1.1 Consistencia de conjuntos: YAML, SAM y .gcn
@@ -166,7 +217,10 @@ chk_estr <- c(
     nidos_particion_de_Pcon   = p_tab_nido %in% sets_yaml$Pcon &&
                                 all(sets_yaml$Pcomb %in% sets_yaml$Pcon) &&
                                 !(p_tab_nido %in% sets_yaml$Pcomb) &&
-                                setequal(c(p_tab_nido, sets_yaml$Pcomb, sets_yaml$Presto), sets_yaml$Pcon)
+                                setequal(c(p_tab_nido, sets_yaml$Pcomb, sets_yaml$Presto), sets_yaml$Pcon),
+    # Margen: solo productos de Pdom; el de exportaciones, solo en P_Exp
+    margen_solo_en_Pdom       = all(abs((MF_v + MI_v)[setdiff(p_names, sets_yaml$Pdom)]) < tol_z),
+    margen_export_solo_P_Exp  = all(abs(ME_v[setdiff(p_names, sets_yaml$P_Exp)]) < tol_z)
 )
 print(chk_estr)
 if (!all(chk_estr)) warning("Los conjuntos del YAML no calzan con la estructura de la SAM: ",
@@ -192,10 +246,12 @@ if (isTRUE(cfg$validaciones$verificar_conjuntos_gcn) && file.exists(gcn_path)) {
     pnc_en_gcn <- sapply(cj$PNC$incluir, function(p)
         grepl(paste0("D<'", p, "'>\\[\\]\\s*=\\s*dst_nc<'", p, "'>"), gcn_txt))
     tab_en_gcn <- grepl(paste0("D<'", p_tab_nido, "'>\\[\\]\\s*/\\s*dst<'", p_tab_nido, "'>"), gcn_txt)
-    if (any(dif_sets != "ok") || !all(pnc_en_gcn) || !tab_en_gcn) {
+    mg_en_gcn  <- grepl("block\\s+MARGEN", gcn_txt) && grepl("mu_f<", gcn_txt)
+    if (any(dif_sets != "ok") || !all(pnc_en_gcn) || !tab_en_gcn || !mg_en_gcn) {
         stop("Los conjuntos del .gcn no coinciden con el YAML (ver tabla). PNC sin identidad en CONSUMER: ",
              paste(names(pnc_en_gcn)[!pnc_en_gcn], collapse = ", "),
-             if (!tab_en_gcn) paste0(". El nido unitario de la utilidad del .gcn no es ", p_tab_nido) else "")
+             if (!tab_en_gcn) paste0(". El nido unitario de la utilidad del .gcn no es ", p_tab_nido) else "",
+             if (!mg_en_gcn) ". El .gcn no tiene el bloque MARGEN con el margen de comercio" else "")
     }
 }
 ```
@@ -205,7 +261,8 @@ if (isTRUE(cfg$validaciones$verificar_conjuntos_gcn) && file.exists(gcn_path)) {
 ```{r impuestos_productos}
 # --- IVA e impuesto adicional como cunas de precio ----------------------------
 # Toda la fila IVA de la SAM se asigna a la demanda final gravada (hogares,
-# gobierno, inversion). La tasa se expresa SIN impuesto: pq = p * (1 + t_iva + t_adic).
+# gobierno, inversion). La tasa se expresa SIN impuesto: pq = (p + margen + especifico)
+# * (1 + t_iva + t_adic). La base imponible incluye el margen de comercio.
 # Si la tasa implicita supera el tope (tasa legal), el exceso se asigna:
 #  - en los productos de 'impuesto_adicional$productos' (bebidas), a un impuesto
 #    adicional ad valorem sobre la demanda final con la misma base que el IVA (t_adic);
@@ -230,11 +287,11 @@ IVA_fd[es_adic]  <- (pmin(t_tot_adic, t_cap) * B_adic)[es_adic]
 ADIC_fd[es_adic] <- (pmax(t_tot_adic - t_cap, 0) * B_adic)[es_adic]
 IVA_int <- IVA_m - IVA_fd - ADIC_fd
 
-base_fd     <- FD_pos - IVA_fd - ADIC_fd           # demanda final a precio con especifico
+base_fd     <- FD_pos - IVA_fd - ADIC_fd           # demanda final a precio con margen y especifico
 t_iva_r     <- ifelse(base_fd > 1e-9, IVA_fd  / base_fd, 0)
 t_adic_r    <- ifelse(base_fd > 1e-9, ADIC_fd / base_fd, 0)
 # Tasa provisoria del residuo intermedio; en los productos cuyo uso intermedio paga
-# especifico se recalcula sobre el precio basico una vez calibrado tau_e (seccion 2).
+# especifico se recalcula sobre el precio con margen una vez calibrado tau_e (seccion 2).
 t_iva_int_r <- ifelse(X_sum - IVA_int > 1e-9, IVA_int / (X_sum - IVA_int), 0)
 names(t_iva_r) <- names(t_adic_r) <- names(t_iva_int_r) <- p_names
 names(IVA_fd) <- names(ADIC_fd) <- names(IVA_int) <- p_names
@@ -305,7 +362,8 @@ Kg_val <- Kg_val + K_rebal_g
 Lh_vals <- as.numeric(chile_sam[cat_hogares, cat_trabajo])
 names(Lh_vals) <- cat_trabajo
 
-revenue_vals <- as.numeric(colSums(t(make_matrix)))
+# Ingreso de cada actividad: productos mas servicio de margen
+revenue_vals <- as.numeric(rowSums(make_matrix) + mg_make)
 
 cat_impprod <- cfg$cuentas_sam$impuestos$impuesto_produccion
 cat_impesp <- cfg$cuentas_sam$impuestos$impuestos_especificos
@@ -474,14 +532,26 @@ sigma_t_val <- cfg$elasticidades$cet_sigma_t
 rho_q_val <- (sigma_q_val - 1) / sigma_q_val
 rho_t_val <- (sigma_t_val + 1) / sigma_t_val
 
+# Produccion de bienes a precio basico (la SAM ya no incluye el margen en make_matrix)
 Z_v <- as.numeric(colSums(make_matrix))
 names(Z_v) <- p_names
 D_v <- D_m
 I_v <- I_m
-E_v <- pmax(E_m, 1e-5)
+
+# --- Exportaciones a valor productor ------------------------------------------
+# La SAM registra las exportaciones a valor FOB, que incluye el margen de comercio
+# de exportacion. La CET reparte la produccion entre ventas domesticas y
+# exportaciones a precio productor: EX se mide a valor productor (FOB - margen) y
+# pworlde = FOB / (FOB - margen), de modo que pe = pworlde - mu_e = 1 en la base y
+# el valor FOB es pworlde * exr * EX.
+E_prod  <- E_m - ME_v
+E_v     <- pmax(E_prod, 1e-5)
+pworlde_v <- ifelse(E_prod > 1e-9, E_m / E_prod, 1)
+mu_e_v    <- ifelse(E_prod > 1e-9, ME_v / E_v, 0)
+names(E_prod) <- names(E_v) <- names(pworlde_v) <- names(mu_e_v) <- p_names
 M_v <- pmax(M_m, 1e-5)
 
-DS_v <- Z_v - E_m
+DS_v <- Z_v - E_prod
 DS_v <- pmax(DS_v, 1.0)
 DS_v["prod_otros"] <- 0
 
@@ -503,7 +573,9 @@ names(TD_Dom_initial) <- p_names
 ImpEsp_p_v <- as.numeric(chile_sam[cat_impesp, p_names])
 names(ImpEsp_p_v) <- p_names
 Ar_v <- as.numeric(chile_sam[cfg$cuentas_sam$impuestos$arancel, p_names])
-Q_v <- TD_Dom_initial - ImpEsp_p_v   # oferta a precio basico: TD_comprador - IVA - TADIC - TESP
+# Oferta a precio basico (con arancel): TD_comprador - IVA - TADIC - TESP - margen de los
+# usos internos (el margen de exportacion no forma parte de la absorcion interna)
+Q_v <- TD_Dom_initial - ImpEsp_p_v - MF_v - MI_v - MV_v
 Q_v["prod_otros"] <- M_v["prod_otros"]
 
 p_base  <- (DS_v + pm_base * M_v) / pmax(Q_v, 1e-6)
@@ -519,16 +591,19 @@ names(p_base) <- names(pz_base) <- p_names
 # Pagan el especifico la demanda final (hogares, gobierno, inversion) y, en los
 # productos de tesp$productos_uso_intermedio, el uso intermedio con el monto
 # kappa_e * tau_e por unidad. Existencias y exportaciones no lo pagan.
-#     pq   = (p + tau_e) * (1 + t_iva + t_adic)
-#     pint = p * (1 + t_iva_int) + kappa_e * tau_e
+#     pq   = (p + mu_f * pmg + tau_e) * (1 + t_iva + t_adic)
+#     pint = (p + mu_i * pmg) * (1 + t_iva_int) + kappa_e * tau_e
 #     TESP = tau_e * (FD + kappa_e * XI)
-# Con FD = FD_neto / (p + tau_e) y XI = XI_neto / (p + kappa_e * tau_e), donde FD_neto y
-# XI_neto son los valores de la SAM netos de IVA e impuesto adicional, tau_e resuelve
-#     tau_e * FD_neto / (p + tau_e) + kappa_e * tau_e * XI_neto / (p + kappa_e * tau_e) = TESP_SAM.
+# Con el margen separado, las cantidades fisicas son FD = (FD_neto - MF) / (p + tau_e)
+# y XI = (XI_neto - MI) / (p + kappa_e * tau_e), donde FD_neto y XI_neto son los valores
+# de la SAM netos de IVA e impuesto adicional y MF, MI los margenes de cada uso. tau_e
+# resuelve
+#     tau_e * A / (p + tau_e) + kappa_e * tau_e * B / (p + kappa_e * tau_e) = TESP_SAM,
+# con A = FD_neto - MF y B = XI_neto - MI.
 # kappa_e resulta de la fraccion recuperada rho del impuesto bruto, que recae solo en el
 # uso intermedio: (1 - kappa_e) * XI = rho * (FD + XI). Sin recuperacion, kappa_e = 1;
 # en los productos cuyo uso intermedio no paga el impuesto, kappa_e = 0 y
-#     tau_e = p * TESP / (FD_neto - TESP).
+#     tau_e = p * TESP / (A - TESP).
 p_te_int <- unlist(cfg$tesp$productos_uso_intermedio)
 if (length(p_te_int) && !all(p_te_int %in% pdom_names_config))
     stop("tesp$productos_uso_intermedio contiene productos fuera de Pdom")
@@ -543,6 +618,10 @@ if (length(rr_cfg)) {
 FD_neto <- FD_m - IVA_fd - ADIC_fd
 XI_neto <- X_sum - IVA_int
 names(FD_neto) <- names(XI_neto) <- p_names
+# Valores netos de IVA y de margen: (p + tau_e) * FD y (p + kappa_e * tau_e) * XI
+FD_nm <- FD_neto - MF_v
+XI_nm <- XI_neto - MI_v
+names(FD_nm) <- names(XI_nm) <- p_names
 
 tau_e_v   <- setNames(rep(0, length(p_names)), p_names)
 kappa_e_v <- setNames(rep(0, length(p_names)), p_names)
@@ -553,9 +632,9 @@ resolver_tau <- function(Tp, A, B, pb, kap) {
     uniroot(f, c(0, up), tol = 1e-13 * pb, maxiter = 1000)$root
 }
 for (pp in p_names[ImpEsp_p_v > 1e-9 & p_names %in% pdom_names_config]) {
-    Tp <- ImpEsp_p_v[pp]; A <- FD_neto[pp]; B <- XI_neto[pp]; pb <- p_base[pp]
+    Tp <- ImpEsp_p_v[pp]; A <- FD_nm[pp]; B <- XI_nm[pp]; pb <- p_base[pp]
     if (!(pp %in% p_te_int)) {
-        if (A - Tp <= 1e-9) stop("El impuesto especifico excede la demanda final neta de IVA en ", pp,
+        if (A - Tp <= 1e-9) stop("El impuesto especifico excede la demanda final neta de IVA y margen en ", pp,
                                  ". Considere incluirlo en tesp$productos_uso_intermedio.")
         tau_e_v[pp] <- pb * Tp / (A - Tp)
         next
@@ -576,15 +655,26 @@ for (pp in p_names[ImpEsp_p_v > 1e-9 & p_names %in% pdom_names_config]) {
 }
 tau_e_v["prod_otros"] <- 0; kappa_e_v["prod_otros"] <- 0
 
-# Base fisica y recaudacion por componente en el ano base
-FD_fis_e   <- ifelse(tau_e_v > 0, FD_neto / (p_base + tau_e_v), 0)
-XI_fis_e   <- ifelse(tau_e_v > 0, XI_neto / (p_base + kappa_e_v * tau_e_v), 0)
+# --- Cantidades fisicas de la demanda final e intermedia y coeficientes de margen ---
+# FD_fis y XI_fis valen para todos los productos (con tau_e = 0 donde no hay especifico).
+# mu_f = MF / FD_fis y mu_i = MI / XI_fis: unidades de servicio de margen (pmg = 1 en la
+# base) por unidad fisica de demanda final y de uso intermedio.
+FD_fis <- ifelse(FD_nm > 1e-12, FD_nm / (p_base + tau_e_v), 0)
+XI_fis <- ifelse(XI_nm > 1e-12, XI_nm / (p_base + kappa_e_v * tau_e_v), 0)
+mu_f_v <- ifelse(FD_fis > 1e-12, MF_v / FD_fis, 0)
+mu_i_v <- ifelse(XI_fis > 1e-12, MI_v / XI_fis, 0)
+names(FD_fis) <- names(XI_fis) <- names(mu_f_v) <- names(mu_i_v) <- p_names
+mu_f_v["prod_otros"] <- 0; mu_i_v["prod_otros"] <- 0
+
+# Base fisica y recaudacion de especificos por componente en el ano base
+FD_fis_e   <- ifelse(tau_e_v > 0, FD_fis, 0)
+XI_fis_e   <- ifelse(tau_e_v > 0, XI_fis, 0)
 TESP_fd_v  <- tau_e_v * FD_fis_e
 TESP_int_v <- kappa_e_v * tau_e_v * XI_fis_e
 TESP_rec_v <- (1 - kappa_e_v) * tau_e_v * XI_fis_e * (names(tau_e_v) %in% p_te_int)
 
-# Residuo de IVA intermedio sobre el precio basico: VAT_int = t_iva_int * p * XI, con
-# p * XI = XI_neto - TESP_int (el uso intermedio paga especifico en p_te_int).
+# Residuo de IVA intermedio sobre el precio con margen: VAT_int = t_iva_int * (p + mu_i) * XI,
+# con (p + mu_i) * XI = XI_neto - TESP_int (el uso intermedio paga especifico en p_te_int).
 t_iva_int_r <- ifelse(XI_neto - TESP_int_v > 1e-9, IVA_int / (XI_neto - TESP_int_v), 0)
 names(t_iva_int_r) <- p_names
 t_iva_int_r["prod_otros"] <- 0
@@ -600,15 +690,30 @@ print(data.frame(
     recuperado      = round(TESP_rec_v[sel_e], 1),
     tau_e           = round(tau_e_v[sel_e], 5),
     kappa_e         = round(kappa_e_v[sel_e], 4),
-    carga_DF        = round((tau_e_v / (p_base + tau_e_v))[sel_e], 4),
-    carga_int       = round((kappa_e_v * tau_e_v / (p_base + kappa_e_v * tau_e_v))[sel_e], 4),
+    carga_DF        = round((tau_e_v / (p_base + mu_f_v + tau_e_v))[sel_e], 4),
+    carga_int       = round((kappa_e_v * tau_e_v / (p_base + mu_i_v + kappa_e_v * tau_e_v))[sel_e], 4),
     t_iva_int       = round(t_iva_int_r[sel_e], 4)), row.names = FALSE)
-cat("carga_DF / carga_int: especifico como fraccion del precio sin IVA en la demanda final y en el uso intermedio.\n")
+cat("carga_DF / carga_int: especifico como fraccion del precio sin IVA (con margen) en la demanda final y en el uso intermedio.\n")
 
 # Precios de comprador (demanda final) e insumo intermedio en el ano base
-pq_base   <- (p_base + tau_e_v) * (1 + t_iva_r + t_adic_r)
-pint_base <- p_base * (1 + t_iva_int_r) + kappa_e_v * tau_e_v
+pq_base   <- (p_base + mu_f_v + tau_e_v) * (1 + t_iva_r + t_adic_r)
+pint_base <- (p_base + mu_i_v) * (1 + t_iva_int_r) + kappa_e_v * tau_e_v
 names(pq_base) <- names(pint_base) <- p_names
+
+cat("\nDiagnostico del margen de comercio (pmg = 1 en la base):\n")
+sel_m <- (MF_v + MI_v + ME_v) > 1e-9
+print(data.frame(
+    producto      = p_names[sel_m],
+    margen_SAM    = round(mg_prod_sam[sel_m], 1),
+    MI            = round(MI_v[sel_m], 1),
+    MF            = round(MF_v[sel_m], 1),
+    ME            = round(ME_v[sel_m], 1),
+    mu_i          = round(mu_i_v[sel_m], 4),
+    mu_f          = round(mu_f_v[sel_m], 4),
+    mu_e          = round(mu_e_v[sel_m], 4),
+    pworlde       = round(pworlde_v[sel_m], 4),
+    margen_pq_pct = round(100 * (mu_f_v / pq_base)[sel_m], 2)), row.names = FALSE)
+cat("mu_x: unidades de margen por unidad fisica; margen_pq_pct: margen como % del precio de comprador final.\n")
 
 at_v <- (Z_v / pz_base) / (gamma_e_v * E_v^rho_t_val + (1 - gamma_e_v) * DS_v^rho_t_val)^(1/rho_t_val)
 aq_v <- (Q_v / p_base) / (delta_m_v * M_v^rho_q_val + (1 - delta_m_v) * DS_v^rho_q_val)^(1/rho_q_val)
@@ -663,8 +768,11 @@ cpi_den_val <- sum(D_con_phys * pq_base[pcon_idx])
 
 net_rev <- revenue_vals * (1.0 - t_pro_r - t_esp_r)
 
+# Participaciones de produccion: productos (make_share) y servicio de margen (mshare_mg)
 make_share <- t(make_matrix / V_sector_vals)
-pz_activity_base <- apply(make_share, 2, function(col) sum(col * pz_base))
+mshare_mg_v <- mg_make / V_sector_vals
+names(mshare_mg_v) <- s_names
+pz_activity_base <- apply(make_share, 2, function(col) sum(col * pz_base)) + mshare_mg_v * 1.0
 V_phys <- V_sector_vals / pz_activity_base
 
 io_matrix <- sweep(X_phys, 2, V_phys + pad_floor, "/")
@@ -730,7 +838,7 @@ if (any(abs(chk_lab) > 1e-3)) warning("Remuneraciones de hogares + pagadas al RM
                                      paste(sprintf("%s=%.4f", names(chk_lab), chk_lab), collapse = ", "))
 
 # Pagos netos al resto del mundo y balanza de pagos de la base (exr = 1):
-# SAVext = M - X + RNROW, con M a precios CIF sin aranceles.
+# SAVext = M - X + RNROW, con M a precios CIF sin aranceles y X a valor FOB.
 RNROW_v <- ROWF_v + LROWP_v + REMH_v - TIA_v - YROWF_v
 chk_bdp_sam <- SAVext_v - (sum(M_m) - sum(E_m) + RNROW_v)
 cat(sprintf("Balanza de pagos de la base: SAVext - (M - X + RNROW) = %.6f\n", chk_bdp_sam))
@@ -738,6 +846,9 @@ if (abs(chk_bdp_sam) > 1e-3) warning("La balanza de pagos de la base no cierra; 
 
 w_pot_calib_vals <- (1 - u_base_val)^(-phi_val)
 names(w_pot_calib_vals) <- cat_trabajo
+
+# Servicio de margen en la base: oferta (Act_com_hot_rest) = demanda (QMG)
+QMG_v <- sum(mg_make)
 
 
 par_flat <- unlist(list(
@@ -799,7 +910,8 @@ par_flat <- unlist(list(
     get_flow_values(t_adic_r[pdom_idx], "t_adic", p_names[pdom_idx]),
     get_flow_values(t_iva_int_r[pdom_idx], "t_iva_int", p_names[pdom_idx]),
     get_flow_values(tar_r, "tar_rate", p_names),
-    get_flow_values(rep(1, length(p_names)), "pworlde", p_names),
+    # Precio mundial de las exportaciones: FOB / valor productor (1 si no hay margen)
+    get_flow_values(pworlde_v, "pworlde", p_names),
     get_flow_values(rep(1, length(p_names)), "pworldm", p_names),
     get_flow_values(t_pro_r, "tps", s_names),
     get_flow_values(t_esp_r, "tes", s_names),
@@ -809,6 +921,11 @@ par_flat <- unlist(list(
     get_flow_values(V_m / p_base, "vexist", p_names),
     get_flow_values(tau_e_v[pdom_idx], "tau_e", p_names[pdom_idx]),
     get_flow_values(kappa_e_v[pdom_idx], "kappa_e", p_names[pdom_idx]),
+    # Margen de comercio: coeficientes por unidad fisica y participacion en la produccion
+    get_flow_values(mu_i_v[pdom_idx], "mu_i", p_names[pdom_idx]),
+    get_flow_values(mu_f_v[pdom_idx], "mu_f", p_names[pdom_idx]),
+    get_flow_values(mu_e_v[pexp_idx], "mu_e", p_names[pexp_idx]),
+    get_flow_values(mshare_mg_v, "mshare_mg", s_names),
     get_flow_values(make_share[pdom_idx, ], "make_share", p_names[pdom_idx], s_names),
     ex_otros_data = as.numeric(E_m["prod_otros"])
 ))
@@ -848,6 +965,8 @@ var_list <- list(
     TESP = Imptos_Espec_sum, TARANCEL = Arancel_sum,
     pk = 1.0, exr = 1.0, Kh = Kh_val, Kf = Kf_val, Kg = Kg_val,
     KD = k_used_data_val, u_k = uk_base_val,
+    # Margen de comercio
+    pmg = 1.0, QMG = QMG_v,
     U = U_val, lambda__CONSUMER_1 = lambda_val
 )
 
@@ -884,8 +1003,8 @@ init_vars <- unlist(list(
       get_flow_values(DD_init, "DD", p_names) },
     get_flow_values(rep(0, length(p_names)), "PI_CET", p_names),
     get_flow_values(rep(0, length(p_names)), "PI_ARM", p_names),
-    # TD_Dom es fisico y no incluye la cuna del especifico: TD_Dom = Q (= Q_v / p_base)
-    get_flow_values(as.numeric(((TD_Dom_initial - ImpEsp_p_v) / p_base)[pdom_idx]), "TD_Dom", pdom_names),
+    # TD_Dom es fisico y no incluye las cunas del especifico ni el margen: TD_Dom = Q
+    get_flow_values(as.numeric((Q_v / p_base)[pdom_idx]), "TD_Dom", pdom_names),
     get_flow_values(as.numeric(((D_m + G_m + I_m) / pq_base)[pdom_idx]), "FD", pdom_names),
     get_flow_values(as.numeric((rowSums(X_matrix) / pint_base)[pdom_idx]), "XI", pdom_names),
     get_flow_values(pq_base, "pq", p_names),
@@ -945,6 +1064,28 @@ chk_iva <- c(
 print(round(chk_iva, 8))
 if (any(abs(chk_iva) > 1e-4)) warning("La calibracion con impuestos en precios no replica la SAM; revisar chk_iva.")
 
+# --- Validacion del margen de comercio: el equilibrio base debe replicar la cuenta
+# Margen_com de la SAM (oferta de Act_com_hot_rest, margen por producto y por uso) ---
+pmg_chk  <- as.numeric(ss_chk["pmg"])
+pdm      <- p_names[pdom_idx]
+pxm      <- p_names[pexp_idx]
+mg_mod_p <- setNames(rep(0, length(p_names)), p_names)
+mg_mod_p[pdm] <- (mu_i_v[pdm] * ss_chk[paste0("XI__", pdm)] + mu_f_v[pdm] * ss_chk[paste0("FD__", pdm)]) * pmg_chk
+mg_mod_p[pxm] <- mg_mod_p[pxm] + mu_e_v[pxm] * ss_chk[paste0("EX__", pxm)] * pmg_chk
+chk_mg <- c(
+    pmg_menos_1               = pmg_chk - 1,
+    QMG_modelo_menos_SAM      = as.numeric(ss_chk["QMG"]) - sum(mg_prod_sam),
+    oferta_margen_menos_SAM   = sum(mshare_mg_v * ss_chk[paste0("V__", s_names)]) * pmg_chk - sum(mg_make),
+    max_abs_margen_producto   = max(abs(mg_mod_p - mg_prod_sam)),
+    margen_DF_menos_SAM       = sum(mu_f_v[pdm] * ss_chk[paste0("FD__", pdm)]) * pmg_chk - sum(MF_v),
+    margen_int_menos_SAM      = sum(mu_i_v[pdm] * ss_chk[paste0("XI__", pdm)]) * pmg_chk - sum(MI_v),
+    margen_exp_menos_SAM      = sum(mu_e_v[pxm] * ss_chk[paste0("EX__", pxm)]) * pmg_chk - sum(ME_v),
+    max_abs_pe_menos_1        = max(abs(ss_chk[paste0("pe__", pxm)] - 1)),
+    X_FOB_modelo_menos_SAM    = sum(ss_chk[paste0("EX__", p_names)] * pworlde_v) * as.numeric(ss_chk["exr"]) - sum(E_m)
+)
+print(round(chk_mg, 8))
+if (any(abs(chk_mg) > 1e-3)) warning("El margen de comercio del equilibrio base no replica la SAM; revisar chk_mg.")
+
 # --- Validacion del PIT: con TRGOV fuera de la base imponible, la recaudacion y la
 # base del equilibrio inicial deben replicar la SAM ---
 chk_pit <- c(
@@ -975,10 +1116,10 @@ if (any(abs(chk_ext) > 1e-3)) warning("El sector externo o el ahorro del equilib
 
 # --- Validacion del cierre: numerario, prestaciones sociales y balanza de pagos ---
 # La balanza de pagos no es una ecuacion del modelo: la implica la ley de Walras.
-# SAVext debe igualar M (CIF, sin aranceles) - X + RNROW (pagos netos de ingreso
+# SAVext debe igualar M (CIF, sin aranceles) - X (FOB) + RNROW (pagos netos de ingreso
 # primario y secundario al resto del mundo).
 M_mod <- sum(ss_chk[paste0("M__", p_names)] * as.numeric(ss_chk["exr"]))
-X_mod <- sum(ss_chk[paste0("EX__", p_names)] * ss_chk[paste0("pe__", p_names)])
+X_mod <- sum(ss_chk[paste0("EX__", p_names)] * pworlde_v * as.numeric(ss_chk["exr"]))
 chk_cierre <- c(
     CPI_menos_numerario = as.numeric(ss_chk["CPI"]) - cpi_num_val,
     PSh_menos_SAM       = as.numeric(ss_chk["PSh"]) - as.numeric(pshdata),

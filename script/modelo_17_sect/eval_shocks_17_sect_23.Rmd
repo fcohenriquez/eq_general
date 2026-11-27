@@ -55,6 +55,8 @@ txt_escribir(c(
             cfg$modelo$nombre, cfg$modelo$version, cfg$modelo$anio_base),
     sprintf("Sectores / productos: %d / %d", length(cfg$sectores), length(cfg$productos)),
     sprintf("SAM                 : %s", cfg$archivos$sam),
+    sprintf("Margen de comercio  : %s", if (is.null(cfg$cuentas_sam$margen)) "incluido en la produccion de los bienes"
+                                        else sprintf("cuenta separada (%s; %s)", cfg$cuentas_sam$margen, cfg$archivos$margenes)),
     sprintf("Distribucion de utilidades neta de IDPC: %s", fmt_lista(cfg$sector_externo$distribucion_neta_idpc)),
     "",
     "Cierre macroeconomico:",
@@ -101,7 +103,7 @@ vars_to_compare <- c(
     "Tax", "FIRMTAX", "PITAX", "VAT", "TADIC", "TPROD", "TESP", "TARANCEL", "TIA", "SAV", "SAVf", "SAVg", "TOTAL_SAV", "SAVext", "TRGOV", "INC", "BTINC", "INGG",
     "ROWF", "REMH", "RNROW",
     paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)),
-    "pk", "exr", "CPI", "PSh", "inv_adj", "U",
+    "pk", "exr", "CPI", "PSh", "inv_adj", "U", "pmg", "QMG",
     paste0("u_rate__", unlist(cfg$cuentas_sam$factores$trabajo)),
     paste0("LD__", unlist(cfg$cuentas_sam$factores$trabajo))
 )
@@ -156,9 +158,21 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     # IPC (numerario): los especificos son montos reales indexados, tau_e * IPC
     cpi_b <- as.numeric(gv(res_base, "CPI")); cpi_s <- as.numeric(gv(res_shock, "CPI"))
 
+    # Margen de comercio (modelo con margen separado): coeficientes por unidad fisica y
+    # precio del servicio. En el modelo sin margen separado valen cero.
+    par_o0 <- function(par, nm, prods) {
+        k <- paste0(nm, "__", prods)
+        v <- rep(0, length(prods))
+        en <- k %in% names(par)
+        v[en] <- as.numeric(par[k[en]])
+        v
+    }
+    pmg_b <- if ("pmg" %in% names(res_base))  as.numeric(gv(res_base,  "pmg")) else 0
+    pmg_s <- if ("pmg" %in% names(res_shock)) as.numeric(gv(res_shock, "pmg")) else 0
+
     # ---------------- VAT (cuna de precio sobre demanda final) ----------------
-    # R = t_iva * (p + tau_e * IPC) * FD  +  t_iva_int * p * XI
-    # tau: tasa sin impuesto; P: precio neto de IVA; Q: base fisica (FD o XI).
+    # R = t_iva * (p + mu_f * pmg + tau_e * IPC) * FD  +  t_iva_int * (p + mu_i * pmg) * XI
+    # tau: tasa sin impuesto; P: precio neto de IVA (con margen); Q: base fisica (FD o XI).
     # Con IPC fijo, el efecto precio recoge la caida de los precios netos respecto
     # de la canasta de consumo (incidencia de la cuna).
     pn_vat <- pn[paste0("t_iva__", pn) %in% names(par_b)]
@@ -169,14 +183,17 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     t_s   <- as.numeric(par_s[paste0("t_iva__", pn_vat)])
     ti_b  <- as.numeric(par_b[paste0("t_iva_int__", pn_vat)])
     ti_s  <- as.numeric(par_s[paste0("t_iva_int__", pn_vat)])
-    # La base de la demanda final es el precio con especifico (p + tau_e * IPC); la intermedia, p.
+    # La base de la demanda final es el precio con margen y especifico (p + mu_f * pmg +
+    # tau_e * IPC); la intermedia, el precio con margen (p + mu_i * pmg).
     tv_b  <- as.numeric(par_b[paste0("tau_e__", pn_vat)])
     tv_s  <- as.numeric(par_s[paste0("tau_e__", pn_vat)])
-    D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b + tv_b * cpi_b, p_s + tv_s * cpi_s, FD_b, FD_s),
-                        decomp3(ti_b, ti_s, p_b, p_s, XI_b, XI_s))
+    mf_v  <- par_o0(par_b, "mu_f", pn_vat)
+    mi_v  <- par_o0(par_b, "mu_i", pn_vat)
+    D_VAT <- sum_decomp(decomp3(t_b,  t_s,  p_b + mf_v * pmg_b + tv_b * cpi_b, p_s + mf_v * pmg_s + tv_s * cpi_s, FD_b, FD_s),
+                        decomp3(ti_b, ti_s, p_b + mi_v * pmg_b, p_s + mi_v * pmg_s, XI_b, XI_s))
 
     # ---------------- TADIC (impuesto adicional ad valorem a bebidas) ----------------
-    # R = t_adic * (p + tau_e * IPC) * FD: misma base que el IVA de la demanda final.
+    # R = t_adic * (p + mu_f * pmg + tau_e * IPC) * FD: misma base que el IVA de la demanda final.
     pn_ad  <- pn[paste0("t_adic__", pn) %in% names(par_b)]
     pa_b   <- gv(res_base , paste0("p__",  pn_ad)); pa_s  <- gv(res_shock, paste0("p__",  pn_ad))
     FDa_b  <- gv(res_base , paste0("FD__", pn_ad)); FDa_s <- gv(res_shock, paste0("FD__", pn_ad))
@@ -184,7 +201,8 @@ build_real_decomp <- function(model_base, model_shock, res_base, res_shock) {
     ta_s   <- as.numeric(par_s[paste0("t_adic__", pn_ad)])
     tva_b  <- as.numeric(par_b[paste0("tau_e__", pn_ad)])
     tva_s  <- as.numeric(par_s[paste0("tau_e__", pn_ad)])
-    D_TADIC <- decomp3(ta_b, ta_s, pa_b + tva_b * cpi_b, pa_s + tva_s * cpi_s, FDa_b, FDa_s)
+    mfa_v  <- par_o0(par_b, "mu_f", pn_ad)
+    D_TADIC <- decomp3(ta_b, ta_s, pa_b + mfa_v * pmg_b + tva_b * cpi_b, pa_s + mfa_v * pmg_s + tva_s * cpi_s, FDa_b, FDa_s)
 
     # ---------------- FIRMTAX ----------------
     # P = retorno bruto pk relativo al IPC. Si el choque no altera fit ni pit,
@@ -382,6 +400,15 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
                     log(pkn_rat) / log(KD_s / KD_b), as.numeric(par_s_m["psi"])))
     }
 
+    # --- Margen de comercio (modelo con margen separado) ---
+    pmg_b <- gv(res_base, "pmg"); pmg_s <- gv(res_shock, "pmg")
+    QMG_b <- gv(res_base, "QMG"); QMG_s <- gv(res_shock, "QMG")
+    if (!is.na(pmg_b) && !is.na(QMG_b)) {
+        cat("\n  Margen de Comercio:\n")
+        cat(sprintf("     Precio del servicio (pmg): %8.4f %%\n", (pmg_s / pmg_b - 1) * 100))
+        cat(sprintf("     Volumen (QMG)            : %8.4f %%\n", (QMG_s / QMG_b - 1) * 100))
+    }
+
     # --- Diagnóstico Okun: contraste con evidencia empírica ---
     ct   <- sub("^u_rate__", "", cat_trabajo)
     LD_b <- sapply(ct, function(l) gv(res_base,  paste0("LD__", l)))
@@ -518,7 +545,7 @@ print_macro_impact <- function(name, p_base_list, p_shock_list, model_base = NUL
 
 calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_shock_list, vars) {
     # Clasificar variables: precios vs montos nominales
-    price_vars <- c(paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)), "pk", "exr")
+    price_vars <- c(paste0("w__", unlist(cfg$cuentas_sam$factores$trabajo)), "pk", "exr", "pmg")
     vars <- vars[vars %in% names(res_base)]
 
     comp <- data.frame(
@@ -532,9 +559,10 @@ calc_tax_impact <- function(res_base, res_shock, pib_base, pib_real_base, pib_sh
     # expresados en poder adquisitivo del consumidor y no necesitan deflactarse.
     comp$Cambio_Pct <- round((comp$Shock / comp$Base - 1) * 100, 4)
 
-    # Impacto como % del PIB real base (solo para montos, no para precios)
+    # Impacto como % del PIB real base (solo para montos, no para precios ni para el
+    # volumen del servicio de margen)
     comp$Impacto_PIB_Pct <- ifelse(
-        comp$Variable %in% price_vars,
+        comp$Variable %in% c(price_vars, "QMG"),
         NA,
         round((comp$Shock - comp$Base) / pib_real_base * 100, 4)
     )
@@ -793,15 +821,17 @@ k_hom        <- cfg$pruebas_cierre$numerario_prueba_homogeneidad %||% 1.1
 cpi_num_base <- as.numeric(get_par_values(model, silent = TRUE)["cpi_num"])
 nm_ss <- names(res_base)
 ct_   <- unlist(cfg$cuentas_sam$factores$trabajo)
+# pmg (precio del servicio de margen) y QMG (su volumen) existen solo en el modelo con
+# margen separado; intersect() los omite en el modelo sin margen.
 v_precios <- intersect(c(grep("^(p|pq|pint|pz|pd|pe|pm)__", nm_ss, value = TRUE),
-                         paste0("w__", ct_), "pk", "exr", "CPI"), nm_ss)
+                         paste0("w__", ct_), "pk", "exr", "CPI", "pmg"), nm_ss)
 v_nominal <- intersect(c("Tax", "VAT", "TADIC", "FIRMTAX", "PITAX", "TPROD", "TESP", "TARANCEL",
                          "INC", "BTINC", "INGG", "INGF", "SAV", "SAVf", "SAVg", "SAVext",
                          "TOTAL_INVEST", "NOM_I_BASE", "TRGOV", "PSh", "TIA",
                          "TREMP", "TRFG", "ROWF", "YROWF", "REMH", "LROWP", "RNROW"), nm_ss)
 v_cantid  <- intersect(c(grep("^(V|D|Q|M|EX|DS|Z|FD|XI)__", nm_ss, value = TRUE),
                          paste0("LD__", ct_), paste0("u_rate__", ct_), "KD", "u_k", "inv_adj",
-                         "s_adj", "g_adj", "tr_adj"), nm_ss)
+                         "s_adj", "g_adj", "tr_adj", "QMG"), nm_ss)
 
 hom <- tryCatch({
     m_hom <- set_free_par(model, free_par = list(cpi_num = cpi_num_base * k_hom))
@@ -821,7 +851,7 @@ hom$cumple <- !is.na(hom$desvio_max) & hom$desvio_max < tol_cie
 
 # --- Prueba 2: balanza de pagos (ley de Walras) ----------------------------------
 # La balanza de pagos no es una ecuacion del modelo: se cumple si todos los flujos
-# estan cerrados. SAVext debe igualar M (CIF) - X + RNROW (pagos netos de ingreso
+# estan cerrados. SAVext debe igualar M (CIF) - X (FOB) + RNROW (pagos netos de ingreso
 # primario y secundario al resto del mundo); la brecha de la base es redondeo de la
 # SAM y debe mantenerse en cada choque.
 brecha_bdp <- function(m, lst) {

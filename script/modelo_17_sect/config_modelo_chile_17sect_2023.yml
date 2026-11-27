@@ -7,7 +7,7 @@ modelo:
   nombre: "CGE Chile"
   version: "17sect_2023"
   anio_base: 2023
-  descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 17 actividades y 21 productos."
+  descripcion: "Modelo CGE estatico calibrado con SAM Chile 2023, 17 actividades, 21 productos y margen de comercio separado."
 
 archivos:
   # SAM con el bloque institucional conciliado con las cuentas por sector institucional,
@@ -17,7 +17,16 @@ archivos:
   # fila Imptos_Espec, con el ajuste correspondiente en la columna de ingresos del
   # gobierno. Conciliacion con el SII 2023 (miles de millones): tabaco 1.092,7 / 1.092,4;
   # gasolinas 1.827,0 / 1.837,1; diesel neto de recuperaciones 809,1 / 759,8.
-  sam: "../data/sam_2023_17sect_sinmg_trab_inst_cft_tesp.csv"
+  # Version '_cmg': el margen de comercio que Act_com_hot_rest registraba como produccion
+  # de los bienes que comercializa (44.135,0 miles de millones) se traslada a la cuenta
+  # Margen_com: fila Margen_com <- columnas prod_* (margen de cada producto) y fila
+  # Act_com_hot_rest <- columna Margen_com (produccion del servicio de margen).
+  sam: "../data/sam_2023_17sect_cmg_trab_inst_cft_tesp.csv"
+  # Margen por producto y tipo de uso (COU 2023 del BCCh, cuadros 24 y 25, agregados a
+  # los 21 productos de la SAM). Columnas: intermedio, hogares, gobierno, inversion,
+  # var_exis, exportaciones, total. El total por producto coincide con la fila
+  # Margen_com de la SAM.
+  margenes: "../data/margenes_comercio_2023_17sect.csv"
   gcn: "../script/cge_calib_chile_17_sect_23.gcn"
   gcn_template: "cge_calib_chile_template.gcn"
   gcn_output: "cge_calib_chile_17_sect_23_auto.gcn"
@@ -61,6 +70,29 @@ cuentas_sam:
     impuestos_especificos: "Imptos_Espec"
     iva: "IVA"
     arancel: "Arancel"
+  # Cuenta del margen de comercio (fila: margen pagado por cada producto; columna:
+  # produccion del servicio de margen por las actividades)
+  margen: "Margen_com"
+
+# Margen de comercio separado (Lofgren, Harris y Robinson, 2002; Decaluwe et al., 2013).
+# Cada unidad fisica de un producto requiere mu_i unidades del servicio de margen en el
+# uso intermedio, mu_f en la demanda final (hogares, gobierno e inversion, con un
+# coeficiente comun) y mu_e en las exportaciones. Las existencias no pagan margen.
+#     pq   = (p + mu_f * pmg + tau_e * IPC) * (1 + t_iva + t_adic)
+#     pint = (p + mu_i * pmg) * (1 + t_iva_int) + kappa_e * tau_e * IPC
+#     pe   = pworlde * exr - mu_e * pmg
+# El servicio lo produce Act_com_hot_rest (mshare_mg = margen / produccion total).
+# Las exportaciones se miden a valor productor (FOB menos margen): pworlde = FOB /
+# (FOB - margen), de modo que pe = 1 en la base.
+margen_comercio:
+  especificacion: "coeficientes_fijos_por_uso"
+  columnas_demanda_final: ["hogares", "gobierno", "inversion"]
+  columna_intermedio: "intermedio"
+  columna_exportaciones: "exportaciones"
+  columna_existencias: "var_exis"
+  # Tolerancia para verificar que el total por producto del archivo de margenes
+  # coincide con la fila Margen_com de la SAM
+  tolerancia_total: 1.0e-3
 
 # Sector externo e instituciones (SAM conciliada). Flujos de la SAM que usa el modelo:
 #   Empresas <- row  : renta de la inversion directa en el exterior (YROWF), fija en divisas.
@@ -73,8 +105,7 @@ sector_externo:
   # true: las rentas distribuidas por las empresas (a hogares, gobierno y resto del
   # mundo) son proporciones del ingreso neto del IDPC, como en las cuentas nacionales,
   # donde se pagan con cargo al ingreso despues de impuestos. false: proporciones del
-  # ingreso bruto (especificacion anterior; un cambio del IDPC recae solo en el ahorro
-  # de las empresas).
+  # ingreso bruto (un cambio del IDPC recae solo en el ahorro de las empresas).
   distribucion_neta_idpc: true
 
 sectores:
@@ -110,7 +141,7 @@ sectores:
     producto_principal: "prod_const"
   - id: "Act_com_hot_rest"
     etiqueta: "Comercio, hoteles y restaurantes"
-    producto_principal: "prod_com_hot_rest"
+    producto_principal: "prod_com_hot_rest"   # produce tambien el servicio de margen (Margen_com)
   - id: "Act_trans_comu_inf"
     etiqueta: "Transporte, comunicaciones e informacion"
     producto_principal: "prod_trans_comu_inf"
@@ -161,6 +192,7 @@ productos:
 #  - Construccion como insumo intermedio: solo Act_const, Act_inmo_viv y, de forma
 #    marginal (1,2), Act_adm_pub; este ultimo flujo se traslada al capital.
 #  - prod_Crudo lo produce solo Act_Min_resto y lo usa solo Act_Combustibles.
+#  - La cuenta Margen_com no es un producto: no pertenece a ningun conjunto.
 conjuntos_gcn:
   LAB:
     incluir:
@@ -417,7 +449,8 @@ sensibilidad_oferta:
 # Especificacion del IVA: cuna de precio sobre la demanda final, uso intermedio
 # desgravado. El IVA que exceda la tasa tope sobre la demanda final de un producto
 # se asigna como residuo transitorio a su uso intermedio (t_iva_int), salvo en los
-# productos de 'productos_impuesto_adicional'.
+# productos de 'productos_impuesto_adicional'. Con el margen separado, la base del
+# IVA es el precio con margen y especifico.
 iva:
   especificacion: "cuna_precio_demanda_final"
   tasa_max_demanda_final: 0.19
@@ -427,12 +460,11 @@ iva:
 # final es 33,9% en bebidas alcoholicas y 22,5% en no alcoholicas. En estos productos,
 # el exceso sobre la tasa tope del IVA se modela como un impuesto adicional ad valorem
 # (t_adic) que grava la demanda final sobre la misma base que el IVA:
-#     pq = (p + tau_e * IPC) * (1 + t_iva + t_adic)
+#     pq = (p + mu_f * pmg + tau_e * IPC) * (1 + t_iva + t_adic)
 # Su recaudacion se reporta como TADIC, separada del IVA; VAT + TADIC replica la fila IVA.
 # El choque de IVA no altera t_adic.
 # NOTA: t_adic y TADIC designan aqui el impuesto adicional a las bebidas. El Impuesto
-# Adicional de la LIR (cuenta Imp_adic de la SAM) se denomina t_ia y TIA, como en el
-# modelo de 12 sectores.
+# Adicional de la LIR (cuenta Imp_adic de la SAM) se denomina t_ia y TIA.
 impuesto_adicional:
   especificacion: "ad_valorem_demanda_final_misma_base_iva"
   productos:
@@ -443,9 +475,9 @@ impuesto_adicional:
 # al IPC) que paga la demanda final (hogares, gobierno, inversion) y, en los productos
 # de 'productos_uso_intermedio', tambien el uso intermedio con el monto kappa_e * tau_e.
 # Existencias y exportaciones no lo pagan. El IVA de la demanda final se calcula sobre el
-# precio con especifico.
-#     pq   = (p + tau_e * IPC) * (1 + t_iva + t_adic)
-#     pint = p * (1 + t_iva_int) + kappa_e * tau_e * IPC
+# precio con margen y especifico.
+#     pq   = (p + mu_f * pmg + tau_e * IPC) * (1 + t_iva + t_adic)
+#     pint = (p + mu_i * pmg) * (1 + t_iva_int) + kappa_e * tau_e * IPC
 #     TESP = tau_e * IPC * (FD + kappa_e * XI)
 # En la SAM recaen en prod_Tabaco, prod_Diesel, prod_Gasolinas y prod_Otros_comb (en este
 # ultimo, el impuesto a los vehiculos a gas licuado, 4,1 miles de millones).
